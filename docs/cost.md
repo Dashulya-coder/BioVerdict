@@ -1,0 +1,95 @@
+# Models, pricing and cost per run
+
+Prices below were read from the providers' official pricing pages on 2026-10-06. Prices and promotions change: re-check before every cost report. Do not quote numbers from this file in the README without re-verifying.
+
+## Official list prices (USD per 1M tokens, input / output)
+
+| Provider | Model | Price | Notes |
+|---|---|---|---|
+| Anthropic | Claude Fable 5.1 | 10 / 50 | not planned |
+| Anthropic | Claude Opus 5.5 | 4 / 20 | optional for one control run |
+| Anthropic | Claude Sonnet 5.5 | 2 / 10 | reasoning steps, Skeptic, Chair, synthesis |
+| Anthropic | Claude Haiku 4.5 | 1 / 5 | extraction |
+| Google | Gemini 3.8 Flash | 0.75 / 3.75 through 2026-12-31, then 1.50 / 7.50 | failover, judge |
+| Google | Gemini 3.5 Flash-Lite | 0.30 / 2.50 | extraction, failover |
+| Google | Gemini 3.1 Pro Preview | 2 / 12 (4 / 18 above 200k prompt tokens) | preview status |
+| OpenAI | gpt-6-astra | 10 / 50 | not planned |
+| OpenAI | gpt-6.1-sol | 2 / 10 | failover, judge |
+| OpenAI | gpt-6-luna | 0.10 / 0.50 | extraction candidate, gated |
+
+- Batch APIs give 50% off but are asynchronous: use for evaluation runs, not for the live demo.
+- Prompt-cache reads are much cheaper than uncached input.
+- Anthropic's newer tokenizer (Opus 4.7 and later, Sonnet 5.x) produces about 30% more tokens for the same text.
+- Gemini 4 Argon was announced on 2026-09-30 but is not generally available through the API; do not plan on it.
+
+Sources: https://platform.claude.com/docs/en/about-claude/pricing, https://ai.google.dev/gemini-api/docs/pricing, https://developers.openai.com/api/docs/pricing
+
+## Important: cost per task is not price per token
+
+Reasoning effort dominates the bill. Independent measurements (Artificial Analysis, https://artificialanalysis.ai/models/releases/comparisons/claude-sonnet-5-5-vs-gemini-3-8-flash) report for Claude Sonnet 5.5: roughly $0.42 per benchmark task at low effort, $0.59 at medium, $1.12 at high and $7.67 at max, with a time to first token of about 450 seconds at max. Gemini 3.8 Flash was about $0.93 at medium and $1.24 at high. Consequences:
+
+1. Use **medium or high** effort for reasoning steps, **never max** (too slow for the live demo).
+2. Use **no reasoning / low** for extraction.
+3. Budget by measured cost per run, not by price per token.
+
+## Model roles
+
+| Step | Primary | Failover | Effort |
+|---|---|---|---|
+| Resolver | Haiku 4.5 | Gemini 3.5 Flash-Lite | none/low |
+| Extraction (quote + value) | Haiku 4.5 | gpt-6-luna, Gemini 3.5 Flash-Lite | none/low |
+| Reasoning modules | Sonnet 5.5 | gpt-6.1-sol, Gemini 3.8 Flash | medium-high |
+| Entailment judge | model from a different provider than the generator | | medium |
+| Skeptic / Chair / synthesis | Sonnet 5.5 | gpt-6.1-sol | high |
+| Baseline ("bare LLM") | all three providers, no retrieval | | |
+
+These are starting hypotheses. The final assignment comes from the bake-off below.
+
+Why Sonnet 5.5 rather than Opus 5.5 for the strongest steps (hypothesis to confirm): third-party tracking reports a closed-book "hallucination rate" of about 47% for Sonnet 5.5 against about 59% for Opus 5.5 on AA-Omniscience, with Opus ahead on factual accuracy. In a closed-world pipeline we want the model that guesses less and follows instructions, not the one that knows more. These are general benchmarks, not our task.
+
+## Bake-off (one evening)
+
+1. Collect 20 real documents (ClinicalTrials.gov records, PubMed abstracts, an SEC exhibit).
+2. Extraction on each candidate (Haiku 4.5, Gemini 3.5 Flash-Lite, Gemini 3.8 Flash low, gpt-6-luna). Measure: quote verbatim in text, number correct, invalid-JSON rate, tokens, latency, cost.
+3. Reasoning steps (module, Skeptic) on Sonnet 5.5 medium and high, gpt-6.1-sol, Gemini 3.8 Flash high. Add one Opus 5.5 control. Score manually.
+4. Entailment: one judge per provider against a manually labelled set of about 30 claims.
+5. Pick the cheapest model that passes the gates for each step.
+
+Results table: TODO.
+
+## Per-run cost estimate
+
+Placeholder assumptions (not measured; **lower bound**, because reasoning tokens are not counted):
+
+| Stage | Input (M tokens) | Output (M tokens) |
+|---|---|---|
+| Resolver | 0.01 | 0.002 |
+| Extraction (~150 docs of ~6k tokens) | 0.90 | 0.12 |
+| Reasoning modules | 0.40 | 0.03 |
+| Skeptic / Chair | 0.08 | 0.004 |
+| Entailment judge (~200 claims) | 0.20 | 0.02 |
+| Synthesis and diligence questions | 0.13 | 0.011 |
+| **Total** | **~1.72** | **~0.19** |
+
+Replace this table with measured numbers from `llm_calls` after the first full runs.
+
+## Measured results
+
+TODO (from the trace table): median cost per run, p90, median time per run, cache hit rate, failover count.
+
+```sql
+SELECT run_id, SUM(cost_usd) AS usd, SUM(input_tokens) AS tin, SUM(output_tokens) AS tout
+FROM llm_calls GROUP BY run_id;
+```
+
+## Budget plan
+
+- Development and debugging: free tiers where available (note: free tiers may use content to improve products; our inputs are public).
+- Paid credit only for: bake-off, judge, baseline, final showcase runs.
+- Cache everything: LLM responses by hash, HTTP responses by key, frozen bundles by hash.
+- Per-run hard cap: `RUN_BUDGET_USD`.
+- Demo: replay recorded runs from cache; keep one live-capable path as a fallback.
+
+## Consumer subscriptions
+
+Consumer plans (Claude, ChatGPT, Gemini student) do not provide API access. Use them for manual prompt testing and coding assistance only. Do not wrap web sessions in unofficial clients.
