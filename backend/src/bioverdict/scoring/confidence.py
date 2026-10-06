@@ -9,6 +9,7 @@ from datetime import date
 from math import prod
 
 from bioverdict.scoring.config import ConfidenceConfig
+from bioverdict.store.as_of import is_visible_as_of
 from bioverdict.store.models import (
     Claim,
     ClaimEvidenceLink,
@@ -40,17 +41,6 @@ def logit(p: float) -> float:
 
 def sigmoid(x: float) -> float:
     return 1 / (1 + math.exp(-x))
-
-
-def _visible_as_of(evidence: Evidence, as_of: date) -> bool:
-    """The time-travel rule. Keep in sync with `store.as_of.is_visible_as_of` (PR #9).
-
-    Dated evidence must be published on or before `as_of`. Undated evidence (for example a
-    snapshot of a database with no history) counts only if it was fetched on or before `as_of`.
-    """
-    if evidence.published_at is not None:
-        return evidence.published_at <= as_of
-    return evidence.retrieved_at.date() <= as_of
 
 
 def recency(evidence: Evidence, as_of: date, cfg: ConfidenceConfig) -> float:
@@ -108,7 +98,7 @@ def claim_confidence(
         and link.direction is not Direction.NEUTRAL
         and link.evidence_id in evidence
         and link.quote in evidence[link.evidence_id].excerpt
-        and _visible_as_of(evidence[link.evidence_id], as_of)
+        and is_visible_as_of(evidence[link.evidence_id], as_of)
     ]
     if not items:
         return ConfidenceResult(
