@@ -2,15 +2,19 @@
 name = "bioverdict"
 version = "0.1.0"
 description = "Evidence-first AI investment committee for biotech underwriting"
+readme = "README.md"
+authors = [
+  { name = "lisovskyi-arsenii", email = "lisovskyiarsenii@gmail.com" },
+]
 requires-python = ">=3.14"
 dependencies = [
-  "fastapi>=0.142",
+  "fastapi>=0.142.2",
   "uvicorn[standard]>=0.54",
-  "pydantic>=2.13",
-  "httpx>=0.28",
+  "pydantic>=2.13.5",
+  "httpx>=0.28.1",
   "tenacity>=9.1",
   "numpy>=2.5",
-  "langgraph>=1.2",
+  "langgraph>=1.2.13",
   "anthropic>=1.11",
   "openai>=3.24",
   "google-genai>=2.28",
@@ -20,11 +24,15 @@ dependencies = [
 bioverdict = "bioverdict:main"
 
 [dependency-groups]
-dev = ["pytest>=9", "pytest-asyncio>=1.4", "ruff>=0.16"]
+dev = ["pytest>=9.1.1", "pytest-asyncio>=1.4", "ruff>=0.16.10"]
 
 [build-system]
 requires = ["uv_build>=0.12.13,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+# `backend` is Arsenii's initial scaffold, kept alongside the `bioverdict` package.
+module-name = ["bioverdict", "backend"]
 
 [tool.ruff]
 line-length = 100

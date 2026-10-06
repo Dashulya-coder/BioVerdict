@@ -1,5 +1,7 @@
 # Evaluation plan
 
+Owners: Dasha owns the eval cases, expectations and sensitivity tests (task B10); Arsenii owns the eval runner, grounding metrics, leakage probe and cache pre-warm (task A8). See [`work-plan.md`](work-plan.md).
+
 We cannot measure whether a recommendation is *right* (outcomes take years), and historical cases leak through LLM training data. So we measure **process quality**: grounding, honesty about unknowns, stability, sensitivity to evidence, and leakage. We also keep a regression set of expert-style expectations.
 
 ## 1. Leakage probe
@@ -67,7 +69,7 @@ A deal or market reaction is a noisy proxy for an expert verdict. Record it as a
   expected_top_risks: ["competition from approved KRAS G12C inhibitors", "..."]
   signals:
     - { text: "...", url: "...", date: "..." }
-  recorded_by: TODO
+  recorded_by: Dasha
   recorded_at: TODO
 ```
 

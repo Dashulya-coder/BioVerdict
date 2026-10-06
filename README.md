@@ -77,6 +77,7 @@ Details: [`docs/architecture.md`](docs/architecture.md). Data contracts: [`docs/
 | [`docs/limitations.md`](docs/limitations.md) | What the system cannot know |
 | [`docs/glossary.md`](docs/glossary.md) | Terms and abbreviations |
 | [`docs/decisions/`](docs/decisions/) | Architecture decision records |
+| [`docs/work-plan.md`](docs/work-plan.md) | Role split, task lists, milestones, ownership |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Team workflow |
 
 ## Status
@@ -102,7 +103,12 @@ TODO: fill from `eval/results/` after the evaluation run. Table template is in [
 
 ## Team
 
-TODO: names and roles.
+| Person | Track |
+|---|---|
+| Arsenii | A: Evidence and platform (resolver, connectors, bundle, API, evidence UI, recompute, eval harness) |
+| Dasha | B: Reasoning and verdict (LLM layer, reasoning modules, scoring, verification, report UI, eval cases) |
+
+Details: [`docs/work-plan.md`](docs/work-plan.md).
 
 ## License
 

@@ -1,16 +1,18 @@
 # Contributing / team workflow
 
-Two-person team. The rules exist to avoid blocking each other, not to add ceremony.
+Two-person team (Arsenii and Dasha). The rules exist to avoid blocking each other, not to add ceremony.
 
 ## Roles
 
-| Role | Owner | Scope |
-|---|---|---|
-| A: data and verdict | TODO | Connectors, evidence store with versions and `as_of`, verifier, scoring, eval |
-| B: analysis and product | TODO | Resolver, LangGraph DAG, agents and prompts, Bull/Bear/Chair, API, UI, diligence questions |
-| Both | | Data schema, ADRs, demo, README |
+The full split, task lists, estimates and milestones are in [`docs/work-plan.md`](docs/work-plan.md). Summary:
 
-Each module has one owner. The other person reviews.
+| Person | Track | Scope |
+|---|---|---|
+| **Arsenii** | A: Evidence and platform | Resolver, connectors, cache and `as_of`, bundle freeze and versions, extraction agents, all API routers, incremental recompute and diff, evidence/sources UI and app shell, eval runner, ops (runbook, cost measurement, demo recordings) |
+| **Dasha** | B: Reasoning and verdict | `llm.call` layer, reasoning modules, Skeptic/Chair, scoring, rNPV and capital, verification, report UI and translation-chain graph, trace/cost panel, eval cases and sensitivity tests, domain pack |
+| Both | | Contracts (data model, `contracts.py`), ADRs, fixtures, integration milestones, demo, README |
+
+Each directory has one owner (ownership map in `docs/work-plan.md`). The other person reviews. The workload is balanced at about 47 and 46 points; rebalance as described in the work plan if estimates change.
 
 ## Schema changes (the expensive kind)
 
@@ -23,7 +25,7 @@ Each module has one owner. The other person reviews.
 ## Git
 
 - `main` is always runnable. Changes go through a pull request reviewed by the other person.
-- Branches: `feat/<area>-<short-name>`, `fix/<short-name>`, `docs/<short-name>`.
+- Branches: `arsenii/<task-id>-<short-name>` and `dasha/<task-id>-<short-name>` (task IDs from `docs/work-plan.md`, for example `dasha/B4-scoring-gates`).
 - Commits follow Conventional Commits: `feat(verify): reject quotes absent from bundle`.
 - Keep PRs small (under about 400 changed lines). Large PRs wait for review.
 
@@ -50,7 +52,9 @@ Keys live in `.env` (git-ignored). Each developer has their own keys. Never past
 
 ## Sync
 
-- Short daily sync: what is blocked, what changes in the schema, what is risky.
+- Short daily sync (10 minutes): what I finished, what I start, what could block you. Update the status column in `docs/work-plan.md`.
+- At most two tasks in progress per person.
+- Pairing sessions at milestones M2 (bundle handoff) and M4 (eval and calibration).
 - Code freeze for the demo: TODO date and time. After it only bug fixes and docs.
 
 ## Decisions

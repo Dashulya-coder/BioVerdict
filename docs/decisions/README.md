@@ -10,5 +10,6 @@
 | [006](ADR-006-domain-focus.md) | Single-domain depth with a universal core | Proposed |
 | [007](ADR-007-time-travel-and-incremental-recompute.md) | Time-travel and incremental recompute as first-class features | Proposed |
 | [008](ADR-008-toolchain-and-pinning.md) | Toolchain versions and pinning policy | Proposed |
+| [009](ADR-009-work-split.md) | Split the work by pipeline halves, with contracts and fixtures | Proposed |
 
 Status becomes `Accepted` when both team members approve. Copy an existing ADR as a template. Superseded ADRs are kept, with a link to their replacement.
