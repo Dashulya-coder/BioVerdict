@@ -5,7 +5,7 @@ import pytest
 from bioverdict.contracts import Reasoner
 from bioverdict.llm import FakeLLM
 from bioverdict.reasoning import MECHANISM, TRANSLATION, ModuleReasoner
-from bioverdict.reasoning.grounding import ground_draft
+from bioverdict.reasoning.grounding import ground_draft, resolve_claim_type
 from bioverdict.reasoning.prompts import build_prompt
 from bioverdict.reasoning.schemas import ModuleDraft
 from bioverdict.scoring.verdict import score_verdict
@@ -13,6 +13,7 @@ from bioverdict.store.models import (
     Basis,
     Bundle,
     ChainLink,
+    ClaimType,
     DiligenceType,
     Direction,
     GateId,
@@ -51,6 +52,7 @@ def ground(d: ModuleDraft, module=MECHANISM, **kw):
         module.section,
         allowed_gates=module.allowed_gates,
         allow_chain=module.chain,
+        forced_type=module.claim_type,
         **kw,
     )
 
@@ -226,3 +228,47 @@ def test_the_same_bundle_gives_the_same_claims() -> None:
     first = ModuleReasoner(canned_llm(), "R-1").reason(BUNDLE)
     second = ModuleReasoner(canned_llm(), "R-1").reason(BUNDLE)
     assert first == second
+
+
+# --- claim type is decided by code -----------------------------------------
+
+
+def test_a_module_fixes_the_claim_type_whatever_the_model_says() -> None:
+    mislabelled = draft(
+        claim("The drug clearly works", claim_type="other", chain_link="patient_benefit")
+    )
+    g = ground(mislabelled, TRANSLATION)
+    assert g.claims[0].claim_type is ClaimType.DRUG_ACTS_IN_HUMANS
+    assert any(d.what == "claim_type" for d in g.drops)  # the override is on record
+    assert (
+        ground(draft(claim("x", claim_type="other")), MECHANISM).claims[0].claim_type
+        is ClaimType.TARGET_CAUSAL
+    )
+
+
+def test_a_correct_label_is_not_reported_as_an_override() -> None:
+    d = draft(claim("x", claim_type="target_causal"))
+    assert not [x for x in ground(d, MECHANISM).drops if x.what == "claim_type"]
+
+
+@pytest.mark.parametrize(
+    ("gates", "proposed", "expected"),
+    [
+        ([GateId.K3], ClaimType.OTHER, ClaimType.TARGET_CAUSAL),  # a genetics claim
+        ([GateId.K1], ClaimType.DRUG_ACTS_IN_HUMANS, ClaimType.OTHER),  # a fact about a study
+        ([GateId.K2, GateId.S4], ClaimType.TARGET_CAUSAL, ClaimType.OTHER),
+        ([], ClaimType.DRUG_ACTS_IN_HUMANS, ClaimType.DRUG_ACTS_IN_HUMANS),  # model's label kept
+    ],
+)
+def test_gate_claims_get_their_type_from_the_gate(gates, proposed, expected) -> None:
+    assert resolve_claim_type(proposed, gates, None) is expected
+
+
+def test_the_reasoner_passes_each_modules_type_through() -> None:
+    claims, _ = ModuleReasoner(canned_llm(), "R-1").reason(BUNDLE)
+    assert {c.claim_type for c in claims if c.section is Section.MECHANISM} == {
+        ClaimType.TARGET_CAUSAL
+    }
+    assert {c.claim_type for c in claims if c.section is Section.TRANSLATION} == {
+        ClaimType.DRUG_ACTS_IN_HUMANS
+    }

@@ -58,6 +58,7 @@ class ModuleReasoner:
                 allowed_gates=module.allowed_gates,
                 allow_chain=module.chain,
                 evidence_sections=_TRANSLATION_SOURCES if module.chain else None,
+                forced_type=module.claim_type,
                 first_number=len(claims) + 1,
             )
             claims += grounded.claims

@@ -19,6 +19,7 @@ from bioverdict.store.models import (
     ChainLink,
     Claim,
     ClaimEvidenceLink,
+    ClaimType,
     DiligenceType,
     GateId,
     Section,
@@ -80,6 +81,7 @@ def ground_draft(
     allowed_gates: frozenset[GateId] = frozenset(),
     allow_chain: bool = False,
     evidence_sections: tuple[Section, ...] | None = None,
+    forced_type: ClaimType | None = None,
     first_number: int = 1,
 ) -> Grounded:
     out = Grounded()
@@ -125,6 +127,7 @@ def ground_draft(
                 allowed_gates,
                 allow_chain,
                 evidence_sections or (section,),
+                forced_type,
             )
         )
         out.links.extend(links)
@@ -142,6 +145,7 @@ def _build_claim(
     allowed_gates: frozenset[GateId],
     allow_chain: bool,
     evidence_sections: tuple[Section, ...],
+    forced_type: ClaimType | None,
 ) -> Claim:
     gates = [g for g in item.gate_signals if g in allowed_gates]
     for g in item.gate_signals:
@@ -151,6 +155,16 @@ def _build_claim(
     chain_link = item.chain_link if allow_chain else None
     if item.chain_link is not None and not allow_chain:
         out.drops.append(Drop(claim_id, item.chain_link.value, "chain link outside translation"))
+
+    claim_type = resolve_claim_type(item.claim_type, gates, forced_type)
+    if claim_type is not item.claim_type:
+        out.drops.append(
+            Drop(
+                claim_id,
+                "claim_type",
+                f"set by code to {claim_type.value} (model: {item.claim_type.value})",
+            )
+        )
 
     basis, diligence, status = Basis(item.basis), item.diligence_type, SectionStatus.FOUND
     if basis is Basis.EXTRACTED and not has_links:
@@ -169,7 +183,7 @@ def _build_claim(
         run_id=run_id,
         section=section,
         text=item.text.strip(),
-        claim_type=item.claim_type,
+        claim_type=claim_type,
         basis=basis,
         status=status,
         confidence=0.0,  # computed from the evidence by scoring.apply_confidence
@@ -178,6 +192,24 @@ def _build_claim(
         critical=item.critical,
         diligence_type=diligence,
     )
+
+
+def resolve_claim_type(
+    proposed: ClaimType, gates: list[GateId], forced: ClaimType | None
+) -> ClaimType:
+    """Code, not the model, decides which column of the evidence-weight table applies.
+
+    The model's choice would let it move confidence: a registry record weighs 0 for efficacy
+    claims but 1.0 for facts about studies, so an efficacy claim labelled `other` would borrow
+    that weight. A module fixes its type; otherwise a claim that asserts a kill criterion is
+    `target_causal` for K3 (a genetics claim) and `other` for the rest (facts about studies,
+    programs and competitors); anything else keeps the model's label.
+    """
+    if forced is not None:
+        return forced
+    if gates:
+        return ClaimType.TARGET_CAUSAL if set(gates) == {GateId.K3} else ClaimType.OTHER
+    return proposed
 
 
 def fill_missing_chain_links(
@@ -195,6 +227,7 @@ def fill_missing_chain_links(
                 run_id=run_id,
                 section=Section.TRANSLATION,
                 text=f"Not shown in the available evidence: {CHAIN_TEXT[link]}.",
+                claim_type=ClaimType.DRUG_ACTS_IN_HUMANS,
                 basis=Basis.UNKNOWN,
                 status=_unknown_status(bundle, TRANSLATION_SOURCES),
                 confidence=0.0,

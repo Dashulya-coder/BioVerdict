@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from bioverdict.store.models import GateId, Section
+from bioverdict.store.models import ClaimType, GateId, Section
 
 _MECHANISM = """\
 Mechanism and biological validation. Decide whether the target is causal for the disease or only
@@ -23,7 +23,7 @@ expression, pathway biology, perturbation studies, animal models, prior drugs ag
 _TRANSLATION = """\
 Preclinical-to-human translation. Build the chain, one or more claims per link, and set
 chain_link on every claim:
-1. molecular_effect: the molecule modulates the target as intended (claim_type "other").
+1. molecular_effect: the molecule modulates the target as intended (claim_type "drug_acts_in_humans").
 2. human_exposure: an effective exposure is reachable in humans, compared with the exposure that
    worked experimentally (claim_type "drug_acts_in_humans").
 3. target_engagement: the drug engages the target in the relevant tissue, including PK/PD and
@@ -47,6 +47,9 @@ class ReasoningModule:
     instruction: str
     allowed_gates: frozenset[GateId] = frozenset()
     chain: bool = False  # claims carry a translation-chain link
+    # The type is fixed by the module, not chosen by the model: it picks the evidence weights, so
+    # a model that mislabels a claim could otherwise move its confidence (see grounding.py).
+    claim_type: ClaimType | None = None
 
 
 MECHANISM = ReasoningModule(
@@ -55,6 +58,7 @@ MECHANISM = ReasoningModule(
     step="reasoning.mechanism",
     instruction=_MECHANISM,
     allowed_gates=frozenset({GateId.K3}),
+    claim_type=ClaimType.TARGET_CAUSAL,
 )
 TRANSLATION = ReasoningModule(
     name="translation",
@@ -62,4 +66,5 @@ TRANSLATION = ReasoningModule(
     step="reasoning.translation",
     instruction=_TRANSLATION,
     chain=True,
+    claim_type=ClaimType.DRUG_ACTS_IN_HUMANS,
 )
