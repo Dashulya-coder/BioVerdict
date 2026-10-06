@@ -20,7 +20,7 @@ Most "AI due diligence" output looks confident whether it is right or wrong. We 
 
 ## Quick start
 
-Prerequisites: Python 3.14, [`uv`](https://docs.astral.sh/uv/), Node 24 LTS (see [`docs/stack.md`](docs/stack.md)).
+Prerequisites: Python 3.14, [`uv`](https://docs.astral.sh/uv/), Node 24 LTS and [`pnpm`](https://pnpm.io/) (see [`docs/stack.md`](docs/stack.md)).
 
 ```bash
 git clone <repo-url> bioverdict && cd bioverdict
@@ -28,7 +28,7 @@ cp .env.example .env            # add API keys, see "Configuration"
 cd backend && uv sync
 uv run python ../scripts/check_compat.py   # expects "17/17 checks passed"
 uv run uvicorn bioverdict.api.main:app --reload      # API on :8000
-cd ../frontend && npm install && npm run dev          # UI on :5173
+cd ../frontend && pnpm install && pnpm dev            # UI on :5173
 ```
 
 Run one underwriting from the CLI (TODO: confirm command names once implemented):
