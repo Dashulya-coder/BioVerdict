@@ -13,10 +13,9 @@ from datetime import UTC, date, datetime
 from pydantic import TypeAdapter
 
 from bioverdict.store.as_of import filter_as_of
-from bioverdict.store.bundle import compute_content_hash
+from bioverdict.store.bundle import compute_content_hash, select_bundle_evidence
 from bioverdict.store.evidence_ids import assign_ids
 from bioverdict.store.evidence_repo import load_evidence, save_evidence
-from bioverdict.store.latest_wins import drop_superseded
 from bioverdict.store.models import Bundle, Evidence, Section, SectionStatus
 
 SECTION_STATUSES = TypeAdapter(dict[Section, SectionStatus])
@@ -67,8 +66,7 @@ def freeze(
         new = assign_ids(existing, filter_as_of(incoming, as_of), version)
         save_evidence(conn, run_id, new)
 
-        visible = drop_superseded(filter_as_of(existing + new, as_of))
-        visible.sort(key=lambda item: item.id)
+        visible = select_bundle_evidence(existing + new, as_of)
         bundle = Bundle(
             bundle_id=f"B-{run_id}-v{version}",
             run_id=run_id,

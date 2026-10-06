@@ -6,11 +6,9 @@ import json
 import sqlite3
 from datetime import date, datetime
 
-from bioverdict.store.as_of import filter_as_of
-from bioverdict.store.bundle import compute_content_hash
+from bioverdict.store.bundle import compute_content_hash, select_bundle_evidence
 from bioverdict.store.evidence_repo import load_evidence
 from bioverdict.store.freeze import SECTION_STATUSES
-from bioverdict.store.latest_wins import drop_superseded
 from bioverdict.store.models import Bundle
 
 
@@ -39,7 +37,7 @@ def load_bundle(conn: sqlite3.Connection, run_id: str, version: int | None = Non
 
     as_of = date.fromisoformat(row["as_of"])
     stored = [e for e in load_evidence(conn, run_id) if e.version <= row["version"]]
-    evidence = drop_superseded(filter_as_of(stored, as_of))
+    evidence = select_bundle_evidence(stored, as_of)
     statuses = SECTION_STATUSES.validate_json(row["section_statuses_json"])
 
     actual_hash = compute_content_hash(evidence, statuses)
