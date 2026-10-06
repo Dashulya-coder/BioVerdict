@@ -112,7 +112,21 @@ MIGRATION_2 = """
 ALTER TABLE evidence ADD COLUMN status_key TEXT;
 """
 
-MIGRATIONS: list[str] = [MIGRATION_1, MIGRATION_2]
+MIGRATION_3 = """
+ALTER TABLE runs ADD COLUMN resolver_json TEXT;
+ALTER TABLE runs ADD COLUMN result_json TEXT;
+CREATE TABLE run_events (
+  run_id     TEXT,
+  seq        INTEGER,
+  step       TEXT,
+  status     TEXT,
+  detail     TEXT,
+  created_at TEXT,
+  PRIMARY KEY (run_id, seq)
+);
+"""
+
+MIGRATIONS: list[str] = [MIGRATION_1, MIGRATION_2, MIGRATION_3]
 SCHEMA_VERSION = len(MIGRATIONS)
 
 
