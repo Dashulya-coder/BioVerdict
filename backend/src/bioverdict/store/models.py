@@ -1,6 +1,4 @@
-"""Shared data model. Source of truth: the Unobio plan PDF, mirrored in docs/data-model.md.
-
-"""
+"""Shared data model. Source of truth: the Unobio plan PDF, mirrored in docs/data-model.md."""
 
 from __future__ import annotations
 
