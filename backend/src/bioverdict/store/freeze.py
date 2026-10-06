@@ -24,8 +24,11 @@ _STATUSES = TypeAdapter(dict[Section, SectionStatus])
 
 def build_catalog(evidence: list[Evidence]) -> list[str]:
     """Every URL and identifier the bundle's evidence was actually fetched from."""
-    entries = {item.url for item in evidence}
-    entries |= {item.locator.value for item in evidence if item.locator}
+    entries: set[str] = set()
+    for item in evidence:
+        entries.add(item.url)
+        if item.locator is not None:
+            entries.add(item.locator.value)
     return sorted(entries)
 
 
