@@ -15,9 +15,29 @@ import calendar
 import json
 from datetime import UTC, date, datetime
 
-from bioverdict.store.models import Evidence, EvidenceLevel, Locator, SourceKind
+from bioverdict.connectors.http import CachedHttpClient
+from bioverdict.store.as_of import filter_as_of
+from bioverdict.store.models import (
+    Evidence,
+    EvidenceLevel,
+    Locator,
+    ResolverOutput,
+    SourceKind,
+)
 
+API_URL = "https://clinicaltrials.gov/api/v2/studies"
 STUDY_URL = "https://clinicaltrials.gov/study/"
+PAGE_SIZE = 20
+
+# Only what parse_study reads, which keeps responses (and the cache) small.
+FIELDS = (
+    "NCTId|BriefSummary|"
+    "OverallStatus|WhyStopped|PrimaryCompletionDate|StudyFirstPostDate|LastUpdatePostDate|"
+    "StudyType|Phase|EnrollmentCount|EnrollmentType|"
+    "DesignAllocation|DesignInterventionModel|DesignMasking|"
+    "PrimaryOutcomeMeasure|PrimaryOutcomeDescription|PrimaryOutcomeTimeFrame|"
+    "LeadSponsorName|HasResults"
+)
 
 _STATUS_FIELDS = ("overallStatus", "whyStopped", "primaryCompletionDateStruct")
 _DESIGN_FIELDS = ("studyType", "phases", "designInfo", "enrollmentInfo")
@@ -99,3 +119,37 @@ def parse_study(study: dict, retrieved_at: datetime | None = None) -> list[Evide
     )
     add("design", _fragment(design, _DESIGN_FIELDS), last_updated, status_key=f"nct:{nct}:design")
     return items
+
+
+def build_queries(query: ResolverOutput, page_size: int = PAGE_SIZE) -> list[dict[str, str]]:
+    """Search parameters: one query per known asset, else per target within the indication."""
+    base = {"pageSize": str(page_size), "fields": FIELDS}
+    if query.known_assets:
+        return [{**base, "query.intr": asset} for asset in query.known_assets]
+    return [
+        {**base, "query.cond": query.indication.name, "query.term": target.symbol}
+        for target in query.targets
+    ]
+
+
+class ClinicalTrialsConnector:
+    """Satisfies `Connector`. Fetches only the first page of results for each query."""
+
+    name = "clinicaltrials"
+
+    def __init__(self, http: CachedHttpClient, page_size: int = PAGE_SIZE) -> None:
+        self._http = http
+        self._page_size = page_size
+
+    async def fetch(self, query: ResolverOutput, as_of: date) -> list[Evidence]:
+        studies: dict[str, dict] = {}  # by NCT id, so a study found twice is read once
+        for params in build_queries(query, self._page_size):
+            body = await self._http.get(API_URL, params)
+            for study in json.loads(body).get("studies", []):
+                nct = study["protocolSection"]["identificationModule"]["nctId"]
+                studies.setdefault(nct, study)
+
+        evidence: list[Evidence] = []
+        for nct in sorted(studies):
+            evidence.extend(parse_study(studies[nct]))
+        return filter_as_of(evidence, as_of)
