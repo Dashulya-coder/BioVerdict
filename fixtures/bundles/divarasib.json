@@ -3,7 +3,7 @@
   "run_id": "R-fixture-divarasib",
   "version": 1,
   "as_of": "2026-10-07",
-  "content_hash": "sha256:15d6c355e0e117a930caa64a2517b791c79344fad68028ac9f4f1af1a885a260",
+  "content_hash": "sha256:8e1a4bc9857189a2ddaffee84ede5855746122441414e46432488014dd07439c",
   "catalog": [
     "36764316",
     "37611121",
@@ -78,7 +78,8 @@
       "type": "source_fact",
       "level": "registry_record",
       "independence_group": "sponsor:Roche",
-      "version": 1
+      "version": 1,
+      "status_key": "nct:NCT06497556:overall_status"
     },
     {
       "id": "E-0004",
