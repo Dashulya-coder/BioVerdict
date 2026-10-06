@@ -47,9 +47,11 @@ async def test_as_of_boundary_is_inclusive() -> None:
     assert await FakeConnector([e]).fetch(QUERY, date(2025, 1, 1)) == [e]
 
 
-async def test_undated_evidence_is_kept() -> None:
-    e = _evidence("E-1", None)
-    assert await FakeConnector([e]).fetch(QUERY, date(2020, 1, 1)) == [e]
+async def test_undated_snapshot_follows_retrieval_date() -> None:
+    e = _evidence("E-1", None)  # retrieved 2026-10-06
+    connector = FakeConnector([e])
+    assert await connector.fetch(QUERY, date(2026, 10, 6)) == [e]
+    assert await connector.fetch(QUERY, date(2026, 10, 5)) == []
 
 
 async def test_from_bundle_file(tmp_path: Path) -> None:

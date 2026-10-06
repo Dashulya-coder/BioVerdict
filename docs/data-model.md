@@ -97,6 +97,15 @@ Link:
 }
 ```
 
+### Content hash
+
+`content_hash` is `sha256:` plus the SHA-256 of a canonical JSON (sorted keys, no spaces, UTF-8) of:
+
+- all evidence sorted by `id`, every field except `retrieved_at` and `version`;
+- `section_statuses`.
+
+Identical evidence therefore gives an identical hash regardless of when it was fetched or in what order. `as_of` and the bundle `version` are not hashed. Evidence `id` is hashed on purpose: claims reference ids, so bundles whose ids differ must not share a hash (and a cached LLM answer). Implementation: `bioverdict.store.bundle.compute_content_hash`.
+
 ## Resolver output
 
 ```json
@@ -123,21 +132,25 @@ CREATE TABLE runs (
 );
 CREATE TABLE bundles (
   bundle_id TEXT PRIMARY KEY, run_id TEXT, version INTEGER,
-  content_hash TEXT, as_of TEXT, catalog_json TEXT, created_at TEXT
+  content_hash TEXT, as_of TEXT, catalog_json TEXT, section_statuses_json TEXT,
+  created_at TEXT, UNIQUE (run_id, version)
 );
 CREATE TABLE evidence (
-  id TEXT PRIMARY KEY, run_id TEXT, source TEXT, source_family TEXT, url TEXT,
-  locator_json TEXT, excerpt TEXT, published_at TEXT, retrieved_at TEXT,
-  level TEXT, independence_group TEXT, version INTEGER
+  run_id TEXT, id TEXT, source TEXT, source_family TEXT, source_kind TEXT,
+  type TEXT, url TEXT, locator_json TEXT, excerpt TEXT, published_at TEXT,
+  retrieved_at TEXT, level TEXT, independence_group TEXT, version INTEGER,
+  PRIMARY KEY (run_id, id)
 );
 CREATE TABLE claims (
-  id TEXT PRIMARY KEY, run_id TEXT, section TEXT, text TEXT, basis TEXT,
-  status TEXT, confidence REAL, confidence_parts_json TEXT,
-  depends_on_json TEXT, diligence_type TEXT, version INTEGER
+  run_id TEXT, id TEXT, section TEXT, claim_type TEXT, text TEXT, basis TEXT,
+  status TEXT, confidence REAL, confidence_parts_json TEXT, flags_json TEXT,
+  depends_on_json TEXT, diligence_type TEXT, chain_link TEXT,
+  gate_signals_json TEXT, critical INTEGER, version INTEGER,
+  PRIMARY KEY (run_id, id)
 );
 CREATE TABLE claim_evidence (
-  claim_id TEXT, evidence_id TEXT, direction TEXT, quote TEXT,
-  PRIMARY KEY (claim_id, evidence_id)
+  run_id TEXT, claim_id TEXT, evidence_id TEXT, direction TEXT, quote TEXT,
+  PRIMARY KEY (run_id, claim_id, evidence_id)
 );
 CREATE TABLE llm_calls (
   id INTEGER PRIMARY KEY AUTOINCREMENT, run_id TEXT, step TEXT, provider TEXT,
@@ -155,3 +168,9 @@ CREATE TABLE verification_log (
 ```
 
 Use WAL mode. One database file per developer; share demo state as a dump.
+
+Notes:
+
+- Ids such as `E-0001` and `C-0001` are unique only within a run, so evidence, claims and their links use the composite key `(run_id, id)`.
+- A bundle has no evidence table of its own. Bundle version `N` of a run contains every evidence row of that run with `version <= N` (evidence is append-only).
+- The applied migration level is stored with `PRAGMA user_version`; `runs.schema_version` records the level a run was created under.

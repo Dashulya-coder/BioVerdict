@@ -1,0 +1,310 @@
+{
+  "bundle_id": "B-fixture-divarasib",
+  "run_id": "R-fixture-divarasib",
+  "version": 1,
+  "as_of": "2026-10-06",
+  "content_hash": "sha256:pending-A3-freeze",
+  "catalog": [
+    "36764316",
+    "37611121",
+    "38052910",
+    "40391409",
+    "40783289",
+    "CHEMBL5095236",
+    "ENSG00000133703",
+    "NCT06497556",
+    "NCT07541170",
+    "https://clinicaltrials.gov/study/NCT06497556",
+    "https://clinicaltrials.gov/study/NCT07541170",
+    "https://platform.opentargets.org/drug/CHEMBL5095236",
+    "https://platform.opentargets.org/evidence/ENSG00000133703/MONDO_0005233",
+    "https://pubmed.ncbi.nlm.nih.gov/36764316/",
+    "https://pubmed.ncbi.nlm.nih.gov/37611121/",
+    "https://pubmed.ncbi.nlm.nih.gov/38052910/",
+    "https://pubmed.ncbi.nlm.nih.gov/40391409/",
+    "https://pubmed.ncbi.nlm.nih.gov/40783289/",
+    "https://www.roche.com/media/releases/med-cor-2026-07-02"
+  ],
+  "evidence": [
+    {
+      "id": "E-0001",
+      "source": "ClinicalTrials.gov",
+      "source_family": "registry",
+      "source_kind": "registry",
+      "url": "https://clinicaltrials.gov/study/NCT06497556",
+      "locator": {
+        "type": "nct",
+        "value": "NCT06497556"
+      },
+      "excerpt": "The purpose of this study is to assess the safety and efficacy of divarasib compared to locally approved KRAS G12C inhibitors (sotorasib or adagrasib) in participants with KRAS G12C-positive (KRAS G12C +) advanced or metastatic non-small cell lung cancer (NSCLC).",
+      "published_at": "2024-07-11",
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_interventional",
+      "independence_group": "sponsor:Roche",
+      "version": 1
+    },
+    {
+      "id": "E-0002",
+      "source": "ClinicalTrials.gov",
+      "source_family": "registry",
+      "source_kind": "registry",
+      "url": "https://clinicaltrials.gov/study/NCT06497556",
+      "locator": {
+        "type": "nct",
+        "value": "NCT06497556"
+      },
+      "excerpt": "PFS is defined as the time from randomization to the first occurrence of disease progression, as determined by blinded independent central review (BICR) according to RECIST v1.1, or death from any cause (whichever occurs first)",
+      "published_at": "2024-07-11",
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_interventional",
+      "independence_group": "sponsor:Roche",
+      "version": 1
+    },
+    {
+      "id": "E-0003",
+      "source": "ClinicalTrials.gov",
+      "source_family": "registry",
+      "source_kind": "registry",
+      "url": "https://clinicaltrials.gov/study/NCT06497556",
+      "locator": {
+        "type": "nct",
+        "value": "NCT06497556"
+      },
+      "excerpt": "{\"overallStatus\": \"ACTIVE_NOT_RECRUITING\", \"primaryCompletionDateStruct\": {\"date\": \"2026-05-19\", \"type\": \"ACTUAL\"}, \"lastUpdatePostDateStruct\": {\"date\": \"2026-09-16\", \"type\": \"ACTUAL\"}}",
+      "published_at": "2026-09-16",
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_interventional",
+      "independence_group": "sponsor:Roche",
+      "version": 1
+    },
+    {
+      "id": "E-0004",
+      "source": "ClinicalTrials.gov",
+      "source_family": "registry",
+      "source_kind": "registry",
+      "url": "https://clinicaltrials.gov/study/NCT07541170",
+      "locator": {
+        "type": "nct",
+        "value": "NCT07541170"
+      },
+      "excerpt": "The main purpose of this study is to evaluate the efficacy of divarasib compared with investigator's choice of immunotherapy (pembrolizumab or nivolumab) or observation in participants with resected Kirsten rat sarcoma viral oncogene homolog glycine 12 to cysteine (KRAS G12C)-positive Stage II-IIIB NSCLC, regardless of tumor programmed death-ligand 1 (PD-L1) status, who have not achieved pathologic complete response (pCR) following neoadjuvant chemoimmunotherapy.",
+      "published_at": "2026-04-21",
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_interventional",
+      "independence_group": "sponsor:Roche",
+      "version": 1
+    },
+    {
+      "id": "E-0005",
+      "source": "Roche press release",
+      "source_family": "company",
+      "source_kind": "company",
+      "url": "https://www.roche.com/media/releases/med-cor-2026-07-02",
+      "locator": {
+        "type": "url",
+        "value": "https://www.roche.com/media/releases/med-cor-2026-07-02"
+      },
+      "excerpt": "The study met its primary and key secondary endpoint, with divarasib achieving clinically meaningful and statistically significant improvements in both progression-free survival (PFS) and overall survival (OS).",
+      "published_at": "2026-07-02",
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_interventional",
+      "independence_group": "sponsor:Roche",
+      "version": 1
+    },
+    {
+      "id": "E-0006",
+      "source": "Roche press release",
+      "source_family": "company",
+      "source_kind": "company",
+      "url": "https://www.roche.com/media/releases/med-cor-2026-07-02",
+      "locator": {
+        "type": "url",
+        "value": "https://www.roche.com/media/releases/med-cor-2026-07-02"
+      },
+      "excerpt": "The G12C mutation is one of the most common KRAS oncogene mutations, found in approximately 14% of NSCLC cases and associated with poor prognosis for patients.",
+      "published_at": "2026-07-02",
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_observational",
+      "independence_group": "sponsor:Roche",
+      "version": 1
+    },
+    {
+      "id": "E-0007",
+      "source": "PubMed",
+      "source_family": "literature",
+      "source_kind": "peer_reviewed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/37611121/",
+      "locator": {
+        "type": "pmid",
+        "value": "37611121"
+      },
+      "excerpt": "Among patients with NSCLC, a confirmed response was observed in 53.4% of patients (95% confidence interval [CI], 39.9 to 66.7), and the median progression-free survival was 13.1 months (95% CI, 8.8 to could not be estimated).",
+      "published_at": "2023-08-23",
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_interventional",
+      "independence_group": "sponsor:Roche",
+      "version": 1
+    },
+    {
+      "id": "E-0008",
+      "source": "PubMed",
+      "source_family": "literature",
+      "source_kind": "peer_reviewed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/37611121/",
+      "locator": {
+        "type": "pmid",
+        "value": "37611121"
+      },
+      "excerpt": "Treatment-related adverse events occurred in 127 patients (93%); grade 3 events occurred in 15 patients (11%) and a grade 4 event in 1 patient (1%).",
+      "published_at": "2023-08-23",
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_interventional",
+      "independence_group": "sponsor:Roche",
+      "version": 1
+    },
+    {
+      "id": "E-0009",
+      "source": "PubMed",
+      "source_family": "literature",
+      "source_kind": "peer_reviewed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/38052910/",
+      "locator": {
+        "type": "pmid",
+        "value": "38052910"
+      },
+      "excerpt": "The objective response rate was 62.5% (95% confidence interval: 40.6%, 81.2%) in KRAS G12C inhibitor-naive patients (n = 24).",
+      "published_at": "2023-12-05",
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_interventional",
+      "independence_group": "sponsor:Roche",
+      "version": 1
+    },
+    {
+      "id": "E-0010",
+      "source": "PubMed",
+      "source_family": "literature",
+      "source_kind": "peer_reviewed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/40391409/",
+      "locator": {
+        "type": "pmid",
+        "value": "40391409"
+      },
+      "excerpt": "Though it binds in the same allosteric pocket as sotorasib and adagrasib, the switch-II loop in each crystal structure takes on a distinct conformation differing as much as 5.6 Å between the Cα atom of residue 65 with sotorasib.",
+      "published_at": "2025-05-20",
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "in_vitro",
+      "independence_group": "lab:structure-pmid-40391409",
+      "version": 1
+    },
+    {
+      "id": "E-0011",
+      "source": "PubMed",
+      "source_family": "literature",
+      "source_kind": "peer_reviewed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/36764316/",
+      "locator": {
+        "type": "pmid",
+        "value": "36764316"
+      },
+      "excerpt": "the study met its primary endpoint of a statistically significant increase in the progression-free survival for sotorasib, compared with docetaxel (median progression-free survival 5·6 months [95% CI 4·3-7·8] vs 4·5 months [3·0-5·7]; hazard ratio 0·66 [0·51-0·86]; p=0·0017)",
+      "published_at": "2023-02-10",
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_interventional",
+      "independence_group": "sponsor:Amgen",
+      "version": 1
+    },
+    {
+      "id": "E-0012",
+      "source": "PubMed",
+      "source_family": "literature",
+      "source_kind": "peer_reviewed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/40783289/",
+      "locator": {
+        "type": "pmid",
+        "value": "40783289"
+      },
+      "excerpt": "median progression-free survival was 5·5 months (95% CI 4·5-6·7) with adagrasib and 3·8 months (95% CI 2·7-4·7) with docetaxel (hazard ratio 0·58 [95% CI 0·45-0·76]; p<0·0001)",
+      "published_at": "2025-08-09",
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_interventional",
+      "independence_group": "sponsor:BMS-Mirati",
+      "version": 1
+    },
+    {
+      "id": "E-0013",
+      "source": "PubMed",
+      "source_family": "literature",
+      "source_kind": "peer_reviewed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/40783289/",
+      "locator": {
+        "type": "pmid",
+        "value": "40783289"
+      },
+      "excerpt": "There were four (1%) treatment-related deaths in the adagrasib group and one (1%) treatment-related death in the docetaxel group.",
+      "published_at": "2025-08-09",
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_interventional",
+      "independence_group": "sponsor:BMS-Mirati",
+      "version": 1
+    },
+    {
+      "id": "E-0014",
+      "source": "Open Targets",
+      "source_family": "target_database",
+      "source_kind": "registry",
+      "url": "https://platform.opentargets.org/drug/CHEMBL5095236",
+      "locator": {
+        "type": "chembl",
+        "value": "CHEMBL5095236"
+      },
+      "excerpt": "{\"id\": \"CHEMBL5095236\", \"name\": \"DIVARASIB\", \"maximumClinicalStage\": \"PHASE_3\", \"indication\": {\"maxClinicalStage\": \"PHASE_3\", \"disease\": {\"id\": \"MONDO_0005233\", \"name\": \"non-small cell lung carcinoma\"}}}",
+      "published_at": null,
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_interventional",
+      "independence_group": "sponsor:Roche",
+      "version": 1
+    },
+    {
+      "id": "E-0015",
+      "source": "Open Targets",
+      "source_family": "target_database",
+      "source_kind": "registry",
+      "url": "https://platform.opentargets.org/evidence/ENSG00000133703/MONDO_0005233",
+      "locator": {
+        "type": "ensembl",
+        "value": "ENSG00000133703"
+      },
+      "excerpt": "{\"target\": \"KRAS\", \"disease\": \"MONDO_0005233\", \"score\": 0.8337881598550857, \"datatypeScores\": [{\"id\": \"clinical\", \"score\": 0.9461536829416707}, {\"id\": \"affected_pathway\", \"score\": 0.8392538873860665}, {\"id\": \"literature\", \"score\": 0.997527330053297}, {\"id\": \"somatic_mutation\", \"score\": 0.9232932373281268}, {\"id\": \"animal_model\", \"score\": 0.2952719883999644}]}",
+      "published_at": null,
+      "retrieved_at": "2026-10-06T21:14:52Z",
+      "type": "source_fact",
+      "level": "human_observational",
+      "independence_group": "database:opentargets-somatic",
+      "version": 1
+    }
+  ],
+  "section_statuses": {
+    "unmet_need": "found",
+    "mechanism": "found",
+    "clinical": "found",
+    "competition": "not_searched",
+    "commercial": "not_searched",
+    "ip_regulatory": "not_searched",
+    "flags": "not_searched"
+  },
+  "created_at": "2026-10-06T21:14:52Z"
+}
