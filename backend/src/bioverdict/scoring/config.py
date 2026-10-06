@@ -18,6 +18,7 @@ _L = {
         EvidenceLevel.HUMAN_OBSERVATIONAL: 0.5,
         EvidenceLevel.ANIMAL_IN_VIVO: 0.3,
         EvidenceLevel.IN_VITRO: 0.15,
+        EvidenceLevel.REGISTRY_RECORD: 0.0,  # a planned trial is no evidence the target is causal
     },
     ClaimType.DRUG_ACTS_IN_HUMANS: {
         EvidenceLevel.HUMAN_GENETICS: 0.4,
@@ -25,6 +26,7 @@ _L = {
         EvidenceLevel.HUMAN_OBSERVATIONAL: 0.4,
         EvidenceLevel.ANIMAL_IN_VIVO: 0.2,
         EvidenceLevel.IN_VITRO: 0.1,
+        EvidenceLevel.REGISTRY_RECORD: 0.0,  # nor that the drug works: only results show that
     },
 }
 # Claims of another type use the weaker of the two columns per level.
@@ -32,6 +34,11 @@ _L[ClaimType.OTHER] = {
     lvl: min(_L[ClaimType.TARGET_CAUSAL][lvl], _L[ClaimType.DRUG_ACTS_IN_HUMANS][lvl])
     for lvl in EvidenceLevel
 }
+# Facts about studies and programs (a trial was stopped, a competitor is in Phase 3, a sponsor
+# dropped the program) are what the gate claims are about, and a registry record is exactly what
+# establishes them. They get their own claim type so that this weight cannot leak into `other`
+# claims such as "the molecule modulates its target".
+_L[ClaimType.STUDY_FACT] = {**_L[ClaimType.DRUG_ACTS_IN_HUMANS], EvidenceLevel.REGISTRY_RECORD: 1.0}
 
 _Q = {
     SourceKind.PEER_REVIEWED: 1.0,

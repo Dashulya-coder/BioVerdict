@@ -24,6 +24,9 @@ class EvidenceLevel(StrEnum):
     HUMAN_OBSERVATIONAL = "human_observational"
     ANIMAL_IN_VIVO = "animal_in_vivo"
     IN_VITRO = "in_vitro"
+    # Not on the strength scale: a record that a study or program exists (its status, phase,
+    # sponsor, design, stated endpoints), not what it found. Proves no efficacy.
+    REGISTRY_RECORD = "registry_record"
 
 
 class EvidenceType(StrEnum):
@@ -53,6 +56,7 @@ class ClaimType(StrEnum):
 
     TARGET_CAUSAL = "target_causal"  # "the target is causal for the disease"
     DRUG_ACTS_IN_HUMANS = "drug_acts_in_humans"
+    STUDY_FACT = "study_fact"  # a fact about a study or program: status, phase, sponsor, stopped
     OTHER = "other"
 
 
