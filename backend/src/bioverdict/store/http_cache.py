@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 import httpx
@@ -30,18 +31,34 @@ def cache_key(
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+@dataclass(frozen=True)
+class CacheEntry:
+    body: bytes
+    fetched_at: datetime  # when the body was really downloaded, not when it was read back
+
+
 class HttpCache:
     def __init__(self, conn: sqlite3.Connection) -> None:
         self._conn = conn
 
-    def get(self, key: str) -> bytes | None:
-        row = self._conn.execute("SELECT body FROM http_cache WHERE key = ?", (key,)).fetchone()
-        return None if row is None else row["body"]
+    def get_entry(self, key: str) -> CacheEntry | None:
+        row = self._conn.execute(
+            "SELECT body, fetched_at FROM http_cache WHERE key = ?", (key,)
+        ).fetchone()
+        if row is None:
+            return None
+        return CacheEntry(row["body"], datetime.fromisoformat(row["fetched_at"]))
 
-    def put(self, key: str, url: str, body: bytes) -> None:
-        fetched_at = datetime.now(UTC).isoformat()
+    def get(self, key: str) -> bytes | None:
+        entry = self.get_entry(key)
+        return None if entry is None else entry.body
+
+    def put(self, key: str, url: str, body: bytes) -> datetime:
+        """Store a response and return the time it was recorded as fetched."""
+        fetched_at = datetime.now(UTC)
         self._conn.execute(
             "INSERT OR REPLACE INTO http_cache (key, url, body, fetched_at) VALUES (?, ?, ?, ?)",
-            (key, url, body, fetched_at),
+            (key, url, body, fetched_at.isoformat()),
         )
         self._conn.commit()
+        return fetched_at
