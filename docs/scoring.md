@@ -43,13 +43,16 @@ w_i = L(level, claim_type) x Q(source) x R(recency) x I_k
 
 `L` depends on the claim type: for "the target is causal" human genetics is strongest; for "the drug works in humans" an RCT is strongest.
 
-| Evidence level | `target_causal` | `drug_acts_in_humans` |
-|---|---|---|
-| human_genetics | 1.0 | 0.4 |
-| human_interventional (RCT) | 0.8 | 1.0 |
-| human_observational | 0.5 | 0.4 |
-| animal_in_vivo | 0.3 | 0.2 |
-| in_vitro | 0.15 | 0.1 |
+| Evidence level | `target_causal` | `drug_acts_in_humans` | `study_fact` |
+|---|---|---|---|
+| human_genetics | 1.0 | 0.4 | 0.4 |
+| human_interventional (RCT) | 0.8 | 1.0 | 1.0 |
+| human_observational | 0.5 | 0.4 | 0.4 |
+| animal_in_vivo | 0.3 | 0.2 | 0.2 |
+| in_vitro | 0.15 | 0.1 | 0.1 |
+| registry_record | 0 | 0 | 1.0 |
+
+`registry_record` (a trial's existence, status, design or stated endpoints, not its findings) never supports an efficacy claim, so it weighs 0 for `target_causal` and `drug_acts_in_humans`. A `study_fact` claim is a fact about a study or program: a trial was stopped, a competitor is in Phase 3, the sponsor dropped the program. Those are what the gate claims (K1, K4, S4-S6) assert and what a registry establishes, so a registry record weighs 1.0 there; the other levels follow the `drug_acts_in_humans` column. Claims of type `other` take the weaker of the first two columns per level, so a registry record weighs 0 for them: it cannot support, for example, "the molecule modulates its target".
 
 - `Q` (source quality): peer-reviewed paper, FDA/EMA, trial registry 1.0; preprint 0.7; press release or company presentation 0.5; `ai_inference` 0.3.
 - `R` (recency): biological data decays slowly (half-life about 10 years). For trial and company status only the latest record counts.

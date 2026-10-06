@@ -49,7 +49,7 @@ Valuation and probabilities are always `modeled`, with the assumptions visible.
 
 `type` is `source_fact` or `ai_inference`. `source_kind` drives the source-quality multiplier Q: `peer_reviewed`, `regulator`, `registry` (1.0), `preprint` (0.7), `company` (0.5), `ai_inference` (0.3).
 
-`level` values, strongest first: `human_genetics`, `human_interventional`, `human_observational`, `animal_in_vivo`, `in_vitro`.
+`level` values, strongest first: `human_genetics`, `human_interventional`, `human_observational`, `animal_in_vivo`, `in_vitro`. A sixth, `registry_record`, is outside that scale: it marks a record that a study or program exists (status, phase, sponsor, design, stated endpoints) rather than what it found, and carries no weight for efficacy claims. Results posted in a registry are `human_interventional`.
 
 `independence_group` is the lab or sponsor. Repeated reports of one result count once.
 
@@ -82,7 +82,7 @@ Link:
 { "claim_id": "C-0117", "evidence_id": "E-0042", "direction": "supports", "quote": "verbatim, must occur in the evidence excerpt" }
 ```
 
-`claim_type` (`target_causal` | `drug_acts_in_humans` | `other`) selects the column of the level-weight table in [`scoring.md`](scoring.md). `flags` holds `sparse`, `contested`, `missing_link`. `chain_link` (`molecular_effect` | `human_exposure` | `target_engagement` | `biological_response` | `patient_benefit`) places a claim on the translation chain. `gate_signals` lists the gates (`K1`..`K5`, `S1`..`S6`) whose condition the claim asserts; code decides whether the gate fires. `critical` marks key claims for the verdict.
+`claim_type` (`target_causal` | `drug_acts_in_humans` | `study_fact` | `other`) selects the column of the level-weight table in [`scoring.md`](scoring.md). `flags` holds `sparse`, `contested`, `missing_link`. `chain_link` (`molecular_effect` | `human_exposure` | `target_engagement` | `biological_response` | `patient_benefit`) places a claim on the translation chain. `gate_signals` lists the gates (`K1`..`K5`, `S1`..`S6`) whose condition the claim asserts; code decides whether the gate fires. `critical` marks key claims for the verdict.
 
 `diligence_type` for `unknown` claims: `proprietary_data` | `patient_level_data` | `kol_interview` | `experiment` | `cmc_diligence` | `ip_diligence`.
 
