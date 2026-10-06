@@ -61,7 +61,9 @@ def ground(d: ModuleDraft, module=MECHANISM, **kw):
 
 
 def test_grounded_claim_keeps_its_links() -> None:
-    g = ground(draft(claim("G12C is common", links=[link("E-0006", G12C)])))
+    g = ground(
+        draft(claim("G12C is common", claim_type="target_causal", links=[link("E-0006", G12C)]))
+    )
     assert [c.basis for c in g.claims] == [Basis.EXTRACTED]
     assert [(l.evidence_id, l.direction) for l in g.links] == [("E-0006", Direction.SUPPORTS)]
     assert g.claims[0].id == "C-0001" and not g.drops
