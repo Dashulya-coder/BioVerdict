@@ -1,6 +1,5 @@
 """Function contracts between the two tracks (docs/work-plan.md, section 3).
 
-Changes need both owners' approval. Fakes in tests must satisfy these protocols.
 """
 
 from __future__ import annotations

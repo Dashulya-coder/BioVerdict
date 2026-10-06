@@ -1,6 +1,5 @@
 """Shared data model. Source of truth: the Unobio plan PDF, mirrored in docs/data-model.md.
 
-Changes need both owners' approval (see docs/work-plan.md, section 7).
 """
 
 from __future__ import annotations
