@@ -95,4 +95,8 @@ During: if something fails, use the fallbacks in `demo-script.md`.
 
 ## 9. Escalation
 
-TODO: who to contact for each area (data, models, UI, organizers).
+| Area | Contact |
+|---|---|
+| Connectors, cache, bundle, API, evidence UI, recompute | Arsenii |
+| LLM layer, reasoning, scoring, verification, report UI | Dasha |
+| Organizers | TODO |

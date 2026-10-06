@@ -4,6 +4,16 @@ Goal: show `Indication + Mechanism -> Evidence -> Underwriting -> Recommendation
 
 Total target: TODO minutes (confirm with organizers).
 
+## Who presents what
+
+| Part | Presenter |
+|---|---|
+| 1 Input and resolver, sources and evidence, add-evidence and diff (steps 1, 3, 5, 6) | Arsenii |
+| 2 Executive verdict, translation chain, verdict logic, sparse asset honesty (steps 2, 4) | Dasha |
+| 7 Trace and cost; Q&A | both |
+
+Swap if it fits better; rehearse the hand-overs.
+
 ## Preparation
 
 - [ ] Cache pre-warmed for every demo asset (retrieval and LLM responses). One live-capable path works as a fallback.

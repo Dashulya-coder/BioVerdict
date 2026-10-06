@@ -1,0 +1,62 @@
+# Secrets (keep .env.example tracked)
+/.env
+/.env.*
+!/.env.example
+/backend/.env
+/backend/.env.*
+!/backend/.env.example
+
+# Backend (Python)
+__pycache__/
+*.py[cod]
+/backend/.venv/
+/backend/*.egg-info/
+/backend/.pytest_cache/
+/backend/.mypy_cache/
+/backend/.ruff_cache/
+/backend/.coverage
+/backend/htmlcov/
+/scripts/__pycache__/
+
+# Frontend (Node)
+/frontend/node_modules/
+/frontend/dist/
+/frontend/dist-ssr/
+/frontend/*.local
+/frontend/coverage/
+/frontend/.vite/
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/pnpm-debug.log*
+
+# Runtime data: SQLite, HTTP/LLM cache, run artifacts
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+/.cache/
+/backend/.cache/
+/backend/data/runs/
+
+# Tooling output
+/graphify-out/
+/.claude/
+
+# Logs
+*.log
+/logs/
+/backend/logs/
+
+# Editors and IDEs (any directory)
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
