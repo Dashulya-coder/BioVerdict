@@ -82,6 +82,8 @@ class LLMConfig(BaseModel):
                 "resolver": _EXTRACTION,
                 "extraction": _EXTRACTION,
                 "reasoning": _REASONING,
+                "reasoning.mechanism": _REASONING,
+                "reasoning.translation": _REASONING,
                 "skeptic": _SYNTHESIS,
                 "chair": _SYNTHESIS,
                 "synthesis": _SYNTHESIS,
