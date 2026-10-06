@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+from datetime import date, datetime
 from pathlib import Path
 
 from bioverdict.store.db import connect
@@ -19,6 +20,15 @@ def fixtures_dir() -> Path:
 
 def db_path() -> Path:
     return Path(os.environ.get("DB_PATH", DEFAULT_DB_PATH))
+
+
+def today() -> date:
+    """Today's date where the server runs, which is the analyst's day (not the UTC day).
+
+    A run dated by this day sees everything downloaded earlier today: evidence without a
+    publication date is visible once it was retrieved on or before the run's date.
+    """
+    return datetime.now().astimezone().date()
 
 
 def use_fixtures() -> bool:
