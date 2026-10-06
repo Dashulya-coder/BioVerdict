@@ -93,7 +93,9 @@ class AnthropicProvider:
             raise classified from exc
 
         if response.stop_reason == "refusal":
-            raise RefusalError(f"{request.model} declined the request")
+            details = getattr(response, "stop_details", None)
+            category = getattr(details, "category", None) or "unspecified"
+            raise RefusalError(f"{request.model} declined the request (category: {category})")
         if response.stop_reason == "max_tokens":
             raise FatalProviderError(
                 f"answer cut off at max_tokens={request.max_tokens}; raise it for this step"

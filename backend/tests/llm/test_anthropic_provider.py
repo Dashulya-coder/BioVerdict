@@ -124,3 +124,10 @@ def test_sdk_errors_are_raised_classified_from_complete() -> None:
     sdk = StubSDK(error=status_error(anthropic.RateLimitError, 429))
     with pytest.raises(TransientProviderError):
         AnthropicProvider(sdk).complete(request("claude-haiku-4-5"))
+
+
+def test_a_refusal_names_the_safety_category() -> None:
+    refused = reply("refusal", None)
+    refused.stop_details = SimpleNamespace(category="bio")
+    with pytest.raises(RefusalError, match="category: bio"):
+        AnthropicProvider(StubSDK(refused)).complete(request("claude-sonnet-5-5"))

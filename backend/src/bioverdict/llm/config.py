@@ -43,9 +43,12 @@ class StepConfig(BaseModel):
     timeout_s: float = 90.0  # the agent timeout from the plan
 
 
-_EXTRACTION = StepConfig(models=[HAIKU], effort=None, max_tokens=4000)
-_REASONING = StepConfig(models=[SONNET], effort="medium", max_tokens=16000)
-_SYNTHESIS = StepConfig(models=[SONNET], effort="high", max_tokens=16000)
+# Collection is short (90 s, the agent timeout of the plan); reasoning writes up to 16k tokens
+# at medium or high effort and needs more. The run deadline caps the sum either way.
+_EXTRACTION = StepConfig(models=[HAIKU], effort=None, max_tokens=4000, timeout_s=90.0)
+# A second model absorbs refusals: the bio safety classifier can refuse mechanism-of-action text.
+_REASONING = StepConfig(models=[SONNET, OPUS], effort="medium", max_tokens=16000, timeout_s=180.0)
+_SYNTHESIS = StepConfig(models=[SONNET, OPUS], effort="high", max_tokens=16000, timeout_s=240.0)
 
 
 class LLMConfig(BaseModel):
@@ -56,6 +59,7 @@ class LLMConfig(BaseModel):
     budget_usd: float = 5.0  # RUN_BUDGET_USD
     breaker_threshold: int = 3  # consecutive failures that open a provider's breaker
     breaker_cooldown_s: float = 180.0  # "a few minutes"
+    run_timeout_s: float = 420.0  # RUN_TIMEOUT_S: hard wall-clock limit per run
 
     def step(self, name: str) -> StepConfig:
         try:
@@ -87,6 +91,7 @@ class LLMConfig(BaseModel):
                 "synthesis": _SYNTHESIS,
             },
             budget_usd=float(os.environ.get("RUN_BUDGET_USD", "5")),
+            run_timeout_s=float(os.environ.get("RUN_TIMEOUT_S", "420")),
         )
         config.validate_prices()
         return config

@@ -10,6 +10,7 @@ from bioverdict.llm.errors import (
     InvalidOutputError,
     LLMError,
     RefusalError,
+    RunTimeoutError,
     TransientProviderError,
 )
 from bioverdict.llm.fake import FakeLLM
@@ -25,6 +26,7 @@ __all__ = [
     "LLMConfig",
     "LLMError",
     "RefusalError",
+    "RunTimeoutError",
     "StepConfig",
     "TransientProviderError",
 ]

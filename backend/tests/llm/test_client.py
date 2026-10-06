@@ -11,13 +11,15 @@ from bioverdict.llm import (
     LLMClient,
     LLMConfig,
     RefusalError,
+    RunTimeoutError,
     StepConfig,
     TransientProviderError,
 )
 from bioverdict.llm.breaker import CircuitBreaker
+from bioverdict.llm.budget import Deadline
 from bioverdict.llm.cache import DiskCache, MemoryCache
 from bioverdict.llm.call_log import MemoryCallLog, SqliteCallLog
-from bioverdict.llm.config import DEFAULT_PRICES, HAIKU, SONNET
+from bioverdict.llm.config import DEFAULT_PRICES, HAIKU, OPUS, SONNET
 from bioverdict.llm.providers.fake import FakeProvider
 from bioverdict.store.db import connect
 from bioverdict.store.migrations import migrate
@@ -248,3 +250,75 @@ def test_bound_client_satisfies_the_contract_and_carries_the_run_id() -> None:
     result = bound.call("s", "p", Answer)  # the plain three-argument contract
     assert log.entries[0].run_id == "R9"
     assert llm.spent("R9") == pytest.approx(result.cost_usd) and llm.spent(None) == 0.0
+
+
+# --- review fixes ------------------------------------------------------------
+
+
+def test_cost_covers_every_attempt_not_just_the_last() -> None:
+    """Reproduced by review: a retry after invalid JSON used to report half of what was spent."""
+    llm, _ = anthropic_only("not json", GOOD)
+    result = llm.call("s", "p", Answer, run_id="R")
+    one_attempt = (100 * 1.0 + 50 * 5.0) / 1_000_000
+    assert result.attempts == 2
+    assert result.cost_usd == pytest.approx(2 * one_attempt)
+    assert (result.input_tokens, result.output_tokens) == (200, 100)
+    assert result.cost_usd == pytest.approx(llm.spent("R"))  # result and budget agree
+
+
+def test_cost_of_a_model_that_failed_before_the_failover_is_kept() -> None:
+    cfg = config(HAIKU, SONNET)
+    fake = FakeProvider("nope", "nope", "nope", GOOD, name="anthropic")  # haiku wastes 3 tries
+    log = MemoryCallLog()
+    llm = LLMClient(cfg, {"anthropic": fake}, call_log=log)
+    result = llm.call("s", "p", Answer, run_id="R")
+    haiku_try = (100 * 1.0 + 50 * 5.0) / 1_000_000
+    sonnet_try = (100 * 2.0 + 50 * 10.0) / 1_000_000
+    assert result.cost_usd == pytest.approx(3 * haiku_try + sonnet_try)
+    assert result.cost_usd == pytest.approx(llm.spent("R"))
+    assert log.entries[0].cost_usd == pytest.approx(result.cost_usd)
+
+
+def test_a_failed_call_logs_the_money_its_wasted_attempts_cost() -> None:
+    log = MemoryCallLog()
+    llm = LLMClient(
+        config(HAIKU), {"anthropic": FakeProvider("nope", name="anthropic")}, call_log=log
+    )
+    with pytest.raises(AllModelsFailedError):
+        llm.call("s", "p", Answer, run_id="R")
+    assert log.entries[0].error
+    assert log.entries[0].cost_usd > 0
+    assert log.entries[0].cost_usd == pytest.approx(llm.spent("R"))
+
+
+def test_a_cache_hit_of_a_failover_answer_still_flags_mixed_models() -> None:
+    cfg = config(HAIKU, SONNET)
+    cache = MemoryCache()
+    first = FakeProvider(TransientProviderError("429", "rate_limit"), GOOD, name="anthropic")
+    LLMClient(cfg, {"anthropic": first}, cache=cache).call("s", "p", Answer, run_id="A")
+    replay = LLMClient(cfg, {"anthropic": FakeProvider(GOOD, name="anthropic")}, cache=cache)
+    assert replay.call("s", "p", Answer, run_id="B").cache_hit
+    assert replay.mixed_models("B")
+
+
+def test_the_run_deadline_stops_further_calls_and_caps_each_timeout() -> None:
+    now = [0.0]
+    deadline = Deadline(limit_s=100, clock=lambda: now[0])
+    fake = FakeProvider(GOOD, name="anthropic")
+    llm = LLMClient(config(HAIKU, step={"timeout_s": 90.0}), {"anthropic": fake}, deadline=deadline)
+    llm.call("s", "first", Answer, run_id="R")
+    now[0] = 60.0  # 40 s left: the step allows 90 s but the run only has 40
+    llm.call("s", "second", Answer, run_id="R")
+    assert fake.requests[1].timeout_s == pytest.approx(40.0)
+    now[0] = 101.0
+    with pytest.raises(RunTimeoutError):
+        llm.call("s", "third", Answer, run_id="R")
+    assert len(fake.requests) == 2  # nothing was sent after the deadline
+    assert llm.call("s", "other run", Answer, run_id="R2")  # each run has its own clock
+
+
+def test_the_default_config_gives_reasoning_a_second_model_and_more_time() -> None:
+    cfg = LLMConfig.default()
+    assert cfg.step("reasoning").models == [SONNET, OPUS]
+    assert cfg.step("synthesis").timeout_s > cfg.step("extraction").timeout_s == 90.0
+    assert cfg.run_timeout_s == 420.0
