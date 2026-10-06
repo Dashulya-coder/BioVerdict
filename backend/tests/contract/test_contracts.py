@@ -21,7 +21,7 @@ from bioverdict.store.models import (
 class FakeConnector:
     name = "fake"
 
-    def fetch(self, query: ResolverOutput, as_of: date) -> list[Evidence]:
+    async def fetch(self, query: ResolverOutput, as_of: date) -> list[Evidence]:
         return []
 
 
