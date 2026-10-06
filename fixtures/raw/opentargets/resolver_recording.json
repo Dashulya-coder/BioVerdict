@@ -277,6 +277,342 @@
    }
   }
  },
+ "04821e739aa5feba1e3765d63095e0760e232da7ac68ce020c86f723a0eca280": {
+  "answer": {
+   "data": {
+    "targets": [
+     {
+      "approvedSymbol": "IRAK4",
+      "id": "ENSG00000198001",
+      "proteinIds": [
+       {
+        "id": "Q9NWZ3",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "A0A8Q3SIT8",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0A8Q3SIY0",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "F8VR40",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "F8VVZ1",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "F8VW24",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "Q69FE3",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "ENSP00000408734",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000446490",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000446571",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000448197",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000449317",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000449553",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000449693",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000449848",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000449859",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000479889",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000512872",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000512873",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000512874",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000512876",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000512877",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000521219",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000521220",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000521221",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000521222",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000607251",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000625867",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000681916",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000681918",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000681921",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000681923",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000681925",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000814646",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "Q69FE1",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q8TDF7",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q9Y589",
+        "source": "uniprot_obsolete"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "Interleukin-1 receptor-associated kinase 4"
+       },
+       {
+        "label": "IRAK-4"
+       },
+       {
+        "label": "IRAK4"
+       },
+       {
+        "label": "NY-REN-64"
+       },
+       {
+        "label": "Renal carcinoma antigen NY-REN-64"
+       },
+       {
+        "label": "IMD67"
+       },
+       {
+        "label": "IPD1"
+       },
+       {
+        "label": "IRAK-4"
+       },
+       {
+        "label": "NY-REN-64"
+       },
+       {
+        "label": "REN64"
+       },
+       {
+        "label": "interleukin-1 receptor-associated kinase 4"
+       },
+       {
+        "label": "renal carcinoma antigen NY-REN-64"
+       },
+       {
+        "label": "IRAK4"
+       }
+      ]
+     },
+     {
+      "approvedSymbol": "PUS7L",
+      "id": "ENSG00000129317",
+      "proteinIds": [
+       {
+        "id": "Q9H0K6",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "F8VP66",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "F8VW99",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "F8VWC0",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "F8VZA0",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "ENSP00000343081",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000398497",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000415899",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000446865",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000447706",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000449222",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000449502",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000450341",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000558456",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000558457",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000607068",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000607069",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000677078",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000808040",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "B3KUJ1",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q05CU0",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q6AHZ3",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q6NUP2",
+        "source": "uniprot_obsolete"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "Pseudouridylate synthase PUS7L"
+       },
+       {
+        "label": "PUS7L"
+       },
+       {
+        "label": "DKFZP434G1415"
+       },
+       {
+        "label": "Pseudouridylate synthase 7 homolog-like protein"
+       },
+       {
+        "label": "pseudouridylate synthase PUS7L"
+       },
+       {
+        "label": "pseudouridylate synthase 7 homolog-like protein"
+       },
+       {
+        "label": "pseudouridylate synthase 7 like"
+       },
+       {
+        "label": "PUS7L"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  targets(ensemblIds: $ids) {\n    id approvedSymbol\n    synonyms { label }\n    proteinIds { id source }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "ENSG00000198001",
+     "ENSG00000129317"
+    ]
+   }
+  }
+ },
  "0a1d74d35f325ec85b6da0644f9364a8eed2db625e6a14f784c4aeb34fb573c6": {
   "answer": {
    "data": {
@@ -320,6 +656,32 @@
     "ids": [
      "CHEMBL5314604"
     ]
+   }
+  }
+ },
+ "154c1f5e89cef56ae4c2e8534318fd537a9c851af7ae1c0fd0562a15201abd68": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "ENSG00000198001",
+       "name": "IRAK4"
+      },
+      {
+       "id": "ENSG00000129317",
+       "name": "PUS7L"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "target",
+    "name": "IRAK4",
+    "size": 10
    }
   }
  },
@@ -1772,6 +2134,36 @@
    "variables": {
     "entity": "disease",
     "name": "hypertension",
+    "size": 10
+   }
+  }
+ },
+ "23d8130500070c3be0ea9a35a4ad7c5323afee4bfcc1be7141919b4e636d08a1": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "ENSG00000164344",
+       "name": "KLKB1"
+      },
+      {
+       "id": "ENSG00000310034",
+       "name": "ENSG00000310034"
+      },
+      {
+       "id": "ENSG00000310010",
+       "name": "ENSG00000310010"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "target",
+    "name": "KLKB1",
     "size": 10
    }
   }
@@ -4023,6 +4415,217 @@
     "ids": [
      "CHEMBL5095236",
      "CHEMBL5314604"
+    ]
+   }
+  }
+ },
+ "e4832865475a75fe8517efe80bebd7f9df2dfb6fab3da958e65a0a8754d672de": {
+  "answer": {
+   "data": {
+    "targets": [
+     {
+      "approvedSymbol": "KLKB1",
+      "id": "ENSG00000164344",
+      "proteinIds": [
+       {
+        "id": "P03952",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "C9J075",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "C9JCT1",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "E9PBC5",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "ENSP00000264690",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000412366",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000415563",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000424469",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000530380",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000530381",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000530382",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000530383",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645268",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645269",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645270",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645271",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645273",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645274",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645275",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645276",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645277",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645279",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645280",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000803645",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "A6NH96",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "B2R8H9",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q17RE8",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q17RE9",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q4W5C3",
+        "source": "uniprot_obsolete"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "Plasma kallikrein"
+       },
+       {
+        "label": "Plasma kallikrein heavy chain"
+       },
+       {
+        "label": "Plasma kallikrein light chain"
+       },
+       {
+        "label": "PKK"
+       },
+       {
+        "label": "KLKB1"
+       },
+       {
+        "label": "KLK3"
+       },
+       {
+        "label": "Fletcher factor"
+       },
+       {
+        "label": "Kininogenin"
+       },
+       {
+        "label": "Plasma prekallikrein"
+       },
+       {
+        "label": "Fletcher factor"
+       },
+       {
+        "label": "KLK3"
+       },
+       {
+        "label": "PKK"
+       },
+       {
+        "label": "PKKD"
+       },
+       {
+        "label": "PPK"
+       },
+       {
+        "label": "plasma kallikrein"
+       },
+       {
+        "label": "kallikrein B, plasma (Fletcher factor) 1"
+       },
+       {
+        "label": "kininogenin"
+       },
+       {
+        "label": "plasma prekallikrein"
+       },
+       {
+        "label": "KLKB1"
+       }
+      ]
+     },
+     {
+      "approvedSymbol": "ENSG00000310034",
+      "id": "ENSG00000310034",
+      "proteinIds": [],
+      "synonyms": []
+     },
+     {
+      "approvedSymbol": "ENSG00000310010",
+      "id": "ENSG00000310010",
+      "proteinIds": [],
+      "synonyms": []
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  targets(ensemblIds: $ids) {\n    id approvedSymbol\n    synonyms { label }\n    proteinIds { id source }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "ENSG00000164344",
+     "ENSG00000310034",
+     "ENSG00000310010"
     ]
    }
   }
