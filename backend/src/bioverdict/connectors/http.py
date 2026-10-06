@@ -58,16 +58,19 @@ class CachedHttpClient:
 
     async def _send(self, request: Callable[[], Awaitable[httpx.Response]]) -> httpx.Response:
         """Send with retries on transient failures; raise the last error if they run out."""
-        async for attempt in AsyncRetrying(
+
+        async def attempt() -> httpx.Response:
+            response = await request()
+            response.raise_for_status()
+            return response
+
+        retrying = AsyncRetrying(
             stop=stop_after_attempt(self._max_attempts),
             wait=self._wait,
             retry=retry_if_exception(is_transient),
             reraise=True,
-        ):
-            with attempt:
-                response = await request()
-                response.raise_for_status()
-        return response
+        )
+        return await retrying(attempt)
 
     def _store(self, key: str, url: str, response: httpx.Response) -> bytes:
         self._cache.put(key, url, response.content)
