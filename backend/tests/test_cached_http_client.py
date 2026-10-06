@@ -2,6 +2,7 @@ from pathlib import Path
 
 import httpx
 import pytest
+from tenacity import wait_none
 
 from bioverdict.connectors.http import CachedHttpClient
 from bioverdict.store.db import connect
@@ -12,23 +13,29 @@ URL = "https://example.org/api"
 
 
 class Server:
-    """Counts requests and answers with the queued status codes (200 when the queue is empty)."""
+    """Counts requests and plays back queued outcomes, then answers 200.
 
-    def __init__(self, *statuses: int) -> None:
+    An outcome is a status code, or an exception to raise (a network failure).
+    """
+
+    def __init__(self, *outcomes: int | Exception) -> None:
         self.requests: list[httpx.Request] = []
-        self._statuses = list(statuses)
+        self._outcomes = list(outcomes)
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
-        status = self._statuses.pop(0) if self._statuses else 200
-        return httpx.Response(status, content=f"body-{len(self.requests)}".encode())
+        outcome = self._outcomes.pop(0) if self._outcomes else 200
+        if isinstance(outcome, Exception):
+            raise outcome
+        return httpx.Response(outcome, content=f"body-{len(self.requests)}".encode())
 
 
 def make_client(tmp_path: Path, server: Server) -> CachedHttpClient:
     conn = connect(tmp_path / "t.db")
     migrate(conn)
     transport = httpx.MockTransport(server)
-    return CachedHttpClient(httpx.AsyncClient(transport=transport), HttpCache(conn))
+    http = httpx.AsyncClient(transport=transport)
+    return CachedHttpClient(http, HttpCache(conn), wait=wait_none())
 
 
 async def test_second_get_is_served_from_cache(tmp_path: Path) -> None:
@@ -52,8 +59,8 @@ async def test_different_params_are_fetched_separately(tmp_path: Path) -> None:
     assert len(server.requests) == 2
 
 
-async def test_error_is_raised_and_not_cached(tmp_path: Path) -> None:
-    server = Server(500)
+async def test_client_error_is_raised_once_and_not_cached(tmp_path: Path) -> None:
+    server = Server(404)
     client = make_client(tmp_path, server)
 
     with pytest.raises(httpx.HTTPStatusError):
@@ -73,3 +80,38 @@ async def test_post_json_is_cached_by_payload_not_key_order(tmp_path: Path) -> N
 
     assert len(server.requests) == 2
     assert server.requests[0].headers["content-type"] == "application/json"
+
+
+async def test_server_error_is_retried_until_it_succeeds(tmp_path: Path) -> None:
+    server = Server(503, 502)
+    client = make_client(tmp_path, server)
+
+    assert await client.get(URL) == b"body-3"
+    assert len(server.requests) == 3
+    assert await client.get(URL) == b"body-3"  # cached after the success
+    assert len(server.requests) == 3
+
+
+async def test_rate_limit_is_retried(tmp_path: Path) -> None:
+    server = Server(429)
+    client = make_client(tmp_path, server)
+
+    assert await client.get(URL) == b"body-2"
+
+
+async def test_network_failure_is_retried(tmp_path: Path) -> None:
+    server = Server(httpx.ConnectError("boom"))
+    client = make_client(tmp_path, server)
+
+    assert await client.get(URL) == b"body-2"
+
+
+async def test_gives_up_after_max_attempts_and_caches_nothing(tmp_path: Path) -> None:
+    server = Server(500, 500, 500)
+    client = make_client(tmp_path, server)
+
+    with pytest.raises(httpx.HTTPStatusError):
+        await client.get(URL)
+    assert len(server.requests) == 3  # MAX_ATTEMPTS
+
+    assert await client.get(URL) == b"body-4"  # nothing was cached by the failure
