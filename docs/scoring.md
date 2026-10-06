@@ -50,6 +50,9 @@ w_i = L(level, claim_type) x Q(source) x R(recency) x I_k
 | human_observational | 0.5 | 0.4 |
 | animal_in_vivo | 0.3 | 0.2 |
 | in_vitro | 0.15 | 0.1 |
+| registry_record | 0 | 0 |
+
+`registry_record` (a trial's existence, status, design or stated endpoints, not its findings) never supports an efficacy claim, so both columns are 0. For claims of any other type, such as the gate claims (a trial was stopped, a competitor is in Phase 3, the sponsor dropped the program), it weighs 1.0: those facts are exactly what a registry establishes. Other levels take the weaker of the two columns for `other` claims.
 
 - `Q` (source quality): peer-reviewed paper, FDA/EMA, trial registry 1.0; preprint 0.7; press release or company presentation 0.5; `ai_inference` 0.3.
 - `R` (recency): biological data decays slowly (half-life about 10 years). For trial and company status only the latest record counts.
