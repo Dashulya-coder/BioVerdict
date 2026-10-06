@@ -42,6 +42,7 @@ Valuation and probabilities are always `modeled`, with the assumptions visible.
   "retrieved_at": "2026-10-06T10:15:00Z",
   "level": "human_interventional",
   "independence_group": "sponsor:<name>",
+  "status_key": null,
   "version": 1
 }
 ```
@@ -51,6 +52,8 @@ Valuation and probabilities are always `modeled`, with the assumptions visible.
 `level` values, strongest first: `human_genetics`, `human_interventional`, `human_observational`, `animal_in_vivo`, `in_vitro`.
 
 `independence_group` is the lab or sponsor. Repeated reports of one result count once.
+
+`status_key` marks a status fact whose newer record replaces the older one, for example `nct:NCT06497556:overall_status` for a trial's recruitment status. Connectors set it only for such facts and leave it `null` for everything else (a trial's summary, endpoints and results do not replace each other, although they share a `url` and `locator`). When a bundle holds several items with the same non-null `status_key`, only the one with the latest `published_at` (retrieval date if undated) is kept; the older ones stay in the evidence store, so earlier bundle versions are unchanged.
 
 **Stance belongs to the link, not to the evidence.** The same document can support one claim and contradict another, so `direction` is stored on the claim-evidence link (below), not on the evidence itself.
 
