@@ -7,6 +7,7 @@ The LLM only establishes facts and attaches evidence; a claim lists the gates it
 from __future__ import annotations
 
 from datetime import date
+from typing import Literal
 
 from bioverdict.scoring.confidence import apply_confidence, chain_probability
 from bioverdict.scoring.config import ConfidenceConfig, VerdictConfig
@@ -40,7 +41,7 @@ HARD = {GateId.K1, GateId.K2, GateId.K3, GateId.K4, GateId.K5}
 _SIGNAL_ONLY = [GateId.K1, GateId.K2, GateId.K3, GateId.K4, GateId.S4, GateId.S5, GateId.S6]
 
 
-def _kind(gate: GateId) -> str:
+def _kind(gate: GateId) -> Literal["hard", "soft"]:
     return "hard" if gate in HARD else "soft"
 
 

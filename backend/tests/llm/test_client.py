@@ -236,3 +236,15 @@ def test_fake_llm_satisfies_the_contract_and_validates_answers() -> None:
         fake.call("bad", "p", Answer)
     with pytest.raises(KeyError):
         fake.call("missing", "p", Answer)
+
+
+def test_bound_client_satisfies_the_contract_and_carries_the_run_id() -> None:
+    log = MemoryCallLog()
+    llm = LLMClient(
+        config(HAIKU), {"anthropic": FakeProvider(GOOD, name="anthropic")}, call_log=log
+    )
+    bound = llm.bind("R9")
+    assert isinstance(bound, LLM)
+    result = bound.call("s", "p", Answer)  # the plain three-argument contract
+    assert log.entries[0].run_id == "R9"
+    assert llm.spent("R9") == pytest.approx(result.cost_usd) and llm.spent(None) == 0.0

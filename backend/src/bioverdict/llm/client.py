@@ -132,6 +132,14 @@ class LLMClient:
         self._record_failure(run_id, step, primary, cfg, started, attempts, str(error))
         raise error
 
+    def bind(self, run_id: str) -> BoundLLM:
+        """A view of this client tied to one run, with the plain `LLM` contract signature.
+
+        Callers that only know `call(step, prompt, schema)` (the collect agents) use it so
+        their calls are still counted against the run's budget and logged with its run id.
+        """
+        return BoundLLM(self, run_id)
+
     def mixed_models(self, run_id: str | None) -> bool:
         """True when any call of the run was answered by a failover model (flag for the trace)."""
         with self._lock:
@@ -282,6 +290,17 @@ class LLMClient:
                 error=error,
             )
         )
+
+
+class BoundLLM:
+    """Satisfies the `LLM` contract; every call belongs to `run_id`."""
+
+    def __init__(self, client: LLMClient, run_id: str) -> None:
+        self._client = client
+        self.run_id = run_id
+
+    def call(self, step: str, prompt: str, schema: type[BaseModel]) -> LLMResult:
+        return self._client.call(step, prompt, schema, run_id=self.run_id)
 
 
 def _short(exc: Exception, limit: int = 400) -> str:
