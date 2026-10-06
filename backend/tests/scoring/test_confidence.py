@@ -3,6 +3,7 @@ from datetime import UTC, date, datetime
 import pytest
 
 from bioverdict.scoring.confidence import chain_probability, claim_confidence
+from bioverdict.scoring.config import ConfidenceConfig
 from bioverdict.store.models import (
     Basis,
     Claim,
@@ -175,3 +176,31 @@ def test_chain_probability_is_a_product_and_finds_missing_links() -> None:
     p, missing = chain_probability([0.9, 0.8, 0.35, 0.9, 0.7])
     assert p == pytest.approx(0.9 * 0.8 * 0.35 * 0.9 * 0.7)
     assert missing == [2]
+
+
+def test_config_instances_do_not_share_tables() -> None:
+    a, b = ConfidenceConfig(), ConfidenceConfig()
+    a.level_weight[ClaimType.TARGET_CAUSAL][EvidenceLevel.HUMAN_GENETICS] = 0.1
+    a.source_quality[SourceKind.REGISTRY] = 0.1
+    assert b.level_weight[ClaimType.TARGET_CAUSAL][EvidenceLevel.HUMAN_GENETICS] == 1.0
+    assert b.source_quality[SourceKind.REGISTRY] == 1.0
+    assert (
+        ConfidenceConfig().level_weight[ClaimType.TARGET_CAUSAL][EvidenceLevel.HUMAN_GENETICS]
+        == 1.0
+    )
+
+
+def test_undated_snapshot_is_hidden_before_it_was_fetched() -> None:
+    snapshot = {
+        "E1": ev(
+            "E1",
+            EvidenceLevel.HUMAN_GENETICS,
+            "db:x",
+            published_at=None,
+            retrieved_at=datetime(2026, 10, 6, tzinfo=UTC),
+        )
+    }
+    l1 = [link("E1", Direction.SUPPORTS)]
+    assert claim_confidence(claim(), l1, snapshot, date(2026, 10, 6)).confidence > 0.5
+    # a backtest in the past must not see a database snapshot taken later
+    assert claim_confidence(claim(), l1, snapshot, date(2020, 1, 1)).confidence == 0.3

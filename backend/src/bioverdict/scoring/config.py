@@ -5,6 +5,8 @@ Every change to a number here needs a logged reason (docs/scoring.md, calibratio
 
 from __future__ import annotations
 
+import copy
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from bioverdict.store.models import ClaimType, EvidenceLevel, SourceKind
@@ -44,8 +46,10 @@ _Q = {
 class ConfidenceConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    level_weight: dict[ClaimType, dict[EvidenceLevel, float]] = Field(default_factory=lambda: _L)
-    source_quality: dict[SourceKind, float] = Field(default_factory=lambda: _Q)
+    level_weight: dict[ClaimType, dict[EvidenceLevel, float]] = Field(
+        default_factory=lambda: copy.deepcopy(_L)
+    )
+    source_quality: dict[SourceKind, float] = Field(default_factory=lambda: copy.deepcopy(_Q))
     p0: float = 0.5  # prior probability of a claim
     kappa: float = 1.2  # log-odds scale
     contra_multiplier: float = 1.0  # plan: may be 1.2 to offset LLM optimism

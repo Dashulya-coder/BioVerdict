@@ -19,8 +19,9 @@ from bioverdict.store.models import (
     SourceKind,
 )
 
-# Biological and literature evidence ages; registry and company records are "latest wins",
-# which the connectors handle, so they are not decayed here.
+# Biological and literature evidence ages. Registry and company records are not decayed here:
+# "latest wins" is applied when the bundle is frozen (older versions of the same url and
+# locator are left out of the bundle), so scoring only ever sees the current record.
 _DECAYING = {SourceKind.PEER_REVIEWED, SourceKind.PREPRINT, SourceKind.REGULATOR}
 
 
@@ -39,6 +40,17 @@ def logit(p: float) -> float:
 
 def sigmoid(x: float) -> float:
     return 1 / (1 + math.exp(-x))
+
+
+def _visible_as_of(evidence: Evidence, as_of: date) -> bool:
+    """The time-travel rule. Keep in sync with `store.as_of.is_visible_as_of` (PR #9).
+
+    Dated evidence must be published on or before `as_of`. Undated evidence (for example a
+    snapshot of a database with no history) counts only if it was fetched on or before `as_of`.
+    """
+    if evidence.published_at is not None:
+        return evidence.published_at <= as_of
+    return evidence.retrieved_at.date() <= as_of
 
 
 def recency(evidence: Evidence, as_of: date, cfg: ConfidenceConfig) -> float:
@@ -86,7 +98,7 @@ def claim_confidence(
     """Confidence of one claim from its evidence links.
 
     Dropped before counting: neutral links, links to unknown evidence, links whose quote does
-    not occur in the excerpt (not grounded), and evidence published after `as_of` (time travel).
+    not occur in the excerpt (not grounded), and evidence not yet visible at `as_of`.
     """
     cfg = cfg or ConfidenceConfig()
     items = [
@@ -96,10 +108,7 @@ def claim_confidence(
         and link.direction is not Direction.NEUTRAL
         and link.evidence_id in evidence
         and link.quote in evidence[link.evidence_id].excerpt
-        and not (
-            evidence[link.evidence_id].published_at
-            and evidence[link.evidence_id].published_at > as_of
-        )
+        and _visible_as_of(evidence[link.evidence_id], as_of)
     ]
     if not items:
         return ConfidenceResult(

@@ -146,3 +146,41 @@ def test_chain_of_five_decent_links_is_still_below_the_invest_bar() -> None:
     r = score_verdict([*strong_chain(0.85), claim("KEY", 0.9, critical=True)], POSITIVE)
     assert r.verdict is Verdict.CONDITIONAL
     assert any("translation chain probability" in c for c in r.what_would_change_our_mind)
+
+
+def test_rescore_recomputes_confidence_before_the_verdict() -> None:
+    from datetime import UTC, date, datetime
+
+    from bioverdict.scoring.verdict import rescore
+    from bioverdict.store.models import (
+        ClaimEvidenceLink,
+        Direction,
+        Evidence,
+        EvidenceLevel,
+        SourceKind,
+    )
+
+    evidence = {
+        "E1": Evidence(
+            id="E1",
+            source="PubMed",
+            source_family="literature",
+            source_kind=SourceKind.PEER_REVIEWED,
+            url="https://example.org/1",
+            excerpt="strong result",
+            published_at=date(2026, 1, 1),
+            retrieved_at=datetime(2026, 10, 6, tzinfo=UTC),
+            level=EvidenceLevel.HUMAN_GENETICS,
+            independence_group="lab:a",
+            version=1,
+        )
+    }
+    gate_claim = claim("FAIL", 0.0, gate_signals=[GateId.K1])  # stale confidence 0.0
+    links = [
+        ClaimEvidenceLink(
+            claim_id="FAIL", evidence_id="E1", direction=Direction.SUPPORTS, quote="strong"
+        )
+    ]
+    updated, result = rescore([gate_claim], links, evidence, date(2026, 10, 6))
+    assert updated[0].confidence > 0.6  # recomputed from the evidence
+    assert gate(result, GateId.K1).fired  # and the gate saw the fresh value

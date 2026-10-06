@@ -38,10 +38,10 @@ LOA_BY_AREA: Final = {
 }
 
 BIO_2021_ONCOLOGY_SOURCE: Final = (
-    "BIO, Informa Pharma Intelligence, QLS, 'Clinical Development Success Rates and "
-    "Contributing Factors 2011-2020', Feb 2021 (oncology, as quoted by Pharmacy Times)"
+    "BIO, QLS Advisors, Informa UK Ltd, 'Clinical Development Success Rates and Contributing "
+    "Factors 2011-2020', February 2021, Fig. 2 and 5b (oncology, n=4,179 transitions, LOA 5.3%)"
 )
-# Real phase transitions for oncology (LOA 5.3%); the Citeline 2024 report gives LOA only.
+# Phase transitions for oncology, checked against the primary report on 2026-10-07.
 BIO_2021_ONCOLOGY: Final = {"phase1": 0.488, "phase2": 0.246, "phase3": 0.477, "nda": 0.920}
 
 GENETIC_SUPPORT_SOURCE: Final = (

@@ -6,12 +6,15 @@ The LLM only establishes facts and attaches evidence; a claim lists the gates it
 
 from __future__ import annotations
 
-from bioverdict.scoring.confidence import chain_probability
+from datetime import date
+
+from bioverdict.scoring.confidence import apply_confidence, chain_probability
 from bioverdict.scoring.config import ConfidenceConfig, VerdictConfig
 from bioverdict.store.models import (
     ChainLink,
     Claim,
     ClaimEvidenceLink,
+    Evidence,
     GateId,
     GateResult,
     Range,
@@ -185,4 +188,24 @@ class DeterministicScorer:
         self.rnpv, self.vcfg, self.ccfg = rnpv, vcfg, ccfg
 
     def score(self, claims: list[Claim], links: list[ClaimEvidenceLink]) -> VerdictResult:
+        """Verdict from claims whose `confidence` is already computed.
+
+        `links` is not read here: confidence comes from `apply_confidence` (or `rescore`). Claims
+        carrying a stale confidence give a stale verdict, so after any evidence change call
+        `rescore` instead.
+        """
         return score_verdict(claims, self.rnpv, self.vcfg, self.ccfg)
+
+
+def rescore(
+    claims: list[Claim],
+    links: list[ClaimEvidenceLink],
+    evidence: dict[str, Evidence],
+    as_of: date,
+    rnpv: Range | None = None,
+    vcfg: VerdictConfig | None = None,
+    ccfg: ConfidenceConfig | None = None,
+) -> tuple[list[Claim], VerdictResult]:
+    """Recompute every confidence from the evidence, then the verdict (incremental recompute)."""
+    updated = apply_confidence(claims, links, evidence, as_of, ccfg)
+    return updated, score_verdict(updated, rnpv, vcfg, ccfg)
