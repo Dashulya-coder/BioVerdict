@@ -261,8 +261,8 @@ def test_a_correct_label_is_not_reported_as_an_override() -> None:
     ("gates", "proposed", "expected"),
     [
         ([GateId.K3], ClaimType.OTHER, ClaimType.TARGET_CAUSAL),  # a genetics claim
-        ([GateId.K1], ClaimType.DRUG_ACTS_IN_HUMANS, ClaimType.OTHER),  # a fact about a study
-        ([GateId.K2, GateId.S4], ClaimType.TARGET_CAUSAL, ClaimType.OTHER),
+        ([GateId.K1], ClaimType.DRUG_ACTS_IN_HUMANS, ClaimType.STUDY_FACT),  # a fact about a study
+        ([GateId.K2, GateId.S4], ClaimType.TARGET_CAUSAL, ClaimType.STUDY_FACT),
         ([], ClaimType.DRUG_ACTS_IN_HUMANS, ClaimType.DRUG_ACTS_IN_HUMANS),  # model's label kept
     ],
 )
@@ -370,3 +370,54 @@ def test_the_reasoner_reports_omitted_evidence() -> None:
     reasoner = ModuleReasoner(canned_llm(), "R-1", max_evidence_chars=2500)
     reasoner.reason(BUNDLE)
     assert reasoner.trace.omitted_evidence
+
+
+# --- a registry record cannot prove efficacy, whatever the model calls the claim ----------
+
+
+def _registry_bundle() -> Bundle:
+    from bioverdict.store.models import EvidenceLevel
+
+    record = BUNDLE.evidence[0].model_copy(
+        update={
+            "id": "E-0200",
+            "level": EvidenceLevel.REGISTRY_RECORD,
+            "excerpt": "The purpose of this study is to assess the safety and efficacy of divarasib",
+        }
+    )
+    return BUNDLE.model_copy(update={"evidence": [record]})
+
+
+def test_a_protocol_description_cannot_raise_confidence_that_the_drug_works() -> None:
+    bundle = _registry_bundle()
+    quote = "assess the safety and efficacy of divarasib"
+    efficacy = draft(
+        claim(
+            "Divarasib works in patients",
+            claim_type="other",
+            chain_link="patient_benefit",
+            links=[link("E-0200", quote)],
+        )
+    )
+    llm = FakeLLM({"reasoning.mechanism": draft(), "reasoning.translation": efficacy})
+    claims, links = ModuleReasoner(llm, "R-1").reason(bundle)
+    works = next(c for c in claims if c.text == "Divarasib works in patients")
+    assert links and works.confidence == pytest.approx(0.5)  # the prior: the record weighs 0
+
+
+def test_the_same_record_does_establish_a_fact_about_a_study() -> None:
+    from bioverdict.scoring.confidence import apply_confidence
+
+    bundle = _registry_bundle()
+    quote = "assess the safety and efficacy of divarasib"
+    g = ground_draft(
+        draft(
+            claim("A trial of divarasib exists", gate_signals=["K4"], links=[link("E-0200", quote)])
+        ),
+        bundle,
+        "R-1",
+        Section.CLINICAL,
+        allowed_gates=frozenset({GateId.K4}),
+    )
+    (scored,) = apply_confidence(g.claims, g.links, bundle.evidence_by_id(), bundle.as_of)
+    assert scored.claim_type is ClaimType.STUDY_FACT and scored.confidence > 0.7
