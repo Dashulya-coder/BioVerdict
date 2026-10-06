@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
+from datetime import datetime
 
 import httpx
 from tenacity import AsyncRetrying, retry_if_exception, stop_after_attempt
@@ -16,6 +18,12 @@ from tenacity.wait import wait_base
 
 from bioverdict.connectors.retry import MAX_ATTEMPTS, is_transient, wait_for_retry
 from bioverdict.store.http_cache import HttpCache, cache_key
+
+
+@dataclass(frozen=True)
+class HttpResponse:
+    body: bytes
+    fetched_at: datetime  # real download time, also for answers served from the cache
 
 
 class CachedHttpClient:
@@ -32,22 +40,22 @@ class CachedHttpClient:
         self._max_attempts = max_attempts
         self._wait = wait
 
-    async def get(self, url: str, params: dict[str, str] | None = None) -> bytes:
+    async def get(self, url: str, params: dict[str, str] | None = None) -> HttpResponse:
         key = cache_key("GET", url, params)
-        cached = self._cache.get(key)
+        cached = self._cache.get_entry(key)
         if cached is not None:
-            return cached
+            return HttpResponse(cached.body, cached.fetched_at)
 
         response = await self._send(lambda: self._client.get(url, params=params))
         return self._store(key, url, response)
 
-    async def post_json(self, url: str, payload: dict) -> bytes:
+    async def post_json(self, url: str, payload: dict) -> HttpResponse:
         # Sorted keys make the body, and therefore the cache key, deterministic.
         body = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         key = cache_key("POST", url, body=body)
-        cached = self._cache.get(key)
+        cached = self._cache.get_entry(key)
         if cached is not None:
-            return cached
+            return HttpResponse(cached.body, cached.fetched_at)
 
         response = await self._send(
             lambda: self._client.post(
@@ -72,6 +80,6 @@ class CachedHttpClient:
         )
         return await retrying(attempt)
 
-    def _store(self, key: str, url: str, response: httpx.Response) -> bytes:
-        self._cache.put(key, url, response.content)
-        return response.content
+    def _store(self, key: str, url: str, response: httpx.Response) -> HttpResponse:
+        fetched_at = self._cache.put(key, url, response.content)
+        return HttpResponse(response.content, fetched_at)
