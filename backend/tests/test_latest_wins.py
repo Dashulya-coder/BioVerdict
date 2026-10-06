@@ -1,5 +1,6 @@
 from datetime import UTC, date, datetime
 
+from bioverdict.store.as_of import filter_as_of
 from bioverdict.store.latest_wins import drop_superseded
 from bioverdict.store.models import Evidence, EvidenceLevel, SourceKind
 
@@ -80,3 +81,15 @@ def test_input_is_not_modified() -> None:
     ]
     drop_superseded(items)
     assert ids(items) == ["E-0001", "E-0002"]
+
+
+def test_as_of_must_be_applied_before_superseding() -> None:
+    old = make_evidence("E-0001", date(2025, 1, 1), status_key=STATUS)
+    new = make_evidence("E-0002", date(2026, 9, 16), status_key=STATUS)
+    as_of = date(2025, 6, 1)
+
+    right = drop_superseded(filter_as_of([old, new], as_of))
+    wrong = filter_as_of(drop_superseded([old, new]), as_of)
+
+    assert ids(right) == ["E-0001"]  # the status known on the analysis date
+    assert ids(wrong) == []  # the future status erased it: why the order matters

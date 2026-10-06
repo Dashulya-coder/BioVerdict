@@ -18,6 +18,10 @@ def drop_superseded(evidence: list[Evidence]) -> list[Evidence]:
 
     The input order is preserved. Superseded items are not deleted from the store; they only
     stay out of the bundle, so earlier bundle versions keep their content.
+
+    Apply `filter_as_of` BEFORE this function, never after. Otherwise a newer status that is
+    still in the future of the analysis date supersedes the older one and is then hidden by the
+    date filter, leaving no status at all (breaks backtests and time travel).
     """
     latest: dict[str, Evidence] = {}
     for item in evidence:
