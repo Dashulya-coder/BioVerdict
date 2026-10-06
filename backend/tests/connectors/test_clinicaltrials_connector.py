@@ -136,3 +136,12 @@ async def test_a_source_error_is_raised(tmp_path: Path) -> None:
     connector = ClinicalTrialsConnector(CachedHttpClient(client, HttpCache(conn), wait=wait_none()))
     with pytest.raises(httpx.HTTPStatusError):
         await connector.fetch(asset_query("divarasib"), TODAY)
+
+
+async def test_retrieved_at_is_the_real_download_time(tmp_path: Path) -> None:
+    connector = make_connector(tmp_path, FakeRegistry())
+    first = await connector.fetch(asset_query("divarasib"), TODAY)
+    second = await connector.fetch(asset_query("divarasib"), TODAY)
+
+    assert {e.retrieved_at for e in first} == {e.retrieved_at for e in second}
+    assert len({e.retrieved_at for e in first}) == 1

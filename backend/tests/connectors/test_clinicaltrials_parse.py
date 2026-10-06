@@ -111,7 +111,7 @@ def test_level_source_and_sponsor() -> None:
     for item in parse_study(DIVARASIB[0], NOW):
         assert item.level is EvidenceLevel.HUMAN_INTERVENTIONAL
         assert (item.source, item.source_family) == ("ClinicalTrials.gov", "registry")
-        assert item.independence_group == "sponsor:Hoffmann-La Roche"
+        assert item.independence_group == "sponsor:Roche"
         assert item.url.startswith("https://clinicaltrials.gov/study/NCT")
         assert item.locator and item.locator.type == "nct"
 
@@ -133,3 +133,8 @@ def test_missing_parts_are_skipped() -> None:
 def test_placeholder_ids_are_unique_within_a_study() -> None:
     ids = [e.id for e in parse_study(DIVARASIB[0], NOW)]
     assert len(ids) == len(set(ids))
+
+
+def test_sponsors_of_one_company_share_a_group() -> None:
+    roche = {item.independence_group for study in DIVARASIB for item in parse_study(study, NOW)}
+    assert roche == {"sponsor:Roche"}

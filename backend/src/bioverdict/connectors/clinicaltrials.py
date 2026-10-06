@@ -16,6 +16,7 @@ import json
 from datetime import UTC, date, datetime
 
 from bioverdict.connectors.http import CachedHttpClient
+from bioverdict.connectors.sponsors import sponsor_group
 from bioverdict.store.as_of import filter_as_of
 from bioverdict.store.models import (
     Evidence,
@@ -100,7 +101,7 @@ def parse_study(study: dict, retrieved_at: datetime | None = None) -> list[Evide
                     if interventional
                     else EvidenceLevel.HUMAN_OBSERVATIONAL
                 ),
-                independence_group=f"sponsor:{sponsor or 'unknown'}",
+                independence_group=sponsor_group(sponsor),
                 status_key=status_key,
                 version=1,
             )
@@ -142,14 +143,15 @@ class ClinicalTrialsConnector:
         self._page_size = page_size
 
     async def fetch(self, query: ResolverOutput, as_of: date) -> list[Evidence]:
-        studies: dict[str, dict] = {}  # by NCT id, so a study found twice is read once
+        found: dict[str, tuple[dict, datetime]] = {}  # by NCT id: a study seen twice is read once
         for params in build_queries(query, self._page_size):
-            body = await self._http.get(API_URL, params)
-            for study in json.loads(body).get("studies", []):
+            response = await self._http.get(API_URL, params)
+            for study in json.loads(response.body).get("studies", []):
                 nct = study["protocolSection"]["identificationModule"]["nctId"]
-                studies.setdefault(nct, study)
+                found.setdefault(nct, (study, response.fetched_at))
 
         evidence: list[Evidence] = []
-        for nct in sorted(studies):
-            evidence.extend(parse_study(studies[nct]))
+        for nct in sorted(found):
+            study, fetched_at = found[nct]
+            evidence.extend(parse_study(study, retrieved_at=fetched_at))
         return filter_as_of(evidence, as_of)
