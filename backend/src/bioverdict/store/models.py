@@ -187,6 +187,11 @@ class Evidence(_Model):
     type: EvidenceType = EvidenceType.SOURCE_FACT
     level: EvidenceLevel
     independence_group: str = Field(description="Lab or sponsor; repeats count once")
+    status_key: str | None = Field(
+        default=None,
+        description="Marks a status fact (trial status, program status); only the latest "
+        "evidence per key is kept in a bundle",
+    )
     version: int = Field(ge=1, description="Evidence-store version in which it appeared")
 
 
