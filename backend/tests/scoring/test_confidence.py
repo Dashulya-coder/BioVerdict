@@ -143,7 +143,7 @@ def test_evidence_after_as_of_is_ignored_for_time_travel() -> None:
 
 
 def test_old_literature_decays_but_registry_does_not() -> None:
-    old = date(2006, 10, 6)  # one half-life (10 years) before AS_OF... twenty years
+    old = date(2006, 10, 6)  # twenty years old: two half-lives
     lit = {"E1": ev("E1", EvidenceLevel.HUMAN_GENETICS, "lab:a", published_at=old)}
     reg = {
         "E1": ev(
