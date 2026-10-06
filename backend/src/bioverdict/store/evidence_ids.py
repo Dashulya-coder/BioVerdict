@@ -16,8 +16,9 @@ _ID_PATTERN = re.compile(r"E-(\d+)")
 
 def dedup_key(evidence: Evidence) -> tuple[str, str, str]:
     """Two items with the same url, locator and excerpt are the same piece of evidence."""
-    locator = evidence.locator.value if evidence.locator else ""
-    return (evidence.url, locator, evidence.excerpt)
+    locator = evidence.locator
+    locator_value = locator.value if locator is not None else ""
+    return (evidence.url, locator_value, evidence.excerpt)
 
 
 def _number(evidence_id: str) -> int:
