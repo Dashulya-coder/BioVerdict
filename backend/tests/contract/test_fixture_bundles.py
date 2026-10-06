@@ -28,6 +28,16 @@ def test_bundle_matches_contract(path: Path) -> None:
 
 
 @pytest.mark.parametrize("path", BUNDLES, ids=lambda p: p.stem)
+def test_bundle_does_not_contain_the_future(path: Path) -> None:
+    bundle = Bundle.model_validate_json(path.read_text(encoding="utf-8"))
+    for e in bundle.evidence:
+        assert e.retrieved_at.date() <= bundle.as_of, f"{e.id} retrieved after the bundle's as_of"
+        assert e.published_at is None or e.published_at <= bundle.as_of, (
+            f"{e.id} is from the future"
+        )
+
+
+@pytest.mark.parametrize("path", BUNDLES, ids=lambda p: p.stem)
 async def test_fake_connector_serves_bundle(path: Path) -> None:
     bundle = Bundle.model_validate_json(path.read_text(encoding="utf-8"))
     result = await FakeConnector.from_bundle_file(path).fetch(QUERY, bundle.as_of)
