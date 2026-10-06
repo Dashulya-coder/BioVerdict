@@ -97,6 +97,15 @@ Link:
 }
 ```
 
+### Content hash
+
+`content_hash` is `sha256:` plus the SHA-256 of a canonical JSON (sorted keys, no spaces, UTF-8) of:
+
+- all evidence sorted by `id`, every field except `retrieved_at` and `version`;
+- `section_statuses`.
+
+Identical evidence therefore gives an identical hash regardless of when it was fetched or in what order. `as_of` and the bundle `version` are not hashed. Evidence `id` is hashed on purpose: claims reference ids, so bundles whose ids differ must not share a hash (and a cached LLM answer). Implementation: `bioverdict.store.bundle.compute_content_hash`.
+
 ## Resolver output
 
 ```json
