@@ -56,6 +56,7 @@ class ClaimType(StrEnum):
 
     TARGET_CAUSAL = "target_causal"  # "the target is causal for the disease"
     DRUG_ACTS_IN_HUMANS = "drug_acts_in_humans"
+    STUDY_FACT = "study_fact"  # a fact about a study or program: status, phase, sponsor, stopped
     OTHER = "other"
 
 
