@@ -120,11 +120,14 @@ Identical evidence therefore gives an identical hash regardless of when it was f
   "delivery": "oral | SC | IV | intrathecal",
   "tissue": "",
   "known_assets": [],
+  "assets": [{ "name": "DIVARASIB", "chembl_id": "CHEMBL5095236" }],
   "assumptions": ["fields the system inferred itself"]
 }
 ```
 
 Several targets are allowed (a triple agonist has three; a degrader and a knockdown need different genetic logic).
+
+`known_assets` are the names to search registries with (what the user typed and the database name). `assets` are the drugs a database identified, each with its ChEMBL id; `chembl_id` is `null` when no database confirmed the name, and a model never writes it. Ids of targets and diseases follow the same rule: they come from Open Targets lookups, not from a model.
 
 ## SQLite schema (sketch)
 
