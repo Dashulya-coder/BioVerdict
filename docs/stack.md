@@ -99,7 +99,7 @@ New interpreter releases lag the ecosystem (binary wheels, tooling). `uv` did no
 
 1. Python: `.python-version` containing `3.14`. Record the full patch below.
 2. Backend: `pyproject.toml` with lower bounds from the table above and a committed `uv.lock`. Install with `uv sync --frozen` in CI and on demo machines.
-3. Frontend: `package.json` with `engines.node`, a committed `package-lock.json`, `npm ci` for installs.
+3. Frontend: `package.json` with `engines.node`, a committed `pnpm-lock.yaml`, `pnpm install --frozen-lockfile` for installs. pnpm 12.9.1 is used in CI. The `packageManager` field is deliberately not set: pnpm 12 then writes its own per-platform binaries into the lock file, which churns it between machines.
 4. Both developers and the demo machine use the same lock files.
 5. **No upgrades after the code freeze** (date in `CONTRIBUTING.md`) except through a PR that re-runs tests, `check_compat.py` and the eval set.
 
@@ -146,8 +146,8 @@ uv add --dev pytest pytest-asyncio ruff
 uv run python ../scripts/check_compat.py        # must print "17/17 checks passed"
 
 cd ../frontend
-npm create vite@latest . -- --template react-ts
-npm install @xyflow/react recharts @tanstack/react-query
+pnpm create vite . --template react-ts
+pnpm add @xyflow/react recharts @tanstack/react-query
 ```
 
 ## Your resolved versions (fill in on day 1)

@@ -10,7 +10,7 @@ Prerequisites: Python 3.14, `uv`, Node 24 LTS, git (see `stack.md` for versions 
 cp .env.example .env
 # fill in keys; never commit .env
 cd backend && uv sync
-cd ../frontend && npm install
+cd ../frontend && pnpm install
 ```
 
 Required variables are listed in the README. Check access:
@@ -24,7 +24,7 @@ uv run bioverdict doctor        # TODO: verifies keys, network, DB, cache dir
 
 ```bash
 cd backend && uv run uvicorn bioverdict.api.main:app --reload
-cd frontend && npm run dev
+cd frontend && pnpm dev
 ```
 
 ## 3. Run an underwriting
