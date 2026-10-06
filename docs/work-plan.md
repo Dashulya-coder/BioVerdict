@@ -78,7 +78,7 @@ Contracts (Python protocols in `bioverdict/contracts.py`):
 
 | Contract | Signature (sketch) | Producer | Consumer |
 |---|---|---|---|
-| Connector | `fetch(query, as_of) -> list[Evidence]` | Arsenii | Arsenii (collect nodes) |
+| Connector | `async fetch(query, as_of) -> list[Evidence]` | Arsenii | Arsenii (collect nodes) |
 | Bundle | frozen `Bundle` + `Evidence` list, content hash, catalog | Arsenii | Dasha |
 | LLM | `llm.call(step, prompt, schema) -> LLMResult` | Dasha | both |
 | Reasoning | `reason(bundle) -> list[Claim]` (+ links) | Dasha | scoring, API |
