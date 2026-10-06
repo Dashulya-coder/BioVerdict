@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
+from bioverdict.store.as_of import filter_as_of
 from bioverdict.store.models import Bundle, Evidence, ResolverOutput
 
 
@@ -22,5 +23,4 @@ class FakeConnector:
 
     async def fetch(self, query: ResolverOutput, as_of: date) -> list[Evidence]:
         # `query` is ignored on purpose: a fixture is one fixed asset.
-        # Undated evidence is kept: nothing proves it was published after `as_of`.
-        return [e for e in self._evidence if e.published_at is None or e.published_at <= as_of]
+        return filter_as_of(self._evidence, as_of)
