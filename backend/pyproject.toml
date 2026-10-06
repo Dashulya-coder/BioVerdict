@@ -30,10 +30,6 @@ dev = ["pytest>=9.1.1", "pytest-asyncio>=1.4", "ruff>=0.16.10"]
 requires = ["uv_build>=0.12.13,<0.13.0"]
 build-backend = "uv_build"
 
-[tool.uv.build-backend]
-# `backend` is Arsenii's initial scaffold, kept alongside the `bioverdict` package.
-module-name = ["bioverdict", "backend"]
-
 [tool.ruff]
 line-length = 100
 

@@ -1,6 +1,4 @@
-"""Function contracts between the two tracks (docs/work-plan.md, section 3).
-
-"""
+"""Function contracts between the two tracks (docs/work-plan.md, section 3)."""
 
 from __future__ import annotations
 

@@ -73,6 +73,14 @@ Worked example (claim "target is causal", kappa = 1.2), required as unit tests:
 
 A weak contradiction barely moves the claim; a strong one lowers it clearly. Both behaviors are required tests.
 
+Assumptions made by the code (not stated in the plan):
+
+- A claim of type `other` takes the weaker of the two level-weight columns per level.
+- A claim with no verified evidence gets confidence 0.3 and the `sparse` flag.
+- Undated evidence counts at a given `as_of` only if it was fetched on or before that date.
+- Recency applies to peer-reviewed, preprint and regulator sources; registry and company records
+  are not decayed because the bundle freeze keeps only the latest version of each record.
+
 **Step 3. Service flags:**
 
 - `sparse`: sum of |w| below a threshold. Report "too little data"; financial-model ranges widen.

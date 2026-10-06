@@ -1,0 +1,56 @@
+[Ad hoc announcement pursuant to Art. 53 LR] Roche’s divarasib shows superiority in head-to-head phase III trial against approved KRAS G12C inhibitors in non-small cell lung cancer
+[Ad hoc announcement pursuant to Art. 53 LR] Roche’s divarasib shows superiority in head-to-head phase III trial against approved KRAS G12C inhibitors in non-small cell lung cancer
+Phase III (Krascendo 1) demonstrates best-in-class potential for patients with previously treated advanced KRAS G12C non-small cell lung cancer
+Divarasib showed clinically meaningful improvements in progression-free survival compared to approved KRAS G12C inhibitors; no new safety signals were observed
+Statistical significance for overall survival was achieved at the interim analysis in this poor-prognosis patient population
+Data will be submitted to health authorities and presented at an upcoming medical meeting
+Basel, 02 July 2026 - Roche (SIX: RO, ROP; OTCQX: RHHBY) announced today positive results from the phase III Krascendo 1 study evaluating divarasib, an investigational next-generation KRAS G12C inhibitor, against the approved, first generation KRAS G12C inhibitors sotorasib or adagrasib in patients with previously treated KRAS G12C non-small cell lung cancer (NSCLC). The study met its primary and key secondary endpoint, with divarasib achieving clinically meaningful and statistically significant improvements in both progression-free survival (PFS) and overall survival (OS). The safety profile for divarasib remained consistent with previous data, with no new findings detected and the most common treatment-related events being manageable and reversible.
+“The superior survival demonstrated in this global head-to-head comparison of KRAS G12C inhibitors confirms the potential of divarasib to improve clinical outcomes for people with KRAS G12C non-small cell lung cancer,” said Levi Garraway, MD, PhD, Roche’s Chief Medical Officer and Head of Global Product Development. “These results should establish divarasib as a new standard of care for previously-treated lung cancer patients with this genetically defined tumor subtype.”
+Efficacious treatments for KRAS G12C NSCLC represent a significant unmet need in lung cancer care. The G12C mutation is one of the most common KRAS oncogene mutations, found in approximately 14% of NSCLC cases and associated with poor prognosis for patients.
+Roche is advancing a comprehensive phase III clinical development programme in NSCLC, investigating divarasib as both a monotherapy and as a chemotherapy-free combination, across different disease settings and lines of therapy. The US Food and Drug Administration granted Breakthrough Therapy Designation to divarasib in 2022, and in 2026, Orphan Drug Designation for KRAS G12C non-small cell lung cancer (NSCLC).
+Data from the Krascendo 1 study will be presented at an upcoming medical meeting and submitted to health authorities with the aim of bringing this potential treatment option to people with KRAS G12C NSCLC as soon as possible.
+] is the only global head-to-head study evaluating a Kirsten rat sarcoma virus (KRAS) G12C inhibitor in direct comparison with first generation KRAS G12C inhibitors.
+This phase III, randomised, open-label, multicentre study evaluates the efficacy and safety of divarasib monotherapy versus sotorasib or adagrasib in people with previously treated KRAS G12C-mutant advanced or metastatic non-small cell lung cancer.
+The study includes 338 adults, randomised to receive either divarasib (once daily) or, either sotorasib (once daily) or adagrasib (twice daily).
+The primary endpoint is blinded independent central review (BICR)-assessed progression-free survival.
+Secondary endpoint measures include overall survival, confirmed objective response, duration of response, as well as other efficacy and safety measures.
+Divarasib is an investigational, next-generation, oral, KRAS G12C inhibitor. It has shown greater potency and selectivity in preclinical studies compared with first generation KRAS G12C-targeting treatments, sotorasib and adagrasib.
+Divarasib is designed to selectively bind to the KRAS G12C protein, locking the protein in an inactive (‘off’) state, thereby turning off its tumour-driving signalling.
+Divarasib’s comprehensive clinical development programme is anchored by three phase III studies:
+Divarasib monotherapy vs sotorasib or adagrasib
+Previously treated KRAS G12C-mutant advanced or metastatic NSCLC (second-line)
+(chemotherapy-free combination) vs chemotherapy plus pembrolizumab
+Previously untreated KRAS G12C-mutant advanced NSCLC (first-line)
+Adjuvant divarasib monotherapy vs immunotherapy or observation
+Resected stage II–IIIB KRAS G12C-mutant NSCLC after standard of care chemoimmunotherapy (early-stage)
+About KRAS G12C non-small cell lung cancer
+Despite advances in treatment, lung cancer remains the leading cause of cancer-related deaths worldwide, surpassing the combined mortality rates of breast, prostate, and stomach cancers.
+Each year, it claims the lives of 1.8 million people, with non-small cell lung cancer (NSCLC) accounting for approximately 85% of cases.
+KRAS is one of the most frequently mutated genes in lung cancer, occurring in approximately 25% of newly diagnosed lung cancers.
+The G12C mutation is one of the most common KRAS mutations, found in approximately 14% of NSCLC cases.
+The KRAS gene produces the KRAS protein, which acts as a cellular control switch, cycling between an active ('on') and inactive ('off') state to regulate cell growth and proliferation, making it a critical target for new therapeutic strategies.
+The G12C mutation locks the KRAS protein in its active ('on') state, leading to continuous, unregulated signalling for cell growth, driving tumour proliferation.
+Roche is committed to advancing the field of lung cancer treatments, leveraging more than 20 years of deep scientific expertise to improve patient outcomes and their overall experience. Roche’s strong commitment to investment in research and development has built a robust portfolio of approved medicines and companion diagnostics, which empowers physicians to better understand a patient's disease and optimise care.
+Roche’s broad portfolio includes approved medicines such as Alecensa® (alectinib), Tecentriq® (atezolizumab), and Rozlytrek® (entrectinib). Its extensive pipeline includes investigational treatments across three key focus areas: small cell lung cancer, non-small cell lung cancer (NSCLC) with actionable genomic alterations (AGA), and NSCLC without AGA. Utilising diverse approaches, ranging from cancer-cell-killing ‘cytotoxics’ and immunotherapies to treatments targeting specific characteristics of cancer cells, we aim to translate scientific discoveries into meaningful progress in patient care.
+Roche (SIX: RO, ROP; OTCQX: RHHBY) is a healthcare company uniquely placed to prevent, stop and cure diseases by uniting leading science and technology across diagnostics, medicines and digital solutions.
+Roche was founded in Basel, Switzerland in 1896 and today is a leading provider of transformative medicines and diagnostics for millions of people in over 150 countries around the world. It is dedicated to tackling healthcare challenges that place the greatest strain on patients, families, communities and healthcare systems. Across its Diagnostics and Pharmaceutical divisions, Roche focuses on areas including oncology, neurology, cardiovascular and metabolic diseases, ophthalmology, infectious diseases and immunology with the aim of providing real and positive change for patients, the people they love and the professionals who care for them.
+Genentech in the United States is a fully owned subsidiary in the Roche Group. Roche is the majority shareholder in Chugai Pharmaceutical, a major innovator in the Japanese therapeutic antibody market. For more information, please visit
+All trademarks used or mentioned in this release are protected by law.
+[1] Nassar AH, et al. Distribution of KRAS (G12C) Somatic Mutations across Race, Sex, and Cancer Type. N Engl J Med 2021; 384 (2): 185-187.
+[2] Wankhede, Durgesh, et al. Prognostic role of KRAS G12C mutation in non-small cell lung cancer: a systematic review and meta-analysis. Diagnostics 13.19 (2023): 3043.
+[3] Gadgeel S, et al. P3.12D.07 Divarasib Versus Adagrasib or Sotorasib in Pretreated KRAS G12C+ Advanced or Metastatic Non-Small Cell Lung Cancer (NSCLC). J of Thorac Oncol. 2024; 19 (10, Supplement): S349.
+[4] Endres NF, et al. Discovery and Characterization of Divarasib (GDC-6036), a Potent Covalent Inhibitor of KRAS G12C. J Med Chem 2026; 69 (5): 5147-5165.
+[5] Landry ML, et al. Discovery and Optimization of a Potent, Efficacious, and Brain-Penetrant Inhibitor of KRAS G12C. J Med Chem 2026; 69 (5): 5241-5258.
+[6] Friedlaender A, et al. KRAS as a druggable target in NSCLC: rising like a phoenix after decades of development failures. Cancer Treat Rev. 2020;85:101978.
+[7] World Health Organization. Global cancer burden growing, amidst mounting need for services [Internet; cited 2026 June]. Available from:
+https://www.who.int/news/item/01-02-2024-global-cancer-burden-growing--amidst-mounting-need-for-services
+[8] American Lung Association. Lung Cancer Statistics [Internet; cited 2026 June]. Available from:
+https://www.lung.org/lung-health-diseases/lung-disease-lookup/lung-cancer/resource-library/lung-cancer-fact-sheet
+[9] World Health Organization. Lung cancer [Internet; cited 2026 June]. Available from:
+https://www.who.int/news-room/fact-sheets/detail/lung-cancer
+[10] Pakkala S, et al. Personalized therapy for lung cancer: striking a moving target. JCI Insight 2018; 3 (15).
+Phone: +41 61 688 8888 / e-mail: media.relations@roche.com
+Media Investor Release Krascendo 1 Phase III English
+Media Investor Release Krascendo 1 Phase III English
+get the latest news and updates to your inbox.
+This website contains information on products which is targeted to a wide range of audiences and could contain product details or information otherwise not accessible or valid in your country. Please be aware that we do not take any responsibility for accessing such information which may not comply with any legal process, regulation, registration or usage in the country of your origin.
