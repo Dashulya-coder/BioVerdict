@@ -60,12 +60,16 @@ def test_every_level_has_a_weight_for_every_claim_type() -> None:
         assert set(table[claim_type]) == set(EvidenceLevel), claim_type
 
 
-@pytest.mark.parametrize("claim_type", [ClaimType.TARGET_CAUSAL, ClaimType.DRUG_ACTS_IN_HUMANS])
-def test_a_registry_record_proves_no_efficacy(claim_type: ClaimType) -> None:
+@pytest.mark.parametrize(
+    "claim_type", [ClaimType.TARGET_CAUSAL, ClaimType.DRUG_ACTS_IN_HUMANS, ClaimType.OTHER]
+)
+def test_a_registry_record_supports_nothing_but_facts_about_studies(
+    claim_type: ClaimType,
+) -> None:
     confidence, _ = confidence_of(claim_type)
     assert confidence == pytest.approx(0.5)  # unchanged from the prior
 
 
 def test_a_registry_record_does_support_a_fact_about_a_study() -> None:
-    confidence, _ = confidence_of(ClaimType.OTHER)
+    confidence, _ = confidence_of(ClaimType.STUDY_FACT)
     assert confidence > 0.7  # enough to let a gate such as "the trial was stopped" fire

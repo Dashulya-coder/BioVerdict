@@ -82,7 +82,7 @@ Link:
 { "claim_id": "C-0117", "evidence_id": "E-0042", "direction": "supports", "quote": "verbatim, must occur in the evidence excerpt" }
 ```
 
-`claim_type` (`target_causal` | `drug_acts_in_humans` | `other`) selects the column of the level-weight table in [`scoring.md`](scoring.md). `flags` holds `sparse`, `contested`, `missing_link`. `chain_link` (`molecular_effect` | `human_exposure` | `target_engagement` | `biological_response` | `patient_benefit`) places a claim on the translation chain. `gate_signals` lists the gates (`K1`..`K5`, `S1`..`S6`) whose condition the claim asserts; code decides whether the gate fires. `critical` marks key claims for the verdict.
+`claim_type` (`target_causal` | `drug_acts_in_humans` | `study_fact` | `other`) selects the column of the level-weight table in [`scoring.md`](scoring.md). `flags` holds `sparse`, `contested`, `missing_link`. `chain_link` (`molecular_effect` | `human_exposure` | `target_engagement` | `biological_response` | `patient_benefit`) places a claim on the translation chain. `gate_signals` lists the gates (`K1`..`K5`, `S1`..`S6`) whose condition the claim asserts; code decides whether the gate fires. `critical` marks key claims for the verdict.
 
 `diligence_type` for `unknown` claims: `proprietary_data` | `patient_level_data` | `kol_interview` | `experiment` | `cmc_diligence` | `ip_diligence`.
 

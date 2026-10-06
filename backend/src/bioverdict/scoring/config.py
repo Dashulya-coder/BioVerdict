@@ -34,9 +34,11 @@ _L[ClaimType.OTHER] = {
     lvl: min(_L[ClaimType.TARGET_CAUSAL][lvl], _L[ClaimType.DRUG_ACTS_IN_HUMANS][lvl])
     for lvl in EvidenceLevel
 }
-# A registry record does establish facts about studies and programs (a trial was stopped, a
-# competitor is in Phase 3, a sponsor dropped the program), which the gate claims are about.
-_L[ClaimType.OTHER][EvidenceLevel.REGISTRY_RECORD] = 1.0
+# Facts about studies and programs (a trial was stopped, a competitor is in Phase 3, a sponsor
+# dropped the program) are what the gate claims are about, and a registry record is exactly what
+# establishes them. They get their own claim type so that this weight cannot leak into `other`
+# claims such as "the molecule modulates its target".
+_L[ClaimType.STUDY_FACT] = {**_L[ClaimType.DRUG_ACTS_IN_HUMANS], EvidenceLevel.REGISTRY_RECORD: 1.0}
 
 _Q = {
     SourceKind.PEER_REVIEWED: 1.0,
