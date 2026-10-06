@@ -60,6 +60,9 @@ CREATE TABLE claims (
   flags_json            TEXT,
   depends_on_json       TEXT,
   diligence_type        TEXT,
+  chain_link            TEXT,
+  gate_signals_json     TEXT,
+  critical              INTEGER,
   version               INTEGER,
   PRIMARY KEY (run_id, id)
 );
