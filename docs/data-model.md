@@ -135,7 +135,8 @@ CREATE TABLE evidence (
 CREATE TABLE claims (
   run_id TEXT, id TEXT, section TEXT, claim_type TEXT, text TEXT, basis TEXT,
   status TEXT, confidence REAL, confidence_parts_json TEXT, flags_json TEXT,
-  depends_on_json TEXT, diligence_type TEXT, version INTEGER,
+  depends_on_json TEXT, diligence_type TEXT, chain_link TEXT,
+  gate_signals_json TEXT, critical INTEGER, version INTEGER,
   PRIMARY KEY (run_id, id)
 );
 CREATE TABLE claim_evidence (
