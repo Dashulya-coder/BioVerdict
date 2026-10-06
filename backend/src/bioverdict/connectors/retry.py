@@ -10,7 +10,8 @@ import httpx
 from tenacity import RetryCallState, wait_exponential
 
 MAX_ATTEMPTS = 3
-MAX_RETRY_AFTER_S = 30.0
+# Three attempts wait at most twice, so a run is held up by 2 x 10 s here; the agent budget is 90 s.
+MAX_RETRY_AFTER_S = 10.0
 
 _exponential = wait_exponential(multiplier=0.5, max=8)
 
