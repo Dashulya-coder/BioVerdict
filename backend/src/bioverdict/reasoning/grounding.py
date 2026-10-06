@@ -21,10 +21,15 @@ from bioverdict.store.models import (
     ClaimEvidenceLink,
     ClaimType,
     DiligenceType,
+    Direction,
     GateId,
     Section,
     SectionStatus,
 )
+
+# A quote shorter than this proves nothing ("a" is a substring of almost any text) unless it is
+# the whole excerpt, as a short registry status can be.
+MIN_QUOTE_CHARS = 8
 
 # What kind of data would answer an unknown chain link (docs: "recognise what needs proprietary
 # data rather than inventing an answer").
@@ -98,9 +103,20 @@ def ground_draft(
         links, seen = [], set()
         for link in item.links:
             ev = evidence.get(link.evidence_id)
+            quote = link.quote.strip()
             if ev is None:
                 out.drops.append(Drop(claim_id, link.evidence_id, "evidence is not in the bundle"))
-            elif link.quote not in ev.excerpt:
+            elif not quote:
+                out.drops.append(Drop(claim_id, link.evidence_id, "empty quote"))
+            elif len(quote) < MIN_QUOTE_CHARS and quote != ev.excerpt.strip():
+                out.drops.append(
+                    Drop(
+                        claim_id,
+                        link.evidence_id,
+                        f"quote shorter than {MIN_QUOTE_CHARS} characters",
+                    )
+                )
+            elif quote not in ev.excerpt:
                 out.drops.append(Drop(claim_id, link.evidence_id, "quote is not in the excerpt"))
             elif link.evidence_id in seen:
                 out.drops.append(Drop(claim_id, link.evidence_id, "evidence cited twice"))
@@ -111,7 +127,7 @@ def ground_draft(
                         claim_id=claim_id,
                         evidence_id=link.evidence_id,
                         direction=link.direction,
-                        quote=link.quote,
+                        quote=quote,
                     )
                 )
 
@@ -121,7 +137,7 @@ def ground_draft(
                 claim_id,
                 run_id,
                 section,
-                bool(links),
+                any(l.direction is not Direction.NEUTRAL for l in links),
                 bundle,
                 out,
                 allowed_gates,
@@ -170,7 +186,11 @@ def _build_claim(
     if basis is Basis.EXTRACTED and not has_links:
         basis = Basis.INFERRED
         out.drops.append(
-            Drop(claim_id, "basis", "extracted without a grounded quote: now inferred")
+            Drop(
+                claim_id,
+                "basis",
+                "extracted without a grounded supporting or contradicting quote: now inferred",
+            )
         )
     if basis is Basis.UNKNOWN:
         diligence = diligence or (
@@ -210,6 +230,26 @@ def resolve_claim_type(
     if gates:
         return ClaimType.TARGET_CAUSAL if set(gates) == {GateId.K3} else ClaimType.OTHER
     return proposed
+
+
+MAX_CRITICAL = 4
+
+
+def cap_critical(claims: list[Claim], limit: int = MAX_CRITICAL) -> tuple[list[Claim], list[Drop]]:
+    """Keep `critical` on at most `limit` claims, the first ones in the order the modules wrote them.
+
+    The verdict hinges on critical claims (every one must reach the confidence bar to allow
+    Invest), so the model cannot be left to decide how many there are.
+    """
+    kept, drops, count = [], [], 0
+    for claim in claims:
+        if claim.critical:
+            count += 1
+            if count > limit:
+                drops.append(Drop(claim.id, "critical", f"more than {limit} critical claims"))
+                claim = claim.model_copy(update={"critical": False})
+        kept.append(claim)
+    return kept, drops
 
 
 def fill_missing_chain_links(
