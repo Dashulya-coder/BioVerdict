@@ -9,14 +9,17 @@
 # Backend (Python)
 __pycache__/
 *.py[cod]
-/backend/.venv/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
 /backend/*.egg-info/
-/backend/.pytest_cache/
-/backend/.mypy_cache/
-/backend/.ruff_cache/
-/backend/.coverage
-/backend/htmlcov/
-/scripts/__pycache__/
+/backend/dist/
+/backend/build/
 
 # Frontend (Node)
 /frontend/node_modules/
@@ -28,6 +31,8 @@ __pycache__/
 /frontend/npm-debug.log*
 /frontend/yarn-debug.log*
 /frontend/pnpm-debug.log*
+/frontend/.pnpm-store/
+*.tsbuildinfo
 
 # Runtime data: SQLite, HTTP/LLM cache, run artifacts
 *.db
@@ -36,13 +41,19 @@ __pycache__/
 *.db-journal
 *.db-wal
 *.db-shm
+# DB_PATH and CACHE_DIR default to data/... (.env.example): database, HTTP/LLM cache, runs
+/data/
+/backend/data/
 /.cache/
 /backend/.cache/
-/backend/data/runs/
 
 # Tooling output
 /graphify-out/
 /.claude/
+
+# Merge leftovers
+*.orig
+*.rej
 
 # Logs
 *.log

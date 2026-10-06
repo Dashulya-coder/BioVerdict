@@ -1,6 +1,7 @@
 """Schema migrations. The applied level lives in `PRAGMA user_version`.
 
-Keep MIGRATION_1 in sync with the SQL block in docs/data-model.md (a test compares them).
+Keep the migrations in sync with the SQL block in docs/data-model.md, which shows the
+end state (a test compares them; columns added by ALTER TABLE come last).
 Never edit an applied migration: append a new one.
 """
 
@@ -107,7 +108,11 @@ CREATE TABLE verification_log (
 );
 """
 
-MIGRATIONS: list[str] = [MIGRATION_1]
+MIGRATION_2 = """
+ALTER TABLE evidence ADD COLUMN status_key TEXT;
+"""
+
+MIGRATIONS: list[str] = [MIGRATION_1, MIGRATION_2]
 SCHEMA_VERSION = len(MIGRATIONS)
 
 

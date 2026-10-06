@@ -48,3 +48,15 @@ def test_put_replaces_existing_entry(cache: HttpCache) -> None:
     cache.put("k", URL, b"old")
     cache.put("k", URL, b"new")
     assert cache.get("k") == b"new"
+
+
+def test_entry_carries_the_time_it_was_stored(cache: HttpCache) -> None:
+    fetched_at = cache.put("k", URL, b"body")
+    entry = cache.get_entry("k")
+    assert entry is not None
+    assert (entry.body, entry.fetched_at) == (b"body", fetched_at)
+    assert entry.fetched_at.tzinfo is not None
+
+
+def test_missing_entry_is_none(cache: HttpCache) -> None:
+    assert cache.get_entry("missing") is None

@@ -142,6 +142,7 @@ CREATE TABLE evidence (
   run_id TEXT, id TEXT, source TEXT, source_family TEXT, source_kind TEXT,
   type TEXT, url TEXT, locator_json TEXT, excerpt TEXT, published_at TEXT,
   retrieved_at TEXT, level TEXT, independence_group TEXT, version INTEGER,
+  status_key TEXT,
   PRIMARY KEY (run_id, id)
 );
 CREATE TABLE claims (

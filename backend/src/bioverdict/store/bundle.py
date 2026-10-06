@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import date
 
+from bioverdict.store.as_of import filter_as_of
+from bioverdict.store.latest_wins import drop_superseded
 from bioverdict.store.models import Evidence, Section, SectionStatus
 
 # Not part of the document's content: when it was fetched, and which store version added it.
@@ -36,3 +39,14 @@ def compute_content_hash(
     }
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     return "sha256:" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def select_bundle_evidence(evidence: list[Evidence], as_of: date) -> list[Evidence]:
+    """The evidence a bundle holds, from everything stored up to its version.
+
+    Order matters: first drop what is not yet known at `as_of`, then let the newest remaining
+    status fact supersede the older ones. The other way round, a future status would erase the
+    older one and then be hidden itself, leaving the run with no status at all.
+    """
+    visible = drop_superseded(filter_as_of(evidence, as_of))
+    return sorted(visible, key=lambda item: item.id)
