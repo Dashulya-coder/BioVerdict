@@ -144,3 +144,22 @@ def chain_probability(
     cfg = cfg or ConfidenceConfig()
     missing = [i for i, c in enumerate(link_confidences) if c < cfg.missing_link_threshold]
     return prod(link_confidences), missing
+
+
+def apply_confidence(
+    claims: list[Claim],
+    links: list[ClaimEvidenceLink],
+    evidence: dict[str, Evidence],
+    as_of: date,
+    cfg: ConfidenceConfig | None = None,
+) -> list[Claim]:
+    """Return claims with confidence, parts and flags computed from their evidence links."""
+    out = []
+    for claim in claims:
+        r = claim_confidence(claim, links, evidence, as_of, cfg)
+        out.append(
+            claim.model_copy(
+                update={"confidence": r.confidence, "confidence_parts": r.parts, "flags": r.flags}
+            )
+        )
+    return out

@@ -102,6 +102,32 @@ class Verdict(StrEnum):
     DO_NOT_INVEST = "Do Not Invest"
 
 
+class ChainLink(StrEnum):
+    """The five links of the human translation chain, in order."""
+
+    MOLECULAR_EFFECT = "molecular_effect"
+    HUMAN_EXPOSURE = "human_exposure"
+    TARGET_ENGAGEMENT = "target_engagement"
+    BIOLOGICAL_RESPONSE = "biological_response"
+    PATIENT_BENEFIT = "patient_benefit"
+
+
+class GateId(StrEnum):
+    """Hard kill criteria K1-K5 (Do Not Invest) and soft S1-S6 (at most Conditional)."""
+
+    K1 = "K1"
+    K2 = "K2"
+    K3 = "K3"
+    K4 = "K4"
+    K5 = "K5"
+    S1 = "S1"
+    S2 = "S2"
+    S3 = "S3"
+    S4 = "S4"
+    S5 = "S5"
+    S6 = "S6"
+
+
 class ServiceFlag(StrEnum):
     SPARSE = "sparse"  # sum |w| below threshold: "too little data"
     CONTESTED = "contested"  # strong support and strong contradiction at once
@@ -190,6 +216,14 @@ class Claim(_Model):
     flags: list[ServiceFlag] = Field(default_factory=list)
     depends_on: list[str] = Field(default_factory=list)
     diligence_type: DiligenceType | None = None
+    chain_link: ChainLink | None = Field(
+        default=None, description="Which translation-chain link this claim speaks to"
+    )
+    gate_signals: list[GateId] = Field(
+        default_factory=list,
+        description="Gates whose condition this claim asserts; code applies the rule",
+    )
+    critical: bool = Field(default=False, description="Key claim for the verdict")
 
     @model_validator(mode="after")
     def _unknown_needs_diligence_type(self) -> Claim:
@@ -239,7 +273,7 @@ class Range(_Model):
 
 
 class GateResult(_Model):
-    gate_id: str  # K1..K5 (hard), S1..S6 (soft)
+    gate_id: GateId
     kind: Literal["hard", "soft"]
     fired: bool
     claim_ids: list[str] = Field(default_factory=list)

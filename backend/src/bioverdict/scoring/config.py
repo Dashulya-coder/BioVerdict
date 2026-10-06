@@ -56,3 +56,16 @@ class ConfidenceConfig(BaseModel):
     sparse_threshold: float = 0.5  # sum |w| below it: "too little data"
     contested_threshold: float = 0.8  # both sums above it: contested
     missing_link_threshold: float = 0.4  # chain link below it is a missing link
+
+
+class VerdictConfig(BaseModel):
+    """Thresholds of the verdict rule. Set after the eval run, not before."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    t_gate: float = 0.6  # a gate fires only on a claim at least this confident
+    t_near: float = 0.4  # below t_gate but above this: "almost fired", shown to the user
+    chain_min: float = 0.5  # Invest needs chain probability >= this
+    key_claim_min: float = 0.7  # Invest needs every critical claim >= this
+    rnpv_p50_min: float = 0.0  # Invest needs rNPV P50 above this
+    no_critical_confidence: float = 0.3  # verdict confidence when no claim is marked critical
