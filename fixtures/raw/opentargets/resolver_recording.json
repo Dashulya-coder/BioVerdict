@@ -1,0 +1,4515 @@
+{
+ "037f43c67a6feab6be26c90cf1b1261b81e879267277a4c04f702d6f304e2f32": {
+  "answer": {
+   "data": {
+    "diseases": [
+     {
+      "id": "EFO_0803536",
+      "name": "multiple sclerosis symptom measurement",
+      "synonyms": [
+       {
+        "terms": [
+         "multiple sclerosis",
+         "Disseminated Sclerosis",
+         "MS",
+         "MS (Multiple Sclerosis)",
+         "MULTIPLE SCLEROSIS ACUTE FULMINATING",
+         "Multiple Sclerosis, Acute Fulminating",
+         "Sclerosis, Disseminated",
+         "Sclerosis, Multiple"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": [
+         "generalised multiple sclerosis",
+         "generalized multiple sclerosis"
+        ]
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0005284",
+      "name": "chronic progressive multiple sclerosis",
+      "synonyms": [
+       {
+        "terms": [
+         "MS CHRONIC PROGRESSIVE",
+         "MULTIPLE SCLEROSIS SECOND PROGRESSIVE",
+         "Multiple Sclerosis, Chronic Progressive",
+         "Multiple Sclerosis, Primary Progressive",
+         "Multiple Sclerosis, Progressive Relapsing",
+         "Multiple Sclerosis, Remittent Progressive",
+         "Multiple Sclerosis, Secondary Progressive",
+         "Primary Progressive Multiple Sclerosis",
+         "Progressive Relapsing Multiple Sclerosis",
+         "Remittent Progressive Multiple Sclerosis",
+         "SECOND PROGRESSIVE MULTIPLE SCLEROSIS",
+         "Secondary Progressive Multiple Sclerosis"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0005314",
+      "name": "relapsing-remitting multiple sclerosis",
+      "synonyms": [
+       {
+        "terms": [
+         "Acute Relapsing Multiple Sclerosis",
+         "MS RELAPSING REMITTING",
+         "Multiple Sclerosis, Acute Relapsing",
+         "Multiple Sclerosis, Relapsing Remitting",
+         "Multiple Sclerosis, Relapsing-Remitting",
+         "Multiple Sclerosis, Remitting-Relapsing",
+         "Relapsing Remitting Multiple Sclerosis",
+         "Remitting Relapsing Multiple Sclerosis",
+         "Remitting-Relapsing Multiple Sclerosis"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0017837",
+      "name": "multiple sclerosis-ichthyosis-factor VIII deficiency syndrome",
+      "synonyms": [
+       {
+        "terms": [
+         "Multiple sclerosis - ichthyosis - factor VIII deficiency"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0000451",
+      "name": "primary progressive multiple sclerosis",
+      "synonyms": [
+       {
+        "terms": [
+         "multiple sclerosis primary progressive",
+         "primary-progressive multiple sclerosis"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0000450",
+      "name": "secondary progressive multiple sclerosis",
+      "synonyms": [
+       {
+        "terms": [
+         "SPMS",
+         "secondary-progressive MS",
+         "multiple sclerosis secondary progressive",
+         "secondary-progressive multiple sclerosis"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0008612",
+      "name": "tuberous sclerosis 1",
+      "synonyms": [
+       {
+        "terms": [
+         "TSC1 tuberous sclerosis",
+         "TSC1-related tuberous sclerosis",
+         "tuberous sclerosis 1",
+         "tuberous sclerosis caused by mutation in TSC1",
+         "tuberous sclerosis type 1",
+         "tuberous sclerosis-1"
+        ]
+       },
+       {
+        "terms": [
+         "TSC1",
+         "tuberous sclerosis, type 1"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0010856",
+      "name": "autosomal dominant polycystic kidney disease type 1 with tuberous sclerosis",
+      "synonyms": [
+       {
+        "terms": [
+         "tuberous sclerosis/polycystic kidney disease contiguous gene syndrome"
+        ]
+       },
+       {
+        "terms": [
+         "PKDTS",
+         "polycystic kidney disease, infantile severe, with tuberous sclerosis",
+         "polycystic kidneys, severe infantile with tuberous sclerosis",
+         "tuberous sclerosis polycystic kidney disease contiguous gene syndrome"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0013199",
+      "name": "tuberous sclerosis 2",
+      "synonyms": [
+       {
+        "terms": [
+         "TSC2-related tuberous sclerosis",
+         "tuberous sclerosis 2",
+         "tuberous sclerosis type 2",
+         "tuberous sclerosis-2"
+        ]
+       },
+       {
+        "terms": [
+         "TSC2",
+         "tuberous sclerosis, type 2"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "HP_0001967",
+      "name": "Diffuse mesangial sclerosis",
+      "synonyms": [
+       {
+        "terms": [
+         "Diffuse mesangial sclerosis glomerulopathy",
+         "Mesangial sclerosis"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  diseases(efoIds: $ids) {\n    id name\n    synonyms { terms }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "EFO_0803536",
+     "MONDO_0005284",
+     "MONDO_0005314",
+     "MONDO_0017837",
+     "MONDO_0000451",
+     "MONDO_0000450",
+     "MONDO_0008612",
+     "MONDO_0010856",
+     "MONDO_0013199",
+     "HP_0001967"
+    ]
+   }
+  }
+ },
+ "0a1d74d35f325ec85b6da0644f9364a8eed2db625e6a14f784c4aeb34fb573c6": {
+  "answer": {
+   "data": {
+    "drugs": [
+     {
+      "childMolecules": [],
+      "drugType": "Small molecule",
+      "id": "CHEMBL5314604",
+      "maximumClinicalStage": "UNKNOWN",
+      "name": "DIVARASIB ADIPATE",
+      "parentMolecule": {
+       "id": "CHEMBL5095236"
+      },
+      "synonyms": [
+       {
+        "label": "Divarasib adipate"
+       },
+       {
+        "label": "GDC-6036 ADIPATE"
+       },
+       {
+        "label": "RG-6330 ADIPATE"
+       },
+       {
+        "label": "RG6330 ADIPATE"
+       },
+       {
+        "label": "RO-7435846 ADIPATE"
+       },
+       {
+        "label": "RO7435846 ADIPATE"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  drugs(chemblIds: $ids) {\n    id name drugType maximumClinicalStage\n    synonyms { label }\n    parentMolecule { id }\n    childMolecules { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "CHEMBL5314604"
+    ]
+   }
+  }
+ },
+ "17c4b1b426dc81ad81cd25fdb3448a8cc7afc3341b862a7b242819ad579a6a2e": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "MONDO_0005233",
+       "name": "non-small cell lung carcinoma"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "disease",
+    "name": "NSCLC",
+    "size": 10
+   }
+  }
+ },
+ "1d36b4f28f589dc85d1bec5736734797768e6ea5a3abe439d03e64f5b2310d8b": {
+  "answer": {
+   "data": {
+    "targets": [
+     {
+      "approvedSymbol": "KRAS",
+      "id": "ENSG00000133703",
+      "proteinIds": [
+       {
+        "id": "P01116",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "A0A8I5KQ21",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0A8I5KQU3",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0A8I5KR86",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0A8I5KUB5",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0A8I5KXN3",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0A8I5KYH6",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0ABF7PHA5",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "G3V4K2",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "G3V5T7",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "L7RSL8",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "ENSP00000256078",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000308495",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000451856",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000452512",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000508568",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000508921",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000509223",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000509238",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000509798",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000510254",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000510431",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000510479",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000510511",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000564214",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000610481",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000652769",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000652770",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000652771",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000652772",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000693813",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000754677",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000754678",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000754679",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000772706",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000772707",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000776644",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000776645",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000802803",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000805991",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "A8K8Z5",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "B0LPF9",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "P01118",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q96D10",
+        "source": "uniprot_obsolete"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "GTPase KRas"
+       },
+       {
+        "label": "GTPase KRas, N-terminally processed"
+       },
+       {
+        "label": "KRAS"
+       },
+       {
+        "label": "KRAS2"
+       },
+       {
+        "label": "RASK2"
+       },
+       {
+        "label": "KRAS1"
+       },
+       {
+        "label": "K-Ras4B"
+       },
+       {
+        "label": "K-Ras 2"
+       },
+       {
+        "label": "Ki-Ras"
+       },
+       {
+        "label": "c-K-ras"
+       },
+       {
+        "label": "c-Ki-ras"
+       },
+       {
+        "label": "'C-K-RAS"
+       },
+       {
+        "label": "C-K-RAS"
+       },
+       {
+        "label": "CFC2"
+       },
+       {
+        "label": "K-RAS2A"
+       },
+       {
+        "label": "K-RAS2B"
+       },
+       {
+        "label": "K-RAS4A"
+       },
+       {
+        "label": "K-RAS4B"
+       },
+       {
+        "label": "K-Ras"
+       },
+       {
+        "label": "K-Ras 2"
+       },
+       {
+        "label": "KI-RAS"
+       },
+       {
+        "label": "KRAS1"
+       },
+       {
+        "label": "KRAS2"
+       },
+       {
+        "label": "NS"
+       },
+       {
+        "label": "NS3"
+       },
+       {
+        "label": "OES"
+       },
+       {
+        "label": "RALD"
+       },
+       {
+        "label": "RALD2"
+       },
+       {
+        "label": "RASK2"
+       },
+       {
+        "label": "c-Ki-ras"
+       },
+       {
+        "label": "c-Ki-ras2"
+       },
+       {
+        "label": "GTPase KRas"
+       },
+       {
+        "label": "K-ras p21 protein"
+       },
+       {
+        "label": "KRAS-ENOPH fusion"
+       },
+       {
+        "label": "Kirsten rat sarcoma viral oncogene homolog"
+       },
+       {
+        "label": "Kirsten rat sarcoma viral proto-oncogene"
+       },
+       {
+        "label": "Kras-Enoph1 fusion protein"
+       },
+       {
+        "label": "PR310 c-K-ras oncogene"
+       },
+       {
+        "label": "c-Kirsten-ras protein"
+       },
+       {
+        "label": "cellular c-Ki-ras2 proto-oncogene"
+       },
+       {
+        "label": "cellular transforming proto-oncogene"
+       },
+       {
+        "label": "oncogene KRAS2"
+       },
+       {
+        "label": "proto-oncogene GTPase"
+       },
+       {
+        "label": "transforming protein p21"
+       },
+       {
+        "label": "v-Ki-ras2 Kirsten rat sarcoma 2 viral oncogene homolog"
+       },
+       {
+        "label": "KRAS"
+       }
+      ]
+     },
+     {
+      "approvedSymbol": "KRASP1",
+      "id": "ENSG00000220635",
+      "proteinIds": [],
+      "synonyms": []
+     },
+     {
+      "approvedSymbol": "NCBP2AS2",
+      "id": "ENSG00000270170",
+      "proteinIds": [
+       {
+        "id": "Q69YL0",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "ENSP00000488305",
+        "source": "ensembl_PRO"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "Protein NCBP2AS2"
+       },
+       {
+        "label": "NCBP2AS2"
+       },
+       {
+        "label": "HIAR"
+       },
+       {
+        "label": "HIAR"
+       },
+       {
+        "label": "KRASIM"
+       },
+       {
+        "label": "Hypoxia-induced angiogenesis regulator"
+       },
+       {
+        "label": "NCBP2 antisense gene protein 2"
+       },
+       {
+        "label": "hypoxia-induced angiogenesis regulator"
+       },
+       {
+        "label": "KRAS-interacting microprotein"
+       },
+       {
+        "label": "HIAR"
+       },
+       {
+        "label": "KRASIM"
+       },
+       {
+        "label": "NCBP2-AS2"
+       },
+       {
+        "label": "protein NCBP2AS2"
+       },
+       {
+        "label": "KRAS-interacting microprotein"
+       },
+       {
+        "label": "NCBP2 antisense RNA 2 (head to head)"
+       },
+       {
+        "label": "NCBP2 antisense gene protein 2"
+       },
+       {
+        "label": "hypoxia-induced angiogenesis regulator"
+       },
+       {
+        "label": "NCBP2AS2"
+       }
+      ]
+     },
+     {
+      "approvedSymbol": "SSPN",
+      "id": "ENSG00000123096",
+      "proteinIds": [
+       {
+        "id": "Q14714",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "F5H0K2",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "F5H381",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "ENSP00000242729",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000396087",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000438801",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000442893",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000445360",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000528082",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000712516",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000802292",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "B3KS67",
+        "source": "uniprot_obsolete"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "Sarcospan"
+       },
+       {
+        "label": "SSPN"
+       },
+       {
+        "label": "KRAG"
+       },
+       {
+        "label": "SPN1"
+       },
+       {
+        "label": "SPN2"
+       },
+       {
+        "label": "K-ras oncogene-associated protein"
+       },
+       {
+        "label": "Kirsten-ras-associated protein"
+       },
+       {
+        "label": "DAGA5"
+       },
+       {
+        "label": "KRAG"
+       },
+       {
+        "label": "NSPN"
+       },
+       {
+        "label": "SPN1"
+       },
+       {
+        "label": "SPN2"
+       },
+       {
+        "label": "sarcospan"
+       },
+       {
+        "label": "K-ras oncogene-associated protein"
+       },
+       {
+        "label": "Kras oncogene-associated"
+       },
+       {
+        "label": "kirsten-ras-associated protein"
+       },
+       {
+        "label": "microspan"
+       },
+       {
+        "label": "nanospan"
+       },
+       {
+        "label": "sarcospan (Kras oncogene-associated gene)"
+       },
+       {
+        "label": "SSPN"
+       }
+      ]
+     },
+     {
+      "approvedSymbol": "ITPRID2",
+      "id": "ENSG00000138434",
+      "proteinIds": [
+       {
+        "id": "P28290",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "E7EUL7",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "E9PHV5",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "F2Z295",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "H7BZ26",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "ENSP00000314669",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000386916",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000387319",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000387420",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000388731",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000392049",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000403754",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000415625",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000656918",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000656919",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000656920",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000656921",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708880",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708881",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708882",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708883",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708884",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708885",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708886",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708887",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708888",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708889",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708890",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708891",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708892",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708893",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708894",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708895",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708896",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708897",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708898",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708899",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708900",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000708901",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000780939",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000785059",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000797107",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000812506",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "A8K6T0",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q68DA6",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q7Z7L2",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q8N1L3",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q8N263",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q8N7H2",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q8NEN5",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q96E36",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q96PW1",
+        "source": "uniprot_obsolete"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "Protein ITPRID2"
+       },
+       {
+        "label": "CS-1"
+       },
+       {
+        "label": "ITPRID2"
+       },
+       {
+        "label": "CS1"
+       },
+       {
+        "label": "KIAA1927"
+       },
+       {
+        "label": "KRAP"
+       },
+       {
+        "label": "SSFA2"
+       },
+       {
+        "label": "CS-1"
+       },
+       {
+        "label": "SPAG13"
+       },
+       {
+        "label": "KRAP"
+       },
+       {
+        "label": "KIAA1927"
+       },
+       {
+        "label": "Cleavage signal-1 protein"
+       },
+       {
+        "label": "ITPR-interacting domain-containing protein 2"
+       },
+       {
+        "label": "Ki-ras-induced actin-interacting protein"
+       },
+       {
+        "label": "Sperm-specific antigen 2"
+       },
+       {
+        "label": "cleavage signal-1 protein"
+       },
+       {
+        "label": "KRAS-induced actin-interacting protein"
+       },
+       {
+        "label": "sperm associated antigen 13"
+       },
+       {
+        "label": "CS-1"
+       },
+       {
+        "label": "CS1"
+       },
+       {
+        "label": "KRAP"
+       },
+       {
+        "label": "SPAG13"
+       },
+       {
+        "label": "SSFA2"
+       },
+       {
+        "label": "protein ITPRID2"
+       },
+       {
+        "label": "ITPR-interacting domain-containing protein 2"
+       },
+       {
+        "label": "KRAS-induced actin-interacting protein"
+       },
+       {
+        "label": "cleavage signal-1 protein"
+       },
+       {
+        "label": "ki-ras-induced actin-interacting protein"
+       },
+       {
+        "label": "sperm associated antigen 13"
+       },
+       {
+        "label": "sperm specific antigen 2"
+       },
+       {
+        "label": "ITPRID2"
+       }
+      ]
+     },
+     {
+      "approvedSymbol": "APBB1",
+      "id": "ENSG00000166313",
+      "proteinIds": [
+       {
+        "id": "O00213",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "A0A075B7G8",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "V9GY97",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "V9GYD5",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "V9GYR7",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "ENSP00000299402",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000311912",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000433338",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000476442",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000476536",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000476646",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000476647",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000476776",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000476846",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000476871",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000477022",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000477069",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000477213",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000575217",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000575218",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000575219",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000575220",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000575221",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000616582",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000616583",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000616584",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000616585",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000616586",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000616587",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000671591",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000671592",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714410",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714411",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714412",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714413",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714415",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714416",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714417",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714419",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714422",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714423",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714426",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714427",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714429",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714430",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714432",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714433",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714436",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714438",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714439",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714441",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000736612",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000785157",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000814557",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "A1E379",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "A6NH82",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "A6NL69",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "B7Z1J5",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "B7Z1J6",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "B7Z2Y0",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "D3DQT2",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q7Z324",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q96A93",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "V9GYK0",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "V9GYT4",
+        "source": "uniprot_obsolete"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "Amyloid beta precursor protein binding family B member 1"
+       },
+       {
+        "label": "APBB1"
+       },
+       {
+        "label": "FE65"
+       },
+       {
+        "label": "RIR"
+       },
+       {
+        "label": "Fe65"
+       },
+       {
+        "label": "Amyloid-beta A4 precursor protein-binding family B member 1"
+       },
+       {
+        "label": "Protein Fe65"
+       },
+       {
+        "label": "FE65"
+       },
+       {
+        "label": "MGC:9072"
+       },
+       {
+        "label": "RIR"
+       },
+       {
+        "label": "amyloid beta precursor protein binding family B member 1"
+       },
+       {
+        "label": "adaptor protein FE65a2"
+       },
+       {
+        "label": "amyloid beta (A4) precursor protein-binding, family B, member 1 (Fe65)"
+       },
+       {
+        "label": "stat-like protein"
+       },
+       {
+        "label": "APBB1"
+       }
+      ]
+     },
+     {
+      "approvedSymbol": "ETFRF1",
+      "id": "ENSG00000205707",
+      "proteinIds": [
+       {
+        "id": "Q6IPR1",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "G3V332",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "G3V427",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "G3V4R2",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "G3V521",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "ENSP00000370761",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000450443",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000450584",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000451008",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000451550",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000451938",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000452130",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000452146",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000452580",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000548687",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000548688",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000548689",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000548690",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000548691",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000548692",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000548693",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000548694",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000548695",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000548696",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000548697",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000548698",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000608270",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000642180",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000642181",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000642182",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000754724",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000772727",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000772728",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000772729",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000811231",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "J3KPI7",
+        "source": "uniprot_obsolete"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "Electron transfer flavoprotein regulatory factor 1"
+       },
+       {
+        "label": "ETFRF1"
+       },
+       {
+        "label": "LYRM5"
+       },
+       {
+        "label": "LYR motif-containing protein 5"
+       },
+       {
+        "label": "LYRM5"
+       },
+       {
+        "label": "electron transfer flavoprotein regulatory factor 1"
+       },
+       {
+        "label": "LYR motif containing 5"
+       },
+       {
+        "label": "LYR motif-containing protein 5"
+       },
+       {
+        "label": "ETFRF1"
+       }
+      ]
+     },
+     {
+      "approvedSymbol": "ENSG00000275197",
+      "id": "ENSG00000275197",
+      "proteinIds": [],
+      "synonyms": []
+     },
+     {
+      "approvedSymbol": "ENSG00000274987",
+      "id": "ENSG00000274987",
+      "proteinIds": [],
+      "synonyms": []
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  targets(ensemblIds: $ids) {\n    id approvedSymbol\n    synonyms { label }\n    proteinIds { id source }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "ENSG00000133703",
+     "ENSG00000220635",
+     "ENSG00000270170",
+     "ENSG00000123096",
+     "ENSG00000138434",
+     "ENSG00000166313",
+     "ENSG00000205707",
+     "ENSG00000275197",
+     "ENSG00000274987"
+    ]
+   }
+  }
+ },
+ "209366fb7c9a67fc08d565d7d3a8858f4f7954743f610ba7cf8964d4796426ad": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "ENSG00000133703",
+       "name": "KRAS"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "target",
+    "name": "KRAS2",
+    "size": 10
+   }
+  }
+ },
+ "238cce57efe06be31629e67a8906b20f132afd4e582b4c0b91e027750dbca1c0": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "MONDO_0005044",
+       "name": "hypertensive disorder"
+      },
+      {
+       "id": "MONDO_0015924",
+       "name": "pulmonary arterial hypertension"
+      },
+      {
+       "id": "MONDO_0007781",
+       "name": "essential hypertension, genetic"
+      },
+      {
+       "id": "MONDO_0001134",
+       "name": "essential hypertension"
+      },
+      {
+       "id": "EFO_0009197",
+       "name": "Pulmonary arterial hypertension associated with portal hypertension"
+      },
+      {
+       "id": "MONDO_0017148",
+       "name": "heritable pulmonary arterial hypertension"
+      },
+      {
+       "id": "MONDO_0007211",
+       "name": "brachydactyly-arterial hypertension syndrome"
+      },
+      {
+       "id": "MONDO_0024664",
+       "name": "hypertension, pregnancy-induced"
+      },
+      {
+       "id": "MONDO_0006846",
+       "name": "malignant hypertension"
+      },
+      {
+       "id": "EFO_0009054",
+       "name": "Pulmonary arterial hypertension associated with congenital heart disease"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "disease",
+    "name": "hypertension",
+    "size": 10
+   }
+  }
+ },
+ "256e707b227619645ccf1439b21fbad5e58ca257f41b9f9599b4a68cd145e640": {
+  "answer": {
+   "data": {
+    "diseases": [
+     {
+      "id": "MONDO_0004975",
+      "name": "Alzheimer disease",
+      "synonyms": [
+       {
+        "terms": [
+         "AD",
+         "Alzheimer dementia",
+         "Alzheimer disease",
+         "Alzheimer's dementia",
+         "Alzheimer's disease",
+         "Alzheimers disease",
+         "presenile and senile dementia",
+         "AD - Alzheimer's disease",
+         "ALZHEIMER DIS",
+         "ALZHEIMERS DIS",
+         "Alzheimer Dementia, Presenile",
+         "Alzheimer Type Dementia",
+         "Alzheimer's",
+         "Alzheimer's disease (disorder)",
+         "Alzheimer's disease, NOS",
+         "Alzheimers",
+         "Alzheimers Dementia",
+         "DAT - Dementia Alzheimer's type",
+         "Dementia in Alzheimer's disease",
+         "Dementia in Alzheimer's disease (disorder)",
+         "Dementia in Alzheimer's disease, unspecified (disorder)",
+         "Dementia of the Alzheimer's type",
+         "Dementia, Alzheimer Type",
+         "Dementia, Presenile",
+         "Dementia, Presenile Alzheimer",
+         "Disease, Alzheimer",
+         "Disease, Alzheimer's",
+         "Presenile Alzheimer Dementia",
+         "[X]Dementia in Alzheimer's disease",
+         "[X]Dementia in Alzheimer's disease (disorder)",
+         "sporadic Alzheimer's disease"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": [
+         "Alzheimer disease, familial"
+        ]
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "EFO_0006514",
+      "name": "Alzheimer's disease biomarker measurement",
+      "synonyms": [
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "EFO_0006801",
+      "name": "Alzheimer's disease neuropathologic change",
+      "synonyms": [
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0011913",
+      "name": "Alzheimer disease 3",
+      "synonyms": [
+       {
+        "terms": [
+         "AD3",
+         "Alzheimer disease 3",
+         "Alzheimer disease type 3",
+         "Alzheimer disease, protection against, due to APOE3-Christchurch",
+         "Alzheimer disease, type 3",
+         "Alzheimer disease, type 3, with spastic paraparesis and apraxia",
+         "Alzheimer disease, type 3, with spastic paraparesis and unusual plaques",
+         "Alzheimer's disease 3",
+         "Alzheimer's disease type 3",
+         "PSEN1 early-onset autosomal dominant Alzheimer disease",
+         "early-onset autosomal dominant Alzheimer disease caused by mutation in PSEN1",
+         "familial Alzheimer disease, type 3",
+         "familial Alzheimer's disease, type 3"
+        ]
+       },
+       {
+        "terms": [
+         "AD",
+         "Alzheimer disease early onset type 3"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "EFO_0022957",
+      "name": "early-onset Alzheimers disease",
+      "synonyms": [
+       {
+        "terms": [
+         "early onset Alzheimer's disease",
+         "early-onset Alzheimer's"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "EFO_1001870",
+      "name": "late-onset Alzheimers disease",
+      "synonyms": [
+       {
+        "terms": [
+         "Alzheimer Senile Dementia",
+         "Alzheimer Type Senile Dementia",
+         "Senile Dementia, Alzheimer Type",
+         "late-onset Alzheimer's"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0014265",
+      "name": "Alzheimer disease 18",
+      "synonyms": [
+       {
+        "terms": [
+         "AD18",
+         "ADAM10 Alzheimer disease",
+         "Alzheimer disease 18",
+         "Alzheimer disease caused by mutation in ADAM10",
+         "Alzheimer disease type 18",
+         "Alzheimer's disease 18",
+         "Alzheimer's disease type 18"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0001627",
+      "name": "dementia",
+      "synonyms": [
+       {
+        "terms": [
+         "dementia",
+         "dementia (disease)",
+         "Dementia, progressive",
+         "Progressive dementia"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "EFO_0006798",
+      "name": "neuritic plaque measurement",
+      "synonyms": [
+       {
+        "terms": [
+         "senile plaque measurement"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0017948",
+      "name": "ABetaA21G amyloidosis",
+      "synonyms": [
+       {
+        "terms": [
+         "ABeta amyloidosis, Flemish type",
+         "ABetaA21G-related amyloidosis",
+         "HCHWA, Flemish type",
+         "cerebral amyloid angiopathy, APP-related, Flemish variant",
+         "hereditary cerebral haemorrhage with amyloidosis, Flemish type",
+         "hereditary cerebral hemorrhage with amyloidosis, Flemish type"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  diseases(efoIds: $ids) {\n    id name\n    synonyms { terms }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "MONDO_0004975",
+     "EFO_0006514",
+     "EFO_0006801",
+     "MONDO_0011913",
+     "EFO_0022957",
+     "EFO_1001870",
+     "MONDO_0014265",
+     "MONDO_0001627",
+     "EFO_0006798",
+     "MONDO_0017948"
+    ]
+   }
+  }
+ },
+ "26798dc419f650c00d8d6236e4473d194a84d4fea6376304eb3d67a309e70dd4": {
+  "answer": {
+   "data": {
+    "diseases": [
+     {
+      "id": "MONDO_0006559",
+      "name": "hidradenitis suppurativa",
+      "synonyms": [
+       {
+        "terms": [
+         "acne inversa",
+         "ectopic acne",
+         "fox den disease",
+         "hidradenitis suppurativa",
+         "pyoderma fistulans significa",
+         "verneuil disease",
+         "Acne inversa, familial",
+         "HS",
+         "hidradenitis"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": [
+         "acne inversa, familial"
+        ]
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0024516",
+      "name": "familial acne inversa",
+      "synonyms": [
+       {
+        "terms": [
+         "ACNINV",
+         "familial hidradenitis suppurativa",
+         "hereditary hidradenitis suppurativa"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  diseases(efoIds: $ids) {\n    id name\n    synonyms { terms }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "MONDO_0006559",
+     "MONDO_0024516"
+    ]
+   }
+  }
+ },
+ "303f1c61999653e886dacca8494371bafbc4f3f75a9d889f0e5104c81b6fc04d": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "CHEMBL5569030",
+       "name": "KT-474"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "drug",
+    "name": "SAR444656",
+    "size": 10
+   }
+  }
+ },
+ "3b2ed8f3211a29123b52e7be0c4f8a101163201bf6a9283881d9015fd898d075": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "CHEMBL6068612",
+       "name": "OBUDANERSEN SODIUM"
+      },
+      {
+       "id": "CHEMBL6068484",
+       "name": "OBUDANERSEN"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "drug",
+    "name": "ION582",
+    "size": 10
+   }
+  }
+ },
+ "3b9aabf9c904037b206984ffb1a84faee63c3242d58f55405c24b7935cfbd875": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "MONDO_0011122",
+       "name": "obesity disorder"
+      },
+      {
+       "id": "MONDO_0019182",
+       "name": "inherited obesity"
+      },
+      {
+       "id": "MONDO_0005139",
+       "name": "morbid obesity"
+      },
+      {
+       "id": "MONDO_0013991",
+       "name": "obesity due to congenital leptin deficiency"
+      },
+      {
+       "id": "MONDO_0012335",
+       "name": "obesity due to pro-opiomelanocortin deficiency"
+      },
+      {
+       "id": "MONDO_0010961",
+       "name": "obesity due to prohormone convertase I deficiency"
+      },
+      {
+       "id": "MONDO_0019115",
+       "name": "obesity due to melanocortin 4 receptor deficiency"
+      },
+      {
+       "id": "MONDO_0019506",
+       "name": "obesity-colitis-hypothyroidism-cardiac hypertrophy-developmental delay syndrome"
+      },
+      {
+       "id": "MONDO_0017408",
+       "name": "rapid-onset childhood obesity-hypothalamic dysfunction-hypoventilation-autonomic dysregulation syndrome"
+      },
+      {
+       "id": "MONDO_0015198",
+       "name": "aniridia-ptosis-intellectual disability-familial obesity syndrome"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "disease",
+    "name": "obesity",
+    "size": 10
+   }
+  }
+ },
+ "410fceda09b7d9b4cfe22ee8bd647f6f15e6e851e96f2b8da66f79ee2ee76110": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": []
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "drug",
+    "name": "MariTide",
+    "size": 10
+   }
+  }
+ },
+ "464876d166cd2f06c49c39bd4df466875f4e520d10533dfe7c9b461929fd1cfa": {
+  "answer": {
+   "data": {
+    "targets": [
+     {
+      "approvedSymbol": "WRN",
+      "id": "ENSG00000165392",
+      "proteinIds": [
+       {
+        "id": "Q14191",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "A0A494C0M3",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0A494C0Y6",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "ENSP00000298139",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000498593",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000498779",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000530342",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000530343",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000530344",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000530345",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000598092",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000598093",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000636234",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000636235",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000721818",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000743899",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000743900",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000743901",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000785788",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000785789",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000798619",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "A1KYY9",
+        "source": "uniprot_obsolete"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "Bifunctional 3'-5' exonuclease/ATP-dependent helicase WRN"
+       },
+       {
+        "label": "3'-5' exonuclease"
+       },
+       {
+        "label": "ATP-dependent helicase"
+       },
+       {
+        "label": "WRN"
+       },
+       {
+        "label": "RECQ3"
+       },
+       {
+        "label": "RECQL2"
+       },
+       {
+        "label": "RECQL2"
+       },
+       {
+        "label": "RECQ3"
+       },
+       {
+        "label": "DNA helicase, RecQ-like type 3"
+       },
+       {
+        "label": "RecQ protein-like 2"
+       },
+       {
+        "label": "Werner syndrome protein"
+       },
+       {
+        "label": "DNA 3'-5' helicase WRN"
+       },
+       {
+        "label": "RECQ3"
+       },
+       {
+        "label": "RECQL2"
+       },
+       {
+        "label": "RECQL3"
+       },
+       {
+        "label": "bifunctional 3'-5' exonuclease/ATP-dependent helicase WRN"
+       },
+       {
+        "label": "DNA helicase, RecQ-like type 3"
+       },
+       {
+        "label": "Werner syndrome ATP-dependent helicase"
+       },
+       {
+        "label": "Werner syndrome RecQ like helicase"
+       },
+       {
+        "label": "Werner syndrome protein"
+       },
+       {
+        "label": "Werner syndrome, RecQ helicase-like"
+       },
+       {
+        "label": "exonuclease WRN"
+       },
+       {
+        "label": "recQ protein-like 2"
+       },
+       {
+        "label": "WRN"
+       }
+      ]
+     },
+     {
+      "approvedSymbol": "WRNIP1",
+      "id": "ENSG00000124535",
+      "proteinIds": [
+       {
+        "id": "Q96S55",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "ENSP00000370141",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000370146",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000370148",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000370150",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000477551",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000592121",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000592122",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645159",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645160",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000645161",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000693518",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000693520",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000693521",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000693522",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000737770",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000779047",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000787247",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000797772",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000797773",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000797774",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000811168",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "B2RDB0",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q53EP6",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q59ET8",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q5W0E2",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q5W0E4",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q8WV26",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q9H681",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q9NRJ6",
+        "source": "uniprot_obsolete"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "ATPase WRNIP1"
+       },
+       {
+        "label": "WRNIP1"
+       },
+       {
+        "label": "WHIP"
+       },
+       {
+        "label": "WHIP"
+       },
+       {
+        "label": "FLJ22526"
+       },
+       {
+        "label": "bA420G6.2"
+       },
+       {
+        "label": "FAP93"
+       },
+       {
+        "label": "CFAP93"
+       },
+       {
+        "label": "Werner helicase-interacting protein 1"
+       },
+       {
+        "label": "CFAP93"
+       },
+       {
+        "label": "FAP93"
+       },
+       {
+        "label": "WHIP"
+       },
+       {
+        "label": "bA420G6.2"
+       },
+       {
+        "label": "ATPase WRNIP1"
+       },
+       {
+        "label": "Werner helicase interacting protein 1"
+       },
+       {
+        "label": "putative helicase RUVBL"
+       },
+       {
+        "label": "WRNIP1"
+       }
+      ]
+     },
+     {
+      "approvedSymbol": "WRN-AS1",
+      "id": "ENSG00000253961",
+      "proteinIds": [],
+      "synonyms": []
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  targets(ensemblIds: $ids) {\n    id approvedSymbol\n    synonyms { label }\n    proteinIds { id source }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "ENSG00000165392",
+     "ENSG00000124535",
+     "ENSG00000253961"
+    ]
+   }
+  }
+ },
+ "481e19ddbc93811b71d8de4c64c10ca12e98558d130b49a7eb3079db93e5d3d6": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "ENSG00000133703",
+       "name": "KRAS"
+      },
+      {
+       "id": "ENSG00000220635",
+       "name": "KRASP1"
+      },
+      {
+       "id": "ENSG00000270170",
+       "name": "NCBP2AS2"
+      },
+      {
+       "id": "ENSG00000123096",
+       "name": "SSPN"
+      },
+      {
+       "id": "ENSG00000138434",
+       "name": "ITPRID2"
+      },
+      {
+       "id": "ENSG00000166313",
+       "name": "APBB1"
+      },
+      {
+       "id": "ENSG00000205707",
+       "name": "ETFRF1"
+      },
+      {
+       "id": "ENSG00000275197",
+       "name": "ENSG00000275197"
+      },
+      {
+       "id": "ENSG00000274987",
+       "name": "ENSG00000274987"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "target",
+    "name": "KRAS",
+    "size": 10
+   }
+  }
+ },
+ "49833c3c8e91429b628382acc7846c382f8781c09598f7dd9803b01ba83c07cf": {
+  "answer": {
+   "data": {
+    "drugs": [
+     {
+      "childMolecules": [],
+      "drugType": "Small molecule",
+      "id": "CHEMBL6068555",
+      "maximumClinicalStage": "PHASE_1",
+      "name": "HRO-761",
+      "parentMolecule": null,
+      "synonyms": [
+       {
+        "label": "HRO-761"
+       },
+       {
+        "label": "HRO761"
+       },
+       {
+        "label": "Hro-761"
+       },
+       {
+        "label": "Hro761"
+       },
+       {
+        "label": "WERNER SYNDROME RECQ HELICASE-IN-1"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  drugs(chemblIds: $ids) {\n    id name drugType maximumClinicalStage\n    synonyms { label }\n    parentMolecule { id }\n    childMolecules { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "CHEMBL6068555"
+    ]
+   }
+  }
+ },
+ "5b50c19a939a5cc3e119a7d5e662b366cc6979e79733807f204e709ada5c5b09": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": []
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "drug",
+    "name": "elisrasib",
+    "size": 10
+   }
+  }
+ },
+ "699f1904ea450d13c650f617f828312d052dff904aa8fd7102562b5ef5aaacc8": {
+  "answer": {
+   "data": {
+    "diseases": [
+     {
+      "id": "MONDO_0011122",
+      "name": "obesity disorder",
+      "synonyms": [
+       {
+        "terms": [
+         "obesity",
+         "obesity disease",
+         "Having too much body fat",
+         "Adiposis",
+         "Adiposity",
+         "Obese",
+         "Obese (finding)",
+         "Obesity (disorder)",
+         "Obesity NOS",
+         "Obesity [Ambiguous]",
+         "Obesity, unspecified",
+         "Overweight and obesity"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0019182",
+      "name": "inherited obesity",
+      "synonyms": [
+       {
+        "terms": [
+         "genetic obesity",
+         "genetic obesity (disease)",
+         "leanness, inherited, autosomal recessive",
+         "monogenic obesity",
+         "obesity, association with, Autosomal recessive",
+         "obesity, early-onset, susceptibility to, Autosomal recessive",
+         "obesity, late-onset, Autosomal recessive",
+         "obesity, mild, early-onset, Autosomal recessive",
+         "obesity, severe, Autosomal recessive",
+         "obesity, severe, and type II diabetes, Autosomal recessive",
+         "obesity, susceptibility to, Autosomal recessive"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0005139",
+      "name": "morbid obesity",
+      "synonyms": [
+       {
+        "terms": [
+         "Morbid Obesities",
+         "Morbid obesity (disorder)",
+         "Obesities, Morbid",
+         "Obesity, Morbid",
+         "Severe obesity"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0013991",
+      "name": "obesity due to congenital leptin deficiency",
+      "synonyms": [
+       {
+        "terms": [
+         "Congenital Leptin Deficiency",
+         "obesity, morbid, due to leptin deficiency"
+        ]
+       },
+       {
+        "terms": [
+         "LEPD",
+         "leptin deficiency or dysfunction"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0012335",
+      "name": "obesity due to pro-opiomelanocortin deficiency",
+      "synonyms": [
+       {
+        "terms": [
+         "POMC Deficiency",
+         "POMC deficiency",
+         "obesity, adrenal insufficiency, and red hair due to POMC deficiency"
+        ]
+       },
+       {
+        "terms": [
+         "OBAIRH"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0010961",
+      "name": "obesity due to prohormone convertase I deficiency",
+      "synonyms": [
+       {
+        "terms": [
+         "PCI deficiency",
+         "PCSK1 Deficiency"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0019115",
+      "name": "obesity due to melanocortin 4 receptor deficiency",
+      "synonyms": [
+       {
+        "terms": [
+         "MC4R deficiency"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0019506",
+      "name": "obesity-colitis-hypothyroidism-cardiac hypertrophy-developmental delay syndrome",
+      "synonyms": [
+       {
+        "terms": [
+         "Obesity - colitis - hypothyroidism - cardiac hypertrophy - developmental delay"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0017408",
+      "name": "rapid-onset childhood obesity-hypothalamic dysfunction-hypoventilation-autonomic dysregulation syndrome",
+      "synonyms": [
+       {
+        "terms": [
+         "ROHHAD",
+         "ROHHAD syndrome",
+         "ROHHADNET",
+         "Rapid-onset Obesity with Hypothalamic Dysfunction, Hypoventilation, and Autonomic Dysregulation",
+         "rapid-onset childhood obesity-hypothalamic dysfunction-hypoventilation-autonomic dysregulation-neural tumors syndrome",
+         "rapid-onset childhood obesity-hypothalamic dysfunction-hypoventilation-autonomic dysregulation-neural tumours syndrome",
+         "rapid-onset obesity with hypothalamic dysfunction, hypoventilation, and autonomic dysregulation",
+         "rapid-onset obesity with hypothalamic dysfunction, hypoventilation, and autonomic dysregulation syndrome",
+         "Rapid-onset childhood obesity - hypothalamic dysfunction-hypoventilation-autonomic dysregulation - neural tumors",
+         "Rapid-onset childhood obesity - hypothalamic dysfunction - hypoventilation - autonomic dysregulation syndrome"
+        ]
+       },
+       {
+        "terms": [
+         "rapid-onset obesity with hypothalamic dysfunction, hypoventilation and autonomic dysregulation"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0015198",
+      "name": "aniridia-ptosis-intellectual disability-familial obesity syndrome",
+      "synonyms": [
+       {
+        "terms": [
+         "Aniridia - ptosis - intellectual disability - familial obesity"
+        ]
+       },
+       {
+        "terms": [
+         "aniridia - ptosis - intellectual disability - familial obesity"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  diseases(efoIds: $ids) {\n    id name\n    synonyms { terms }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "MONDO_0011122",
+     "MONDO_0019182",
+     "MONDO_0005139",
+     "MONDO_0013991",
+     "MONDO_0012335",
+     "MONDO_0010961",
+     "MONDO_0019115",
+     "MONDO_0019506",
+     "MONDO_0017408",
+     "MONDO_0015198"
+    ]
+   }
+  }
+ },
+ "6fdd8a886f10171423ee22bb2d1df9c29dc75e71b1521c64786a1580a773251f": {
+  "answer": {
+   "data": {
+    "drugs": [
+     {
+      "childMolecules": [
+       {
+        "id": "CHEMBL5314604"
+       }
+      ],
+      "drugType": "Small molecule",
+      "id": "CHEMBL5095236",
+      "maximumClinicalStage": "PHASE_3",
+      "name": "DIVARASIB",
+      "parentMolecule": null,
+      "synonyms": [
+       {
+        "label": "Divarasib"
+       },
+       {
+        "label": "GDC-6036"
+       },
+       {
+        "label": "Gdc 6036"
+       },
+       {
+        "label": "RG-6330"
+       },
+       {
+        "label": "RG6330"
+       },
+       {
+        "label": "RO-7435846"
+       },
+       {
+        "label": "RO7435846"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  drugs(chemblIds: $ids) {\n    id name drugType maximumClinicalStage\n    synonyms { label }\n    parentMolecule { id }\n    childMolecules { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "CHEMBL5095236"
+    ]
+   }
+  }
+ },
+ "83d639f864d2643b7a83f101e24c444c9f4638a96d762eb65cb5926bd9b4f5df": {
+  "answer": {
+   "data": {
+    "targets": [
+     {
+      "approvedSymbol": "KRAS",
+      "id": "ENSG00000133703",
+      "proteinIds": [
+       {
+        "id": "P01116",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "A0A8I5KQ21",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0A8I5KQU3",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0A8I5KR86",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0A8I5KUB5",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0A8I5KXN3",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0A8I5KYH6",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "A0ABF7PHA5",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "G3V4K2",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "G3V5T7",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "L7RSL8",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "ENSP00000256078",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000308495",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000451856",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000452512",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000508568",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000508921",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000509223",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000509238",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000509798",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000510254",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000510431",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000510479",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000510511",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000564214",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000610481",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000652769",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000652770",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000652771",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000652772",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000693813",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000754677",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000754678",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000754679",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000772706",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000772707",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000776644",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000776645",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000802803",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000805991",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "A8K8Z5",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "B0LPF9",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "P01118",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q96D10",
+        "source": "uniprot_obsolete"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "GTPase KRas"
+       },
+       {
+        "label": "GTPase KRas, N-terminally processed"
+       },
+       {
+        "label": "KRAS"
+       },
+       {
+        "label": "KRAS2"
+       },
+       {
+        "label": "RASK2"
+       },
+       {
+        "label": "KRAS1"
+       },
+       {
+        "label": "K-Ras4B"
+       },
+       {
+        "label": "K-Ras 2"
+       },
+       {
+        "label": "Ki-Ras"
+       },
+       {
+        "label": "c-K-ras"
+       },
+       {
+        "label": "c-Ki-ras"
+       },
+       {
+        "label": "'C-K-RAS"
+       },
+       {
+        "label": "C-K-RAS"
+       },
+       {
+        "label": "CFC2"
+       },
+       {
+        "label": "K-RAS2A"
+       },
+       {
+        "label": "K-RAS2B"
+       },
+       {
+        "label": "K-RAS4A"
+       },
+       {
+        "label": "K-RAS4B"
+       },
+       {
+        "label": "K-Ras"
+       },
+       {
+        "label": "K-Ras 2"
+       },
+       {
+        "label": "KI-RAS"
+       },
+       {
+        "label": "KRAS1"
+       },
+       {
+        "label": "KRAS2"
+       },
+       {
+        "label": "NS"
+       },
+       {
+        "label": "NS3"
+       },
+       {
+        "label": "OES"
+       },
+       {
+        "label": "RALD"
+       },
+       {
+        "label": "RALD2"
+       },
+       {
+        "label": "RASK2"
+       },
+       {
+        "label": "c-Ki-ras"
+       },
+       {
+        "label": "c-Ki-ras2"
+       },
+       {
+        "label": "GTPase KRas"
+       },
+       {
+        "label": "K-ras p21 protein"
+       },
+       {
+        "label": "KRAS-ENOPH fusion"
+       },
+       {
+        "label": "Kirsten rat sarcoma viral oncogene homolog"
+       },
+       {
+        "label": "Kirsten rat sarcoma viral proto-oncogene"
+       },
+       {
+        "label": "Kras-Enoph1 fusion protein"
+       },
+       {
+        "label": "PR310 c-K-ras oncogene"
+       },
+       {
+        "label": "c-Kirsten-ras protein"
+       },
+       {
+        "label": "cellular c-Ki-ras2 proto-oncogene"
+       },
+       {
+        "label": "cellular transforming proto-oncogene"
+       },
+       {
+        "label": "oncogene KRAS2"
+       },
+       {
+        "label": "proto-oncogene GTPase"
+       },
+       {
+        "label": "transforming protein p21"
+       },
+       {
+        "label": "v-Ki-ras2 Kirsten rat sarcoma 2 viral oncogene homolog"
+       },
+       {
+        "label": "KRAS"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  targets(ensemblIds: $ids) {\n    id approvedSymbol\n    synonyms { label }\n    proteinIds { id source }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "ENSG00000133703"
+    ]
+   }
+  }
+ },
+ "8adb4f466db1c40871e73aef24c52b5d831604d80bbad8b6726b777bb9bc553b": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "CHEMBL5095236",
+       "name": "DIVARASIB"
+      },
+      {
+       "id": "CHEMBL5314604",
+       "name": "DIVARASIB ADIPATE"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "drug",
+    "name": "divarasib",
+    "size": 10
+   }
+  }
+ },
+ "924fcc36b3791577b18441cccc31d187a3334a4deaf2586182a208e7808ecc50": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "MONDO_0006559",
+       "name": "hidradenitis suppurativa"
+      },
+      {
+       "id": "MONDO_0024516",
+       "name": "familial acne inversa"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "disease",
+    "name": "hidradenitis suppurativa",
+    "size": 10
+   }
+  }
+ },
+ "935a2d02189348f7dab398a679291b8cfea596033f55ab7f76723fad4076f069": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": []
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "disease",
+    "name": "MSI-high solid tumors",
+    "size": 10
+   }
+  }
+ },
+ "96c398ac20cc50359168b929e6f7397bc92b80b38b442b48b612dac414dc5e28": {
+  "answer": {
+   "data": {
+    "drugs": [
+     {
+      "childMolecules": [],
+      "drugType": "Protein",
+      "id": "CHEMBL5095485",
+      "maximumClinicalStage": "PHASE_3",
+      "name": "RETATRUTIDE",
+      "parentMolecule": null,
+      "synonyms": [
+       {
+        "label": "LY-3437943"
+       },
+       {
+        "label": "LY3437943"
+       },
+       {
+        "label": "Retatrutide"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  drugs(chemblIds: $ids) {\n    id name drugType maximumClinicalStage\n    synonyms { label }\n    parentMolecule { id }\n    childMolecules { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "CHEMBL5095485"
+    ]
+   }
+  }
+ },
+ "a17229b2722080599782b40463ec588b8ff1489b47e0d058e6a74dc605587203": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "EFO_0803536",
+       "name": "multiple sclerosis symptom measurement"
+      },
+      {
+       "id": "MONDO_0005284",
+       "name": "chronic progressive multiple sclerosis"
+      },
+      {
+       "id": "MONDO_0005314",
+       "name": "relapsing-remitting multiple sclerosis"
+      },
+      {
+       "id": "MONDO_0017837",
+       "name": "multiple sclerosis-ichthyosis-factor VIII deficiency syndrome"
+      },
+      {
+       "id": "MONDO_0000451",
+       "name": "primary progressive multiple sclerosis"
+      },
+      {
+       "id": "MONDO_0000450",
+       "name": "secondary progressive multiple sclerosis"
+      },
+      {
+       "id": "MONDO_0008612",
+       "name": "tuberous sclerosis 1"
+      },
+      {
+       "id": "MONDO_0010856",
+       "name": "autosomal dominant polycystic kidney disease type 1 with tuberous sclerosis"
+      },
+      {
+       "id": "MONDO_0013199",
+       "name": "tuberous sclerosis 2"
+      },
+      {
+       "id": "HP_0001967",
+       "name": "Diffuse mesangial sclerosis"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "disease",
+    "name": "multiple sclerosis",
+    "size": 10
+   }
+  }
+ },
+ "a60bd58e75c13331b422f5eaee7aad1cbb01adef7c2a9073ac9b7ab3b094dbb7": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "ENSG00000165392",
+       "name": "WRN"
+      },
+      {
+       "id": "ENSG00000124535",
+       "name": "WRNIP1"
+      },
+      {
+       "id": "ENSG00000253961",
+       "name": "WRN-AS1"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "target",
+    "name": "WRN",
+    "size": 10
+   }
+  }
+ },
+ "ac69d67fa6a3b052e850065c5a63c7b28fa1c1325e5a602449a30383fe477afd": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": []
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "drug",
+    "name": "RMC-9805",
+    "size": 10
+   }
+  }
+ },
+ "af9e6aa082aaacae86c5afca069e41f0ebd6608d36cc04a42d5009ec0c58898a": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "CHEMBL6068555",
+       "name": "HRO-761"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "drug",
+    "name": "HRO761",
+    "size": 10
+   }
+  }
+ },
+ "b339b8600e58e2b00b7bc15705467bb22266022eefc66720bbe3138a6d42c8a9": {
+  "answer": {
+   "data": {
+    "targets": [
+     {
+      "approvedSymbol": "GLP1R",
+      "id": "ENSG00000112164",
+      "proteinIds": [
+       {
+        "id": "P43220",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "ENSP00000362353",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000714815",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "Q2M229",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q99669",
+        "source": "uniprot_obsolete"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "Glucagon-like peptide 1 receptor"
+       },
+       {
+        "label": "GLP-1 receptor"
+       },
+       {
+        "label": "GLP-1-R"
+       },
+       {
+        "label": "GLP-1R"
+       },
+       {
+        "label": "GLP1R"
+       },
+       {
+        "label": "GLP-1R"
+       },
+       {
+        "label": "GLP-1"
+       },
+       {
+        "label": "GLP-1-R"
+       },
+       {
+        "label": "GLP-1R"
+       },
+       {
+        "label": "glucagon-like peptide 1 receptor"
+       },
+       {
+        "label": "GLP-1 receptor"
+       },
+       {
+        "label": "GLP1 receptor"
+       },
+       {
+        "label": "seven transmembrane helix receptor"
+       },
+       {
+        "label": "GLP1R"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  targets(ensemblIds: $ids) {\n    id approvedSymbol\n    synonyms { label }\n    proteinIds { id source }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "ENSG00000112164"
+    ]
+   }
+  }
+ },
+ "b67a64ed7ef56492de7ead4e2b078c6d5d82875d35253848203eeb06ac5c5360": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": []
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "target",
+    "name": "NOTAGENE",
+    "size": 10
+   }
+  }
+ },
+ "bde9ce453f0f914fd3c7f3698688d159ffef6119ac19d6db763b61dd8cce5766": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "CHEMBL4298023",
+       "name": "M-1095"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "drug",
+    "name": "sonelokimab",
+    "size": 10
+   }
+  }
+ },
+ "bfb3428385c12e2195bd823cc8276968fd3467772b915eecc12922241a38a342": {
+  "answer": {
+   "data": {
+    "drugs": [
+     {
+      "childMolecules": [],
+      "drugType": "Antibody",
+      "id": "CHEMBL6068148",
+      "maximumClinicalStage": "PHASE_3",
+      "name": "NAVENIBART",
+      "parentMolecule": null,
+      "synonyms": [
+       {
+        "label": "Navenibart"
+       },
+       {
+        "label": "Star-0215"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  drugs(chemblIds: $ids) {\n    id name drugType maximumClinicalStage\n    synonyms { label }\n    parentMolecule { id }\n    childMolecules { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "CHEMBL6068148"
+    ]
+   }
+  }
+ },
+ "c02f48b18fa19a2e34cb7bc4d4d73cc56dab28f23867ab349d108eae7d09ceeb": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "CHEMBL5095485",
+       "name": "RETATRUTIDE"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "drug",
+    "name": "retatrutide",
+    "size": 10
+   }
+  }
+ },
+ "ca5a4ba377dccc96252b816d06dc48cc42b316c94e04078c519612c5546b6e7e": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "CHEMBL5314604",
+       "name": "DIVARASIB ADIPATE"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "drug",
+    "name": "divarasib adipate",
+    "size": 10
+   }
+  }
+ },
+ "d125992e1e4c047faa7b85f0621539a978fb6e5f545d71ca6de13006fb09cc61": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "CHEMBL6068148",
+       "name": "NAVENIBART"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "drug",
+    "name": "STAR-0215",
+    "size": 10
+   }
+  }
+ },
+ "d2321ac8ddca5e3eeaa16699c6e69e5ea462e666a119ff3d7053b35dd1403ad7": {
+  "answer": {
+   "data": {
+    "drugs": [
+     {
+      "childMolecules": [],
+      "drugType": "Small molecule",
+      "id": "CHEMBL5569030",
+      "maximumClinicalStage": "PHASE_2",
+      "name": "KT-474",
+      "parentMolecule": null,
+      "synonyms": [
+       {
+        "label": "Kt-474"
+       },
+       {
+        "label": "SAR-444656"
+       },
+       {
+        "label": "SAR444656"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  drugs(chemblIds: $ids) {\n    id name drugType maximumClinicalStage\n    synonyms { label }\n    parentMolecule { id }\n    childMolecules { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "CHEMBL5569030"
+    ]
+   }
+  }
+ },
+ "d2fe35926892d975cf748ce29a78ddb190c9da5cff51cf89c2b012954a0c59ae": {
+  "answer": {
+   "data": {
+    "drugs": [
+     {
+      "childMolecules": [],
+      "drugType": "Oligonucleotide",
+      "id": "CHEMBL6068612",
+      "maximumClinicalStage": "PHASE_3",
+      "name": "OBUDANERSEN SODIUM",
+      "parentMolecule": null,
+      "synonyms": [
+       {
+        "label": "ION-582"
+       },
+       {
+        "label": "ION582"
+       },
+       {
+        "label": "Ion582"
+       },
+       {
+        "label": "Obudanersen sodium"
+       }
+      ]
+     },
+     {
+      "childMolecules": [],
+      "drugType": "Oligonucleotide",
+      "id": "CHEMBL6068484",
+      "maximumClinicalStage": "UNKNOWN",
+      "name": "OBUDANERSEN",
+      "parentMolecule": null,
+      "synonyms": [
+       {
+        "label": "ION-582 FREE ACID"
+       },
+       {
+        "label": "ION582 free acid"
+       },
+       {
+        "label": "Obudanersen"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  drugs(chemblIds: $ids) {\n    id name drugType maximumClinicalStage\n    synonyms { label }\n    parentMolecule { id }\n    childMolecules { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "CHEMBL6068612",
+     "CHEMBL6068484"
+    ]
+   }
+  }
+ },
+ "dcf42b61757966e8afbbf8092011a02977b5e54109af06aac9bfd74d5b23b028": {
+  "answer": {
+   "data": {
+    "drugs": [
+     {
+      "childMolecules": [
+       {
+        "id": "CHEMBL5314604"
+       }
+      ],
+      "drugType": "Small molecule",
+      "id": "CHEMBL5095236",
+      "maximumClinicalStage": "PHASE_3",
+      "name": "DIVARASIB",
+      "parentMolecule": null,
+      "synonyms": [
+       {
+        "label": "Divarasib"
+       },
+       {
+        "label": "GDC-6036"
+       },
+       {
+        "label": "Gdc 6036"
+       },
+       {
+        "label": "RG-6330"
+       },
+       {
+        "label": "RG6330"
+       },
+       {
+        "label": "RO-7435846"
+       },
+       {
+        "label": "RO7435846"
+       }
+      ]
+     },
+     {
+      "childMolecules": [],
+      "drugType": "Small molecule",
+      "id": "CHEMBL5314604",
+      "maximumClinicalStage": "UNKNOWN",
+      "name": "DIVARASIB ADIPATE",
+      "parentMolecule": {
+       "id": "CHEMBL5095236"
+      },
+      "synonyms": [
+       {
+        "label": "Divarasib adipate"
+       },
+       {
+        "label": "GDC-6036 ADIPATE"
+       },
+       {
+        "label": "RG-6330 ADIPATE"
+       },
+       {
+        "label": "RG6330 ADIPATE"
+       },
+       {
+        "label": "RO-7435846 ADIPATE"
+       },
+       {
+        "label": "RO7435846 ADIPATE"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  drugs(chemblIds: $ids) {\n    id name drugType maximumClinicalStage\n    synonyms { label }\n    parentMolecule { id }\n    childMolecules { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "CHEMBL5095236",
+     "CHEMBL5314604"
+    ]
+   }
+  }
+ },
+ "e5a5b2fac801dc00b2a47155b470cbb583d9f49c29d11685886046cffb3cd803": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "MONDO_0004975",
+       "name": "Alzheimer disease"
+      },
+      {
+       "id": "EFO_0006514",
+       "name": "Alzheimer's disease biomarker measurement"
+      },
+      {
+       "id": "EFO_0006801",
+       "name": "Alzheimer's disease neuropathologic change"
+      },
+      {
+       "id": "MONDO_0011913",
+       "name": "Alzheimer disease 3"
+      },
+      {
+       "id": "EFO_0022957",
+       "name": "early-onset Alzheimers disease"
+      },
+      {
+       "id": "EFO_1001870",
+       "name": "late-onset Alzheimers disease"
+      },
+      {
+       "id": "MONDO_0014265",
+       "name": "Alzheimer disease 18"
+      },
+      {
+       "id": "MONDO_0001627",
+       "name": "dementia"
+      },
+      {
+       "id": "EFO_0006798",
+       "name": "neuritic plaque measurement"
+      },
+      {
+       "id": "MONDO_0017948",
+       "name": "ABetaA21G amyloidosis"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "disease",
+    "name": "Alzheimer's disease",
+    "size": 10
+   }
+  }
+ },
+ "e5b23634b2fac7ef5e165785286c5bbb1de15da8fd3fd1856bf45b94ba90a21d": {
+  "answer": {
+   "data": {
+    "diseases": [
+     {
+      "id": "MONDO_0005044",
+      "name": "hypertensive disorder",
+      "synonyms": [
+       {
+        "terms": [
+         "blood pressure, high",
+         "blood pressure, increased",
+         "high blood pressure",
+         "hypertensive disease",
+         "increased blood pressure",
+         "pressure, high blood",
+         "vascular hypertensive disorder",
+         "Arterial hypertension",
+         "Systemic hypertension",
+         "Hypertension",
+         "(hypertensive disease) or (hypertension)",
+         "Blood Pressures, High",
+         "HTN",
+         "HTN - hypertension",
+         "High Blood Pressures",
+         "High blood pressure (& [essential hypertension])",
+         "Hypertensive disease (disorder)",
+         "Hypertensive disease NOS (disorder)",
+         "SURG COMP - HYPERTENSION",
+         "[X]Hypertensive diseases",
+         "[X]Hypertensive diseases (disorder)",
+         "hyperpiesia",
+         "hypertension NOS",
+         "hypertensive disease NOS"
+        ]
+       },
+       {
+        "terms": [
+         "High blood pressure"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": [
+         "HTN"
+        ]
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0015924",
+      "name": "pulmonary arterial hypertension",
+      "synonyms": [
+       {
+        "terms": [
+         "PAH",
+         "pulmonary arterial hypertension",
+         "Ayerza Arrilaga Syndrome",
+         "Ayerza Syndrome",
+         "Ayerza's Syndrome",
+         "Ayerza-Arrilaga Syndrome",
+         "Ayerzas Syndrome",
+         "HYPERTENSION PULM",
+         "Hypertension, Pulmonary",
+         "PHT - Pulmonary hypertension",
+         "PPH1",
+         "PULM HYPERTENSION",
+         "Pulmonary hypertension, NOS",
+         "Syndrome, Ayerza",
+         "Syndrome, Ayerza-Arrilaga",
+         "pulmonary hypertension",
+         "pulmonary hypertension (disorder)",
+         "pulmonary hypertension, primary, 1"
+        ]
+       },
+       {
+        "terms": [
+         "PPH",
+         "idiopathic pulmonary hypertension"
+        ]
+       },
+       {
+        "terms": [
+         "PAH with overt features of venous/capillaries involvement",
+         "PVOD/PCH"
+        ]
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0007781",
+      "name": "essential hypertension, genetic",
+      "synonyms": [
+       {
+        "terms": [
+         "blood pressure regulation QTL",
+         "genetic essential hypertension",
+         "hypertension, essential, salt-sensitive"
+        ]
+       },
+       {
+        "terms": [
+         "EHT"
+        ]
+       },
+       {
+        "terms": [
+         "hypertension, essential, susceptibility to, 2",
+         "hypertension, essential, susceptibility to, 3",
+         "hypertension, essential, susceptibility to, 4",
+         "hypertension, essential, susceptibility to, 5",
+         "hypertension, essential, susceptibility to, 6",
+         "hypertension, susceptibility to"
+        ]
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0001134",
+      "name": "essential hypertension",
+      "synonyms": [
+       {
+        "terms": [
+         "idiopathic hypertension",
+         "primary hypertension"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "EFO_0009197",
+      "name": "Pulmonary arterial hypertension associated with portal hypertension",
+      "synonyms": [
+       {
+        "terms": [
+         "PAH associated with portal hypertension",
+         "POPH",
+         "Portopulmonary hypertension",
+         "portal hypertension-associated PAH"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0017148",
+      "name": "heritable pulmonary arterial hypertension",
+      "synonyms": [
+       {
+        "terms": [
+         "FPAH",
+         "HPAH",
+         "HpaH",
+         "familial pulmonary arterial hypertension",
+         "hereditary pulmonary arterial hypertension"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0007211",
+      "name": "brachydactyly-arterial hypertension syndrome",
+      "synonyms": [
+       {
+        "terms": [
+         "Bilginturan brachydactyly",
+         "Bilginturan syndrome",
+         "brachydactyly type E, with short stature and hypertension",
+         "Brachydactyly - arterial hypertension"
+        ]
+       },
+       {
+        "terms": [
+         "HTNB",
+         "brachydactyly type E with short stature and hypertension",
+         "hypertension and brachydactyly syndrome"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0024664",
+      "name": "hypertension, pregnancy-induced",
+      "synonyms": [
+       {
+        "terms": [
+         "hypertension associated disorders of pregnancy",
+         "hypertension-associated pregnancy disorder",
+         "pregnancy-induced hypertension"
+        ]
+       },
+       {
+        "terms": [
+         "gestational hypertension",
+         "hypertension, gestational",
+         "hypertension, pregnancy induced",
+         "hypertension, pregnancy transient",
+         "hypertensions, pregnancy induced",
+         "induced Hypertensions, pregnancy",
+         "induced hypertension, pregnancy",
+         "pregnancy induced hypertension",
+         "pregnancy transient hypertension",
+         "transient hypertension, pregnancy"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0006846",
+      "name": "malignant hypertension",
+      "synonyms": [
+       {
+        "terms": [
+         "accelerated-malignant hypertension",
+         "hypertensive emergency",
+         "malignant phase hypertension",
+         "Hypertension, Malignant"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": [
+         "MHT"
+        ]
+       }
+      ]
+     },
+     {
+      "id": "EFO_0009054",
+      "name": "Pulmonary arterial hypertension associated with congenital heart disease",
+      "synonyms": [
+       {
+        "terms": [
+         "PAH associated with congenital heart disease",
+         "congenital heart disease-associated PAH"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  diseases(efoIds: $ids) {\n    id name\n    synonyms { terms }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "MONDO_0005044",
+     "MONDO_0015924",
+     "MONDO_0007781",
+     "MONDO_0001134",
+     "EFO_0009197",
+     "MONDO_0017148",
+     "MONDO_0007211",
+     "MONDO_0024664",
+     "MONDO_0006846",
+     "EFO_0009054"
+    ]
+   }
+  }
+ },
+ "e8db8e66768862fa3e57905f6c609dc7c8c59015b5c8c6e953c498ac9cc514e2": {
+  "answer": {
+   "data": {
+    "diseases": [
+     {
+      "id": "MONDO_0005233",
+      "name": "non-small cell lung carcinoma",
+      "synonyms": [
+       {
+        "terms": [
+         "NSCLC",
+         "NSCLC - non-small cell lung cancer",
+         "non-small cell cancer of lung",
+         "non-small cell cancer of the lung",
+         "non-small cell carcinoma of lung",
+         "non-small cell carcinoma of the lung",
+         "non-small cell lung cancer",
+         "non-small cell lung carcinoma",
+         "non-small cell lung carcinoma (disease)"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  diseases(efoIds: $ids) {\n    id name\n    synonyms { terms }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "MONDO_0005233"
+    ]
+   }
+  }
+ },
+ "e9a1924b08d62c2082b48ae40a6410655e82fb54446916d6582f4e1a349c0bd2": {
+  "answer": {
+   "data": {
+    "drugs": [
+     {
+      "childMolecules": [],
+      "drugType": "Unknown",
+      "id": "CHEMBL4298023",
+      "maximumClinicalStage": "PHASE_3",
+      "name": "M-1095",
+      "parentMolecule": null,
+      "synonyms": [
+       {
+        "label": "ALX-0761"
+       },
+       {
+        "label": "ALX0761"
+       },
+       {
+        "label": "M-1095"
+       },
+       {
+        "label": "M1095"
+       },
+       {
+        "label": "Sonelokimab"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  drugs(chemblIds: $ids) {\n    id name drugType maximumClinicalStage\n    synonyms { label }\n    parentMolecule { id }\n    childMolecules { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "CHEMBL4298023"
+    ]
+   }
+  }
+ },
+ "fb0025f471590061a3f54182e7bca55725c9ee78583536a70fe43ee5695d3fce": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "ENSG00000112164",
+       "name": "GLP1R"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "target",
+    "name": "GLP1R",
+    "size": 10
+   }
+  }
+ }
+}

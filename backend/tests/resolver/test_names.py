@@ -74,10 +74,11 @@ def test_the_parent_wins_over_its_salt_for_the_parents_name() -> None:
     assert choose(ranked) == DIVARASIB
 
 
-def test_a_salt_name_chooses_the_salt_record() -> None:
-    assert choose(rank_candidates("divarasib adipate", [DIVARASIB, DIVARASIB_ADIPATE])) == (
-        DIVARASIB_ADIPATE
-    )
+def test_a_salt_name_resolves_to_the_parent_drug() -> None:
+    """The parent stands for its salts: development data are recorded against it."""
+    ranked = rank_candidates("divarasib adipate", [DIVARASIB, DIVARASIB_ADIPATE])
+    assert ranked[0].candidate == DIVARASIB_ADIPATE  # it matched by its own name...
+    assert choose(ranked) == DIVARASIB  # ...but the parent is the drug
 
 
 def test_a_form_match_of_a_parent_and_its_salt_resolves_to_the_parent() -> None:
@@ -95,3 +96,10 @@ def test_unrelated_drugs_at_the_same_rank_are_ambiguous() -> None:
 def test_nothing_matching_chooses_nothing() -> None:
     assert choose(rank_candidates("RMC-9805", [RMC_5552, KT474])) is None
     assert choose([]) is None
+
+
+def test_the_parent_is_chosen_even_when_a_salt_matched_more_closely() -> None:
+    salt = Candidate("CHEMBL6068612", "OBUDANERSEN SODIUM", ("ION582",), parent_id="CHEMBL6068484")
+    ranked = rank_candidates("ION582", [salt, OBUDANERSEN])
+    assert [r.kind for r in ranked] == [MatchKind.SYNONYM, MatchKind.FORM]
+    assert choose(ranked) == OBUDANERSEN

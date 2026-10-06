@@ -91,7 +91,8 @@ def choose(ranked: list[Ranked]) -> Candidate | None:
     """The one drug the query means, or None when it is unknown or ambiguous.
 
     The best-ranked candidates are compared. If they are one record, or a parent and its
-    salts/forms, the parent is chosen. Two unrelated drugs at the same rank are ambiguous.
+    salts/forms, the parent is chosen (when it matched at all). Two unrelated drugs at the same
+    rank are ambiguous.
     """
     if not ranked:
         return None
@@ -100,4 +101,6 @@ def choose(ranked: list[Ranked]) -> Candidate | None:
     if len(parents) != 1:
         return None
     parent_id = parents.pop()
-    return next((c for c in best if c.chembl_id == parent_id), best[0])
+    # The parent stands for its salts, even when it matched less closely than one of them.
+    matched = [r.candidate for r in ranked]
+    return next((c for c in matched if c.chembl_id == parent_id), best[0])
