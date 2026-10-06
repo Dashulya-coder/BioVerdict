@@ -222,13 +222,14 @@ def resolve_claim_type(
     The model's choice would let it move confidence: a registry record weighs 0 for efficacy
     claims but 1.0 for facts about studies, so an efficacy claim labelled `other` would borrow
     that weight. A module fixes its type; otherwise a claim that asserts a kill criterion is
-    `target_causal` for K3 (a genetics claim) and `other` for the rest (facts about studies,
-    programs and competitors); anything else keeps the model's label.
+    `target_causal` for K3 (a genetics claim) and `study_fact` for the rest (a trial was stopped,
+    a competitor is in Phase 3, a sponsor dropped the program: facts about studies and
+    programs, which is what a registry establishes); anything else keeps the model's label.
     """
     if forced is not None:
         return forced
     if gates:
-        return ClaimType.TARGET_CAUSAL if set(gates) == {GateId.K3} else ClaimType.OTHER
+        return ClaimType.TARGET_CAUSAL if set(gates) == {GateId.K3} else ClaimType.STUDY_FACT
     return proposed
 
 
