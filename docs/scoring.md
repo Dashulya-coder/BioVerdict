@@ -6,43 +6,78 @@ All numeric weights below are **starting heuristics**. They are calibrated on th
 
 ## Layer 1: Kill criteria (gates)
 
-Any triggered gate caps the verdict. Gates read claims, not free text.
+Source of truth: the Unobio plan (PDF). The LLM only establishes a fact and attaches evidence to it; code applies the rule. Gates read claims, not free text.
 
-| Gate | Condition | Effect |
+**Hard (any one fires: Do Not Invest):**
+
+| Gate | Condition | Detected from |
 |---|---|---|
-| G1 | No link of the human translation chain is supported | cap at Conditional (Do Not Invest if also G3) |
-| G2 | Critical safety signal in human data | Do Not Invest unless a documented mitigation exists |
-| G3 | Same target failed in this indication and the asset shows no stated difference | Do Not Invest |
-| G4 | Efficacious exposure not achievable safely in humans (per supported claims) | Do Not Invest |
-| G5 | Population or endpoint cannot be defined from the bundle | cap at Conditional |
-| G6 | Critical unknown with no plan to resolve it (no diligence route) | cap at Conditional |
+| K1 | The same target failed in Phase 2/3 for efficacy in the same indication, and the current program's difference is not explained (better exposure, patient selection, other modality) | AACT (`why_stopped`, results), PubMed |
+| K2 | Serious on-target toxicity in humans with no way to mitigate it (clinical hold, deaths, class boxed warning) | openFDA FAERS, FDA, press releases |
+| K3 | Genetics contradicts the direction of action: gene loss of function is harmful in humans and the drug mimics that loss | Open Targets, GWAS Catalog |
+| K4 | The sponsor stopped the program (asset level) | ClinicalTrials.gov, SEC EDGAR |
+| K5 | rNPV is negative even in the optimistic scenario (P90) | Investment model |
 
-Gates fire only on claims with sufficient confidence (threshold `T_gate`, TODO). Each fired gate lists the claims that triggered it.
+**Soft (any one fires, no hard gate: at most Conditional):**
+
+| Gate | Condition | Detected from |
+|---|---|---|
+| S1 | A translation-chain link is missing (no human target engagement, unknown exposure in the target tissue) | Translation agent |
+| S2 | Key claims carry the `sparse` flag | Evidence store |
+| S3 | A key claim carries the `contested` flag | Evidence store |
+| S4 | 3 or more competitors with the same mechanism are a phase or more ahead, with no clear advantage | Competition agent |
+| S5 | The biomarker or endpoint is not recognised by the regulator as a surrogate | FDA guidance, trial design |
+| S6 | IP protection ends soon after the expected launch, or ownership is unclear | Orange/Purple Book, patents |
+
+Thresholds are config parameters, calibrated on the eval set. A criterion that nearly fired is recorded in `GateResult.near_miss` and becomes a line in "What would change our mind" (for example: "S4 fires if one more competitor reaches Phase 3").
 
 ## Layer 2: Claim confidence
 
-Evidence levels and weights (heuristic):
+The LLM only classifies each piece of evidence (level, direction, which claim). Code computes the confidence.
 
-| Level | Weight |
-|---|---|
-| human_genetics | 0.90 |
-| human_interventional | 0.85 |
-| human_observational | 0.55 |
-| animal_in_vivo | 0.35 |
-| in_vitro | 0.20 |
-
-For each independent group `g` supporting a claim, take the strongest evidence level, multiply by freshness, and combine:
+**Step 1. Weight of one piece of evidence:**
 
 ```
-support = 1 - prod_g (1 - w_g * fresh_g)
-contra  = same formula over contradicting groups
-confidence = support * (1 - 0.7 * contra)
+w_i = L(level, claim_type) x Q(source) x R(recency) x I_k
 ```
 
-- `fresh` decays with the age of the evidence (parameters per evidence type, TODO).
-- Repeated reports of the same result share an `independence_group` and count once.
-- A claim with no verified evidence is `inferred` with confidence capped at 0.3.
-- Effect: one in vitro contradiction barely moves a claim backed by human genetics, while a strong clinical contradiction moves it a lot. Both behaviors are required tests.
+`L` depends on the claim type: for "the target is causal" human genetics is strongest; for "the drug works in humans" an RCT is strongest.
+
+| Evidence level | `target_causal` | `drug_acts_in_humans` |
+|---|---|---|
+| human_genetics | 1.0 | 0.4 |
+| human_interventional (RCT) | 0.8 | 1.0 |
+| human_observational | 0.5 | 0.4 |
+| animal_in_vivo | 0.3 | 0.2 |
+| in_vitro | 0.15 | 0.1 |
+
+- `Q` (source quality): peer-reviewed paper, FDA/EMA, trial registry 1.0; preprint 0.7; press release or company presentation 0.5; `ai_inference` 0.3.
+- `R` (recency): biological data decays slowly (half-life about 10 years). For trial and company status only the latest record counts.
+- `I_k` (independence): evidence from one lab or sponsor is sorted by weight and the k-th item gets a multiplier `0.5^(k-1)`. Five papers from one group count slightly more than one, not five times more.
+
+**Step 2. Aggregation in log-odds:**
+
+```
+logit(c) = logit(p0) + kappa * sum_i s_i * w_i,    s_i = +1 (supports), -1 (contradicts)
+```
+
+`p0 = 0.5` by default, `kappa = 1.2` to start. Contradicting evidence may get an extra multiplier of 1.2 to offset LLM optimism. A claim with no verified evidence is `ai_inference` with low weight.
+
+Worked example (claim "target is causal", kappa = 1.2), required as unit tests:
+
+| Evidence state | sum(s*w) | Confidence |
+|---|---|---|
+| Genetics (1.0) + observational (0.5) + animal (0.3) | +1.8 | 90% |
+| + weak in vitro contradiction (-0.15) | +1.65 | 88% |
+| + strong contradiction: large biobank, no association (-1.0) | +0.8 | 72% |
+
+A weak contradiction barely moves the claim; a strong one lowers it clearly. Both behaviors are required tests.
+
+**Step 3. Service flags:**
+
+- `sparse`: sum of |w| below a threshold. Report "too little data"; financial-model ranges widen.
+- `contested`: both the supporting and the contradicting sums are strong (for example both above 0.8). Shown explicitly in the report, never averaged away.
+- Translation chain: the probability of the chain is the product of the confidence of its five links. A link with confidence below 0.4 is a `missing_link`.
 
 ## Layer 3: Probability of success
 
@@ -96,13 +131,12 @@ Output: a range of capital and time to the next value inflection point (for exam
 
 Applied in order:
 
-1. Any gate with effect "Do Not Invest" fires: **Do Not Invest**.
-2. Else any gate with effect "cap at Conditional" fires: at most **Conditional**.
-3. Else if rNPV P50 >= `T_invest` and confidence of critical claims >= `T_conf` and no uncovered critical unknowns: **Invest**.
-4. Else if rNPV P90 <= `T_floor`: **Do Not Invest**.
-5. Else: **Conditional**, listing the conditions.
+1. Any hard gate (K1-K5) fires: **Do Not Invest**.
+2. Else any soft gate (S1-S6) fires: **Conditional**.
+3. Else **Invest** if all hold: rNPV P50 > 0, translation-chain probability >= 0.5, key claims have confidence >= 0.7.
+4. Else **Conditional**, listing the conditions.
 
-Thresholds `T_gate`, `T_invest`, `T_conf`, `T_floor` are set after running the eval set, not before. Expect most outputs to be Conditional or Do Not Invest; a verdict distribution that is mostly Invest is a calibration bug.
+All thresholds are config parameters set after running the eval set. LLMs lean optimistic and real biotech investors are sceptical, so most outputs should be Conditional or Do Not Invest; a verdict distribution that is mostly Invest is a calibration bug. Check by running all 20 drugs from the list.
 
 ## What would change our mind
 
