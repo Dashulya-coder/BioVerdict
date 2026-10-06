@@ -12,7 +12,7 @@ from bioverdict.contracts import Connector
 from bioverdict.store.db import connect
 from bioverdict.store.http_cache import HttpCache
 from bioverdict.store.migrations import migrate
-from bioverdict.store.models import EvidenceLevel, Indication, ResolverOutput, Target
+from bioverdict.store.models import Asset, EvidenceLevel, Indication, ResolverOutput, Target
 
 RAW = Path(__file__).parents[3] / "fixtures" / "raw"
 TODAY = date(2026, 10, 7)
@@ -137,3 +137,38 @@ async def test_graphql_errors_are_raised_and_not_cached(tmp_path: Path) -> None:
     assert any(e.level is EvidenceLevel.REGISTRY_RECORD for e in evidence)
     assert server.payloads[0]["query"] == server.payloads[1]["query"]  # the retry reached the API
     assert str(API_URL).startswith("https://api.platform.opentargets.org")
+
+
+async def test_an_asset_with_a_confirmed_id_is_read_without_searching_by_name(
+    tmp_path: Path,
+) -> None:
+    server = FakeOpenTargets()
+    resolved = ResolverOutput(
+        indication=Indication(name="NSCLC", mondo_id="MONDO_0005233"),
+        targets=[Target(symbol="KRAS")],
+        known_assets=["HRO761"],  # a name Open Targets does not list
+        assets=[Asset(name="DIVARASIB", chembl_id="CHEMBL5095236")],
+    )
+
+    evidence = await make_connector(tmp_path, server).fetch(resolved, TODAY)
+
+    assert server.asked("search(") == 0
+    assert [p["variables"]["id"] for p in server.payloads if "drug(" in p["query"]] == [
+        "CHEMBL5095236"
+    ]
+    assert any(e.level is EvidenceLevel.REGISTRY_RECORD for e in evidence)
+
+
+async def test_an_unconfirmed_asset_is_not_looked_up_by_name_behind_the_resolvers_back(
+    tmp_path: Path,
+) -> None:
+    server = FakeOpenTargets()
+    resolved = ResolverOutput(
+        indication=Indication(name="NSCLC"),
+        targets=[Target(symbol="KRAS")],
+        known_assets=["divarasib"],
+        assets=[Asset(name="divarasib", chembl_id=None)],  # the Resolver could not confirm it
+    )
+
+    assert await make_connector(tmp_path, server).fetch(resolved, TODAY) == []
+    assert server.asked("search(") == 0
