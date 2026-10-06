@@ -1,7 +1,8 @@
 """ClinicalTrials.gov v2: turns study records into Evidence.
 
 Per study this yields: the brief summary, each primary outcome, the status (with the reason a
-trial was stopped, when given) and the design. Structured parts are stored as a JSON fragment
+trial was stopped, when given) and the design. All of it is `registry_record` evidence: it shows
+that a study exists and how it is set up, not what it found, so it proves no efficacy. Structured parts are stored as a JSON fragment
 of the API response, so a quote can be an exact substring of the excerpt.
 
 Status and design change over time, so they carry a `status_key` and a newer record replaces
@@ -76,7 +77,6 @@ def parse_study(study: dict, retrieved_at: datetime | None = None) -> list[Evide
     first_posted = parse_ct_date(status.get("studyFirstPostDateStruct", {}).get("date"))
     last_updated = parse_ct_date(status.get("lastUpdatePostDateStruct", {}).get("date"))
     sponsor = protocol.get("sponsorCollaboratorsModule", {}).get("leadSponsor", {}).get("name")
-    interventional = design.get("studyType") == "INTERVENTIONAL"
 
     items: list[Evidence] = []
 
@@ -96,11 +96,7 @@ def parse_study(study: dict, retrieved_at: datetime | None = None) -> list[Evide
                 excerpt=excerpt,
                 published_at=published_at,
                 retrieved_at=retrieved_at,
-                level=(
-                    EvidenceLevel.HUMAN_INTERVENTIONAL
-                    if interventional
-                    else EvidenceLevel.HUMAN_OBSERVATIONAL
-                ),
+                level=EvidenceLevel.REGISTRY_RECORD,
                 independence_group=sponsor_group(sponsor),
                 status_key=status_key,
                 version=1,

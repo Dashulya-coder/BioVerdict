@@ -109,17 +109,21 @@ def test_reason_for_stopping_is_part_of_the_status() -> None:
 
 def test_level_source_and_sponsor() -> None:
     for item in parse_study(DIVARASIB[0], NOW):
-        assert item.level is EvidenceLevel.HUMAN_INTERVENTIONAL
+        assert item.level is EvidenceLevel.REGISTRY_RECORD
         assert (item.source, item.source_family) == ("ClinicalTrials.gov", "registry")
         assert item.independence_group == "sponsor:Roche"
         assert item.url.startswith("https://clinicaltrials.gov/study/NCT")
         assert item.locator and item.locator.type == "nct"
 
 
-def test_observational_study_is_marked_observational() -> None:
-    study = json.loads(json.dumps(DIVARASIB[0]))
-    study["protocolSection"]["designModule"]["studyType"] = "OBSERVATIONAL"
-    assert {e.level for e in parse_study(study, NOW)} == {EvidenceLevel.HUMAN_OBSERVATIONAL}
+def test_a_protocol_is_never_treated_as_a_finding() -> None:
+    """Interventional or not, a registry record says a study exists, not what it found."""
+    levels = {e.level for study in DIVARASIB + TERMINATED for e in parse_study(study, NOW)}
+    assert levels == {EvidenceLevel.REGISTRY_RECORD}
+
+    observational = json.loads(json.dumps(DIVARASIB[0]))
+    observational["protocolSection"]["designModule"]["studyType"] = "OBSERVATIONAL"
+    assert {e.level for e in parse_study(observational, NOW)} == {EvidenceLevel.REGISTRY_RECORD}
 
 
 def test_missing_parts_are_skipped() -> None:
