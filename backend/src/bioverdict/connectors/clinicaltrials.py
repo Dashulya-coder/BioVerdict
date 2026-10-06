@@ -123,6 +123,7 @@ def _evidence(
     sponsor: str | None,
     retrieved_at: datetime,
     status_key: str | None = None,
+    independence_group: str | None = None,
 ) -> Evidence | None:
     if not excerpt:
         return None
@@ -137,7 +138,7 @@ def _evidence(
         published_at=published_at,
         retrieved_at=retrieved_at,
         level=level,
-        independence_group=sponsor_group(sponsor),
+        independence_group=independence_group or sponsor_group(sponsor),
         status_key=status_key,
         version=1,
     )
@@ -274,6 +275,8 @@ def parse_results(
             _sponsor(study),
             retrieved_at,
             status_key=f"nct:{nct}:result:{measure.get('type', 'OTHER').lower()}:{number}",
+            # What a trial found is one dataset: the registry and the papers about it count once.
+            independence_group=f"trial:{nct}",
         )
         if item is not None:
             evidence.append(item)

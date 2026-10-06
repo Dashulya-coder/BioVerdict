@@ -60,7 +60,7 @@ def test_a_result_is_human_evidence_dated_when_it_was_posted() -> None:
     assert item.level is EvidenceLevel.HUMAN_INTERVENTIONAL
     assert item.published_at == date(2023, 5, 10)
     assert item.url == "https://clinicaltrials.gov/study/NCT04303780"
-    assert item.independence_group == "sponsor:Amgen"
+    assert item.independence_group == "trial:NCT04303780"  # shared with the papers on this trial
 
 
 def test_a_result_can_be_replaced_by_an_amended_posting() -> None:
