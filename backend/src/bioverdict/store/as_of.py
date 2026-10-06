@@ -11,8 +11,15 @@ from bioverdict.store.models import Evidence
 
 
 def is_visible_as_of(evidence: Evidence, as_of: date) -> bool:
-    """Inclusive on the cutoff date. Undated evidence is kept: nothing proves it is later."""
-    return evidence.published_at is None or evidence.published_at <= as_of
+    """Whether a run replayed at `as_of` may see this evidence. The cutoff date is inclusive.
+
+    Dated evidence is judged by its publication date. Undated evidence is a snapshot of a
+    source's current state (for example an Open Targets record), so it is only trustworthy
+    if it was retrieved by the cutoff; otherwise it may show the future.
+    """
+    if evidence.published_at is not None:
+        return evidence.published_at <= as_of
+    return evidence.retrieved_at.date() <= as_of
 
 
 def filter_as_of(evidence: list[Evidence], as_of: date) -> list[Evidence]:
