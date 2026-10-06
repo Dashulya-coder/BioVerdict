@@ -49,7 +49,7 @@ Valuation and probabilities are always `modeled`, with the assumptions visible.
 
 `type` is `source_fact` or `ai_inference`. `source_kind` drives the source-quality multiplier Q: `peer_reviewed`, `regulator`, `registry` (1.0), `preprint` (0.7), `company` (0.5), `ai_inference` (0.3).
 
-`level` values, strongest first: `human_genetics`, `human_interventional`, `human_observational`, `animal_in_vivo`, `in_vitro`.
+`level` values, strongest first: `human_genetics`, `human_interventional`, `human_observational`, `animal_in_vivo`, `in_vitro`. A sixth, `registry_record`, is outside that scale: it marks a record that a study or program exists (status, phase, sponsor, design, stated endpoints) rather than what it found, and carries no weight for efficacy claims. Results posted in a registry are `human_interventional`.
 
 `independence_group` is the lab or sponsor. Repeated reports of one result count once.
 
