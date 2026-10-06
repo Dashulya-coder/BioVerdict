@@ -67,8 +67,12 @@ class VerdictConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    t_gate: float = 0.6  # a gate fires only on a claim at least this confident
-    t_near: float = 0.4  # below t_gate but above this: "almost fired", shown to the user
+    t_gate: float = 0.6  # a soft gate (caps at Conditional) fires on a claim this confident
+    # A hard gate means Do Not Invest, so it asks for more: one registry record alone reaches
+    # about 0.77 and a stop reason can be "business decision", so a second independent
+    # confirmation is needed. Calibrated on the eval set like every threshold.
+    t_hard_gate: float = 0.85
+    t_near: float = 0.4  # below the firing threshold but above this: "almost fired"
     chain_min: float = 0.5  # Invest needs chain probability >= this
     key_claim_min: float = 0.7  # Invest needs every critical claim >= this
     rnpv_p50_min: float = 0.0  # Invest needs rNPV P50 above this

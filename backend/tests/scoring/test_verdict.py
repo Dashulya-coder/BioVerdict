@@ -61,11 +61,11 @@ def test_weak_key_claim_blocks_invest() -> None:
 
 def test_hard_gate_overrides_everything_else() -> None:
     claims = [*strong_chain(0.95), claim("KEY", 0.95, critical=True)]
-    claims.append(claim("FAIL", 0.8, gate_signals=[GateId.K1]))
+    claims.append(claim("FAIL", 0.9, gate_signals=[GateId.K1]))
     r = score_verdict(claims, POSITIVE)
     assert r.verdict is Verdict.DO_NOT_INVEST
     assert gate(r, GateId.K1).claim_ids == ["FAIL"]
-    assert r.confidence == pytest.approx(0.8)
+    assert r.confidence == pytest.approx(0.9)
 
 
 def test_gate_does_not_fire_on_low_confidence_claim() -> None:
@@ -175,7 +175,7 @@ def test_rescore_recomputes_confidence_before_the_verdict() -> None:
             version=1,
         )
     }
-    gate_claim = claim("FAIL", 0.0, gate_signals=[GateId.K1])  # stale confidence 0.0
+    gate_claim = claim("FAIL", 0.0, gate_signals=[GateId.S4])  # stale confidence 0.0
     links = [
         ClaimEvidenceLink(
             claim_id="FAIL", evidence_id="E1", direction=Direction.SUPPORTS, quote="strong"
@@ -183,4 +183,25 @@ def test_rescore_recomputes_confidence_before_the_verdict() -> None:
     ]
     updated, result = rescore([gate_claim], links, evidence, date(2026, 10, 6))
     assert updated[0].confidence > 0.6  # recomputed from the evidence
-    assert gate(result, GateId.K1).fired  # and the gate saw the fresh value
+    assert gate(result, GateId.S4).fired  # and the gate saw the fresh value
+
+
+def test_a_weak_hard_signal_is_ignored_below_the_soft_threshold() -> None:
+    base = [*strong_chain(), claim("KEY", 0.9, critical=True)]
+    weak = score_verdict([*base, claim("STOP", 0.5, gate_signals=[GateId.K1])], POSITIVE)
+    assert weak.verdict is Verdict.INVEST  # 0.5 is noise, not an unconfirmed finding
+
+
+def test_a_hard_gate_needs_more_confidence_than_a_soft_one() -> None:
+    """One registry record reaches ~0.77: enough to cap at Conditional, not to say Do Not Invest."""
+    base = [*strong_chain(), claim("KEY", 0.9, critical=True)]
+    stopped = score_verdict([*base, claim("STOP", 0.77, gate_signals=[GateId.K1])], POSITIVE)
+    assert stopped.verdict is Verdict.CONDITIONAL  # not Invest: the signal is serious
+    assert not gate(stopped, GateId.K1).fired  # but not Do Not Invest on one source
+    assert "K1 would fire" in gate(stopped, GateId.K1).near_miss
+    assert any("second independent source" in c for c in stopped.what_would_change_our_mind)
+    assert any("not yet confirmed" in r for r in stopped.top_risks)
+    competitor = score_verdict([*base, claim("COMP", 0.77, gate_signals=[GateId.S4])], POSITIVE)
+    assert competitor.verdict is Verdict.CONDITIONAL and gate(competitor, GateId.S4).fired
+    confirmed = score_verdict([*base, claim("STOP", 0.86, gate_signals=[GateId.K1])], POSITIVE)
+    assert confirmed.verdict is Verdict.DO_NOT_INVEST

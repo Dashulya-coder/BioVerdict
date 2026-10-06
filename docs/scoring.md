@@ -29,7 +29,7 @@ Source of truth: the Unobio plan (PDF). The LLM only establishes a fact and atta
 | S5 | The biomarker or endpoint is not recognised by the regulator as a surrogate | FDA guidance, trial design |
 | S6 | IP protection ends soon after the expected launch, or ownership is unclear | Orange/Purple Book, patents |
 
-Thresholds are config parameters, calibrated on the eval set. A criterion that nearly fired is recorded in `GateResult.near_miss` and becomes a line in "What would change our mind" (for example: "S4 fires if one more competitor reaches Phase 3").
+A hard gate (K1-K5) fires only on a claim with confidence of at least `t_hard_gate` (0.85); a soft gate (S1-S6) fires at `t_gate` (0.6). A hard gate means Do Not Invest, so it needs more than one registry record (about 0.77 alone): a stop reason may be a business decision. A hard-gate claim between 0.6 and 0.85 does not fire, but it caps the verdict at Conditional and asks for a second independent source. Thresholds are config parameters, calibrated on the eval set. A criterion that nearly fired is recorded in `GateResult.near_miss` and becomes a line in "What would change our mind" (for example: "S4 fires if one more competitor reaches Phase 3").
 
 ## Layer 2: Claim confidence
 

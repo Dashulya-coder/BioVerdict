@@ -61,11 +61,12 @@ def evaluate_gates(
 
     for gate in _SIGNAL_ONLY:  # gates asserted by a claim with enough confidence
         signals = [c for c in claims if gate in c.gate_signals]
-        firing = [c for c in signals if c.confidence >= vcfg.t_gate]
-        near = [c for c in signals if vcfg.t_near <= c.confidence < vcfg.t_gate]
+        threshold = vcfg.t_hard_gate if gate in HARD else vcfg.t_gate
+        firing = [c for c in signals if c.confidence >= threshold]
+        near = [c for c in signals if vcfg.t_near <= c.confidence < threshold]
         near_miss = (
             f"{gate.value} would fire if claim {near[0].id} (confidence "
-            f"{near[0].confidence:.2f}) reached {vcfg.t_gate:.2f}"
+            f"{near[0].confidence:.2f}) reached {threshold:.2f}"
             if not firing and near
             else None
         )
@@ -116,7 +117,7 @@ def score_verdict(
     """Apply the plan's verdict rule. Claims must already carry their computed confidence.
 
     1. any hard gate fires -> Do Not Invest
-    2. else any soft gate fires -> Conditional
+    2. else any soft gate fires, or a hard gate has one source only -> Conditional
     3. else Invest if rNPV P50 > 0, chain probability >= 0.5 and key claims >= 0.7
     4. else Conditional, with the failed conditions listed
     """
@@ -126,11 +127,19 @@ def score_verdict(
     fired = [g for g in gates if g.fired]
     hard, soft = [g for g in fired if g.kind == "hard"], [g for g in fired if g.kind == "soft"]
     critical = [c for c in claims if c.critical]
+    # A kill criterion backed by one source: too weak for Do Not Invest, too serious to ignore.
+    unconfirmed = [
+        g
+        for g in gates
+        if g.kind == "hard"
+        and not g.fired
+        and any(c.confidence >= vcfg.t_gate and g.gate_id in c.gate_signals for c in claims)
+    ]
 
     conditions: list[str] = []
     if hard:
         verdict = Verdict.DO_NOT_INVEST
-    elif soft:
+    elif soft or unconfirmed:
         verdict = Verdict.CONDITIONAL
     else:
         if rnpv is None:
@@ -161,8 +170,14 @@ def score_verdict(
         )
 
     risks = [GATE_TEXT[g.gate_id] for g in hard + soft]
+    risks += [f"{GATE_TEXT[g.gate_id]} (not yet confirmed)" for g in unconfirmed]
     risks += [c.text for c in sorted(critical, key=lambda c: c.confidence)]
     changes = [f"Resolving this would lift the cap: {GATE_TEXT[g.gate_id]}" for g in soft]
+    changes += [
+        f"Confirm or refute {g.gate_id.value} with a second independent source: "
+        f"{GATE_TEXT[g.gate_id]}"
+        for g in unconfirmed
+    ]
     changes += conditions
     changes += [g.near_miss for g in gates if g.near_miss]
 
