@@ -19,7 +19,7 @@ from bioverdict.store.evidence_repo import load_evidence, save_evidence
 from bioverdict.store.latest_wins import drop_superseded
 from bioverdict.store.models import Bundle, Evidence, Section, SectionStatus
 
-_STATUSES = TypeAdapter(dict[Section, SectionStatus])
+SECTION_STATUSES = TypeAdapter(dict[Section, SectionStatus])
 
 
 def build_catalog(evidence: list[Evidence]) -> list[str]:
@@ -60,7 +60,7 @@ def freeze(
                     f"as_of {as_of} is earlier than version {previous['version']} "
                     f"({previous['as_of']}); a bundle version may not move back in time"
                 )
-            statuses = _STATUSES.validate_json(previous["section_statuses_json"])
+            statuses = SECTION_STATUSES.validate_json(previous["section_statuses_json"])
         statuses.update(section_statuses or {})
 
         existing = load_evidence(conn, run_id)
@@ -90,7 +90,7 @@ def freeze(
                 bundle.content_hash,
                 as_of.isoformat(),
                 json.dumps(bundle.catalog),
-                _STATUSES.dump_json(statuses).decode("utf-8"),
+                SECTION_STATUSES.dump_json(statuses).decode("utf-8"),
                 bundle.created_at.isoformat(),
             ),
         )
