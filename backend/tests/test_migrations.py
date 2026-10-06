@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from bioverdict.store.db import connect
-from bioverdict.store.migrations import SCHEMA_VERSION, current_version, migrate
+from bioverdict.store.migrations import MIGRATION_1, SCHEMA_VERSION, current_version, migrate
 
 DATA_MODEL = Path(__file__).parents[2] / "docs" / "data-model.md"
 
@@ -61,3 +61,16 @@ def test_migration_matches_data_model_doc(tmp_path: Path) -> None:
     from_code = connect(tmp_path / "t.db")
     migrate(from_code)
     assert _columns(from_code) == _columns(from_doc)
+
+
+def test_database_at_version_1_is_upgraded(tmp_path: Path) -> None:
+    conn = connect(tmp_path / "t.db")
+    conn.executescript(f"BEGIN;\n{MIGRATION_1}\nPRAGMA user_version = 1;\nCOMMIT;")
+    conn.execute("INSERT INTO evidence (run_id, id) VALUES ('R-1', 'E-0001')")
+    conn.commit()
+
+    assert migrate(conn) == SCHEMA_VERSION
+    columns = [c["name"] for c in conn.execute("PRAGMA table_info(evidence)")]
+    assert columns[-1] == "status_key"
+    row = conn.execute("SELECT id, status_key FROM evidence").fetchone()
+    assert (row["id"], row["status_key"]) == ("E-0001", None)  # existing rows survive
