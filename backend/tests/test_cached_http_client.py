@@ -45,7 +45,7 @@ async def test_second_get_is_served_from_cache(tmp_path: Path) -> None:
     first = await client.get(URL, {"q": "a"})
     second = await client.get(URL, {"q": "a"})
 
-    assert first == second == b"body-1"
+    assert first.body == second.body == b"body-1"
     assert len(server.requests) == 1
 
 
@@ -65,8 +65,8 @@ async def test_client_error_is_raised_once_and_not_cached(tmp_path: Path) -> Non
 
     with pytest.raises(httpx.HTTPStatusError):
         await client.get(URL)
-    assert await client.get(URL) == b"body-2"  # the retry reaches the server
-    assert await client.get(URL) == b"body-2"  # and is now cached
+    assert (await client.get(URL)).body == b"body-2"  # the retry reaches the server
+    assert (await client.get(URL)).body == b"body-2"  # and is now cached
     assert len(server.requests) == 2
 
 
@@ -86,9 +86,9 @@ async def test_server_error_is_retried_until_it_succeeds(tmp_path: Path) -> None
     server = Server(503, 502)
     client = make_client(tmp_path, server)
 
-    assert await client.get(URL) == b"body-3"
+    assert (await client.get(URL)).body == b"body-3"
     assert len(server.requests) == 3
-    assert await client.get(URL) == b"body-3"  # cached after the success
+    assert (await client.get(URL)).body == b"body-3"  # cached after the success
     assert len(server.requests) == 3
 
 
@@ -96,14 +96,14 @@ async def test_rate_limit_is_retried(tmp_path: Path) -> None:
     server = Server(429)
     client = make_client(tmp_path, server)
 
-    assert await client.get(URL) == b"body-2"
+    assert (await client.get(URL)).body == b"body-2"
 
 
 async def test_network_failure_is_retried(tmp_path: Path) -> None:
     server = Server(httpx.ConnectError("boom"))
     client = make_client(tmp_path, server)
 
-    assert await client.get(URL) == b"body-2"
+    assert (await client.get(URL)).body == b"body-2"
 
 
 async def test_gives_up_after_max_attempts_and_caches_nothing(tmp_path: Path) -> None:
@@ -114,4 +114,15 @@ async def test_gives_up_after_max_attempts_and_caches_nothing(tmp_path: Path) ->
         await client.get(URL)
     assert len(server.requests) == 3  # MAX_ATTEMPTS
 
-    assert await client.get(URL) == b"body-4"  # nothing was cached by the failure
+    assert (await client.get(URL)).body == b"body-4"  # nothing was cached by the failure
+
+
+async def test_a_cached_answer_keeps_its_original_download_time(tmp_path: Path) -> None:
+    server = Server()
+    client = make_client(tmp_path, server)
+
+    first = await client.get(URL)
+    second = await client.get(URL)
+
+    assert second.fetched_at == first.fetched_at  # not the time it was read back
+    assert len(server.requests) == 1
