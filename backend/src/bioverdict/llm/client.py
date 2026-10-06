@@ -1,21 +1,25 @@
 """`llm.call(step, prompt, schema)`: the only way code talks to a model (ADR-004).
 
-Order of events for one call: cache lookup, then the step's model chain. Per model: budget check,
-provider call, schema validation (invalid JSON is retried on the same model with feedback).
-Transient errors (429, quota, 5xx, timeout) fail over to the next model and count against the
-provider's circuit breaker; auth and bad-request errors do not fail over.
+Order of events for one call: cache lookup, then the step's model chain. Per model: budget and
+deadline check, provider call, schema validation (invalid JSON is retried on the same model with
+feedback). Transient errors (429, quota, 5xx, timeout) fail over to the next model and count
+against the provider's circuit breaker; auth and bad-request errors do not fail over.
+
+Every attempt is paid for, so the result and the log carry the tokens and cost of all attempts of
+the call (invalid answers and models that failed before a failover included), not only the last.
 """
 
 from __future__ import annotations
 
 import threading
 import time
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 
 from pydantic import BaseModel, ValidationError
 
 from bioverdict.llm.breaker import CircuitBreaker
-from bioverdict.llm.budget import Budget
+from bioverdict.llm.budget import Budget, Deadline
 from bioverdict.llm.cache import LLMCache, cache_key
 from bioverdict.llm.call_log import CallLog, CallRecord
 from bioverdict.llm.config import LLMConfig, StepConfig
@@ -26,10 +30,20 @@ from bioverdict.llm.errors import (
     FatalProviderError,
     InvalidOutputError,
     RefusalError,
+    RunTimeoutError,
     TransientProviderError,
 )
 from bioverdict.llm.types import Provider, ProviderRequest, ProviderResponse, split_model_ref
 from bioverdict.store.models import LLMResult
+
+
+@dataclass
+class _Usage:
+    """Tokens and cost of every attempt of one `call`."""
+
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cost_usd: float = 0.0
 
 
 class LLMClient:
@@ -42,6 +56,7 @@ class LLMClient:
         call_log: CallLog | None = None,
         breaker: CircuitBreaker | None = None,
         budget: Budget | None = None,
+        deadline: Deadline | None = None,
     ) -> None:
         config.validate_prices()
         self._config = config
@@ -52,6 +67,7 @@ class LLMClient:
             config.breaker_threshold, config.breaker_cooldown_s
         )
         self._budget = budget or Budget(config.budget_usd)
+        self._deadline = deadline or Deadline(config.run_timeout_s)
         self._mixed: set[str] = set()
         self._lock = threading.Lock()
 
@@ -70,7 +86,7 @@ class LLMClient:
         self._require_providers(step, cfg)
         started = time.perf_counter()
 
-        def request_for(ref: str, text: str) -> ProviderRequest:
+        def request_for(ref: str, text: str, timeout_s: float | None = None) -> ProviderRequest:
             return ProviderRequest(
                 model=split_model_ref(ref)[1],
                 prompt=text,
@@ -79,7 +95,7 @@ class LLMClient:
                 effort=cfg.effort,
                 temperature=cfg.temperature,
                 max_tokens=cfg.max_tokens,
-                timeout_s=cfg.timeout_s,
+                timeout_s=cfg.timeout_s if timeout_s is None else timeout_s,
             )
 
         primary = cfg.models[0]
@@ -90,13 +106,18 @@ class LLMClient:
                 update={
                     "step": step,
                     "cache_hit": True,
+                    "input_tokens": 0,
+                    "output_tokens": 0,
                     "cost_usd": 0.0,
                     "latency_ms": int((time.perf_counter() - started) * 1000),
                 }
             )
+            if hit.failover_from is not None:  # the recorded answer came from a failover model
+                self._mark_mixed(run_id)
             self._record(run_id, step, result, cfg, error=None)
             return result
 
+        usage = _Usage()
         failures: list[str] = []
         attempts = 0
         first_failed: str | None = None
@@ -107,7 +128,9 @@ class LLMClient:
                 first_failed = first_failed or ref
                 continue
             try:
-                response, used = self._ask_model(ref, cfg, prompt, request_for, schema, run_id)
+                response, used = self._ask_model(
+                    ref, cfg, prompt, request_for, schema, run_id, usage
+                )
             except (TransientProviderError, RefusalError, InvalidOutputError) as exc:
                 attempts += getattr(exc, "attempts", 1)
                 failures.append(f"{ref}: {type(exc).__name__}: {exc}")
@@ -115,13 +138,13 @@ class LLMClient:
                 if isinstance(exc, TransientProviderError):
                     self._breaker.record_failure(provider_name)
                 continue
-            except (FatalProviderError, BudgetExceededError) as exc:
-                self._record_failure(run_id, step, ref, cfg, started, attempts + 1, str(exc))
+            except (FatalProviderError, BudgetExceededError, RunTimeoutError) as exc:
+                self._record_failure(run_id, step, ref, cfg, started, attempts + 1, usage, str(exc))
                 raise
             attempts += used
             self._breaker.record_success(provider_name)
             result = self._build_result(
-                step, ref, response, schema, started, attempts, first_failed, run_id
+                step, ref, response, schema, started, attempts, first_failed, run_id, usage
             )
             if self._cache is not None:
                 self._cache.put(key, result.model_dump(mode="json"))
@@ -129,7 +152,7 @@ class LLMClient:
             return result
 
         error = AllModelsFailedError(step, failures)
-        self._record_failure(run_id, step, primary, cfg, started, attempts, str(error))
+        self._record_failure(run_id, step, primary, cfg, started, attempts, usage, str(error))
         raise error
 
     def bind(self, run_id: str) -> BoundLLM:
@@ -150,6 +173,10 @@ class LLMClient:
 
     # -- internals ------------------------------------------------------------
 
+    def _mark_mixed(self, run_id: str | None) -> None:
+        with self._lock:
+            self._mixed.add(run_id or "-")
+
     def _require_providers(self, step: str, cfg: StepConfig) -> None:
         for ref in cfg.models:
             name, _ = split_model_ref(ref)
@@ -161,9 +188,10 @@ class LLMClient:
         ref: str,
         cfg: StepConfig,
         prompt: str,
-        request_for,
+        request_for: Callable[..., ProviderRequest],
         schema: type[BaseModel],
         run_id: str | None,
+        usage: _Usage,
     ) -> tuple[ProviderResponse, int]:
         """Call one model, retrying invalid JSON with feedback. Returns (response, attempts)."""
         provider = self._providers[split_model_ref(ref)[0]]
@@ -171,9 +199,10 @@ class LLMClient:
         last: InvalidOutputError | None = None
         for attempt in range(1, cfg.max_validation_retries + 2):
             self._budget.check(run_id)
+            left = self._deadline.check(run_id)
             try:
-                response = provider.complete(request_for(ref, text))
-                self._charge(run_id, ref, response)
+                response = provider.complete(request_for(ref, text, min(cfg.timeout_s, left)))
+                self._charge(run_id, ref, response, usage)
                 schema.model_validate_json(response.text)
                 return response, attempt
             except (ValidationError, InvalidOutputError) as exc:
@@ -186,8 +215,14 @@ class LLMClient:
         last.attempts = cfg.max_validation_retries + 1  # type: ignore[attr-defined]
         raise last
 
-    def _charge(self, run_id: str | None, ref: str, response: ProviderResponse) -> None:
-        self._budget.charge(run_id, self._cost(ref, response))
+    def _charge(
+        self, run_id: str | None, ref: str, response: ProviderResponse, usage: _Usage
+    ) -> None:
+        cost = self._cost(ref, response)
+        self._budget.charge(run_id, cost)
+        usage.input_tokens += response.input_tokens
+        usage.output_tokens += response.output_tokens
+        usage.cost_usd += cost
 
     def _cost(self, ref: str, response: ProviderResponse) -> float:
         price = self._config.prices[ref]
@@ -206,19 +241,19 @@ class LLMClient:
         attempts: int,
         first_failed: str | None,
         run_id: str | None,
+        usage: _Usage,
     ) -> LLMResult:
         provider_name, _ = split_model_ref(ref)
         if first_failed is not None:
-            with self._lock:
-                self._mixed.add(run_id or "-")
+            self._mark_mixed(run_id)
         return LLMResult(
             step=step,
             provider=provider_name,
             model=response.model,
             parsed=schema.model_validate_json(response.text).model_dump(mode="json"),
-            input_tokens=response.input_tokens,
-            output_tokens=response.output_tokens,
-            cost_usd=self._cost(ref, response),
+            input_tokens=usage.input_tokens,
+            output_tokens=usage.output_tokens,
+            cost_usd=usage.cost_usd,
             latency_ms=int((time.perf_counter() - started) * 1000),
             attempts=attempts,
             cache_hit=False,
@@ -269,8 +304,10 @@ class LLMClient:
         cfg: StepConfig,
         started: float,
         attempts: int,
+        usage: _Usage,
         error: str,
     ) -> None:
+        """A failed call still cost money for its wasted attempts; the row says how much."""
         if self._log is None:
             return
         provider_name, model = split_model_ref(ref)
@@ -281,9 +318,9 @@ class LLMClient:
                 provider=provider_name,
                 model=model,
                 effort=cfg.effort,
-                input_tokens=0,
-                output_tokens=0,
-                cost_usd=0.0,
+                input_tokens=usage.input_tokens,
+                output_tokens=usage.output_tokens,
+                cost_usd=usage.cost_usd,
                 latency_ms=int((time.perf_counter() - started) * 1000),
                 attempts=attempts,
                 cache_hit=False,

@@ -31,6 +31,10 @@ class BudgetExceededError(LLMError):
     """The per-run spending cap is reached; no further call is made."""
 
 
+class RunTimeoutError(LLMError):
+    """The whole run exceeded its deadline (RUN_TIMEOUT_S); no further model call is made."""
+
+
 class ConfigError(LLMError):
     """The configuration cannot work (unknown step, unpriced model, missing provider)."""
 
