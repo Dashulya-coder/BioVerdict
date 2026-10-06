@@ -12,9 +12,17 @@ run whose `as_of` is not before the day it was downloaded (see `store.as_of`).
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import date, datetime
 
-from bioverdict.store.models import Evidence, EvidenceLevel, Locator, SourceKind
+from bioverdict.connectors.http import CachedHttpClient
+from bioverdict.store.as_of import filter_as_of
+from bioverdict.store.models import (
+    Evidence,
+    EvidenceLevel,
+    Locator,
+    ResolverOutput,
+    SourceKind,
+)
 
 API_URL = "https://api.platform.opentargets.org/api/v4/graphql"
 SITE_URL = "https://platform.opentargets.org"
@@ -172,3 +180,56 @@ def parse_associations(association_response: dict, retrieved_at: datetime) -> li
                 )
             )
     return items
+
+
+class OpenTargetsError(RuntimeError):
+    """The API answered with GraphQL errors."""
+
+
+def raise_on_graphql_errors(body: bytes) -> None:
+    """GraphQL reports failures with HTTP 200; refuse them so they are not cached."""
+    errors = json.loads(body).get("errors")
+    if errors:
+        messages = "; ".join(str(error.get("message", error)) for error in errors)
+        raise OpenTargetsError(messages)
+
+
+class OpenTargetsConnector:
+    """Satisfies `Connector`.
+
+    Reads the clinical stage of each known asset (found by exact name) and, for every target
+    that has an Ensembl id, its association with the indication (a MONDO or EFO id). The
+    Resolver supplies those ids; without them nothing is fetched for that part.
+    """
+
+    name = "opentargets"
+
+    def __init__(self, http: CachedHttpClient) -> None:
+        self._http = http
+
+    async def _query(self, payload: dict) -> tuple[dict, datetime]:
+        response = await self._http.post_json(API_URL, payload, validate=raise_on_graphql_errors)
+        return json.loads(response.body), response.fetched_at
+
+    async def fetch(self, query: ResolverOutput, as_of: date) -> list[Evidence]:
+        disease_id = query.indication.mondo_id or query.indication.efo_id
+        evidence: list[Evidence] = []
+
+        for asset in query.known_assets:
+            hits, _ = await self._query(search_payload(asset))
+            chembl_id = pick_drug(hits, asset)
+            if chembl_id is None:
+                continue
+            drug, fetched_at = await self._query(drug_payload(chembl_id))
+            evidence += parse_drug(drug, fetched_at, disease_id)
+
+        if disease_id is not None:
+            for target in query.targets:
+                if target.ensembl is None:
+                    continue
+                answer, fetched_at = await self._query(
+                    association_payload(disease_id, target.ensembl)
+                )
+                evidence += parse_associations(answer, fetched_at)
+
+        return filter_as_of(evidence, as_of)
