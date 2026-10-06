@@ -33,6 +33,8 @@ Valuation and probabilities are always `modeled`, with the assumptions visible.
   "id": "E-0042",
   "source": "ClinicalTrials.gov",
   "source_family": "registry",
+  "source_kind": "registry",
+  "type": "source_fact",
   "url": "https://clinicaltrials.gov/study/NCT00000000",
   "locator": { "type": "nct", "value": "NCT00000000" },
   "excerpt": "verbatim text from the document",
@@ -43,6 +45,8 @@ Valuation and probabilities are always `modeled`, with the assumptions visible.
   "version": 1
 }
 ```
+
+`type` is `source_fact` or `ai_inference`. `source_kind` drives the source-quality multiplier Q: `peer_reviewed`, `regulator`, `registry` (1.0), `preprint` (0.7), `company` (0.5), `ai_inference` (0.3).
 
 `level` values, strongest first: `human_genetics`, `human_interventional`, `human_observational`, `animal_in_vivo`, `in_vitro`.
 
@@ -57,6 +61,8 @@ Valuation and probabilities are always `modeled`, with the assumptions visible.
   "id": "C-0117",
   "run_id": "R-...",
   "section": "translation",
+  "claim_type": "drug_acts_in_humans",
+  "flags": [],
   "text": "claim in plain language",
   "basis": "extracted",
   "status": "found",
@@ -72,6 +78,8 @@ Link:
 ```json
 { "claim_id": "C-0117", "evidence_id": "E-0042", "direction": "supports", "quote": "verbatim, must occur in the evidence excerpt" }
 ```
+
+`claim_type` (`target_causal` | `drug_acts_in_humans` | `other`) selects the column of the level-weight table in [`scoring.md`](scoring.md). `flags` holds `sparse`, `contested`, `missing_link`.
 
 `diligence_type` for `unknown` claims: `proprietary_data` | `patient_level_data` | `kol_interview` | `experiment` | `cmc_diligence` | `ip_diligence`.
 
