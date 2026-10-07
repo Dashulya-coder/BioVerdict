@@ -1,0 +1,22 @@
+{
+  "indication": {
+    "name": "non-small cell lung carcinoma",
+    "mondo_id": "MONDO_0005233"
+  },
+  "targets": [
+    {
+      "symbol": "KRAS",
+      "uniprot": "P01116",
+      "ensembl": "ENSG00000133703"
+    }
+  ],
+  "action": "inhibitor",
+  "modality": "small molecule",
+  "delivery": "oral",
+  "tissue": "lung",
+  "known_assets": ["divarasib", "GDC-6036", "RG-6330"],
+  "assumptions": [
+    "targets: not stated in the input, filled in by the model",
+    "action: not stated in the input, filled in by the model"
+  ]
+}

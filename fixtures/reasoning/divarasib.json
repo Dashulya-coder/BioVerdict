@@ -1,0 +1,117 @@
+{
+  "reasoning.mechanism": {
+    "claims": [
+      {
+        "text": "KRAS G12C is a frequent, poor-prognosis driver mutation in NSCLC",
+        "claim_type": "target_causal",
+        "basis": "extracted",
+        "critical": true,
+        "links": [
+          {
+            "evidence_id": "E-0006",
+            "direction": "supports",
+            "quote": "found in approximately 14% of NSCLC cases and associated with poor prognosis"
+          },
+          {
+            "evidence_id": "E-0015",
+            "direction": "supports",
+            "quote": "\"id\": \"somatic_mutation\""
+          }
+        ]
+      },
+      {
+        "text": "Divarasib occupies the same switch-II pocket as sotorasib and adagrasib but holds the loop in a different conformation",
+        "claim_type": "target_causal",
+        "basis": "extracted",
+        "links": [
+          {
+            "evidence_id": "E-0010",
+            "direction": "supports",
+            "quote": "takes on a distinct conformation"
+          }
+        ]
+      },
+      {
+        "text": "No human genetic evidence on the effect of losing KRAS function is in the bundle, so the direction of action cannot be checked against genetics",
+        "claim_type": "target_causal",
+        "basis": "unknown",
+        "diligence_type": "experiment",
+        "links": []
+      }
+    ]
+  },
+  "reasoning.translation": {
+    "claims": [
+      {
+        "text": "Divarasib binds KRAS G12C in the allosteric switch-II pocket",
+        "claim_type": "drug_acts_in_humans",
+        "basis": "extracted",
+        "chain_link": "molecular_effect",
+        "links": [
+          {
+            "evidence_id": "E-0010",
+            "direction": "supports",
+            "quote": "binds in the same allosteric pocket as sotorasib and adagrasib"
+          }
+        ]
+      },
+      {
+        "text": "Whether the exposure reached in patients is the effective one is not shown in the available evidence",
+        "claim_type": "drug_acts_in_humans",
+        "basis": "unknown",
+        "chain_link": "human_exposure",
+        "diligence_type": "patient_level_data",
+        "links": []
+      },
+      {
+        "text": "Target engagement in tumour tissue is not shown; response in patients does not prove it",
+        "claim_type": "drug_acts_in_humans",
+        "basis": "unknown",
+        "chain_link": "target_engagement",
+        "diligence_type": "experiment",
+        "links": []
+      },
+      {
+        "text": "Divarasib produces confirmed responses in patients with KRAS G12C NSCLC",
+        "claim_type": "drug_acts_in_humans",
+        "basis": "extracted",
+        "chain_link": "biological_response",
+        "critical": true,
+        "links": [
+          {
+            "evidence_id": "E-0007",
+            "direction": "supports",
+            "quote": "a confirmed response was observed in 53.4% of patients"
+          }
+        ]
+      },
+      {
+        "text": "Divarasib improved progression-free and overall survival over the approved KRAS G12C inhibitors in a randomised phase 3, as reported by the sponsor",
+        "claim_type": "drug_acts_in_humans",
+        "basis": "extracted",
+        "chain_link": "patient_benefit",
+        "critical": true,
+        "links": [
+          {
+            "evidence_id": "E-0005",
+            "direction": "supports",
+            "quote": "statistically significant improvements in both progression-free survival (PFS) and overall survival (OS)"
+          }
+        ]
+      },
+      {
+        "text": "Treatment-related adverse events were mostly low grade in the phase 1 study",
+        "claim_type": "drug_acts_in_humans",
+        "basis": "extracted",
+        "chain_link": "patient_benefit",
+        "links": [
+          {
+            "evidence_id": "E-0008",
+            "direction": "supports",
+            "quote": "grade 3 events occurred in 15 patients (11%)"
+          }
+        ]
+      }
+    ]
+  }
+}

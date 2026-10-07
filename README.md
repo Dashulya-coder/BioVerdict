@@ -31,12 +31,18 @@ uv run uvicorn bioverdict.api.main:app --reload      # API on :8000
 cd ../frontend && pnpm install && pnpm dev            # UI on :5173
 ```
 
-Run one underwriting from the CLI (TODO: confirm command names once implemented):
+Run one underwriting through the API. Until the live pipeline is wired in, runs are answered from
+`fixtures/` (`USE_FIXTURES=1`, the default); the only fixture so far is `divarasib`:
 
 ```bash
-uv run bioverdict run --indication "KRAS G12C NSCLC" --mechanism "KRAS G12C inhibitor"
-uv run bioverdict run --asset divarasib --as-of 2026-06-30
+curl -s -X POST localhost:8000/runs -H 'content-type: application/json' -d '{"asset": "divarasib"}'
+curl -s localhost:8000/runs/<run_id>/report      # executive verdict, claims, chain, sources
+curl -N localhost:8000/runs/<run_id>/events      # progress as server-sent events
 ```
+
+The routes and response shapes are described in [`docs/architecture.md`](docs/architecture.md)
+(section 12); a running server also serves them at `/docs`. The command line (`bioverdict run`) is not
+implemented yet.
 
 Full operating procedures, including cache pre-warm and demo-day fallbacks: [`docs/runbook.md`](docs/runbook.md).
 
@@ -82,8 +88,9 @@ Details: [`docs/architecture.md`](docs/architecture.md). Data contracts: [`docs/
 
 ## Status
 
-- [ ] P0: schema, evidence store with versions and `as_of`, deterministic scoring, eval set, resolver
-- [ ] P1: five core agents, connectors, executive verdict, drill-down UI, trace and cost panel
+- [x] P0: schema, evidence store with versions and `as_of`, deterministic scoring, resolver
+- [ ] P0: eval set
+- [ ] P1: five core agents (mechanism and translation done), connectors (ClinicalTrials.gov and Open Targets done; PubMed and openFDA pending), executive verdict and drill-down API (done, on fixtures), drill-down UI, trace and cost panel
 - [ ] P1: incremental re-underwrite, diff screen, "add evidence"
 - [ ] P2: Bull/Bear, targeted second round, translation chain graph, diligence ranking by value of information
 - [ ] P3: IP/CMC, red/green flags, market sentiment, more playbooks
