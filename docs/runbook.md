@@ -29,6 +29,17 @@ cd frontend && pnpm dev
 
 ## 3. Run an underwriting
 
+For the independent A4 collection-only demo (no underwriting or paid calls), run from the
+repository root:
+
+```bash
+uv run --project backend python scripts/collect_fixture.py --db /tmp/a4.sqlite
+```
+
+See [collection](collection.md) for cutoffs, statuses, limits and live-integration requirements.
+The commands below describe the full underwriting interface; fixture CLI implementation is
+in pending PR #33 and is not included in this A4 branch.
+
 ```bash
 uv run bioverdict run --asset divarasib --output report.json  # offline fixture demo
 uv run bioverdict run --indication "..." --mechanism "..."    # TODO
