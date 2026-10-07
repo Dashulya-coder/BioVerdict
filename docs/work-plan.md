@@ -9,9 +9,9 @@ Two people, one goal: **near-equal workload, and both of us busy from the first 
 
 ## Progress snapshot — 2026-10-07
 
-Checked against merged `main` (100a96e), repository files and open PRs #14, #28, #30–#35,
-plus this `arsenii/A4-fixture-collection` branch. Unpublished teammate work is not included.
-Update this snapshot after merges or new implementation.
+Checked against merged `main`, the repository files and the open pull requests. Unpublished
+teammate work is not included. Update this snapshot when a task changes state, not on every PR:
+the per-task detail lives in the tables below.
 
 **Legend:** `[x]` complete task implementation merged; `[~]` partial implementation or pending
 review; `[ ]` task implementation still to do. A prototype, contract, plan or helper does not
@@ -20,30 +20,17 @@ even for complete components.
 
 | Person | Complete tasks | Partial / pending review | Still to do |
 |---|---|---|---|
-| Arsenii | 0 of 12 whole tasks | 7: A1, A2, A3, A4, A5, A6, A11 | 5: A7, A8, A9, A10, A12 |
-| Dasha | 3 of 13: B1, B2, B4 | 3: B8, B10, B11 | 7: B3, B5, B6, B7, B9, B12, B13 |
+| Arsenii | 1 of 12 whole tasks: A2 | 6: A1, A3, A4, A5, A6, A11 | 5: A7, A8, A9, A10, A12 |
+| Dasha | 1 of 13: B4 | 5: B1, B2, B8, B10, B11 | 7: B3, B5, B6, B7, B9, B12, B13 |
 
-These are **whole-task counts, not effort percentages**. Arsenii's cache/storage work is
-largely merged, but A3 remains partial while the fixture hash fix and end-to-end live validation
-are outstanding. Dasha's merged reasoning/scoring components still need full-pipeline evaluation.
+These are **whole-task counts, not effort percentages**. The collect → freeze path, the
+connectors, the fixture API/CLI and the first UI screens are merged but not yet joined into a live
+run, and the merged reasoning and scoring have not been evaluated on a full pipeline or called on a
+real model.
 
-**Ready for review, not merged:**
-
-- [#14](https://github.com/Dashulya-coder/BioVerdict/pull/14): fixture hash correction.
-- [#28](https://github.com/Dashulya-coder/BioVerdict/pull/28): Open Targets connector.
-- [#30](https://github.com/Dashulya-coder/BioVerdict/pull/30): Resolver part 1; currently based on #28.
-- [#32](https://github.com/Dashulya-coder/BioVerdict/pull/32): CT results/pagination/stopped studies and PubMed.
-- [#31](https://github.com/Dashulya-coder/BioVerdict/pull/31): fixture API and pipeline.
-- [#33](https://github.com/Dashulya-coder/BioVerdict/pull/33): fixture CLI; depends on #31/#14.
-- [#34](https://github.com/Dashulya-coder/BioVerdict/pull/34): shared Tailwind design system.
-- [#35](https://github.com/Dashulya-coder/BioVerdict/pull/35): functional demo UI; depends on #34 and targets `main`.
-  The UI can run without backend PRs. It displays prepared data and does not run underwriting.
-- `arsenii/A4-fixture-collection`: bounded collect/extraction → frozen bundle on fixtures;
-  independent of the API/CLI/frontend PRs. Live registration and run-lifecycle wiring remain.
-
-**Next for Arsenii:** review/merge the pending A1/A2/A3/A5 work, then wire frontend → fixture
-API and live Resolver/collect → frozen bundle. **Next for Dasha:** B3 clinical/competition and
-B5 report UI can proceed on fixtures using [the shared styles in #34](https://github.com/Dashulya-coder/BioVerdict/blob/arsenii/A5-design-system/docs/design-system.md); B8 needs an
+**Next for Arsenii:** wire the frontend to the fixture API, then the live Resolver and collect →
+frozen bundle (M2). **Next for Dasha:** B3 clinical/competition, B5 report UI on the fixture API
+using [the shared styles](design-system.md), and a first live run of B1/B2; B8 needs an
 independent verification implementation. M2/M3 require both tracks.
 
 ## What this plan satisfies
@@ -78,7 +65,7 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 | A2 | Connectors: ClinicalTrials.gov v2 and Open Targets, returning `Evidence` objects | P0 | 4 | yes | [x] | ClinicalTrials.gov (#19), its posted results, stopped studies and pagination (#32) and Open Targets (#28) merged. | Wire the connectors into live collection and verify a real bundle handoff (M2). |
 | A3 | HTTP cache, `as_of` filter, source catalog (allowlist), bundle freeze, hash and versions | P0 | 3 | yes | [~] | SQLite, cache/retries/pacing, cutoff, canonical ids, latest-wins, catalog, hash (fixture hash #14), freeze/load and versions merged. | Validate the complete live collect → freeze flow. |
 | A4 | Extraction collect agents: quote + value into `Evidence`, section statuses, bounded tool loops | P0 | 4 | yes | [~] | Bounded, injected-tool collection with grounded quote/value extraction, cutoff/latest-wins, honest statuses, budget/deadline handling and collect → freeze DAG (#36). | Register live connectors and the Resolver, then wire the API/CLI lifecycle. Live extraction quality and full graph integration still need validation. |
-| A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [~] | Fixture API/report/drill-down/trace/SSE (#31), CLI (#33) and shared Tailwind UI (#34) merged; functional input/resolver/evidence screens in #35. | Merge #35; connect the UI to the API and add live collection. Resolver and full evidence-list endpoints still needed. |
+| A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [~] | Fixture API/report/drill-down/trace/SSE (#31), CLI (#33) and shared Tailwind UI (#34) and the input/resolver/evidence screens on prepared data (#35) merged. | Connect the UI to the API and add live collection. Resolver and full evidence-list endpoints still needed. |
 | A6 | Connectors: PubMed / Europe PMC and openFDA / Drugs@FDA | P1 | 4 |  | [~] | PubMed connector merged (#32). | openFDA / Drugs@FDA and any additional Europe PMC coverage; validate PubMed bodies before caching. |
 | A7 | Incremental recompute engine, add-evidence endpoint, diff API and diff screen | P1 | 5 | yes | [ ] | Scoring has a reusable rescore helper; no A7 workflow. | Implement add-evidence, recompute orchestration, report diff API and UI (or the documented full re-run fallback). |
 | A8 | Eval runner, grounding and citation metrics, leakage probe, cache pre-warm | P1 | 4 |  | [ ] | Evaluation strategy documented. | Implement runner, grounding/citation metrics, leakage probe and cache pre-warm. |
