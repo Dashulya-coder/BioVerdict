@@ -1,2 +1,4 @@
 def main() -> None:
-    print("Hello from bioverdict!")
+    from bioverdict.cli import main as cli_main
+
+    raise SystemExit(cli_main())

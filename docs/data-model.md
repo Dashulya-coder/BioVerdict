@@ -120,18 +120,26 @@ Identical evidence therefore gives an identical hash regardless of when it was f
   "delivery": "oral | SC | IV | intrathecal",
   "tissue": "",
   "known_assets": [],
+  "assets": [{ "name": "DIVARASIB", "chembl_id": "CHEMBL5095236" }],
   "assumptions": ["fields the system inferred itself"]
 }
 ```
 
 Several targets are allowed (a triple agonist has three; a degrader and a knockdown need different genetic logic).
 
+`known_assets` are the names to search registries with (what the user typed and the database name). `assets` are the drugs a database identified, each with its ChEMBL id; `chembl_id` is `null` when no database confirmed the name, and a model never writes it. Ids of targets and diseases follow the same rule: they come from Open Targets lookups, not from a model.
+
 ## SQLite schema (sketch)
 
 ```sql
 CREATE TABLE runs (
   run_id TEXT PRIMARY KEY, input_json TEXT, as_of TEXT, status TEXT,
-  verdict TEXT, created_at TEXT, finished_at TEXT, schema_version INTEGER
+  verdict TEXT, created_at TEXT, finished_at TEXT, schema_version INTEGER,
+  resolver_json TEXT, result_json TEXT
+);
+CREATE TABLE run_events (
+  run_id TEXT, seq INTEGER, step TEXT, status TEXT, detail TEXT, created_at TEXT,
+  PRIMARY KEY (run_id, seq)
 );
 CREATE TABLE bundles (
   bundle_id TEXT PRIMARY KEY, run_id TEXT, version INTEGER,
@@ -178,3 +186,4 @@ Notes:
 - Ids such as `E-0001` and `C-0001` are unique only within a run, so evidence, claims and their links use the composite key `(run_id, id)`.
 - A bundle has no evidence table of its own. Bundle version `N` of a run contains every evidence row of that run with `version <= N` (evidence is append-only).
 - The applied migration level is stored with `PRAGMA user_version`; `runs.schema_version` records the level a run was created under.
+- `runs.resolver_json` holds the `ResolverOutput` (with its assumptions) and `runs.result_json` the `VerdictResult` of a finished run; `runs.verdict` repeats the verdict word for listings. `run_events` is the progress log of a run (one row per step and status); the SSE endpoint streams it and the trace panel reads it.

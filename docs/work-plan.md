@@ -9,9 +9,9 @@ Two people, one goal: **near-equal workload, and both of us busy from the first 
 
 ## Progress snapshot — 2026-10-07
 
-Checked against merged `main` (100a96e), repository files and open PRs #14, #28, #30–#34,
-plus this `arsenii/A5-research-workspace` branch. Unpublished teammate work is not included.
-Update this snapshot after merges or new implementation.
+Checked against merged `main`, the repository files and the open pull requests. Unpublished
+teammate work is not included. Update this snapshot when a task changes state, not on every PR:
+the per-task detail lives in the tables below.
 
 **Legend:** `[x]` complete task implementation merged; `[~]` partial implementation or pending
 review; `[ ]` task implementation still to do. A prototype, contract, plan or helper does not
@@ -20,28 +20,17 @@ even for complete components.
 
 | Person | Complete tasks | Partial / pending review | Still to do |
 |---|---|---|---|
-| Arsenii | 0 of 12 whole tasks | 6: A1, A2, A3, A5, A6, A11 | 6: A4, A7, A8, A9, A10, A12 |
-| Dasha | 3 of 13: B1, B2, B4 | 3: B8, B10, B11 | 7: B3, B5, B6, B7, B9, B12, B13 |
+| Arsenii | 1 of 12 whole tasks: A2 | 6: A1, A3, A4, A5, A6, A11 | 5: A7, A8, A9, A10, A12 |
+| Dasha | 1 of 13: B4 | 5: B1, B2, B8, B10, B11 | 7: B3, B5, B6, B7, B9, B12, B13 |
 
-These are **whole-task counts, not effort percentages**. Arsenii's cache/storage work is
-largely merged, but A3 remains partial while the fixture hash fix and end-to-end live validation
-are outstanding. Dasha's merged reasoning/scoring components still need full-pipeline evaluation.
+These are **whole-task counts, not effort percentages**. The collect → freeze path, the
+connectors, the fixture API/CLI and the first UI screens are merged but not yet joined into a live
+run, and the merged reasoning and scoring have not been evaluated on a full pipeline or called on a
+real model.
 
-**Ready for review, not merged:**
-
-- [#14](https://github.com/Dashulya-coder/BioVerdict/pull/14): fixture hash correction.
-- [#28](https://github.com/Dashulya-coder/BioVerdict/pull/28): Open Targets connector.
-- [#30](https://github.com/Dashulya-coder/BioVerdict/pull/30): Resolver part 1; currently based on #28.
-- [#32](https://github.com/Dashulya-coder/BioVerdict/pull/32): CT results/pagination/stopped studies and PubMed.
-- [#31](https://github.com/Dashulya-coder/BioVerdict/pull/31): fixture API and pipeline.
-- [#33](https://github.com/Dashulya-coder/BioVerdict/pull/33): fixture CLI; depends on #31/#14.
-- [#34](https://github.com/Dashulya-coder/BioVerdict/pull/34): shared Tailwind design system.
-- `arsenii/A5-research-workspace`: functional demo UI; depends on #34 and targets `main`.
-  The UI can run without backend PRs. It displays prepared data and does not run underwriting.
-
-**Next for Arsenii:** review/merge the pending A1/A2/A3/A5 work, then wire frontend → fixture
-API and live Resolver/collect → frozen bundle. **Next for Dasha:** B3 clinical/competition and
-B5 report UI can proceed on fixtures using [the shared styles](design-system.md); B8 needs an
+**Next for Arsenii:** wire the frontend to the fixture API, then the live Resolver and collect →
+frozen bundle (M2). **Next for Dasha:** B3 clinical/competition, B5 report UI on the fixture API
+using [the shared styles](design-system.md), and a first live run of B1/B2; B8 needs an
 independent verification implementation. M2/M3 require both tracks.
 
 ## What this plan satisfies
@@ -72,12 +61,12 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 
 | ID | Task | Priority | Points | Demo-critical | Status | Implemented / evidence | Remaining |
 |---|---|---|---|---|---|---|---|
-| A1 | Resolver: input formats (indication+mechanism, drug name, company code) to MONDO/EFO, UniProt/Ensembl, ChEMBL/Open Targets IDs; alias disambiguation | P0 | 3 | yes | [~] | Drug/target/disease lookup and confirmed IDs in PR #30 (part 1; depends on #28). | Finish remaining input/alias cases and expose live resolution to API/UI. |
-| A2 | Connectors: ClinicalTrials.gov v2 and Open Targets, returning `Evidence` objects | P0 | 4 | yes | [~] | ClinicalTrials.gov connector merged (#19); Open Targets #28 and CT results/pagination/stopped studies #32 ready for review. | Merge pending connectors; wire and verify a real bundle handoff (M2). |
-| A3 | HTTP cache, `as_of` filter, source catalog (allowlist), bundle freeze, hash and versions | P0 | 3 | yes | [~] | SQLite, cache/retries, cutoff, canonical IDs, latest-wins, catalog, hash, freeze/load and versions merged. | Merge fixture hash fix #14; validate the complete live collect → freeze flow. |
-| A4 | Extraction collect agents: quote + value into `Evidence`, section statuses, bounded tool loops | P0 | 4 | yes | [ ] | Contracts and connector foundations exist. | Implement extraction agents, section-status aggregation and bounded collection orchestration. |
-| A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [~] | Fixture API/report/drill-down/trace/SSE in #31; CLI in #33; shared Tailwind UI in #34; functional input/resolver/evidence/sources in this frontend branch. | Review/merge PRs; connect UI to API and add live collection. Resolver and full evidence-list endpoints still needed. |
-| A6 | Connectors: PubMed / Europe PMC and openFDA / Drugs@FDA | P1 | 4 |  | [~] | PubMed connector in #32. | Review/merge PubMed; implement openFDA / Drugs@FDA and any additional Europe PMC coverage. |
+| A1 | Resolver: input formats (indication+mechanism, drug name, company code) to MONDO/EFO, UniProt/Ensembl, ChEMBL/Open Targets IDs; alias disambiguation | P0 | 3 | yes | [~] | Drug, target and disease id lookup with strict name matching merged (#30, part 1). | Free-text parsing with the LLM, `Resolver.resolve()` with `assumptions`, ChEMBL ids in `ResolverOutput`; expose live resolution to the API/UI. |
+| A2 | Connectors: ClinicalTrials.gov v2 and Open Targets, returning `Evidence` objects | P0 | 4 | yes | [x] | ClinicalTrials.gov (#19), its posted results, stopped studies and pagination (#32) and Open Targets (#28) merged. | Wire the connectors into live collection and verify a real bundle handoff (M2). |
+| A3 | HTTP cache, `as_of` filter, source catalog (allowlist), bundle freeze, hash and versions | P0 | 3 | yes | [~] | SQLite, cache/retries/pacing, cutoff, canonical ids, latest-wins, catalog, hash (fixture hash #14), freeze/load and versions merged. | Validate the complete live collect → freeze flow. |
+| A4 | Extraction collect agents: quote + value into `Evidence`, section statuses, bounded tool loops | P0 | 4 | yes | [~] | Bounded, injected-tool collection with grounded quote/value extraction, cutoff/latest-wins, honest statuses, budget/deadline handling and collect → freeze DAG (#36). | Register live connectors and the Resolver, then wire the API/CLI lifecycle. Live extraction quality and full graph integration still need validation. |
+| A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [~] | Fixture API/report/drill-down/trace/SSE (#31), CLI (#33) and shared Tailwind UI (#34) and the input/resolver/evidence screens on prepared data (#35) merged. | Connect the UI to the API and add live collection. Resolver and full evidence-list endpoints still needed. |
+| A6 | Connectors: PubMed / Europe PMC and openFDA / Drugs@FDA | P1 | 4 |  | [~] | PubMed connector merged (#32). | openFDA / Drugs@FDA and any additional Europe PMC coverage; validate PubMed bodies before caching. |
 | A7 | Incremental recompute engine, add-evidence endpoint, diff API and diff screen | P1 | 5 | yes | [ ] | Scoring has a reusable rescore helper; no A7 workflow. | Implement add-evidence, recompute orchestration, report diff API and UI (or the documented full re-run fallback). |
 | A8 | Eval runner, grounding and citation metrics, leakage probe, cache pre-warm | P1 | 4 |  | [ ] | Evaluation strategy documented. | Implement runner, grounding/citation metrics, leakage probe and cache pre-warm. |
 | A9 | Epidemiology and pricing connectors (SEER, GCO, CMS) and TAM numbers derived by code | P1 | 4 |  | [ ] | TAM contracts/design documented. | Implement epidemiology/pricing retrieval and reproducible TAM calculations. |
@@ -89,8 +78,8 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 
 | ID | Task | Priority | Points | Demo-critical | Status | Implemented / evidence | Remaining |
 |---|---|---|---|---|---|---|---|
-| B1 | LLM layer: `llm.call`, provider adapters, schema validation and retries, cache, failover, circuit breaker, budget cap, logging | P0 | 5 | yes | [x] | LLM client, Anthropic adapter, validation/retries, cache, failover logic, breaker, budget and logging merged (#18). | Integrate real collection; add further live provider adapters as needed for failover/judge and validate live configuration. |
-| B2 | Reasoning modules: mechanism validation and translation chain (supported / weak / missing links) | P0 | 5 | yes | [x] | Mechanism and translation modules, grounding and explicit missing-chain links merged (#26/#29). | Consume real frozen bundles and evaluate quality; remaining clinical modules are B3. |
+| B1 | LLM layer: `llm.call`, provider adapters, schema validation and retries, cache, failover, circuit breaker, budget cap, logging | P0 | 5 | yes | [~] | LLM client, one adapter (Anthropic), validation/retries, cache, failover logic, breaker, budget, deadline and logging merged (#18). | No live call has been made and there is no second provider adapter (failover across providers, cross-provider judge). Validate with a real run. |
+| B2 | Reasoning modules: mechanism validation and translation chain (supported / weak / missing links) | P0 | 5 | yes | [~] | Mechanism and translation modules, grounding and explicit missing-chain links merged (#26/#29/#37). | No real model answer has been seen: validate prompt and output quality on a live run; remaining modules are B3. |
 | B3 | Reasoning modules: clinical development and competition and pipeline | P0 | 4 | yes | [ ] | Generic reasoning framework exists. | Implement clinical development, competition and pipeline modules. |
 | B4 | Scoring: gates, claim confidence, probability of success, verdict mapping | P0 | 4 | yes | [x] | Confidence, gates, PoS and deterministic verdict mapping merged (#11/#27); study-fact handling #29. | Calibrate thresholds in M4; wire B7 financial outputs when available. |
 | B5 | Report UI: executive verdict, claim drill-down, translation-chain graph | P0 | 4 | yes | [ ] | Shared English dark-console tokens/primitives available in #34. | Implement executive report, claim drill-down and translation graph using the shared design system. |
@@ -152,24 +141,29 @@ Do these in parallel where possible, then review each other's work.
 
 Phase 0 evidence: contracts, `FakeConnector`, `FakeLLM`, Divarasib's 15-item bundle and
 contract tests exist. Compatibility 17/17 and 369 backend tests passed on the CLI branch;
-the second machine is unconfirmed. HRO761 fixture, collect/reason graph nodes, and full API
+the second machine is unconfirmed. A4 adds collect/freeze graph nodes and grounded extraction
+(29 cases, 332 backend tests). HRO761 fixture, reason-side graph nodes and full API
 fixture handoff are still outstanding. ADRs remain **Proposed**; code-freeze date remains TODO.
 CLI execution is implemented in pending #33, so M0 is not fully merged.
 
 Exit criterion (milestone M0): both can run `uv run bioverdict run --asset divarasib` with `USE_FIXTURES=1` and see the DAG finish, and both UIs can be developed against fixture JSON.
 
+CLI status (2026-10-07): the offline command now runs the fixture pipeline through resolve,
+collect, freeze, mechanism/translation reasoning, scoring and JSON report export. It uses the A5
+fixture API's SQLite records; live orchestration and the remaining Phase 0 sign-offs are pending.
+
 ## 6. Milestones
 
 Frontend status (2026-10-07): approved English dark console; Tailwind 4, shared tokens and
 typed primitives in #34. Input → resolved assumptions → evidence explorer and original sources
-are implemented in this dependent frontend branch with search, filters, cutoffs, verbatim quotes,
+are implemented in #35 with search, filters, cutoffs, verbatim quotes,
 original links, keyboard navigation and mobile layout. Prepared Divarasib data only; API wiring
-and report/trace remain outstanding. Styles are shared in `docs/design-system.md`.
+and report/trace remain outstanding. The shared style document is in #34; it is not yet present in this main-based A4 branch.
 
 | Milestone | Meaning | Who | Status / remaining |
 |---|---|---|---|
-| M0 | Contracts, fixtures and fakes merged; both start parallel work | both | [~] Contracts/fakes/Divarasib exist; merge CLI/API, complete graph/HRO761 and verify both machines. |
-| M1 | `llm.call` works for one provider; extraction switches from `FakeLLM` to real | Dasha delivers, Arsenii switches | [~] One-provider LLM layer merged; real extraction switch not implemented. |
+| M0 | Contracts, fixtures and fakes merged; both start parallel work | both | [~] Contracts/fakes/Divarasib exist; merge CLI/API, merge A4 collection; complete reasoning graph/HRO761 and verify both machines. |
+| M1 | `llm.call` works for one provider; extraction switches from `FakeLLM` to real | Dasha delivers, Arsenii switches | [~] One-provider LLM layer merged; fixture extraction in A4; live extraction switch remains. |
 | M2 | **Bundle handoff:** a real bundle for divarasib from real connectors passes the bundle contract test; reasoning runs on it | Arsenii delivers, Dasha consumes; short pairing session | [ ] Connectors partly pending; live collection → frozen bundle → reasoning not integrated. |
 | M3 | **Walking skeleton:** one asset end to end (low quality is fine); both UIs show real data; recompute works at least as "re-run reason and score on bundle v2" | both | [~] Fixture backend path in #31/#33 and demo UI prepared; API-driven UIs/live path/recompute still missing. |
 | M4 | Eval run, leakage probe, calibration of thresholds; fix the worst failures | both, joint | [ ] Eval runner/cases, leakage runs and calibration outstanding. |
