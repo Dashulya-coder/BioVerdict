@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from bioverdict.reasoning.gate_guards import GateGuard, evidence_guard
 from bioverdict.store.models import ClaimType, GateId, Section
 
 _MECHANISM = """\
@@ -50,6 +51,8 @@ class ReasoningModule:
     # The type is fixed by the module, not chosen by the model: it picks the evidence weights, so
     # a model that mislabels a claim could otherwise move its confidence (see grounding.py).
     claim_type: ClaimType | None = None
+    # Code check that a gate signal rests on the right kind of evidence (reasoning/gate_guards.py).
+    gate_guard: GateGuard | None = None
 
 
 MECHANISM = ReasoningModule(
@@ -59,6 +62,7 @@ MECHANISM = ReasoningModule(
     instruction=_MECHANISM,
     allowed_gates=frozenset({GateId.K3}),
     claim_type=ClaimType.TARGET_CAUSAL,
+    gate_guard=evidence_guard,
 )
 TRANSLATION = ReasoningModule(
     name="translation",

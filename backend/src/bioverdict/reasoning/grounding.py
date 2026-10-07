@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 
+from bioverdict.reasoning.gate_guards import GateGuard
 from bioverdict.reasoning.schemas import DraftClaim, ModuleDraft
 from bioverdict.store.models import (
     Basis,
@@ -23,6 +24,7 @@ from bioverdict.store.models import (
     ClaimType,
     DiligenceType,
     Direction,
+    Evidence,
     GateId,
     Section,
     SectionStatus,
@@ -110,6 +112,7 @@ def ground_draft(
     allow_chain: bool = False,
     evidence_sections: tuple[Section, ...] | None = None,
     forced_type: ClaimType | None = None,
+    gate_guard: GateGuard | None = None,
     first_number: int = 1,
 ) -> Grounded:
     out = Grounded()
@@ -176,6 +179,12 @@ def ground_draft(
                 allow_chain,
                 evidence_sections or (section,),
                 forced_type,
+                [
+                    (link, evidence[link.evidence_id])
+                    for link in links
+                    if link.direction is Direction.SUPPORTS
+                ],
+                gate_guard,
             )
         )
         out.links.extend(links)
@@ -194,13 +203,26 @@ def _build_claim(
     allow_chain: bool,
     evidence_sections: tuple[Section, ...],
     forced_type: ClaimType | None,
+    support: list[tuple[ClaimEvidenceLink, Evidence]],
+    gate_guard: GateGuard | None,
 ) -> Claim:
-    gates = [g for g in item.gate_signals if g in allowed_gates]
+    gates: list[GateId] = []
     for g in item.gate_signals:
         if g not in allowed_gates:
             out.drops.append(
                 Drop(claim_id, g.value, "gate is outside this module's remit", DropKind.GATE)
             )
+        elif gate_guard is not None and (why := gate_guard(g, support)) is not None:
+            out.drops.append(
+                Drop(
+                    claim_id,
+                    g.value,
+                    f"gate not supported by the cited evidence: {why}",
+                    DropKind.GATE,
+                )
+            )
+        else:
+            gates.append(g)
 
     chain_link = item.chain_link if allow_chain else None
     if item.chain_link is not None and not allow_chain:
