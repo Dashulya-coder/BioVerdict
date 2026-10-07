@@ -9,6 +9,7 @@ from tenacity import wait_none
 from bioverdict.connectors.clinicaltrials import (
     API_URL,
     FIELDS,
+    STOPPED,
     ClinicalTrialsConnector,
     build_queries,
 )
@@ -33,9 +34,24 @@ class FakeRegistry:
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
+        if request.url.path.rstrip("/") != "/api/v2/studies":  # one study: its posted results
+            nct = request.url.path.rsplit("/", 1)[-1]
+            recorded = RAW / f"results_{nct}.json"
+            empty = {"protocolSection": {"identificationModule": {"nctId": nct}}}
+            return httpx.Response(
+                200, content=recorded.read_bytes() if recorded.exists() else json.dumps(empty)
+            )
         params = request.url.params
+        if "pageToken" in params:  # the recorded answers are one page each
+            return httpx.Response(200, json={"studies": []})
         body = TERMINATED if params.get("query.intr") == "sotorasib" else DIVARASIB
         return httpx.Response(200, content=body)
+
+    def searches(self) -> list[httpx.Request]:
+        return [r for r in self.requests if r.url.path.rstrip("/") == "/api/v2/studies"]
+
+    def result_requests(self) -> list[str]:
+        return [r.url.path.rsplit("/", 1)[-1] for r in self.requests if r not in self.searches()]
 
 
 def make_connector(tmp_path: Path, registry: FakeRegistry) -> ClinicalTrialsConnector:
@@ -62,10 +78,18 @@ def test_satisfies_connector_protocol(tmp_path: Path) -> None:
 
 
 def test_asset_name_is_searched_as_intervention() -> None:
-    [params] = build_queries(asset_query("divarasib"))
+    params, _ = build_queries(asset_query("divarasib"))
     assert params["query.intr"] == "divarasib"
     assert "query.cond" not in params
     assert params["fields"] == FIELDS and params["pageSize"] == "20"
+
+
+def test_every_search_is_repeated_for_stopped_studies() -> None:
+    plain, stopped = build_queries(asset_query("divarasib"))
+
+    assert "filter.overallStatus" not in plain
+    assert stopped == {**plain, "filter.overallStatus": STOPPED}
+    assert STOPPED == "TERMINATED|WITHDRAWN|SUSPENDED"
 
 
 def test_without_assets_the_indication_and_each_target_are_searched() -> None:
@@ -77,7 +101,10 @@ def test_without_assets_the_indication_and_each_target_are_searched() -> None:
     assert [(q["query.cond"], q["query.term"]) for q in queries] == [
         ("obesity", "GLP1R"),
         ("obesity", "GIPR"),
+        ("obesity", "GLP1R"),  # the same two, restricted to stopped studies
+        ("obesity", "GIPR"),
     ]
+    assert [q.get("filter.overallStatus") for q in queries] == [None, None, STOPPED, STOPPED]
 
 
 async def test_fetch_returns_evidence_for_every_study_found(tmp_path: Path) -> None:
@@ -89,8 +116,8 @@ async def test_fetch_returns_evidence_for_every_study_found(tmp_path: Path) -> N
         for s in json.loads(DIVARASIB)["studies"]
     }
     assert nct_ids(evidence) == expected
-    assert registry.requests[0].url.params["query.intr"] == "divarasib"
-    assert str(registry.requests[0].url).startswith(API_URL)
+    assert registry.searches()[0].url.params["query.intr"] == "divarasib"
+    assert str(registry.searches()[0].url).startswith(API_URL)
 
 
 async def test_a_study_found_by_two_assets_is_read_once(tmp_path: Path) -> None:
@@ -122,8 +149,9 @@ async def test_a_repeated_fetch_is_served_from_the_cache(tmp_path: Path) -> None
     registry = FakeRegistry()
     connector = make_connector(tmp_path, registry)
     await connector.fetch(asset_query("divarasib"), TODAY)
+    asked = len(registry.requests)
     await connector.fetch(asset_query("divarasib"), TODAY)
-    assert len(registry.requests) == 1
+    assert asked > 0 and len(registry.requests) == asked
 
 
 async def test_a_source_error_is_raised(tmp_path: Path) -> None:

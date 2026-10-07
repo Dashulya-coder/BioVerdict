@@ -153,6 +153,15 @@ class Target(_Model):
     ensembl: str | None = None
 
 
+class Asset(_Model):
+    """A drug the Resolver identified: its database name and its ChEMBL id."""
+
+    name: str
+    chembl_id: str | None = Field(
+        default=None, description="Set only when a database confirmed the name; never by a model"
+    )
+
+
 class ResolverOutput(_Model):
     """Normalized input. Several targets are allowed (retatrutide has three)."""
 
@@ -162,7 +171,12 @@ class ResolverOutput(_Model):
     modality: str | None = None  # small molecule | antibody | siRNA | ASO | peptide | ...
     delivery: str | None = None  # oral | SC | IV | intrathecal | ...
     tissue: str | None = None
-    known_assets: list[str] = Field(default_factory=list)
+    known_assets: list[str] = Field(
+        default_factory=list, description="Names to search registries and news with"
+    )
+    assets: list[Asset] = Field(
+        default_factory=list, description="The drugs a database identified, with their ids"
+    )
     assumptions: list[str] = Field(
         default_factory=list, description="Fields the system inferred itself"
     )
