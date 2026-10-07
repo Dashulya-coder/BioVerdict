@@ -17,7 +17,7 @@ The source of truth for tokens is `frontend/src/index.css`, shared by both track
 | `ink` | `#E7EDE6` | Main text |
 | `muted` | `#A4B0A6` | Secondary text and metadata |
 | `rule` | `#303C33` | Decorative dividers and panel borders |
-| `accent` | `#80CDBB` | Primary actions, focus, verified source labels |
+| `accent` | `#80CDBB` | Primary actions, focus, source provenance labels |
 | `assumption` | `#D3B47A` | Explicit assumptions and review prompts |
 | `danger` | `#E89A92` | Failures and invalid input |
 
@@ -86,5 +86,5 @@ pnpm format:check
 pnpm build
 ```
 
-Ownership: Arsenii owns `src/app/` and `src/features/evidence/`; Dasha owns
+Ownership: Arsenii owns `src/app/`, `src/features/input/` and `src/features/evidence/`; Dasha owns
 `src/features/report/` and `src/features/trace/`. Shared style changes go through review.

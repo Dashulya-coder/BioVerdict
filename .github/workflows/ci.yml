@@ -54,3 +54,9 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Install browser for workspace checks
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Workspace browser checks
+        run: pnpm exec playwright test
