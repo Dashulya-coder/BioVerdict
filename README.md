@@ -66,6 +66,7 @@ Details: [`docs/architecture.md`](docs/architecture.md). Data contracts: [`docs/
 |---|---|
 | [`docs/architecture.md`](docs/architecture.md) | Pipeline, agents, evidence store, failure handling, API |
 | [`docs/stack.md`](docs/stack.md) | Toolchain, versions, pinning policy, project skeleton |
+| [`docs/design-system.md`](docs/design-system.md) | Approved dark-console palette, typography, shared UI and frontend conventions |
 | [`docs/data-model.md`](docs/data-model.md) | Evidence, Claim, Bundle, statuses, SQLite schema |
 | [`docs/scoring.md`](docs/scoring.md) | Gates, confidence, probability of success, rNPV, capital |
 | [`docs/sources.md`](docs/sources.md) | Data sources, attribution, source-order rules |
