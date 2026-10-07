@@ -41,8 +41,19 @@ curl -N localhost:8000/runs/<run_id>/events      # progress as server-sent event
 ```
 
 The routes and response shapes are described in [`docs/architecture.md`](docs/architecture.md)
-(section 12); a running server also serves them at `/docs`. The command line (`bioverdict run`) is not
-implemented yet.
+(section 12); a running server also serves them at `/docs`. Run the same fixture pipeline without
+starting the server (from `backend/`, no API keys needed):
+
+```bash
+uv run bioverdict run --asset divarasib --as-of 2026-10-07 --output report.json
+```
+
+The JSON report goes to stdout and the optional output file; diagnostics go to stderr. Runs are
+saved to SQLite, shared with the API when both use the same `DB_PATH`. Use `--db` and `--fixtures`
+to override paths. `python -m bioverdict` provides the same CLI. The current fixture snapshot is
+static; an earlier cutoff filters evidence and drops claims whose citations no longer verify.
+This is an offline demo, not a live underwriting. Export environment variables explicitly;
+the CLI does not automatically load `.env`.
 
 Full operating procedures, including cache pre-warm and demo-day fallbacks: [`docs/runbook.md`](docs/runbook.md).
 
