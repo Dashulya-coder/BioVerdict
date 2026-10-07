@@ -14,14 +14,18 @@ from pathlib import Path
 
 from bioverdict.llm import FakeLLM
 from bioverdict.reasoning import ModuleReasoner
+from bioverdict.reasoning.grounding import fill_missing_chain_links
 from bioverdict.scoring.verdict import score_verdict
+from bioverdict.store.bundle import compute_content_hash, select_bundle_evidence
 from bioverdict.store.bundle_repo import save_bundle
-from bioverdict.store.models import Bundle, ResolverOutput, VerdictResult
+from bioverdict.store.freeze import build_catalog
+from bioverdict.store.models import Basis, Bundle, ResolverOutput, SectionStatus, VerdictResult
 from bioverdict.store.runs_repo import (
     DONE,
     FAILED,
     add_event,
     finish_run,
+    get_run,
     save_claims,
     save_resolver,
 )
@@ -85,7 +89,31 @@ def _run(conn: sqlite3.Connection, run_id: str, name: str, fixtures: Path) -> Ve
 
     add_event(conn, run_id, "collect", "started", "from fixtures, no network")
     bundle = Bundle.model_validate_json(_load(fixtures, "bundles", name))
-    bundle = bundle.model_copy(update={"run_id": run_id, "bundle_id": f"B-{run_id}-v1"})
+    if compute_content_hash(bundle.evidence, bundle.section_statuses) != bundle.content_hash:
+        raise ValueError("fixture content_hash does not match the evidence")
+    run = get_run(conn, run_id)
+    if run is None:
+        raise ValueError(f"run {run_id} does not exist")
+    visible = select_bundle_evidence(bundle.evidence, run.as_of)
+    # Evidence has no section membership. Conservatively mark previously found sections
+    # incomplete when the dated snapshot loses evidence; do not invent negative searches.
+    statuses = {
+        section: SectionStatus.INCOMPLETE
+        if len(visible) < len(bundle.evidence) and status is SectionStatus.FOUND
+        else status
+        for section, status in bundle.section_statuses.items()
+    }
+    bundle = bundle.model_copy(
+        update={
+            "run_id": run_id,
+            "bundle_id": f"B-{run_id}-v1",
+            "as_of": run.as_of,
+            "evidence": visible,
+            "catalog": build_catalog(visible),
+            "section_statuses": statuses,
+            "content_hash": compute_content_hash(visible, statuses),
+        }
+    )
     add_event(conn, run_id, "collect", "done", f"{len(bundle.evidence)} evidence items")
 
     add_event(conn, run_id, "freeze", "started")
@@ -98,9 +126,27 @@ def _run(conn: sqlite3.Connection, run_id: str, name: str, fixtures: Path) -> Ve
     answers = json.loads(_load(fixtures, "reasoning", name))
     reasoner = ModuleReasoner(FakeLLM(answers), run_id)
     claims, links = reasoner.reason(bundle)
+    # Canned answers are fixed in time. A failed citation must remove the whole claim,
+    # including a claim with other surviving citations, rather than soften it to inference.
+    rejected = {
+        d.claim_id for d in reasoner.trace.drops if d.what.startswith("E-") or d.what == "basis"
+    }
+    cited = {link.claim_id for link in links}
+    rejected |= {c.id for c in claims if c.basis is not Basis.UNKNOWN and c.id not in cited}
+    next_number = max((int(c.id.removeprefix("C-")) for c in claims), default=0) + 1
+    claims = [c for c in claims if c.id not in rejected]
+    links = [link for link in links if link.claim_id not in rejected]
+    claims += fill_missing_chain_links(claims, bundle, run_id, next_number)
     save_claims(conn, run_id, claims, links, bundle.version)
-    dropped = len(reasoner.trace.drops)
-    add_event(conn, run_id, "reason", "done", f"{len(claims)} claims, {dropped} dropped by code")
+    dropped = len(reasoner.trace.drops) + len(rejected)
+    add_event(
+        conn,
+        run_id,
+        "reason",
+        "done",
+        f"{len(claims)} claims, {dropped} dropped by code; rejected claims: "
+        f"{', '.join(sorted(rejected)) or 'none'}",
+    )
 
     add_event(conn, run_id, "score", "started")
     result = score_verdict(claims)

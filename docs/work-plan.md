@@ -117,6 +117,10 @@ Do these in parallel where possible, then review each other's work.
 
 Exit criterion (milestone M0): both can run `uv run bioverdict run --asset divarasib` with `USE_FIXTURES=1` and see the DAG finish, and both UIs can be developed against fixture JSON.
 
+CLI status (2026-10-07): the offline command now runs the fixture pipeline through resolve,
+collect, freeze, mechanism/translation reasoning, scoring and JSON report export. It uses the A5
+fixture API's SQLite records; live orchestration and the remaining Phase 0 sign-offs are pending.
+
 ## 6. Milestones
 
 | Milestone | Meaning | Who |
