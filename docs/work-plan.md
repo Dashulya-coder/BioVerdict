@@ -9,8 +9,8 @@ Two people, one goal: **near-equal workload, and both of us busy from the first 
 
 ## Progress snapshot — 2026-10-07
 
-Checked against merged `main` (100a96e), repository files and open PRs #14, #28, #30–#34,
-plus this `arsenii/A5-research-workspace` branch. Unpublished teammate work is not included.
+Checked against merged `main` (100a96e), repository files and open PRs #14, #28, #30–#36,
+plus this `arsenii/A5-dark-editorial` branch. Unpublished teammate work is not included.
 Update this snapshot after merges or new implementation.
 
 **Legend:** `[x]` complete task implementation merged; `[~]` partial implementation or pending
@@ -20,7 +20,7 @@ even for complete components.
 
 | Person | Complete tasks | Partial / pending review | Still to do |
 |---|---|---|---|
-| Arsenii | 0 of 12 whole tasks | 6: A1, A2, A3, A5, A6, A11 | 6: A4, A7, A8, A9, A10, A12 |
+| Arsenii | 0 of 12 whole tasks | 7: A1, A2, A3, A4, A5, A6, A11 | 5: A7, A8, A9, A10, A12 |
 | Dasha | 3 of 13: B1, B2, B4 | 3: B8, B10, B11 | 7: B3, B5, B6, B7, B9, B12, B13 |
 
 These are **whole-task counts, not effort percentages**. Arsenii's cache/storage work is
@@ -36,8 +36,13 @@ are outstanding. Dasha's merged reasoning/scoring components still need full-pip
 - [#31](https://github.com/Dashulya-coder/BioVerdict/pull/31): fixture API and pipeline.
 - [#33](https://github.com/Dashulya-coder/BioVerdict/pull/33): fixture CLI; depends on #31/#14.
 - [#34](https://github.com/Dashulya-coder/BioVerdict/pull/34): shared Tailwind design system.
-- `arsenii/A5-research-workspace`: functional demo UI; depends on #34 and targets `main`.
+- [#35](https://github.com/Dashulya-coder/BioVerdict/pull/35): functional demo UI; depends on #34 and targets `main`.
   The UI can run without backend PRs. It displays prepared data and does not run underwriting.
+- [#36](https://github.com/Dashulya-coder/BioVerdict/pull/36): bounded fixture collection/extraction
+  and collect → freeze graph. Live registration and API/CLI lifecycle integration remain.
+- `arsenii/A5-dark-editorial`: approved warm dark palette, local Lora headings and compact
+  evidence table/reading pane; depends on #35. Shared tokens/styles are in `docs/design-system.md`
+  for both Arsenii and Dasha. Visual implementation is complete pending review; A5 remains partial.
 
 **Next for Arsenii:** review/merge the pending A1/A2/A3/A5 work, then wire frontend → fixture
 API and live Resolver/collect → frozen bundle. **Next for Dasha:** B3 clinical/competition and
@@ -75,7 +80,7 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 | A1 | Resolver: input formats (indication+mechanism, drug name, company code) to MONDO/EFO, UniProt/Ensembl, ChEMBL/Open Targets IDs; alias disambiguation | P0 | 3 | yes | [~] | Drug/target/disease lookup and confirmed IDs in PR #30 (part 1; depends on #28). | Finish remaining input/alias cases and expose live resolution to API/UI. |
 | A2 | Connectors: ClinicalTrials.gov v2 and Open Targets, returning `Evidence` objects | P0 | 4 | yes | [~] | ClinicalTrials.gov connector merged (#19); Open Targets #28 and CT results/pagination/stopped studies #32 ready for review. | Merge pending connectors; wire and verify a real bundle handoff (M2). |
 | A3 | HTTP cache, `as_of` filter, source catalog (allowlist), bundle freeze, hash and versions | P0 | 3 | yes | [~] | SQLite, cache/retries, cutoff, canonical IDs, latest-wins, catalog, hash, freeze/load and versions merged. | Merge fixture hash fix #14; validate the complete live collect → freeze flow. |
-| A4 | Extraction collect agents: quote + value into `Evidence`, section statuses, bounded tool loops | P0 | 4 | yes | [ ] | Contracts and connector foundations exist. | Implement extraction agents, section-status aggregation and bounded collection orchestration. |
+| A4 | Extraction collect agents: quote + value into `Evidence`, section statuses, bounded tool loops | P0 | 4 | yes | [~] | Grounded quote/value extraction, bounded injected-tool collection, honest statuses and collect → freeze DAG in #36; 29 new tests. | Review/merge #36; register live connectors/Resolver and wire API/CLI lifecycle. Validate live extraction quality and full graph integration. |
 | A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [~] | Fixture API/report/drill-down/trace/SSE in #31; CLI in #33; shared Tailwind UI in #34; functional input/resolver/evidence/sources in this frontend branch. | Review/merge PRs; connect UI to API and add live collection. Resolver and full evidence-list endpoints still needed. |
 | A6 | Connectors: PubMed / Europe PMC and openFDA / Drugs@FDA | P1 | 4 |  | [~] | PubMed connector in #32. | Review/merge PubMed; implement openFDA / Drugs@FDA and any additional Europe PMC coverage. |
 | A7 | Incremental recompute engine, add-evidence endpoint, diff API and diff screen | P1 | 5 | yes | [ ] | Scoring has a reusable rescore helper; no A7 workflow. | Implement add-evidence, recompute orchestration, report diff API and UI (or the documented full re-run fallback). |
@@ -93,7 +98,7 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 | B2 | Reasoning modules: mechanism validation and translation chain (supported / weak / missing links) | P0 | 5 | yes | [x] | Mechanism and translation modules, grounding and explicit missing-chain links merged (#26/#29). | Consume real frozen bundles and evaluate quality; remaining clinical modules are B3. |
 | B3 | Reasoning modules: clinical development and competition and pipeline | P0 | 4 | yes | [ ] | Generic reasoning framework exists. | Implement clinical development, competition and pipeline modules. |
 | B4 | Scoring: gates, claim confidence, probability of success, verdict mapping | P0 | 4 | yes | [x] | Confidence, gates, PoS and deterministic verdict mapping merged (#11/#27); study-fact handling #29. | Calibrate thresholds in M4; wire B7 financial outputs when available. |
-| B5 | Report UI: executive verdict, claim drill-down, translation-chain graph | P0 | 4 | yes | [ ] | Shared English dark-console tokens/primitives available in #34. | Implement executive report, claim drill-down and translation graph using the shared design system. |
+| B5 | Report UI: executive verdict, claim drill-down, translation-chain graph | P0 | 4 | yes | [ ] | Shared English Tailwind primitives in #34; approved dark editorial palette and heading styles in this branch. | Implement executive report, claim drill-down and translation graph using `docs/design-system.md`. |
 | B6 | Reasoning modules: disease and unmet need; commercial opportunity (uses TAM numbers from A9) | P1 | 3 |  | [ ] | Domain checklists documented. | Implement disease/unmet-need and commercial modules; consume A9 TAM. |
 | B7 | rNPV Monte Carlo, capital and time to milestone, tornado chart | P1 | 3 |  | [ ] | Range/financial output contracts and scoring hooks exist. | Implement Monte Carlo rNPV, capital/time calculation and tornado chart. |
 | B8 | Verification: entailment judge (other provider), source authority, temporal validity | P1 | 3 | yes | [~] | Quote/ID grounding in B2; shared cutoff filter. Strict failed-citation claim dropping added by fixture CLI #33. | Implement independent entailment judge, authority/temporal verification and persist verification results. Quote match alone is insufficient. |
@@ -152,16 +157,18 @@ Do these in parallel where possible, then review each other's work.
 
 Phase 0 evidence: contracts, `FakeConnector`, `FakeLLM`, Divarasib's 15-item bundle and
 contract tests exist. Compatibility 17/17 and 369 backend tests passed on the CLI branch;
-the second machine is unconfirmed. HRO761 fixture, collect/reason graph nodes, and full API
-fixture handoff are still outstanding. ADRs remain **Proposed**; code-freeze date remains TODO.
+the second machine is unconfirmed. Collect/freeze nodes are implemented in #36 (332 backend
+tests on its main-based branch). HRO761 fixture, reasoning graph nodes and full API fixture
+handoff are still outstanding. ADRs remain **Proposed**; code-freeze date remains TODO.
 CLI execution is implemented in pending #33, so M0 is not fully merged.
 
 Exit criterion (milestone M0): both can run `uv run bioverdict run --asset divarasib` with `USE_FIXTURES=1` and see the DAG finish, and both UIs can be developed against fixture JSON.
 
 ## 6. Milestones
 
-Frontend status (2026-10-07): approved English dark console; Tailwind 4, shared tokens and
-typed primitives in #34. Input → resolved assumptions → evidence explorer and original sources
+Frontend status (2026-10-07): approved English dark editorial workspace; Tailwind 4, shared tokens and
+typed primitives in #34, updated warm palette/local Lora headings in this branch.
+Input → resolved assumptions → evidence explorer and original sources
 are implemented in this dependent frontend branch with search, filters, cutoffs, verbatim quotes,
 original links, keyboard navigation and mobile layout. Prepared Divarasib data only; API wiring
 and report/trace remain outstanding. Styles are shared in `docs/design-system.md`.

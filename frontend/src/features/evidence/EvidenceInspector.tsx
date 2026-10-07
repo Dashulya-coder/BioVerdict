@@ -45,10 +45,8 @@ export function EvidenceInspector({ evidence }: { evidence: Evidence }) {
         ))}
       </dl>
       <div className="mt-6 border-t border-rule pt-5">
-        <p className="mb-3 font-mono text-[10px] tracking-[0.15em] text-muted uppercase">
-          Verbatim excerpt
-        </p>
-        <blockquote className="border-l-2 border-accent/40 pl-4 text-sm leading-7">
+        <h3 className="mb-4 font-editorial text-xl font-medium">Verbatim excerpt</h3>
+        <blockquote className="border-l-2 border-accent/50 bg-raised p-4 text-sm leading-7">
           {evidence.excerpt}
         </blockquote>
       </div>
@@ -57,7 +55,7 @@ export function EvidenceInspector({ evidence }: { evidence: Evidence }) {
           href={evidence.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-11 items-center gap-2 rounded-sm border border-rule px-3 text-xs text-accent hover:bg-raised"
+          className="inline-flex min-h-11 items-center gap-2 rounded-sm border border-control px-3 text-xs text-accent hover:bg-raised"
         >
           Open original source
           <Icon name="external" />

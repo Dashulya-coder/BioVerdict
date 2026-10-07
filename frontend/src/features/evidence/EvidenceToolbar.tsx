@@ -13,7 +13,7 @@ export function EvidenceToolbar({
   onChange: (filters: EvidenceFilters) => void
 }) {
   const selectClass =
-    'mt-2 min-h-11 w-full rounded-sm border border-rule bg-sidebar px-3 py-2.5 text-sm'
+    'mt-2 min-h-11 w-full rounded-sm border border-control bg-sidebar px-3 py-2.5 text-sm'
   return (
     <form
       role="search"
