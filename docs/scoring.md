@@ -41,6 +41,8 @@ A hard gate (K1-K5) fires only on a claim with confidence of at least `t_hard_ga
 | K4 | a terminated or withdrawn study, or a statement that a program was discontinued |
 | S4 | at least three independent sources (competitors of one sponsor or one paper count once) |
 
+Claims that assert a gate about a study or program are typed `study_fact` (K3 stays `target_causal`). `study_fact` is the only type a registry record can fully support, so it is allowed only in the modules that describe studies and programs, and a `study_fact` claim can never be a key (`critical`) claim: a protocol description cannot carry the verdict.
+
 ## Layer 2: Claim confidence
 
 The LLM only classifies each piece of evidence (level, direction, which claim). Code computes the confidence.
