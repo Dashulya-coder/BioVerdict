@@ -171,7 +171,12 @@ def score_verdict(
 
     risks = [GATE_TEXT[g.gate_id] for g in hard + soft]
     risks += [f"{GATE_TEXT[g.gate_id]} (not yet confirmed)" for g in unconfirmed]
-    risks += [c.text for c in sorted(critical, key=lambda c: c.confidence)]
+    # A key claim is a positive statement; what makes it a risk is how little backs it.
+    risks += [
+        f"Key claim with limited support ({c.confidence:.0%}): {c.text}"
+        for c in sorted(critical, key=lambda c: c.confidence)
+        if c.confidence < vcfg.key_claim_min
+    ]
     changes = [f"Resolving this would lift the cap: {GATE_TEXT[g.gate_id]}" for g in soft]
     changes += [
         f"Confirm or refute {g.gate_id.value} with a second independent source: "

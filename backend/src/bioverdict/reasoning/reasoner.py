@@ -11,7 +11,7 @@ from bioverdict.reasoning.grounding import (
     fill_missing_chain_links,
     ground_draft,
 )
-from bioverdict.reasoning.modules import MECHANISM, TRANSLATION, ReasoningModule
+from bioverdict.reasoning.modules import ALL_MODULES, ReasoningModule
 from bioverdict.reasoning.prompts import MAX_EVIDENCE_CHARS, build_prompt
 from bioverdict.reasoning.schemas import ModuleDraft
 from bioverdict.scoring.confidence import apply_confidence
@@ -31,13 +31,13 @@ class ReasoningTrace:
 
 
 class ModuleReasoner:
-    """Runs mechanism then translation. Confidence is computed from the grounded links."""
+    """Runs mechanism, clinical, competition, then translation. Confidence is computed from the grounded links."""
 
     def __init__(
         self,
         llm: LLM,
         run_id: str,
-        modules: tuple[ReasoningModule, ...] = (MECHANISM, TRANSLATION),
+        modules: tuple[ReasoningModule, ...] = ALL_MODULES,
         confidence: ConfidenceConfig | None = None,
         max_evidence_chars: int = MAX_EVIDENCE_CHARS,
     ) -> None:
@@ -67,6 +67,8 @@ class ModuleReasoner:
                 allow_chain=module.chain,
                 evidence_sections=_TRANSLATION_SOURCES if module.chain else None,
                 forced_type=module.claim_type,
+                gate_guard=module.gate_guard,
+                allow_study_fact=module.allow_study_fact,
                 first_number=len(claims) + 1,
             )
             claims += grounded.claims

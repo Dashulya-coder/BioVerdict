@@ -31,6 +31,18 @@ Source of truth: the Unobio plan (PDF). The LLM only establishes a fact and atta
 
 A hard gate (K1-K5) fires only on a claim with confidence of at least `t_hard_gate` (0.85); a soft gate (S1-S6) fires at `t_gate` (0.6). A hard gate means Do Not Invest, so it needs more than one registry record (about 0.77 alone): a stop reason may be a business decision. A hard-gate claim between 0.6 and 0.85 does not fire, but it caps the verdict at Conditional and asks for a second independent source. Thresholds are config parameters, calibrated on the eval set. A criterion that nearly fired is recorded in `GateResult.near_miss` and becomes a line in "What would change our mind" (for example: "S4 fires if one more competitor reaches Phase 3").
 
+**Gate guards (code).** The model tags a claim with the gate it asserts; code keeps the tag only if the cited evidence shows that kind of fact (`reasoning/gate_guards.py`). The guard is a necessary condition: scoring still weighs the claim.
+
+| Gate | The cited evidence must show |
+|---|---|
+| K1 | a stop for lack of efficacy: a registry `whyStopped` that reads as futility or an endpoint not met (a business, funding or enrolment stop does not count, and neither does wording that mixes the two) |
+| K2 | a safety stop, a clinical hold or a boxed warning |
+| K3 | human genetics (animal and in vitro evidence cannot assert it) |
+| K4 | a terminated or withdrawn study, or a statement that a program was discontinued |
+| S4 | at least three independent sources (competitors of one sponsor or one paper count once) |
+
+Claims that assert a gate about a study or program are typed `study_fact`; a `study_fact` can never be a key (`critical`) claim, so a protocol description cannot carry the verdict.
+
 ## Layer 2: Claim confidence
 
 The LLM only classifies each piece of evidence (level, direction, which claim). Code computes the confidence.

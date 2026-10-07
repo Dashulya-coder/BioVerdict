@@ -64,7 +64,8 @@ def test_a_section_that_was_not_searched_says_so_instead_of_vanishing(
     sections = {s.section: s for s in build_report(conn, "R-1").sections}
 
     competition = sections[Section.COMPETITION]
-    assert competition.status is SectionStatus.NOT_SEARCHED and competition.claims == []
+    assert competition.status is SectionStatus.NOT_SEARCHED
+    assert competition.claims and all(c.badge == "unknown" for c in competition.claims)
 
 
 def test_every_claim_link_points_at_evidence_with_its_source(conn: sqlite3.Connection) -> None:

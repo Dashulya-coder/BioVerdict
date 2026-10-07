@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 
+from bioverdict.reasoning.gate_guards import GateGuard
 from bioverdict.reasoning.schemas import DraftClaim, ModuleDraft
 from bioverdict.store.models import (
     Basis,
@@ -23,6 +24,7 @@ from bioverdict.store.models import (
     ClaimType,
     DiligenceType,
     Direction,
+    Evidence,
     GateId,
     Section,
     SectionStatus,
@@ -110,6 +112,8 @@ def ground_draft(
     allow_chain: bool = False,
     evidence_sections: tuple[Section, ...] | None = None,
     forced_type: ClaimType | None = None,
+    gate_guard: GateGuard | None = None,
+    allow_study_fact: bool = False,
     first_number: int = 1,
 ) -> Grounded:
     out = Grounded()
@@ -176,6 +180,13 @@ def ground_draft(
                 allow_chain,
                 evidence_sections or (section,),
                 forced_type,
+                [
+                    (link, evidence[link.evidence_id])
+                    for link in links
+                    if link.direction is Direction.SUPPORTS
+                ],
+                gate_guard,
+                allow_study_fact,
             )
         )
         out.links.extend(links)
@@ -194,13 +205,27 @@ def _build_claim(
     allow_chain: bool,
     evidence_sections: tuple[Section, ...],
     forced_type: ClaimType | None,
+    support: list[tuple[ClaimEvidenceLink, Evidence]],
+    gate_guard: GateGuard | None,
+    allow_study_fact: bool,
 ) -> Claim:
-    gates = [g for g in item.gate_signals if g in allowed_gates]
+    gates: list[GateId] = []
     for g in item.gate_signals:
         if g not in allowed_gates:
             out.drops.append(
                 Drop(claim_id, g.value, "gate is outside this module's remit", DropKind.GATE)
             )
+        elif gate_guard is not None and (why := gate_guard(g, support)) is not None:
+            out.drops.append(
+                Drop(
+                    claim_id,
+                    g.value,
+                    f"gate not supported by the cited evidence: {why}",
+                    DropKind.GATE,
+                )
+            )
+        else:
+            gates.append(g)
 
     chain_link = item.chain_link if allow_chain else None
     if item.chain_link is not None and not allow_chain:
@@ -213,7 +238,7 @@ def _build_claim(
             )
         )
 
-    claim_type = resolve_claim_type(item.claim_type, gates, forced_type)
+    claim_type = resolve_claim_type(item.claim_type, gates, forced_type, allow_study_fact)
     if claim_type is not item.claim_type:
         out.drops.append(
             Drop(
@@ -221,6 +246,18 @@ def _build_claim(
                 "claim_type",
                 f"set by code to {claim_type.value} (model: {item.claim_type.value})",
                 DropKind.CLAIM_TYPE,
+            )
+        )
+
+    critical = item.critical
+    if critical and claim_type is ClaimType.STUDY_FACT:
+        critical = False
+        out.drops.append(
+            Drop(
+                claim_id,
+                "critical",
+                "a fact about a study cannot be a key claim: key claims need results",
+                DropKind.CRITICAL,
             )
         )
 
@@ -252,13 +289,16 @@ def _build_claim(
         confidence=0.0,  # computed from the evidence by scoring.apply_confidence
         chain_link=chain_link,
         gate_signals=gates,
-        critical=item.critical,
+        critical=critical,
         diligence_type=diligence,
     )
 
 
 def resolve_claim_type(
-    proposed: ClaimType, gates: list[GateId], forced: ClaimType | None
+    proposed: ClaimType,
+    gates: list[GateId],
+    forced: ClaimType | None,
+    allow_study_fact: bool = False,
 ) -> ClaimType:
     """Code, not the model, decides which column of the evidence-weight table applies.
 
@@ -267,12 +307,16 @@ def resolve_claim_type(
     that weight. A module fixes its type; otherwise a claim that asserts a kill criterion is
     `target_causal` for K3 (a genetics claim) and `study_fact` for the rest (a trial was stopped,
     a competitor is in Phase 3, a sponsor dropped the program: facts about studies and
-    programs, which is what a registry establishes); anything else keeps the model's label.
+    programs, which is what a registry establishes); anything else keeps the model's label, except
+    that `study_fact` (the only type a registry record can fully support) is allowed only in the
+    modules that describe studies and programs.
     """
     if forced is not None:
         return forced
     if gates:
         return ClaimType.TARGET_CAUSAL if set(gates) == {GateId.K3} else ClaimType.STUDY_FACT
+    if proposed is ClaimType.STUDY_FACT and not allow_study_fact:
+        return ClaimType.DRUG_ACTS_IN_HUMANS
     return proposed
 
 
