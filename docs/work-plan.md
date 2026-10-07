@@ -123,6 +123,10 @@ fixture API's SQLite records; live orchestration and the remaining Phase 0 sign-
 
 ## 6. Milestones
 
+Frontend status (2026-10-07): approved English dark-console design; Tailwind 4, shared tokens
+and typed UI primitives are in `arsenii/A5-design-system`. A5 input/resolver/evidence screens
+follow in a separate dependent feature branch. Report and trace remain in Dasha's scope.
+
 | Milestone | Meaning | Who |
 |---|---|---|
 | M0 | Contracts, fixtures and fakes merged; both start parallel work | both |
