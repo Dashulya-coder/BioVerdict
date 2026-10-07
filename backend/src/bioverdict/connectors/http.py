@@ -19,6 +19,10 @@ from tenacity.wait import wait_base
 from bioverdict.connectors.retry import MAX_ATTEMPTS, is_transient, wait_for_retry
 from bioverdict.store.http_cache import HttpCache, cache_key
 
+# Inspects a fresh body before it is cached and raises if it is an error in disguise (GraphQL
+# answers HTTP 200 with an `errors` list); such a body is returned to nobody and never stored.
+Validator = Callable[[bytes], None]
+
 
 @dataclass(frozen=True)
 class HttpResponse:
@@ -40,16 +44,24 @@ class CachedHttpClient:
         self._max_attempts = max_attempts
         self._wait = wait
 
-    async def get(self, url: str, params: dict[str, str] | None = None) -> HttpResponse:
+    async def get(
+        self,
+        url: str,
+        params: dict[str, str] | None = None,
+        *,
+        validate: Validator | None = None,
+    ) -> HttpResponse:
         key = cache_key("GET", url, params)
         cached = self._cache.get_entry(key)
         if cached is not None:
             return HttpResponse(cached.body, cached.fetched_at)
 
         response = await self._send(lambda: self._client.get(url, params=params))
-        return self._store(key, url, response)
+        return self._store(key, url, response, validate)
 
-    async def post_json(self, url: str, payload: dict) -> HttpResponse:
+    async def post_json(
+        self, url: str, payload: dict, *, validate: Validator | None = None
+    ) -> HttpResponse:
         # Sorted keys make the body, and therefore the cache key, deterministic.
         body = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         key = cache_key("POST", url, body=body)
@@ -62,7 +74,7 @@ class CachedHttpClient:
                 url, content=body, headers={"Content-Type": "application/json"}
             )
         )
-        return self._store(key, url, response)
+        return self._store(key, url, response, validate)
 
     async def _send(self, request: Callable[[], Awaitable[httpx.Response]]) -> httpx.Response:
         """Send with retries on transient failures; raise the last error if they run out."""
@@ -80,6 +92,10 @@ class CachedHttpClient:
         )
         return await retrying(attempt)
 
-    def _store(self, key: str, url: str, response: httpx.Response) -> HttpResponse:
+    def _store(
+        self, key: str, url: str, response: httpx.Response, validate: Validator | None
+    ) -> HttpResponse:
+        if validate is not None:
+            validate(response.content)  # raises for a body that must not be cached
         fetched_at = self._cache.put(key, url, response.content)
         return HttpResponse(response.content, fetched_at)
