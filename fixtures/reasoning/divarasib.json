@@ -40,6 +40,124 @@
       }
     ]
   },
+  "reasoning.clinical": {
+    "claims": [
+      {
+        "text": "Divarasib is in a randomized Phase 3 trial against sotorasib or adagrasib in KRAS G12C-positive advanced non-small cell lung cancer",
+        "claim_type": "study_fact",
+        "basis": "extracted",
+        "links": [
+          {
+            "evidence_id": "E-0001",
+            "direction": "supports",
+            "quote": "assess the safety and efficacy of divarasib compared to locally approved KRAS G12C inhibitors (sotorasib or adagrasib)"
+          }
+        ]
+      },
+      {
+        "text": "The Phase 3 primary endpoint is progression-free survival judged by blinded independent central review",
+        "claim_type": "study_fact",
+        "basis": "extracted",
+        "links": [
+          {
+            "evidence_id": "E-0002",
+            "direction": "supports",
+            "quote": "blinded independent central review (BICR) according to RECIST v1.1"
+          }
+        ]
+      },
+      {
+        "text": "Roche reports that the Phase 3 trial met its primary and key secondary endpoints, progression-free and overall survival",
+        "claim_type": "drug_acts_in_humans",
+        "basis": "extracted",
+        "critical": true,
+        "links": [
+          {
+            "evidence_id": "E-0005",
+            "direction": "supports",
+            "quote": "The study met its primary and key secondary endpoint"
+          },
+          {
+            "evidence_id": "E-0003",
+            "direction": "neutral",
+            "quote": "ACTIVE_NOT_RECRUITING"
+          }
+        ]
+      },
+      {
+        "text": "In the Phase 1 study divarasib gave a confirmed response in 53.4% of patients with non-small cell lung cancer",
+        "claim_type": "drug_acts_in_humans",
+        "basis": "extracted",
+        "critical": true,
+        "links": [
+          {
+            "evidence_id": "E-0007",
+            "direction": "supports",
+            "quote": "a confirmed response was observed in 53.4% of patients"
+          },
+          {
+            "evidence_id": "E-0009",
+            "direction": "supports",
+            "quote": "The objective response rate was 62.5%"
+          }
+        ]
+      },
+      {
+        "text": "Treatment-related adverse events were frequent in the Phase 1 study, with grade 3 events in 11% of patients",
+        "claim_type": "drug_acts_in_humans",
+        "basis": "extracted",
+        "links": [
+          {
+            "evidence_id": "E-0008",
+            "direction": "supports",
+            "quote": "Treatment-related adverse events occurred in 127 patients (93%)"
+          }
+        ]
+      },
+      {
+        "text": "The approved G12C inhibitors set the bar divarasib must beat: sotorasib and adagrasib each improved median progression-free survival over docetaxel",
+        "claim_type": "drug_acts_in_humans",
+        "basis": "extracted",
+        "links": [
+          {
+            "evidence_id": "E-0011",
+            "direction": "supports",
+            "quote": "statistically significant increase in the progression-free survival for sotorasib"
+          },
+          {
+            "evidence_id": "E-0012",
+            "direction": "supports",
+            "quote": "median progression-free survival was 5·5 months"
+          }
+        ]
+      },
+      {
+        "text": "The size of the Phase 3 benefit (hazard ratios, median progression-free and overall survival) is not in the evidence: the company release gives no numbers",
+        "claim_type": "drug_acts_in_humans",
+        "basis": "unknown",
+        "diligence_type": "patient_level_data",
+        "links": []
+      },
+      {
+        "text": "No failed trial of another drug against the same target in this indication is in the bundle, so whether similar programs failed is not shown",
+        "claim_type": "drug_acts_in_humans",
+        "basis": "unknown",
+        "diligence_type": "kol_interview",
+        "links": []
+      }
+    ]
+  },
+  "reasoning.competition": {
+    "claims": [
+      {
+        "text": "The wider competitive landscape (other KRAS G12C and RAS(ON) programs, other mechanisms in this indication, discontinued programs) was not searched, so competitors beyond the two approved inhibitors are unknown",
+        "claim_type": "study_fact",
+        "basis": "unknown",
+        "diligence_type": "proprietary_data",
+        "links": []
+      }
+    ]
+  },
   "reasoning.translation": {
     "claims": [
       {
@@ -90,7 +208,7 @@
         "claim_type": "drug_acts_in_humans",
         "basis": "extracted",
         "chain_link": "patient_benefit",
-        "critical": true,
+        "critical": false,
         "links": [
           {
             "evidence_id": "E-0005",

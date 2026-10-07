@@ -21,7 +21,7 @@ even for complete components.
 | Person | Complete tasks | Partial / pending review | Still to do |
 |---|---|---|---|
 | Arsenii | 1 of 12 whole tasks: A2 | 6: A1, A3, A4, A5, A6, A11 | 5: A7, A8, A9, A10, A12 |
-| Dasha | 1 of 13: B4 | 5: B1, B2, B8, B10, B11 | 7: B3, B5, B6, B7, B9, B12, B13 |
+| Dasha | 1 of 13: B4 | 6: B1, B2, B3, B8, B10, B11 | 6: B5, B6, B7, B9, B12, B13 |
 
 These are **whole-task counts, not effort percentages**. The collect → freeze path, the
 connectors, the fixture API/CLI and the first UI screens are merged but not yet joined into a live
@@ -29,7 +29,7 @@ run, and the merged reasoning and scoring have not been evaluated on a full pipe
 real model.
 
 **Next for Arsenii:** wire the frontend to the fixture API, then the live Resolver and collect →
-frozen bundle (M2). **Next for Dasha:** B3 clinical/competition, B5 report UI on the fixture API
+frozen bundle (M2). **Next for Dasha:** B5 report UI on the fixture API
 using [the shared styles](design-system.md), and a first live run of B1/B2; B8 needs an
 independent verification implementation. M2/M3 require both tracks.
 
@@ -80,7 +80,7 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 |---|---|---|---|---|---|---|---|
 | B1 | LLM layer: `llm.call`, provider adapters, schema validation and retries, cache, failover, circuit breaker, budget cap, logging | P0 | 5 | yes | [~] | LLM client, one adapter (Anthropic), validation/retries, cache, failover logic, breaker, budget, deadline and logging merged (#18). | No live call has been made and there is no second provider adapter (failover across providers, cross-provider judge). Validate with a real run. |
 | B2 | Reasoning modules: mechanism validation and translation chain (supported / weak / missing links) | P0 | 5 | yes | [~] | Mechanism and translation modules, grounding and explicit missing-chain links merged (#26/#29/#37). | No real model answer has been seen: validate prompt and output quality on a live run; remaining modules are B3. |
-| B3 | Reasoning modules: clinical development and competition and pipeline | P0 | 4 | yes | [ ] | Generic reasoning framework exists. | Implement clinical development, competition and pipeline modules. |
+| B3 | Reasoning modules: clinical development and competition and pipeline | P0 | 4 | yes | [~] | Clinical and competition modules (with K1/K2/K4/S4 evidence guards, a stop-reason classifier and `study_fact` rules) run on the divarasib fixture. | Run on real bundles and live model output; add a pipeline section (programs in development) once connectors feed it; calibrate the guards on the eval set. |
 | B4 | Scoring: gates, claim confidence, probability of success, verdict mapping | P0 | 4 | yes | [x] | Confidence, gates, PoS and deterministic verdict mapping merged (#11/#27); study-fact handling #29. | Calibrate thresholds in M4; wire B7 financial outputs when available. |
 | B5 | Report UI: executive verdict, claim drill-down, translation-chain graph | P0 | 4 | yes | [ ] | Shared English dark-console tokens/primitives available in #34. | Implement executive report, claim drill-down and translation graph using the shared design system. |
 | B6 | Reasoning modules: disease and unmet need; commercial opportunity (uses TAM numbers from A9) | P1 | 3 |  | [ ] | Domain checklists documented. | Implement disease/unmet-need and commercial modules; consume A9 TAM. |

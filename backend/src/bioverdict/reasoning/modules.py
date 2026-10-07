@@ -40,6 +40,48 @@ chain_link on every claim:
 """
 
 
+_CLINICAL = """\
+Clinical development. From the registry records, published trials and company statements in the
+evidence, establish: the target patient population, the endpoint, the biomarker strategy, the
+comparator, the approximate trial size, the development sequence, and the relevant historical
+trials. Then identify similar programs (same target, pathway or indication) that succeeded or
+failed and explain what each implies for this program.
+- Registry text states what a trial planned or what its status is; it is not a result. Use posted
+  results, publications and company statements for what a trial found.
+- Report response rates with their confirmation status when the evidence gives it, and say when
+  two trials used different comparators or populations and so cannot be compared directly.
+- Kill criteria. These claims describe a fact about studies or programs; assert a gate only when
+  the cited evidence itself states the fact, and quote the words that state it:
+  K1: the SAME target failed in a Phase 2 or 3 trial in this indication for lack of efficacy
+      (futility, endpoint not met), and nothing in the evidence explains why this program
+      differs (exposure, patient selection, modality). A trial stopped for a business decision,
+      slow enrollment, funding or the pandemic is NOT a failed target: do not use K1 for it.
+  K2: serious on-target toxicity in humans that cannot be mitigated (a clinical hold, deaths
+      attributed to the drug, a boxed warning in the class).
+  K4: the sponsor stopped this asset's program (a terminated or withdrawn study, a statement
+      that development was discontinued).
+- Write these gate claims about one fact each, and give each its own supporting quote. If a stop
+  reason is missing or ambiguous, write a normal claim or an `unknown`, not a gate claim.
+- If a part is missing from the evidence (no posted results, no comparator named), write an
+  `unknown` claim for it.
+"""
+
+_COMPETITION = """\
+Competition and pipeline. Map, from the evidence only: approved therapies; clinical-stage
+competitors; other programs against the same target; alternative mechanisms in the same
+indication; discontinued programs. For each competitor give its sponsor, its phase and the quote
+that shows both. Say what differentiation a new entrant would need.
+- Do not name a competitor the evidence does not name. The registry and the target databases in
+  the bundle are samples, not a complete census: say so when the evidence is thin, and write an
+  `unknown` claim if a part of the landscape was not searched.
+- S4: at least three competitors with the same mechanism are a phase or more ahead of this
+  program and show no clear disadvantage. Assert S4 on one claim that cites a separate piece of
+  evidence for each competitor (different sponsors); one sponsor or one paper counts once.
+- Distinguish a scientifically interesting program from a commercially valuable one: a crowded
+  class matters even when the biology is sound.
+"""
+
+
 @dataclass(frozen=True)
 class ReasoningModule:
     name: str
@@ -74,3 +116,25 @@ TRANSLATION = ReasoningModule(
     chain=True,
     claim_type=ClaimType.DRUG_ACTS_IN_HUMANS,
 )
+
+CLINICAL = ReasoningModule(
+    name="clinical",
+    section=Section.CLINICAL,
+    step="reasoning.clinical",
+    instruction=_CLINICAL,
+    allowed_gates=frozenset({GateId.K1, GateId.K2, GateId.K4}),
+    gate_guard=evidence_guard,
+    allow_study_fact=True,
+)
+COMPETITION = ReasoningModule(
+    name="competition",
+    section=Section.COMPETITION,
+    step="reasoning.competition",
+    instruction=_COMPETITION,
+    allowed_gates=frozenset({GateId.S4}),
+    gate_guard=evidence_guard,
+    allow_study_fact=True,
+)
+
+# Order of the plan: translation reads what mechanism and clinical established.
+ALL_MODULES = (MECHANISM, CLINICAL, COMPETITION, TRANSLATION)
