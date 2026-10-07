@@ -194,10 +194,23 @@ def raise_on_graphql_errors(body: bytes) -> None:
         raise OpenTargetsError(messages)
 
 
+class OpenTargetsApi:
+    """Posts GraphQL to Open Targets through the cache, refusing error bodies."""
+
+    def __init__(self, http: CachedHttpClient) -> None:
+        self._http = http
+
+    async def query(self, payload: dict) -> tuple[dict, datetime]:
+        """The decoded answer and the time it was really downloaded."""
+        response = await self._http.post_json(API_URL, payload, validate=raise_on_graphql_errors)
+        return json.loads(response.body), response.fetched_at
+
+
 class OpenTargetsConnector:
     """Satisfies `Connector`.
 
-    Reads the clinical stage of each known asset (found by exact name) and, for every target
+    Reads the clinical stage of each asset the Resolver identified (by its ChEMBL id; by exact
+    name only when the Resolver gave no assets) and, for every target
     that has an Ensembl id, its association with the indication (a MONDO or EFO id). The
     Resolver supplies those ids; without them nothing is fetched for that part.
     """
@@ -205,31 +218,35 @@ class OpenTargetsConnector:
     name = "opentargets"
 
     def __init__(self, http: CachedHttpClient) -> None:
-        self._http = http
+        self._api = OpenTargetsApi(http)
 
-    async def _query(self, payload: dict) -> tuple[dict, datetime]:
-        response = await self._http.post_json(API_URL, payload, validate=raise_on_graphql_errors)
-        return json.loads(response.body), response.fetched_at
+    async def _drug_ids(self, query: ResolverOutput) -> list[str]:
+        """ChEMBL ids the Resolver confirmed; only without any, search the names given."""
+        confirmed = [a.chembl_id for a in query.assets if a.chembl_id]
+        if confirmed or query.assets:
+            return confirmed
+        ids: list[str] = []
+        for name in query.known_assets:
+            hits, _ = await self._api.query(search_payload(name))
+            chembl_id = pick_drug(hits, name)
+            if chembl_id is not None:
+                ids.append(chembl_id)
+        return ids
 
     async def fetch(self, query: ResolverOutput, as_of: date) -> list[Evidence]:
         disease_id = query.indication.mondo_id or query.indication.efo_id
         evidence: list[Evidence] = []
 
-        for asset in query.known_assets:
-            hits, _ = await self._query(search_payload(asset))
-            chembl_id = pick_drug(hits, asset)
-            if chembl_id is None:
-                continue
-            drug, fetched_at = await self._query(drug_payload(chembl_id))
+        for chembl_id in await self._drug_ids(query):
+            drug, fetched_at = await self._api.query(drug_payload(chembl_id))
             evidence += parse_drug(drug, fetched_at, disease_id)
 
         if disease_id is not None:
             for target in query.targets:
                 if target.ensembl is None:
                     continue
-                answer, fetched_at = await self._query(
-                    association_payload(disease_id, target.ensembl)
-                )
+                payload = association_payload(disease_id, target.ensembl)
+                answer, fetched_at = await self._api.query(payload)
                 evidence += parse_associations(answer, fetched_at)
 
         return filter_as_of(evidence, as_of)
