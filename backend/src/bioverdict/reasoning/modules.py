@@ -53,6 +53,8 @@ class ReasoningModule:
     claim_type: ClaimType | None = None
     # Code check that a gate signal rests on the right kind of evidence (reasoning/gate_guards.py).
     gate_guard: GateGuard | None = None
+    # Only modules that describe studies and programs may type a claim `study_fact`.
+    allow_study_fact: bool = False
 
 
 MECHANISM = ReasoningModule(
