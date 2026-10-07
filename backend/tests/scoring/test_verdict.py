@@ -205,3 +205,15 @@ def test_a_hard_gate_needs_more_confidence_than_a_soft_one() -> None:
     assert competitor.verdict is Verdict.CONDITIONAL and gate(competitor, GateId.S4).fired
     confirmed = score_verdict([*base, claim("STOP", 0.86, gate_signals=[GateId.K1])], POSITIVE)
     assert confirmed.verdict is Verdict.DO_NOT_INVEST
+
+
+def test_a_well_supported_key_claim_is_not_listed_as_a_risk() -> None:
+    claims = [*strong_chain(), claim("KEY", 0.9, critical=True, text="The drug works")]
+    r = score_verdict(claims, POSITIVE)
+    assert r.verdict is Verdict.INVEST and r.top_risks == []
+
+
+def test_a_weak_key_claim_is_a_risk_phrased_as_limited_support() -> None:
+    claims = [*strong_chain(), claim("KEY", 0.55, critical=True, text="The drug works")]
+    r = score_verdict(claims, POSITIVE)
+    assert r.top_risks == ["Key claim with limited support (55%): The drug works"]
