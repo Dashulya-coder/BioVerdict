@@ -148,18 +148,26 @@ Section statuses: `found`, `conflicting`, `not_reported`, `none_found`, `not_sea
 
 Every run has a `run_id`. The trace records each step, tool call, LLM call (model, tokens, cost, latency), cache hits, verification outcomes and the bundle hash. The UI shows a trace panel with total tokens and cost.
 
-## 12. API (draft)
+## 12. API
 
-| Method and path | Purpose |
-|---|---|
-| `POST /runs` | Start a run: `{ indication, mechanism, asset?, as_of? }` returns `run_id` |
-| `GET /runs/{id}/events` | SSE progress stream |
-| `GET /runs/{id}/report` | Report with executive verdict |
-| `GET /runs/{id}/claims/{claim_id}` | Claim with linked evidence |
-| `GET /runs/{id}/evidence/{evidence_id}` | Evidence with excerpt and source |
-| `POST /runs/{id}/evidence` | Add evidence (URL or text); creates a new version and returns the diff |
-| `GET /runs/{id}/diff?from=v1&to=v2` | Before/after |
-| `GET /runs/{id}/trace` | Steps, tokens, cost |
+Implemented in `bioverdict/api/` (response shapes in `api/schemas.py`). Runs are answered from
+fixtures while `USE_FIXTURES=1` (the default until the live pipeline is wired in); the routes and
+shapes do not change when that is replaced. Interactive documentation: `/docs` on a running server.
+
+| Method and path | Purpose | State |
+|---|---|---|
+| `POST /runs` | Start a run: `{ asset, as_of? }`, returns `run_id` at once (202). Fixture mode knows the assets listed in `fixtures/`; others get 422 with the list | done |
+| `GET /runs`, `GET /runs/{id}` | List runs, one run's status and verdict | done |
+| `GET /runs/{id}/events` | SSE progress: one event per step and status, then `end`; resumes from `Last-Event-ID` | done |
+| `GET /runs/{id}/report` | `ReportResponse`: executive verdict, sections with claims and links, translation chain, gates, diligence questions, assumptions, cited sources, bundle identity. 409 while the run is going | done |
+| `GET /runs/{id}/claims/{claim_id}` | One claim with its links | done |
+| `GET /runs/{id}/evidence/{evidence_id}` | One evidence item with excerpt, source and the claims that quote it | done |
+| `GET /runs/{id}/trace` | Steps, model calls, tokens and cost | done |
+| `POST /runs/{id}/evidence` | Add evidence (URL or text); creates a new version and returns the diff | A7 |
+| `GET /runs/{id}/diff?from=v1&to=v2` | Before/after | A7 |
+
+Every claim and evidence item carries a badge: `source_fact` (copied from a source),
+`ai_inference` (a model's judgement) or `unknown` (a gap, with the kind of data that would answer it).
 
 ## 13. Security
 

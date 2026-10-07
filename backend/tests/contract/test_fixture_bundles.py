@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from bioverdict.connectors.fake import FakeConnector
+from bioverdict.store.bundle import compute_content_hash
 from bioverdict.store.models import Bundle, Indication, ResolverOutput, Target
 
 BUNDLES = sorted((Path(__file__).parents[3] / "fixtures" / "bundles").glob("*.json"))
@@ -35,6 +36,13 @@ def test_bundle_does_not_contain_the_future(path: Path) -> None:
         assert e.published_at is None or e.published_at <= bundle.as_of, (
             f"{e.id} is from the future"
         )
+
+
+@pytest.mark.parametrize("path", BUNDLES, ids=lambda p: p.stem)
+def test_bundle_content_hash_is_current(path: Path) -> None:
+    bundle = Bundle.model_validate_json(path.read_text(encoding="utf-8"))
+    expected = compute_content_hash(bundle.evidence, bundle.section_statuses)
+    assert bundle.content_hash == expected, "fixture changed: update its content_hash"
 
 
 @pytest.mark.parametrize("path", BUNDLES, ids=lambda p: p.stem)
