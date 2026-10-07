@@ -4,7 +4,7 @@ import pytest
 
 from bioverdict.contracts import Reasoner
 from bioverdict.llm import FakeLLM
-from bioverdict.reasoning import MECHANISM, TRANSLATION, ModuleReasoner
+from bioverdict.reasoning import ALL_MODULES, MECHANISM, TRANSLATION, ModuleReasoner
 from bioverdict.reasoning.grounding import (
     cap_critical,
     ground_draft,
@@ -33,6 +33,12 @@ ORR = "a confirmed response was observed in 53.4% of patients"  # in E-0007
 G12C = "found in approximately 14% of NSCLC cases"  # in E-0006
 STRUCTURE = "takes on a distinct conformation"  # in E-0010 (in vitro)
 CT_SUMMARY = "assess the safety and efficacy of divarasib"  # in E-0001
+
+
+def fake_llm(answers: dict) -> FakeLLM:
+    """Canned answers for the steps a test cares about; the others return nothing."""
+    empty = ModuleDraft(claims=[])
+    return FakeLLM({"reasoning.clinical": empty, "reasoning.competition": empty, **answers})
 
 
 def link(evidence_id: str, quote: str, direction: str = "supports") -> dict:
@@ -175,7 +181,7 @@ def canned_llm() -> FakeLLM:
             basis="unknown",
         ),
     )
-    return FakeLLM({"reasoning.mechanism": mechanism, "reasoning.translation": translation})
+    return fake_llm({"reasoning.mechanism": mechanism, "reasoning.translation": translation})
 
 
 def test_reasoner_satisfies_the_contract() -> None:
@@ -191,7 +197,7 @@ def test_reasoner_returns_grounded_claims_with_computed_confidence() -> None:
     in_vitro = by_text["Binding mode differs from sotorasib and adagrasib"]
     assert in_vitro.confidence < response.confidence  # one in vitro paper is weaker
     assert all(l.claim_id in {c.id for c in claims} for l in links)
-    assert len(reasoner.trace.llm_results) == 2 and not reasoner.trace.drops
+    assert len(reasoner.trace.llm_results) == len(ALL_MODULES) and not reasoner.trace.drops
 
 
 def test_missing_chain_links_become_explicit_unknown_claims() -> None:
@@ -221,7 +227,7 @@ def test_a_model_that_invents_a_quote_cannot_raise_confidence() -> None:
             links=[link("E-0007", "all patients were cured")],
         ),
     )
-    llm = FakeLLM({"reasoning.mechanism": draft(), "reasoning.translation": forged})
+    llm = fake_llm({"reasoning.mechanism": draft(), "reasoning.translation": forged})
     reasoner = ModuleReasoner(llm, "R-1")
     claims, links = reasoner.reason(BUNDLE)
     cured = next(c for c in claims if c.text == "Divarasib is curative")
@@ -322,7 +328,7 @@ def test_critical_is_capped_in_code() -> None:
 
 def test_the_reasoner_applies_the_critical_cap_across_modules() -> None:
     many = lambda tag: draft(*[claim(f"{tag} {i}", critical=True) for i in range(3)])
-    llm = FakeLLM({"reasoning.mechanism": many("m"), "reasoning.translation": many("t")})
+    llm = fake_llm({"reasoning.mechanism": many("m"), "reasoning.translation": many("t")})
     reasoner = ModuleReasoner(llm, "R-1")
     claims, _ = reasoner.reason(BUNDLE)
     assert sum(c.critical for c in claims) == 4
@@ -399,7 +405,7 @@ def test_a_protocol_description_cannot_raise_confidence_that_the_drug_works() ->
             links=[link("E-0200", quote)],
         )
     )
-    llm = FakeLLM({"reasoning.mechanism": draft(), "reasoning.translation": efficacy})
+    llm = fake_llm({"reasoning.mechanism": draft(), "reasoning.translation": efficacy})
     claims, links = ModuleReasoner(llm, "R-1").reason(bundle)
     works = next(c for c in claims if c.text == "Divarasib works in patients")
     assert links and works.confidence == pytest.approx(0.5)  # the prior: the record weighs 0

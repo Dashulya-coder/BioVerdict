@@ -88,6 +88,8 @@ class LLMConfig(BaseModel):
                 "reasoning": _REASONING,
                 "reasoning.mechanism": _REASONING,
                 "reasoning.translation": _REASONING,
+                "reasoning.clinical": _REASONING,
+                "reasoning.competition": _REASONING,
                 "skeptic": _SYNTHESIS,
                 "chair": _SYNTHESIS,
                 "synthesis": _SYNTHESIS,
