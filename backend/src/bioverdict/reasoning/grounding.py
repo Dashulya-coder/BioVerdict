@@ -11,6 +11,7 @@ Rules (docs/architecture.md, verification gates 1 and 2):
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 
 from bioverdict.reasoning.schemas import DraftClaim, ModuleDraft
 from bioverdict.store.models import (
@@ -49,13 +50,35 @@ CHAIN_TEXT: dict[ChainLink, str] = {
 }
 
 
+class DropKind(StrEnum):
+    """What code did to a model proposal. Callers branch on this, never on the reason text."""
+
+    EMPTY_CLAIM = "empty_claim"  # a claim without text
+    LINK = "link"  # a citation removed: unknown evidence, empty, too short or ungrounded quote
+    DUPLICATE_LINK = "duplicate_link"  # the same evidence cited twice (harmless)
+    BASIS = "basis"  # `extracted` without a grounded quote, now `inferred`
+    CLAIM_TYPE = "claim_type"  # the model's claim type replaced by the module's or gate's
+    GATE = "gate"  # a gate signal outside the module's remit
+    CHAIN_LINK = "chain_link"  # a chain link outside the translation module
+    CRITICAL = "critical"  # more critical claims than allowed
+
+
 @dataclass(frozen=True)
 class Drop:
-    """Something the model proposed and code removed, with the reason (feeds verification_log)."""
+    """Something the model proposed and code removed or changed, with the reason.
+
+    Feeds verification_log and the trace. `what` names the thing (an evidence id, a gate, ...).
+    """
 
     claim_id: str
     what: str
     reason: str
+    kind: DropKind
+
+    @property
+    def is_citation_failure(self) -> bool:
+        """True when the claim's support was weakened: a citation was rejected or basis lowered."""
+        return self.kind in (DropKind.LINK, DropKind.BASIS)
 
 
 @dataclass
@@ -95,7 +118,7 @@ def ground_draft(
 
     for item in draft.claims:
         if not item.text.strip():
-            out.drops.append(Drop("-", "claim", "empty text"))
+            out.drops.append(Drop("-", "claim", "empty text", DropKind.EMPTY_CLAIM))
             continue
         claim_id = f"C-{number:04d}"
         number += 1
@@ -105,21 +128,30 @@ def ground_draft(
             ev = evidence.get(link.evidence_id)
             quote = link.quote.strip()
             if ev is None:
-                out.drops.append(Drop(claim_id, link.evidence_id, "evidence is not in the bundle"))
+                out.drops.append(
+                    Drop(claim_id, link.evidence_id, "evidence is not in the bundle", DropKind.LINK)
+                )
             elif not quote:
-                out.drops.append(Drop(claim_id, link.evidence_id, "empty quote"))
+                out.drops.append(Drop(claim_id, link.evidence_id, "empty quote", DropKind.LINK))
             elif len(quote) < MIN_QUOTE_CHARS and quote != ev.excerpt.strip():
                 out.drops.append(
                     Drop(
                         claim_id,
                         link.evidence_id,
                         f"quote shorter than {MIN_QUOTE_CHARS} characters",
+                        DropKind.LINK,
                     )
                 )
             elif quote not in ev.excerpt:
-                out.drops.append(Drop(claim_id, link.evidence_id, "quote is not in the excerpt"))
+                out.drops.append(
+                    Drop(claim_id, link.evidence_id, "quote is not in the excerpt", DropKind.LINK)
+                )
             elif link.evidence_id in seen:
-                out.drops.append(Drop(claim_id, link.evidence_id, "evidence cited twice"))
+                out.drops.append(
+                    Drop(
+                        claim_id, link.evidence_id, "evidence cited twice", DropKind.DUPLICATE_LINK
+                    )
+                )
             else:
                 seen.add(link.evidence_id)
                 links.append(
@@ -166,11 +198,20 @@ def _build_claim(
     gates = [g for g in item.gate_signals if g in allowed_gates]
     for g in item.gate_signals:
         if g not in allowed_gates:
-            out.drops.append(Drop(claim_id, g.value, "gate is outside this module's remit"))
+            out.drops.append(
+                Drop(claim_id, g.value, "gate is outside this module's remit", DropKind.GATE)
+            )
 
     chain_link = item.chain_link if allow_chain else None
     if item.chain_link is not None and not allow_chain:
-        out.drops.append(Drop(claim_id, item.chain_link.value, "chain link outside translation"))
+        out.drops.append(
+            Drop(
+                claim_id,
+                item.chain_link.value,
+                "chain link outside translation",
+                DropKind.CHAIN_LINK,
+            )
+        )
 
     claim_type = resolve_claim_type(item.claim_type, gates, forced_type)
     if claim_type is not item.claim_type:
@@ -179,6 +220,7 @@ def _build_claim(
                 claim_id,
                 "claim_type",
                 f"set by code to {claim_type.value} (model: {item.claim_type.value})",
+                DropKind.CLAIM_TYPE,
             )
         )
 
@@ -190,6 +232,7 @@ def _build_claim(
                 claim_id,
                 "basis",
                 "extracted without a grounded supporting or contradicting quote: now inferred",
+                DropKind.BASIS,
             )
         )
     if basis is Basis.UNKNOWN:
@@ -247,7 +290,14 @@ def cap_critical(claims: list[Claim], limit: int = MAX_CRITICAL) -> tuple[list[C
         if claim.critical:
             count += 1
             if count > limit:
-                drops.append(Drop(claim.id, "critical", f"more than {limit} critical claims"))
+                drops.append(
+                    Drop(
+                        claim.id,
+                        "critical",
+                        f"more than {limit} critical claims",
+                        DropKind.CRITICAL,
+                    )
+                )
                 claim = claim.model_copy(update={"critical": False})
         kept.append(claim)
     return kept, drops
