@@ -74,6 +74,7 @@ Details: [`docs/architecture.md`](docs/architecture.md). Data contracts: [`docs/
 | [`docs/domain-pack-oncology.md`](docs/domain-pack-oncology.md) | Domain-specific playbook (RAS/KRAS and WRN) |
 | [`docs/demo-script.md`](docs/demo-script.md) | Final demo walkthrough |
 | [`docs/runbook.md`](docs/runbook.md) | Setup, operations, failure playbook |
+| [`docs/collection.md`](docs/collection.md) | A4 bounded collection, grounding, limits and offline demo |
 | [`docs/limitations.md`](docs/limitations.md) | What the system cannot know |
 | [`docs/glossary.md`](docs/glossary.md) | Terms and abbreviations |
 | [`docs/decisions/`](docs/decisions/) | Architecture decision records |
