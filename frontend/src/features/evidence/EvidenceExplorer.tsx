@@ -44,7 +44,7 @@ export function EvidenceExplorer({
         sources
       </p>
       {selected ? (
-        <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
           {mode === 'sources' ? (
             <SourceList groups={groups} selectedId={selected.id} onSelect={setSelectedId} />
           ) : (

@@ -12,13 +12,10 @@ export function Sidebar({ screen }: { screen: Screen }) {
     <aside className="border-b border-rule bg-sidebar lg:fixed lg:inset-y-0 lg:left-0 lg:w-56 lg:border-r lg:border-b-0">
       <a
         href="#new"
-        className="flex items-center gap-3 px-6 py-6"
+        className="flex min-h-20 items-center px-6 py-6"
         aria-label="BioVerdict, new analysis"
       >
-        <span className="flex size-8 items-center justify-center rounded-sm border border-accent/30 font-mono text-accent">
-          B
-        </span>
-        <span className="text-lg font-medium tracking-tight">BioVerdict</span>
+        <span className="font-editorial text-xl font-medium">BioVerdict</span>
       </a>
       <p className="hidden px-6 font-mono text-[10px] tracking-[0.15em] text-muted uppercase lg:block">
         Research workspace
@@ -36,7 +33,7 @@ export function Sidebar({ screen }: { screen: Screen }) {
                 ? 'page'
                 : undefined
             }
-            className={`flex min-h-11 flex-1 items-center gap-3 rounded-sm px-3 py-3 text-sm lg:flex-none ${screen === item.screen || (screen === 'resolved' && item.screen === 'new') ? 'bg-selected text-accent' : 'text-muted hover:bg-surface hover:text-ink'}`}
+            className={`flex min-h-11 flex-1 items-center gap-3 border-l-2 px-3 py-3 text-sm lg:flex-none ${screen === item.screen || (screen === 'resolved' && item.screen === 'new') ? 'border-accent bg-selected text-ink' : 'border-transparent text-muted hover:bg-surface hover:text-ink'}`}
           >
             <Icon name={item.icon} />
             {item.label}

@@ -8,19 +8,29 @@
   src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2');
 }
 
+@font-face {
+  font-family: 'Lora Variable';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('@fontsource-variable/lora/files/lora-latin-wght-normal.woff2') format('woff2');
+}
+
 @theme {
   --font-sans: 'Inter Variable', Inter, system-ui, sans-serif;
+  --font-editorial: 'Lora Variable', Georgia, serif;
   --font-mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
-  --color-canvas: #111714;
-  --color-sidebar: #0d1310;
-  --color-surface: #19211c;
-  --color-raised: #202b24;
-  --color-selected: #24372d;
-  --color-ink: #e7ede6;
-  --color-muted: #a4b0a6;
-  --color-rule: #303c33;
-  --color-accent: #80cdbb;
-  --color-assumption: #d3b47a;
+  --color-canvas: #171c18;
+  --color-sidebar: #111611;
+  --color-surface: #20271f;
+  --color-raised: #273024;
+  --color-selected: #2d382c;
+  --color-ink: #e8e3d7;
+  --color-muted: #afb3a5;
+  --color-rule: #394435;
+  --color-control: #74806b;
+  --color-accent: #aec2a1;
+  --color-assumption: #c3a777;
   --color-danger: #e89a92;
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;

@@ -1,24 +1,28 @@
 # BioVerdict design system
 
-Approved direction (2026-10-07): **dark analytical console**, English interface.
-[Canva concept](https://canva.link/oup7kd6ugksa668) establishes the layout and palette;
-the implementation corrects its overlapping text and adapts it to small screens.
+Approved direction (2026-10-07): **dark editorial workspace**, English interface.
+[Latest Canva concept](https://canva.link/92wk5z92z6lv5ez) combines the original dark
+analytical console with warm editorial typography and sage accents. It supersedes
+the earlier dark and light concepts. The implementation uses plain backgrounds,
+existing product navigation and locally served fonts; mockup photography and extra
+navigation labels are illustrative. Quotes, dates and identifiers come from fixture data.
 The source of truth for tokens is `frontend/src/index.css`, shared by both tracks.
 
 ## Colors
 
 | Token / Tailwind suffix | Value | Use |
 |---|---|---|
-| `canvas` | `#111714` | Main background |
-| `sidebar` | `#0D1310` | Navigation and inset form fields |
-| `surface` | `#19211C` | Panels and subtle controls |
-| `raised` | `#202B24` | Hovered surfaces |
-| `selected` | `#24372D` | Selected rows and navigation |
-| `ink` | `#E7EDE6` | Main text |
-| `muted` | `#A4B0A6` | Secondary text and metadata |
-| `rule` | `#303C33` | Decorative dividers and panel borders |
-| `accent` | `#80CDBB` | Primary actions, focus, source provenance labels |
-| `assumption` | `#D3B47A` | Explicit assumptions and review prompts |
+| `canvas` | `#171C18` | Main background |
+| `sidebar` | `#111611` | Navigation and inset form fields |
+| `surface` | `#20271F` | Panels and subtle controls |
+| `raised` | `#273024` | Hovered surfaces and source quotations |
+| `selected` | `#2D382C` | Selected rows and navigation |
+| `ink` | `#E8E3D7` | Warm main text |
+| `muted` | `#AFB3A5` | Secondary text and metadata |
+| `rule` | `#394435` | Decorative dividers and panel borders |
+| `control` | `#74806B` | Input, select and secondary action boundaries |
+| `accent` | `#AEC2A1` | Sage primary actions, focus and source labels |
+| `assumption` | `#C3A777` | Explicit assumptions and review prompts |
 | `danger` | `#E89A92` | Failures and invalid input |
 
 Use semantic utilities: `bg-canvas`, `text-ink`, `border-rule`, `text-assumption`.
@@ -28,14 +32,18 @@ Pair every status color with text; absence of evidence must not look like a reas
 
 ## Type, spacing and layout
 
-- Inter Variable, served locally; system sans-serif fallback. Monospace only for IDs,
-  timestamps and compact metadata. Do not load fonts from a third-party CDN.
+- Inter Variable for controls, tables and quotations; Lora Variable (`font-editorial`)
+  for the wordmark, page titles and excerpt heading. Both are served locally as Latin
+  WOFF2 files with `font-display: swap`; system sans-serif and Georgia are fallbacks.
+  Monospace only for IDs, timestamps and compact metadata. No third-party font CDN.
 - Body: 14px, 20–28px line height. Metadata: 12px. Page headings: 30–36px, medium weight.
   Source quotations: 14px with at least 24px line height. Preserve their original wording.
 - Use the Tailwind 4px spacing scale. Field gaps 8px; related groups 16px; panel padding
   24px; page padding 24px on mobile and 40px on desktop. Corners are 4px or 6px.
 - Desktop: persistent sidebar, thin top bar, generous central work area. Evidence uses
-  a table and inspector. On mobile, navigation wraps and the inspector stacks below the list.
+  a compact ID/date/source/type table beside a nearly equal-width reading pane.
+  Selection has a sage surface and a left rule. Keep the full quotation in the pane.
+  On mobile, navigation wraps and the inspector stacks below the list.
 - Use rules and subtle surface differences for hierarchy. Keep one primary action per
   screen. Avoid gradients, glow, oversized marketing headings and decorative charts.
 
@@ -70,6 +78,7 @@ Visible keyboard focus; associated field labels; 44px button/input targets; nati
 where possible; headings and landmarks; descriptive link text; reduced motion support.
 Empty, loading and failed states explain what happened and give an appropriate next action.
 Tables may scroll inside their region; the whole page must not overflow on mobile.
+Use `border-control` for interactive control boundaries; `border-rule` is decorative.
 
 TypeScript uses `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`.
 ESLint checks types, React hooks and promises. Prettier sorts Tailwind utilities using this
