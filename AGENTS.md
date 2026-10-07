@@ -29,7 +29,7 @@ contains operating commands. Runtime: Python >=3.14, Node 24; use existing lockf
 
 This branch, `arsenii/A5-dark-editorial`, builds on the functional workspace in #35
 (`arsenii/A5-research-workspace`, e85cc25), which depends on shared styles #34.
-The style PR targets `main`; merge #34 and #35 first to isolate its diff. Backend fixture API #31
+Style PR #38 targets `main`; merge #34 and #35 first to isolate its diff. Backend fixture API #31
 and CLI #33 remain separate open PRs; #33 builds on #31 and the fixture hash work from #14.
 The descriptions below of CLI/API behavior refer to those PRs, not merged `main`.
 
@@ -98,6 +98,16 @@ CI installs Chromium and runs these browser checks after lint/format/build.
 Optional `PLAYWRIGHT_CHROMIUM_EXECUTABLE` selects an installed local binary;
 `PLAYWRIGHT_SCREENSHOT_DIR` exports preview screenshots outside the repository.
 FastAPI TestClient hangs in the sandbox; backend checks that use it require an unsandboxed run.
+
+Latest launch: `cd /tmp/bioverdict-editorial-worktree/frontend` then `pnpm dev`;
+open Vite's printed URL (normally http://localhost:5173). Dependencies are installed
+in this worktree. No backend/API keys are needed. Check Open analysis → Explore evidence
+and Sources; use `pnpm install --frozen-lockfile` first on a fresh checkout.
+PR #38 code commit `2f59201` passed both GitHub CI jobs and 8 local browser scenarios.
+GitHub main has since merged Dasha's #37 (`da55825`): typed `DropKind` and
+`Drop.is_citation_failure`. This worktree does not yet include that change. #31/#33
+need to stop parsing `Drop.what` and count only citation failures as dropped claims;
+record the follow-up without implementing it during this context update.
 
 Next: review/merge #34, #35 and this style PR, then connect the approved backend API.
 Resolver and full evidence-list endpoints remain needed for an API-driven evidence explorer;

@@ -2,7 +2,7 @@
 
 ## Branch and delivery
 
-`arsenii/A5-dark-editorial`, based on workspace PR #35 (`e85cc25`). Its PR targets
+`arsenii/A5-dark-editorial`, PR #38, based on workspace PR #35 (`e85cc25`). Its PR targets
 `main`; merge the foundation #34 and functional workspace #35 first. This branch
 contains their frontend changes but not the separate API/CLI/collection branches.
 Do not merge automatically. The user requested stopping after this restyle.
@@ -32,6 +32,28 @@ Palette checks: 21 semantic text pairs have contrast >=5.32:1; control boundarie
 on sidebar/surface/hover backgrounds have contrast >=3.29:1. This is not a complete
 accessibility audit. Local Lora adds a 37.78 kB font asset; existing dependencies
 retain their locked versions.
+Both GitHub CI jobs passed for implementation commit `2f59201`.
+
+## Run the approved UI
+
+```sh
+cd /tmp/bioverdict-editorial-worktree/frontend
+pnpm dev
+```
+
+Open Vite's printed URL, normally http://localhost:5173. Dependencies are already
+installed here; a fresh checkout needs `pnpm install --frozen-lockfile` first.
+Check Open analysis → Explore evidence → Sources, search/filters and Copy quote.
+Backend/API keys are unnecessary for this prepared demo. Temporary worktrees may
+be cleaned by the OS; the code is preserved in the pushed branch.
+
+## Teammate update checked after the restyle
+
+GitHub main merged #37 (`da55825`): `DropKind` and `Drop.is_citation_failure`.
+This worktree still has its earlier main baseline. The PR reports 306 tests.
+Follow up in #31/#33: use the typed citation-failure property instead of parsing
+`Drop.what`, and count only citation failures in the dropped-claim event. This
+documentation update does not implement the follow-up.
 
 ## Remaining
 
