@@ -206,3 +206,42 @@ async def test_pacing_is_off_by_default(tmp_path: Path) -> None:
     await client.get("https://example.org/b")
 
     assert time_.sleeps == []
+
+
+class Rejected(Exception):
+    pass
+
+
+def reject_errors(body: bytes) -> None:
+    if body.startswith(b"error"):
+        raise Rejected(body.decode())
+
+
+async def test_a_body_rejected_by_the_validator_is_not_cached(tmp_path: Path) -> None:
+    class Flaky(Server):
+        def __call__(self, request: httpx.Request) -> httpx.Response:
+            self.requests.append(request)
+            body = b"error: bad query" if len(self.requests) == 1 else b"fine"
+            return httpx.Response(200, content=body)
+
+    server = Flaky()
+    client = make_client(tmp_path, server)
+
+    with pytest.raises(Rejected):
+        await client.post_json(URL, {"q": 1}, validate=reject_errors)
+    second = await client.post_json(URL, {"q": 1}, validate=reject_errors)
+
+    assert second.body == b"fine"  # the failed answer was not served from the cache
+    assert len(server.requests) == 2
+
+
+async def test_validator_is_not_applied_again_to_a_cached_body(tmp_path: Path) -> None:
+    calls: list[bytes] = []
+
+    def spy(body: bytes) -> None:
+        calls.append(body)
+
+    client = make_client(tmp_path, Server())
+    await client.get(URL, validate=spy)
+    await client.get(URL, validate=spy)
+    assert len(calls) == 1

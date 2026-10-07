@@ -35,9 +35,9 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 
 | ID | Task | Priority | Points | Demo-critical | Status |
 |---|---|---|---|---|---|
-| A1 | Resolver: input formats (indication+mechanism, drug name, company code) to MONDO/EFO, UniProt/Ensembl, ChEMBL/Open Targets IDs; alias disambiguation | P0 | 3 | yes | [ ] |
+| A1 | Resolver: input formats (indication+mechanism, drug name, company code) to MONDO/EFO, UniProt/Ensembl, ChEMBL/Open Targets IDs; alias disambiguation | P0 | 3 | yes | [x] |
 | A2 | Connectors: ClinicalTrials.gov v2 and Open Targets, returning `Evidence` objects | P0 | 4 | yes | [ ] |
-| A3 | HTTP cache, `as_of` filter, source catalog (allowlist), bundle freeze, hash and versions | P0 | 3 | yes | [ ] |
+| A3 | HTTP cache, `as_of` filter, source catalog (allowlist), bundle freeze, hash and versions | P0 | 3 | yes | [x] |
 | A4 | Extraction collect agents: quote + value into `Evidence`, section statuses, bounded tool loops | P0 | 4 | yes | [ ] |
 | A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [ ] |
 | A6 | Connectors: PubMed / Europe PMC and openFDA / Drugs@FDA | P1 | 4 |  | [ ] |
@@ -47,6 +47,8 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 | A10 | Connectors: SEC EDGAR and Tavily | P2 | 3 |  | [ ] |
 | A11 | Ops: runbook upkeep, cost measurement from the trace table, model bake-off run, demo recordings | P2 | 3 |  | [ ] |
 | A12 | Patent/IP connectors (Google Patents links, Orange/Purple Book) and market-sentiment module | P3 | 3 |  | [ ] |
+
+Status notes (2026-10-07): A1 (PR #30) and A3 are done. A2: ClinicalTrials.gov and Open Targets are done; posted results (`hasResults`) and pagination of ClinicalTrials.gov remain. A5: the backend API runs on fixtures (`docs/architecture.md` section 12); the UI shell and the evidence screens remain.
 
 ### Dasha: Track B (Reasoning and verdict)
 
@@ -114,6 +116,10 @@ Do these in parallel where possible, then review each other's work.
 - [ ] Both: `tests/contract/` with one test per contract (a real bundle validates against the schema; the fixtures load; the fakes satisfy the protocols).
 
 Exit criterion (milestone M0): both can run `uv run bioverdict run --asset divarasib` with `USE_FIXTURES=1` and see the DAG finish, and both UIs can be developed against fixture JSON.
+
+CLI status (2026-10-07): the offline command now runs the fixture pipeline through resolve,
+collect, freeze, mechanism/translation reasoning, scoring and JSON report export. It uses the A5
+fixture API's SQLite records; live orchestration and the remaining Phase 0 sign-offs are pending.
 
 ## 6. Milestones
 
