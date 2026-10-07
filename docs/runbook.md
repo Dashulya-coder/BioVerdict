@@ -1,6 +1,6 @@
 # Runbook
 
-For whoever operates the system: setup, normal operations, evaluation, demo day, and what to do when something breaks. Commands marked TODO must be confirmed once the CLI exists.
+For whoever operates the system: setup, normal operations, evaluation, demo day, and what to do when something breaks. Commands marked TODO are not implemented yet.
 
 ## 1. Setup
 
@@ -41,12 +41,22 @@ The commands below describe the full underwriting interface; fixture CLI impleme
 in pending PR #33 and is not included in this A4 branch.
 
 ```bash
-uv run bioverdict run --asset divarasib                       # TODO
+uv run bioverdict run --asset divarasib --output report.json  # offline fixture demo
 uv run bioverdict run --indication "..." --mechanism "..."    # TODO
 uv run bioverdict run --asset divarasib --as-of 2026-06-30    # time-travel
 ```
 
-A run writes: bundle(s), evidence, claims, verification log, LLM-call log, report. Open the trace to see tokens, cost and models used.
+The fixture CLI writes run status, progress events, bundle, evidence and claims to SQLite, and
+returns the API's JSON report on stdout (also in `--output` if supplied). Diagnostics use stderr.
+No network or paid model calls occur; provider-call totals are zero. Exit codes are 0 for success,
+1 for run/export failure and 2 for invalid input or unsupported live mode. A failed export leaves
+the completed run in SQLite. Use an existing output directory.
+
+`--as-of` filters the static fixture by publication date (or retrieval date for undated records),
+rebuilds the bundle hash/catalog and drops claims with failed citations. Previously found sections
+become incomplete when evidence is filtered. This cannot reconstruct historical source revisions
+or refresh resolver assumptions. Only `divarasib` is supported; live input and other commands remain
+TODO. `USE_FIXTURES=0` is rejected. Export environment variables explicitly; `.env` is not auto-loaded.
 
 ## 4. Pre-warm the cache
 

@@ -421,3 +421,57 @@ def test_the_same_record_does_establish_a_fact_about_a_study() -> None:
     )
     (scored,) = apply_confidence(g.claims, g.links, bundle.evidence_by_id(), bundle.as_of)
     assert scored.claim_type is ClaimType.STUDY_FACT and scored.confidence > 0.7
+
+
+# --- drops are classified, so callers never parse text -------------------------
+
+
+def test_every_kind_of_drop_is_classified() -> None:
+    from bioverdict.reasoning.grounding import DropKind
+
+    g = ground(
+        draft(
+            claim("", links=[]),
+            claim(
+                "x",
+                claim_type="other",
+                gate_signals=["K1"],
+                chain_link="human_exposure",
+                critical=True,
+                links=[
+                    link("E-9999", "anything"),
+                    link("E-0006", ""),
+                    link("E-0006", "KRAS"),
+                    link("E-0006", "this is not in the text"),
+                    link("E-0006", G12C),
+                    link("E-0006", "poor prognosis for patients"),
+                ],
+            ),
+        )
+    )
+    kinds = {d.kind for d in g.drops}
+    assert kinds == {
+        DropKind.EMPTY_CLAIM,
+        DropKind.LINK,
+        DropKind.DUPLICATE_LINK,
+        DropKind.GATE,
+        DropKind.CHAIN_LINK,
+        DropKind.CLAIM_TYPE,
+    }
+    assert [d.kind for d in g.drops if d.what == "E-9999"] == [DropKind.LINK]
+
+
+def test_citation_failures_are_told_apart_from_harmless_changes() -> None:
+    from bioverdict.reasoning.grounding import DropKind
+
+    g = ground(draft(claim("x", links=[link("E-0006", "not in the text at all")])))
+    failures = [d for d in g.drops if d.is_citation_failure]
+    assert {d.kind for d in failures} == {DropKind.LINK, DropKind.BASIS}
+    harmless = ground(draft(claim("y", claim_type="other", links=[link("E-0006", G12C)])))
+    assert harmless.drops and not any(
+        d.is_citation_failure for d in harmless.drops
+    )  # type override
+    twice = ground(
+        draft(claim("z", links=[link("E-0006", G12C), link("E-0006", "poor prognosis")]))
+    )
+    assert not any(d.is_citation_failure for d in twice.drops)  # a repeated citation is harmless
