@@ -128,6 +128,86 @@ async def test_a_cached_answer_keeps_its_original_download_time(tmp_path: Path) 
     assert len(server.requests) == 1
 
 
+class FakeTime:
+    """A clock the test moves by sleeping, so pacing is checked without waiting."""
+
+    def __init__(self) -> None:
+        self.now = 100.0
+        self.sleeps: list[float] = []
+
+    def clock(self) -> float:
+        return self.now
+
+    async def sleep(self, seconds: float) -> None:
+        self.sleeps.append(seconds)
+        self.now += seconds
+
+
+def paced_client(tmp_path: Path, time_: FakeTime, interval: float = 1.0) -> CachedHttpClient:
+    conn = connect(tmp_path / "t.db")
+    migrate(conn)
+    http = httpx.AsyncClient(transport=httpx.MockTransport(Server()))
+    return CachedHttpClient(
+        http,
+        HttpCache(conn),
+        min_interval_s=interval,
+        clock=time_.clock,
+        sleep=time_.sleep,
+    )
+
+
+async def test_network_calls_to_one_host_are_spaced(tmp_path: Path) -> None:
+    time_ = FakeTime()
+    client = paced_client(tmp_path, time_)
+
+    await client.get("https://example.org/a")
+    await client.get("https://example.org/b")
+    await client.get("https://example.org/c")
+
+    assert time_.sleeps == [pytest.approx(1.0), pytest.approx(1.0)]  # none before the first
+
+
+async def test_calls_to_different_hosts_do_not_wait_for_each_other(tmp_path: Path) -> None:
+    time_ = FakeTime()
+    client = paced_client(tmp_path, time_)
+
+    await client.get("https://one.example.org/a")
+    await client.get("https://two.example.org/a")
+
+    assert time_.sleeps == []
+
+
+async def test_a_cache_hit_is_never_delayed(tmp_path: Path) -> None:
+    time_ = FakeTime()
+    client = paced_client(tmp_path, time_)
+    await client.get("https://example.org/a")
+
+    await client.get("https://example.org/a")  # served from the cache
+
+    assert time_.sleeps == []
+
+
+async def test_no_wait_when_enough_time_has_passed_anyway(tmp_path: Path) -> None:
+    time_ = FakeTime()
+    client = paced_client(tmp_path, time_)
+    await client.get("https://example.org/a")
+    time_.now += 5.0
+
+    await client.get("https://example.org/b")
+
+    assert time_.sleeps == []
+
+
+async def test_pacing_is_off_by_default(tmp_path: Path) -> None:
+    time_ = FakeTime()
+    client = paced_client(tmp_path, time_, interval=0.0)
+
+    await client.get("https://example.org/a")
+    await client.get("https://example.org/b")
+
+    assert time_.sleeps == []
+
+
 class Rejected(Exception):
     pass
 
