@@ -58,6 +58,9 @@ def main(
     )
     warming.add_argument("--as-of", type=date.fromisoformat, default=settings.today())
     warming.add_argument("--output", type=Path, help="also write the result as JSON")
+    warming.add_argument(
+        "--refresh", action="store_true", help="download again what is already cached"
+    )
 
     for command in (run, evaluate, warming):
         command.add_argument("--db", type=Path, help="SQLite path; defaults to DB_PATH")
@@ -66,7 +69,8 @@ def main(
     args = parser.parse_args(argv)
 
     if args.command == "warm":
-        return _warm(parser, args, sources or paced_sources(WARM_INTERVAL_S, WARM_ATTEMPTS))
+        patient = paced_sources(WARM_INTERVAL_S, WARM_ATTEMPTS, refresh=args.refresh)
+        return _warm(parser, args, sources or patient)
     fixture_mode = settings.use_fixtures()
     fixtures = args.fixtures if args.fixtures is not None else settings.fixtures_dir()
     if not fixture_mode and live is None:

@@ -447,3 +447,20 @@ async def test_text_beyond_the_prompts_allowed_is_left_unread_and_says_so():
 
     assert len(model.calls) == 2
     assert collected.sections[0].status is SectionStatus.INCOMPLETE
+
+
+async def test_what_a_connector_could_not_read_makes_the_section_incomplete():
+    source = FakeConnector([evidence()], name="fixture")
+    source.problems = ["results of NCT1 could not be read (HTTPStatusError)"]
+
+    collected = await collect(
+        [CollectPlan(section=Section.CLINICAL, tools=("fixture",))],
+        {"fixture": source},
+        llm(FACT),
+        QUERY,
+        AS_OF,
+    )
+
+    (section,) = collected.sections
+    assert section.facts and section.status is SectionStatus.INCOMPLETE
+    assert section.issues == ["fixture: results of NCT1 could not be read (HTTPStatusError)"]

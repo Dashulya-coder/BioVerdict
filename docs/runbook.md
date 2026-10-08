@@ -73,8 +73,8 @@ model call. `NCBI_API_KEY` is optional. Source answers are cached in SQLite and 
 `{"asset": ...}` or `{"indication": ..., "mechanism": ...}`; start the server with
 `USE_FIXTURES=0 uv run --env-file ../.env uvicorn bioverdict.api.main:app`.
 
-A run fails, with the reason in its last event, when no target is identified, when every planned
-source of a section failed and nothing was collected, or when the budget, the deadline or the
+A run fails, with the reason in its last event, when no target is identified, when nothing was
+collected and a section failed or was cut short (a source error, a timeout), or when the budget, the deadline or the
 model configuration stops it. Unexpected errors are recorded by class name only; the text is in
 the server log. A section that was cut short (more than 50 records or 24,000 characters per
 source, a rejected quote, a source error) is `incomplete`, never `found`.
@@ -131,6 +131,12 @@ and the targets come from the list; a later live run lets the model read them fr
 may ask slightly different questions. Exit code 1 means at least one asset had a problem: an
 unconfirmed target list, a source that failed. Read the table before the demo: a drug whose name
 no database confirms is searched by name only, and an asset without a target cannot run.
+
+Source answers are cached in SQLite and by default never expire, so every run replays the same
+downloads: a demo and a comparison of two runs depend on that. For live work on changing
+records set `HTTP_CACHE_MAX_AGE_H` (hours): an older answer is downloaded again and replaced.
+`uv run bioverdict warm --list <file> --refresh` downloads everything again once. A refresh that
+fails raises; the stale answer is not used in its place.
 
 ## 5. Run evaluation
 

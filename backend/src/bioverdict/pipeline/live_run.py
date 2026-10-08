@@ -11,10 +11,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import sqlite3
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 
 from bioverdict.agents.collect import Collection
-from bioverdict.contracts import LLM, Connector
+from bioverdict.contracts import LLM
 from bioverdict.graph.collect_nodes import CollectNodes, CollectState
 from bioverdict.graph.pipeline import collection_graph
 from bioverdict.llm.errors import BudgetExceededError, ConfigError, RunTimeoutError
@@ -102,7 +102,7 @@ async def _resolve_and_collect(
             if "collect" in update:
                 collection: Collection = update["collect"]["collection"]
                 _require_evidence(collection)
-                add_event(conn, run_id, "collect", "done", _summary(collection, source.tools))
+                add_event(conn, run_id, "collect", "done", _summary(collection))
                 add_event(conn, run_id, "freeze", "started")
             if "freeze" in update:
                 bundle = update["freeze"]["bundle"]
@@ -116,14 +116,22 @@ async def _resolve_and_collect(
 
 
 def _require_evidence(collection: Collection) -> None:
-    """An empty bundle is an answer only if the sources were read; failed sources are not."""
-    failed = [s for s in collection.sections if s.status is SectionStatus.ERROR]
+    """An empty bundle is an answer only if the sources were read to the end.
+
+    A section that failed or was cut short (a source error, a timeout) and left nothing behind
+    says nothing about the asset; reasoning over it would report gaps that are not findings.
+    """
+    unread = (SectionStatus.ERROR, SectionStatus.INCOMPLETE)
+    failed = [s for s in collection.sections if s.status in unread]
     if failed and not collection.evidence:
-        detail = "; ".join(f"{s.section.value} ({', '.join(s.issues)})" for s in failed)
+        detail = "; ".join(
+            f"{s.section.value} {s.status.value} ({', '.join(s.issues) or 'cut short'})"
+            for s in failed
+        )
         raise NoEvidenceError(f"no evidence was collected and these sections failed: {detail}")
 
 
-def _summary(collection: Collection, tools: Mapping[str, Connector]) -> str:
+def _summary(collection: Collection) -> str:
     """Every planned section with its status, what was rejected and what could not be read."""
     parts = []
     for section in collection.sections:
@@ -134,7 +142,4 @@ def _summary(collection: Collection, tools: Mapping[str, Connector]) -> str:
         if section.issues:
             text += f" [{', '.join(section.issues)}]"
         parts.append(text)
-    called = {name for section in collection.sections for name in section.tools_called}
-    for name in sorted(called):
-        parts += [f"{name}: {problem}" for problem in getattr(tools[name], "problems", [])]
     return f"{len(collection.evidence)} evidence items; " + "; ".join(parts)

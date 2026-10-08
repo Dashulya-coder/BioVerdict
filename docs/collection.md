@@ -60,6 +60,8 @@ outside the injected allowlist. This is a fixed tool loop, not autonomous web re
 | Section/run timeout, truncation, rejected fact, capacity/step cap or partial tool failure | incomplete |
 | All attempted tools fail, or budget is exhausted before any tool completes | error |
 
+What a connector read only in part (it lists the gaps, for example a study whose posted results
+could not be downloaded) is added to the section's issues and makes the section `incomplete`.
 Auth/configuration failures propagate instead of becoming a successful empty result.
 Collection issues name tools and exception classes without copying provider exception bodies.
 The staged trace is returned; durable collection-event/API trace wiring is later integration.

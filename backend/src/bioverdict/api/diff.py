@@ -41,11 +41,11 @@ class _Run:
     def keys(self) -> dict[str, EvidenceKey]:
         return {item.id: dedup_key(item) for item in self.bundle.evidence}
 
-    def quoted(self, claim: Claim) -> dict[EvidenceKey, str]:
-        """The evidence a claim quotes, with the direction of each link."""
+    def quoted(self, claim: Claim) -> dict[EvidenceKey, tuple[str, str]]:
+        """The evidence a claim quotes, with the direction and the words of each link."""
         keys = self.keys()
         return {
-            keys[link.evidence_id]: link.direction.value
+            keys[link.evidence_id]: (link.direction.value, link.quote)
             for link in self.links
             if link.claim_id == claim.id and link.evidence_id in keys
         }

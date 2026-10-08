@@ -152,12 +152,37 @@ def test_a_verdict_inside_the_expectation_passes_and_one_outside_does_not(conn) 
     assert all(c.runs[0].verdict == "Conditional" for c in report.cases)
 
 
-def test_repeated_runs_measure_stability(conn) -> None:
+def test_repeats_replayed_from_fixtures_are_not_called_stability(conn) -> None:
     report = run_cases(conn, [case()], start, mode="fixtures", repeat=3, today=TODAY)
 
     (result,) = report.cases
     assert len(result.runs) == 3 and len({r.run_id for r in result.runs}) == 3
-    assert result.same_verdict_every_run is True and result.top_risk_overlap == 1.0
+    assert result.fresh_runs == 0
+    assert result.same_verdict_every_run is None and result.top_risk_overlap is None
+    assert "| replayed |" in summary(report)
+
+
+def answered(conn: sqlite3.Connection, cache_hit: bool):
+    """A fixture run that also logs one model call, fresh or served from the cache."""
+
+    def run(connection: sqlite3.Connection, run_id: str, text: str):
+        with connection:
+            connection.execute(
+                "INSERT INTO llm_calls (run_id, step, cache_hit, cost_usd) VALUES (?, 'x', ?, 0.01)",
+                (run_id, int(cache_hit)),
+            )
+        return start(connection, run_id, text)
+
+    return run
+
+
+def test_stability_is_measured_between_runs_a_model_answered_afresh(conn) -> None:
+    fresh = run_cases(conn, [case()], answered(conn, False), mode="live", repeat=2, today=TODAY)
+    cached = run_cases(conn, [case()], answered(conn, True), mode="live", repeat=2, today=TODAY)
+
+    assert fresh.cases[0].fresh_runs == 2 and fresh.cases[0].same_verdict_every_run is True
+    assert fresh.cases[0].top_risk_overlap == 1.0 and "| n/a | yes |" in summary(fresh)
+    assert cached.cases[0].fresh_runs == 0 and cached.cases[0].same_verdict_every_run is None
 
 
 def test_a_single_run_says_nothing_about_stability(conn) -> None:
@@ -205,6 +230,6 @@ def test_the_report_is_written_as_json_and_a_readable_summary(conn, tmp_path: Pa
     stored = json.loads((tmp_path / "out" / "today" / "results.json").read_text())
     text = (tmp_path / "out" / "today" / "summary.md").read_text()
     assert stored["mode"] == "fixtures" and len(stored["cases"][0]["runs"]) == 2
-    assert "| c1 | Conditional | Conditional | yes | yes |" in text
+    assert "| c1 | Conditional | Conditional | yes | replayed |" in text
     assert "no model judged these reports" in text and "shared words only" in text
     assert "Verdicts: Conditional 2." in text

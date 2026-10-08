@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from bioverdict.api.diff import build_diff
-from bioverdict.llm import FakeLLM
+from bioverdict.llm import ConfigError, FakeLLM
 from bioverdict.pipeline.fixture_run import run_fixture
 from bioverdict.pipeline.recompute import (
     PARENT,
@@ -73,7 +73,7 @@ def conn(tmp_path: Path) -> sqlite3.Connection:
 
 def recompute(conn: sqlite3.Connection, added: list[Evidence] | None = None, as_of=LATE):
     bundle = prepare_recompute(conn, "R-1", "R-2", added or [STATEMENT], as_of)
-    return finish_recompute(conn, "R-2", bundle, FakeLLM(drafts()))
+    return finish_recompute(conn, "R-2", lambda: bundle, lambda: FakeLLM(drafts()))
 
 
 def test_added_evidence_becomes_the_next_bundle_version_of_a_new_run(conn) -> None:
@@ -160,7 +160,7 @@ def test_only_a_finished_run_can_grow(conn) -> None:
 def test_a_model_failure_is_recorded_on_the_new_run_only(conn) -> None:
     bundle = prepare_recompute(conn, "R-1", "R-2", [STATEMENT], LATE)
 
-    assert finish_recompute(conn, "R-2", bundle, FakeLLM({})) is None
+    assert finish_recompute(conn, "R-2", lambda: bundle, lambda: FakeLLM({})) is None
 
     failed, original = get_run(conn, "R-2"), get_run(conn, "R-1")
     assert failed is not None and failed.status == FAILED
@@ -188,3 +188,50 @@ def test_evidence_typed_in_by_an_analyst_is_marked_as_such() -> None:
         SourceKind.COMPANY,
         EvidenceLevel.HUMAN_INTERVENTIONAL,
     )
+
+
+def test_a_recompute_without_a_model_fails_with_the_reason_instead_of_hanging(conn) -> None:
+    bundle = prepare_recompute(conn, "R-1", "R-2", [STATEMENT], LATE)
+
+    def no_model():
+        raise ConfigError("ANTHROPIC_API_KEY is not set")
+
+    assert finish_recompute(conn, "R-2", lambda: bundle, no_model) is None
+
+    run = get_run(conn, "R-2")
+    assert run is not None and run.status == FAILED
+    assert "ANTHROPIC_API_KEY" in load_events(conn, "R-2")[-1].detail
+
+
+def test_a_recompute_that_cannot_be_prepared_is_failed_not_left_running(conn, monkeypatch) -> None:
+    def broken(*args, **kwargs):
+        raise sqlite3.OperationalError("disk I/O error")
+
+    monkeypatch.setattr("bioverdict.pipeline.recompute.freeze", broken)
+
+    with pytest.raises(sqlite3.OperationalError):
+        prepare_recompute(conn, "R-1", "R-2", [STATEMENT], LATE)
+
+    run = get_run(conn, "R-2")
+    assert run is not None and run.status == FAILED
+    assert load_events(conn, "R-2")[-1].detail == "OperationalError"
+
+
+def test_a_claim_that_quotes_other_words_of_the_same_evidence_has_changed(conn) -> None:
+    create_run(conn, "R-same", {"asset": "divarasib"}, EARLY)
+    run_fixture(conn, "R-same", "divarasib", FIXTURES)
+    assert build_diff(conn, "R-1", "R-same").claims == []
+    link = conn.execute(
+        "SELECT claim_id, evidence_id, quote FROM claim_evidence WHERE run_id = 'R-same' LIMIT 1"
+    ).fetchone()
+    with conn:
+        conn.execute(
+            "UPDATE claim_evidence SET quote = ? WHERE run_id = 'R-same' AND claim_id = ? "
+            "AND evidence_id = ?",
+            (link["quote"][:-1], link["claim_id"], link["evidence_id"]),
+        )
+
+    (changed,) = build_diff(conn, "R-1", "R-same").claims
+
+    assert changed.change == "changed" and changed.after is not None
+    assert changed.after.id == link["claim_id"]

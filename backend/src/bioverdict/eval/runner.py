@@ -73,8 +73,11 @@ class CaseResult(BaseModel):
     expected_verdict: list[str]
     runs: list[RunMetrics]
     verdict_as_expected: bool | None  # None: no expectation recorded, or no run finished
-    same_verdict_every_run: bool | None  # None with fewer than two finished runs
-    top_risk_overlap: float | None  # mean Jaccard of the top-risk lists between runs
+    # Stability is measured between runs in which a model actually answered. A repeat served
+    # from the model cache, or from fixtures, replays the first answer and proves nothing.
+    fresh_runs: int
+    same_verdict_every_run: bool | None  # None with fewer than two fresh runs
+    top_risk_overlap: float | None  # mean Jaccard of the top-risk lists between fresh runs
     risks: list[RiskMatch]
 
 
@@ -119,7 +122,8 @@ def run_case(
     finished = [run for run in runs if run.verdict is not None]
     verdicts = {run.verdict for run in finished}
     expected = [verdict.value for verdict in case.expected_verdict]
-    pairs = list(combinations(finished, 2))
+    fresh = [run for run in finished if run.llm_calls > run.cache_hits]
+    pairs = list(combinations(fresh, 2))
     return CaseResult(
         case_id=case.id,
         request=request,
@@ -127,7 +131,10 @@ def run_case(
         expected_verdict=expected,
         runs=runs,
         verdict_as_expected=(verdicts <= set(expected)) if expected and finished else None,
-        same_verdict_every_run=(len(verdicts) == 1) if len(finished) > 1 else None,
+        fresh_runs=len(fresh),
+        same_verdict_every_run=(
+            len({run.verdict for run in fresh}) == 1 if len(fresh) > 1 else None
+        ),
         top_risk_overlap=(
             round(
                 statistics.fmean(_jaccard(set(a.top_risks), set(b.top_risks)) for a, b in pairs), 2
@@ -177,7 +184,7 @@ def _case_row(case: CaseResult) -> str:
     seconds = [run.seconds for run in done if run.seconds is not None]
     cells += [
         _mark(case.verdict_as_expected),
-        _mark(case.same_verdict_every_run),
+        _mark(case.same_verdict_every_run) if case.fresh_runs > 1 or len(done) < 2 else "replayed",
         _share(_total(done, "quotes_present"), _total(done, "links")),
         _share(_total(done, "cited_in_catalog"), _total(done, "cited_evidence")),
         _share(_total(done, "sections_covered"), _total(done, "sections_required")),
@@ -206,7 +213,9 @@ def summary(report: EvalReport) -> str:
         f"# Evaluation run, {report.started_at:%Y-%m-%d %H:%M} UTC",
         "",
         f"Mode: **{report.mode}**, {len(report.cases)} case(s), {report.repeat} run(s) each. "
-        + "Counted by code from the stored records; no model judged these reports.",
+        + "Counted by code from the stored records; no model judged these reports. "
+        + "`Stable` compares runs a model answered afresh; `replayed` means the repeats came "
+        + "from fixtures or the model cache and say nothing about stability.",
         "",
         header,
         "|" + "---|" * 11,

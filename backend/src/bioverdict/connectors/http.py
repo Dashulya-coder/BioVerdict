@@ -16,14 +16,14 @@ import json
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 import httpx
 from tenacity import AsyncRetrying, retry_if_exception, stop_after_attempt
 from tenacity.wait import wait_base
 
 from bioverdict.connectors.retry import MAX_ATTEMPTS, is_transient, wait_for_retry
-from bioverdict.store.http_cache import HttpCache, cache_key
+from bioverdict.store.http_cache import CacheEntry, HttpCache, cache_key
 
 # What a run should use (a few requests a second is well inside what public sources accept);
 # the class default is 0 so that tests do not wait.
@@ -49,6 +49,7 @@ class CachedHttpClient:
         max_attempts: int = MAX_ATTEMPTS,
         wait: wait_base | Callable = wait_for_retry,
         min_interval_s: float = 0.0,
+        max_age_s: float | None = None,
         clock: Callable[[], float] = time.monotonic,
         sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     ) -> None:
@@ -57,6 +58,9 @@ class CachedHttpClient:
         self._max_attempts = max_attempts
         self._wait = wait
         self._min_interval_s = min_interval_s
+        # None: a cached answer never expires, so a recorded run replays identically (demo,
+        # tests). A number: an older answer is fetched again and replaced; 0 refreshes all.
+        self._max_age_s = max_age_s
         self._clock = clock
         self._sleep = sleep
         self._last_call: dict[str, float] = {}
@@ -70,7 +74,7 @@ class CachedHttpClient:
         validate: Validator | None = None,
     ) -> HttpResponse:
         key = cache_key("GET", url, params)
-        cached = self._cache.get_entry(key)
+        cached = self._fresh(key)
         if cached is not None:
             return HttpResponse(cached.body, cached.fetched_at)
 
@@ -83,7 +87,7 @@ class CachedHttpClient:
         # Sorted keys make the body, and therefore the cache key, deterministic.
         body = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         key = cache_key("POST", url, body=body)
-        cached = self._cache.get_entry(key)
+        cached = self._fresh(key)
         if cached is not None:
             return HttpResponse(cached.body, cached.fetched_at)
 
@@ -94,6 +98,14 @@ class CachedHttpClient:
             ),
         )
         return self._store(key, url, response, validate)
+
+    def _fresh(self, key: str) -> CacheEntry | None:
+        """The cached answer, unless it is older than this client accepts."""
+        entry = self._cache.get_entry(key)
+        if entry is None or self._max_age_s is None:
+            return entry
+        age = (datetime.now(UTC) - entry.fetched_at).total_seconds()
+        return entry if age < self._max_age_s else None
 
     async def _pace(self, url: str) -> None:
         """Wait until `min_interval_s` has passed since the last network call to this host."""
