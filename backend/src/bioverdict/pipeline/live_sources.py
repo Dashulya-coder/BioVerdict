@@ -19,8 +19,15 @@ import httpx
 from bioverdict import settings
 from bioverdict.agents.collect import CollectPlan
 from bioverdict.connectors.clinicaltrials import ClinicalTrialsConnector
+from bioverdict.connectors.epidemiology import (
+    CancerIncidenceConnector,
+    CdcIndicatorsConnector,
+    OrphanetConnector,
+    PopulationConnector,
+)
 from bioverdict.connectors.http import DEFAULT_MIN_INTERVAL_S, CachedHttpClient
 from bioverdict.connectors.opentargets import OpenTargetsApi, OpenTargetsConnector
+from bioverdict.connectors.pricing import AnalogPricingConnector
 from bioverdict.connectors.pubmed import PubMedConnector
 from bioverdict.connectors.retry import MAX_ATTEMPTS
 from bioverdict.contracts import Connector
@@ -36,6 +43,11 @@ LIVE_PLANS = (
     CollectPlan(section=Section.MECHANISM, tools=("opentargets",)),
     CollectPlan(section=Section.CLINICAL, tools=("clinicaltrials", "pubmed")),
     CollectPlan(section=Section.COMPETITION, tools=("clinicaltrials_class",)),
+    # Market records are status facts: stored whole, read by code (`market/tam.py`), no model.
+    CollectPlan(
+        section=Section.COMMERCIAL,
+        tools=("analog_pricing", "cancer_incidence", "cdc_indicators", "orphanet", "population"),
+    ),
 )
 
 
@@ -141,6 +153,11 @@ def _sources(http: CachedHttpClient) -> Sources:
         ClinicalTrialsConnector(http),
         TargetClassTrials(ClinicalTrialsConnector(http)),
         PubMedConnector(http, api_key=os.environ.get("NCBI_API_KEY") or None),
+        AnalogPricingConnector(http),
+        CancerIncidenceConnector(http),
+        CdcIndicatorsConnector(http),
+        OrphanetConnector(http),
+        PopulationConnector(http),
     ]
     return Sources(
         lookup=OpenTargetsLookup(OpenTargetsApi(http)),

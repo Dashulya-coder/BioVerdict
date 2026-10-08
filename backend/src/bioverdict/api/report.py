@@ -15,12 +15,14 @@ from bioverdict.api.schemas import (
     ExecutiveVerdict,
     LinkView,
     LLMCallView,
+    MarketResponse,
     ReportResponse,
     RunSummary,
     SectionView,
     TraceResponse,
     TraceTotals,
 )
+from bioverdict.market.tam import estimate_market
 from bioverdict.scoring.config import ConfidenceConfig, VerdictConfig
 from bioverdict.scoring.verdict import chain_confidences
 from bioverdict.store.load_bundle import load_bundle
@@ -263,6 +265,28 @@ def list_evidence(conn: sqlite3.Connection, run_id: str) -> list[EvidenceView]:
         raise RunNotReadyError(f"run {run_id} has no frozen bundle yet") from exc
     _, links = load_claims(conn, run_id)
     return [evidence_view(item, links) for item in bundle.evidence]
+
+
+def build_market(conn: sqlite3.Connection, run_id: str) -> MarketResponse:
+    """The market size of the run's bundle; not ready until the bundle is frozen."""
+    require_run(conn, run_id)
+    try:
+        bundle = load_bundle(conn, run_id)
+    except LookupError as exc:
+        raise RunNotReadyError(f"run {run_id} has no frozen bundle yet") from exc
+    estimate = estimate_market(bundle)
+    _, links = load_claims(conn, run_id)
+    by_id = bundle.evidence_by_id()
+    return MarketResponse(
+        run_id=run_id,
+        patients=estimate.patients,
+        patients_basis=estimate.patients_basis,
+        annual_price_usd=estimate.annual_price_usd,
+        tam_usd=estimate.tam.tam_usd if estimate.tam else None,
+        assumptions=estimate.assumptions,
+        missing=estimate.missing,
+        sources=[evidence_view(by_id[evidence_id], links) for evidence_id in estimate.evidence_ids],
+    )
 
 
 def build_trace(conn: sqlite3.Connection, run_id: str) -> TraceResponse:

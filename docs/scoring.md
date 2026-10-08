@@ -136,6 +136,23 @@ Inputs are distributions, not points:
 | Capital | Layer 5 |
 | Discount rate | range (TODO) |
 
+**Market size today (A9, `bioverdict/market/tam.py`, served by `GET /runs/{id}/market`).** Until
+the Monte Carlo exists, the bundle's market records are combined by plain arithmetic:
+
+- *Patients*, the first that the bundle has: US new cases a year of the cancer site (NCI State
+  Cancer Profiles); else the CDC's measured adult prevalence times the population aged 15 and
+  over; else Orphanet's point prevalence class (for the US, the world or Europe) times the whole
+  US population, the class bounds giving the range.
+- *Price*: Medicare's average spending per beneficiary, latest reported year, on each product
+  approved against the same target (Open Targets names them): lowest, median, highest.
+- *Market size*: patients times price, bound by bound.
+
+It is the size of a market at analog prices, not a sales forecast: no diagnosis, eligibility,
+treatment, market-share or uptake rate is applied, the cancer site may be wider than the
+indication, and the price is before rebates. Each of these is written into the response's
+`assumptions`, and what could not be computed into `missing`. For a very common condition the
+product is far above any plausible sales and must not be read as one.
+
 Run N draws (TODO N, for example 10,000). Report P10 / P50 / P90 and a tornado chart showing which assumption moves rNPV most. Every input shows its assumption and label `modeled`.
 
 ## Layer 5: Capital and time to next milestone

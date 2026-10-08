@@ -32,6 +32,7 @@ These become diligence questions with the data type named.
 - **A registry has no history here.** ClinicalTrials.gov serves the current text of a record. Every part of it (summary, endpoints, status, design) is dated by the record's last update, so a run replayed at an earlier date does not see that study at all rather than seeing wording that may have been written later. Posted results are dated by their own posting date.
 - **A positive verdict is not reachable yet.** `Invest` needs a positive rNPV from the investment model, which is not built (B7); until then the best verdict a run can give is `Conditional`, and the report says which condition is missing.
 - **A model call that timed out keeps running in its thread** until the provider answers; its late answer is discarded.
+- **Market size is partial and crude.** Patients are covered for three cancer sites, three common conditions and rare diseases Orphanet lists; price only where an approved drug against the same target has Medicare spending. Everything else is reported as missing. An Orphanet code can describe a narrower (for example hereditary) form than the indication, which makes the count far too low.
 
 ## Out of scope
 

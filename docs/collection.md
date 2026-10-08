@@ -103,6 +103,10 @@ this graph, writes each section's status, fact count, rejections and issues into
 progress event, and hands the frozen bundle to the shared reason → score step. See the
 [runbook](runbook.md) for how to start a live run and how it fails.
 
+The commercial section reads the market sources (`analog_pricing`, `cancer_incidence`,
+`cdc_indicators`, `orphanet`, `population`). All of their records are status facts, so no model
+reads them; `market/tam.py` computes the market size from them (see [scoring](scoring.md)).
+
 Checkpointing and independent verification (B8) remain subsequent work. Tests verify the offline
 boundary and mocked call logging; runs against the real sources used a stand-in model. Neither
 establishes live-provider or medical extraction quality.

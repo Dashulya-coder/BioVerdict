@@ -27,8 +27,13 @@ When two sources disagree:
 | Genetics (add) | GWAS Catalog | https://www.ebi.ac.uk/gwas | Human genetic evidence |
 | Regulatory | openFDA, Drugs@FDA, DailyMed | https://open.fda.gov | Labels, approvals of analogs, adverse events of approved class members |
 | Regulatory (add) | EMA documents | https://www.ema.europa.eu | EU regulatory context |
-| Payer and market | CMS (ASP, NADAC, Part B/D) | https://data.cms.gov | Pricing analogs |
-| Epidemiology | SEER, CDC, IARC/GCO, WHO | various | Incidence and prevalence |
+| Payer and market | CMS Medicare Part D and Part B Spending by Drug | https://data.cms.gov | Spending per beneficiary on approved analogs (implemented, `connectors/pricing.py`); ASP and NADAC are not read |
+| Analogs | Open Targets, drugs approved against the target | https://platform.opentargets.org | Which approved drugs count as price analogs (implemented) |
+| Epidemiology | NCI State Cancer Profiles | https://statecancerprofiles.cancer.gov | US new cases a year by cancer site: lung, pancreas, colorectal (implemented, `connectors/epidemiology.py`) |
+| Epidemiology | CDC Chronic Disease Indicators | https://data.cdc.gov | US adult prevalence: obesity, high blood pressure, asthma (implemented) |
+| Epidemiology | Orphanet (Orphadata, CC BY 4.0) | https://www.orphadata.com | Prevalence of rare diseases, by the Orphanet code Open Targets cross-references (implemented) |
+| Population | World Bank | https://api.worldbank.org | US population the rates are applied to (implemented) |
+| Epidemiology (not read) | SEER, IARC/GCO, WHO | various | SEER needs a key; no documented open API was found for GCO; the WHO API did not answer |
 | Company | SEC EDGAR | https://www.sec.gov/edgar | Filings, 8-K exhibits, pipeline statements |
 | Company | Tavily | https://tavily.com | Press releases and presentations |
 | IP | Google Patents (deep links only) | https://patents.google.com | Patent links; no API |
