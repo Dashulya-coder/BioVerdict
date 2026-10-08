@@ -1,0 +1,3 @@
+# name<TAB>indication<TAB>targets (comma separated). Used by: bioverdict warm --list eval/assets_example.tsv
+# The indication and the targets are what the Resolver looks up; they are inputs, not findings.
+divarasib	NSCLC	KRAS

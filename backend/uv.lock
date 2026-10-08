@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.14"
 
 [[package]]
@@ -64,6 +64,7 @@ dependencies = [
     { name = "numpy" },
     { name = "openai" },
     { name = "pydantic" },
+    { name = "pyyaml" },
     { name = "tenacity" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -85,6 +86,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.5" },
     { name = "openai", specifier = ">=3.24" },
     { name = "pydantic", specifier = ">=2.13.5" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "tenacity", specifier = ">=9.1" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54" },
 ]

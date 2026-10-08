@@ -10,11 +10,42 @@ import sqlite3
 
 from bioverdict.contracts import LLM
 from bioverdict.reasoning import ModuleReasoner
-from bioverdict.reasoning.grounding import fill_missing_chain_links
+from bioverdict.reasoning.grounding import Drop, fill_missing_chain_links
 from bioverdict.reasoning.modules import ALL_MODULES
 from bioverdict.scoring.verdict import score_verdict
-from bioverdict.store.models import Basis, Bundle, VerdictResult
+from bioverdict.store.models import Basis, Bundle, VerdictResult, VerificationCheck
 from bioverdict.store.runs_repo import DONE, add_event, finish_run, save_claims
+from bioverdict.store.verification_repo import save_checks
+
+QUOTE_CHECK = "quote_in_source"  # a citation that code could not ground in the bundle
+DROPPED_CHECK = "claim_dropped"  # the claim was removed from the report for that reason
+
+
+def _checks(drops: list[Drop], rejected: set[str]) -> list[VerificationCheck]:
+    """What code removed or changed, for the verification log: nothing is dropped silently.
+
+    A failed citation is a failed `quote_in_source` check. Other corrections (a gate or a claim
+    type the module may not set, a repeated link) are logged under their own kind.
+    """
+    checks = [
+        VerificationCheck(
+            claim_id=drop.claim_id,
+            check_name=QUOTE_CHECK if drop.is_citation_failure else drop.kind.value,
+            passed=False,
+            detail=f"{drop.what}: {drop.reason}",
+        )
+        for drop in drops
+    ]
+    checks += [
+        VerificationCheck(
+            claim_id=claim_id,
+            check_name=DROPPED_CHECK,
+            passed=False,
+            detail="no grounded citation left, or one of its citations failed",
+        )
+        for claim_id in sorted(rejected)
+    ]
+    return checks
 
 
 def reason_and_score(
@@ -34,6 +65,7 @@ def reason_and_score(
     links = [link for link in links if link.claim_id not in rejected]
     claims += fill_missing_chain_links(claims, bundle, run_id, next_number)
     save_claims(conn, run_id, claims, links, bundle.version)
+    save_checks(conn, run_id, _checks(reasoner.trace.drops, rejected))
     corrections = sum(not d.is_citation_failure for d in reasoner.trace.drops)
     add_event(
         conn,
