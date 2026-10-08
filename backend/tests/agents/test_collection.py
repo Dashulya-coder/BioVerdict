@@ -396,3 +396,54 @@ def test_the_character_budget_is_spent_in_the_order_given():
 
     assert truncated and len(supplied["z-first"].excerpt) == 100
     assert len(supplied["a-second"].excerpt) == 28
+
+
+async def test_status_facts_reach_the_bundle_whole_without_asking_the_model():
+    status = evidence(id="raw-status", status_key="nct:NCT1:overall_status", excerpt='{"a": 1}')
+    model = llm()
+
+    collected = await run([status], model)
+
+    (section,) = collected.sections
+    assert collected.evidence == [status] and model.calls == []
+    assert section.status is SectionStatus.FOUND and section.rejected == []
+
+
+async def test_the_model_is_asked_about_texts_only_and_cannot_cite_a_status_fact():
+    status = evidence(id="raw-status", status_key="nct:NCT1:overall_status", excerpt='{"a": 1}')
+    model = llm(FACT, {"source_id": "raw-status", "quote": '{"a": 1}'})
+
+    collected = await run([evidence(), status], model)
+
+    (section,) = collected.sections
+    assert "raw-status" not in model.calls[0][1] and "raw-1" in model.calls[0][1]
+    assert {e.id for e in collected.evidence} == {"raw-1", "raw-status"}
+    assert [r.source_id for r in section.rejected] == ["raw-status"]
+
+
+async def test_text_that_exceeds_one_prompt_is_read_in_several():
+    texts = [
+        evidence(id=f"raw-{n}", url=f"https://example.org/{n}", excerpt=f"{n}" * 100)
+        for n in range(1, 4)
+    ]
+    model = llm()
+
+    collected = await run(texts, model, max_chars=128)
+
+    (section,) = collected.sections
+    prompts = sorted(prompt for _, prompt in model.calls)
+    assert len(prompts) == 3 and all(f'"raw-{n}"' in prompts[n - 1] for n in range(1, 4))
+    assert section.status is SectionStatus.NOT_REPORTED  # all of it was read, nothing was found
+
+
+async def test_text_beyond_the_prompts_allowed_is_left_unread_and_says_so():
+    texts = [
+        evidence(id=f"raw-{n}", url=f"https://example.org/{n}", excerpt=f"{n}" * 100)
+        for n in range(1, 4)
+    ]
+    model = llm()
+
+    collected = await run(texts, model, max_chars=128, max_batches=2)
+
+    assert len(model.calls) == 2
+    assert collected.sections[0].status is SectionStatus.INCOMPLETE

@@ -78,7 +78,8 @@ def answers(form: dict = FORM) -> dict:
     Freezing numbers evidence anew, so the canned drafts are rewritten to the ids the same
     excerpts get in the run's bundle.
     """
-    facts = [{"source_id": e.id, "quote": e.excerpt} for e in BUNDLE.evidence]
+    # A status fact reaches the bundle as retrieved; the model is asked about the rest.
+    facts = [{"source_id": e.id, "quote": e.excerpt} for e in BUNDLE.evidence if not e.status_key]
     old_ids = {(e.url, e.excerpt): e.id for e in BUNDLE.evidence}
     new_ids = {old_ids[e.url, e.excerpt]: e.id for e in assign_ids([], BUNDLE.evidence, 1)}
     drafts = (FIXTURES / "reasoning" / "divarasib.json").read_text(encoding="utf-8")

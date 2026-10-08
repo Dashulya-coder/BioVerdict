@@ -16,6 +16,8 @@ from bioverdict.store.models import (
     Section,
 )
 
+MAX_FACTS = 32  # per extraction prompt; a prompt that returns this many may have more to say
+
 
 class FactDraft(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -27,7 +29,7 @@ class FactDraft(BaseModel):
 
 class ExtractionDraft(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    facts: list[FactDraft] = Field(default_factory=list, max_length=32)
+    facts: list[FactDraft] = Field(default_factory=list, max_length=MAX_FACTS)
 
 
 @dataclass(frozen=True)
@@ -62,11 +64,17 @@ def prioritise(records: list[Evidence]) -> list[Evidence]:
 
 
 def prepare_prompt(
-    records: list[Evidence], query: ResolverOutput, section: Section, max_chars: int
+    records: list[Evidence],
+    query: ResolverOutput,
+    section: Section,
+    max_chars: int,
+    whole_records: bool = False,
 ) -> tuple[str, dict[str, Evidence], bool]:
     """Bound source text without letting validation read text omitted from the prompt.
 
     Records are taken in the order given, so the caller decides what the budget is spent on.
+    With `whole_records` a record that does not fit is left for the caller's next prompt instead
+    of being cut, unless it is the first one and would otherwise never be read.
     """
     visible: dict[str, Evidence] = {}
     remaining = max_chars
@@ -75,6 +83,9 @@ def prepare_prompt(
         if record.id in visible:
             raise ValueError("connector returned ambiguous source ids")
         if remaining <= 0:
+            truncated = True
+            break
+        if whole_records and visible and len(record.excerpt) > remaining:
             truncated = True
             break
         if record.status_key and len(record.excerpt) > remaining:
