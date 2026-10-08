@@ -659,6 +659,32 @@
    }
   }
  },
+ "131888ed83c7e8fa0698b040f61fbfc9957837f68e7c05afe41a33083bec3b20": {
+  "answer": {
+   "data": {
+    "search": {
+     "hits": [
+      {
+       "id": "ENSG00000205755",
+       "name": "CRLF2"
+      },
+      {
+       "id": "ENSG00000292363",
+       "name": "CRLF2"
+      }
+     ]
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($name: String!, $entity: String!, $size: Int!) {\n  search(queryString: $name, entityNames: [$entity], page: {index: 0, size: $size}) {\n    hits { id name }\n  }\n}\n",
+   "variables": {
+    "entity": "target",
+    "name": "CRLF2",
+    "size": 10
+   }
+  }
+ },
  "154c1f5e89cef56ae4c2e8534318fd537a9c851af7ae1c0fd0562a15201abd68": {
   "answer": {
    "data": {
@@ -3448,6 +3474,188 @@
    "variables": {
     "ids": [
      "CHEMBL5095236"
+    ]
+   }
+  }
+ },
+ "799dc164c1ee8557a844d85bf2a774a163b356d116d0d6fb9bbe154bd2f4b1f3": {
+  "answer": {
+   "data": {
+    "targets": [
+     {
+      "approvedSymbol": "CRLF2",
+      "id": "ENSG00000205755",
+      "proteinIds": [
+       {
+        "id": "Q9HC73",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "A0A0C4DH06",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "D0E2W4",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "ENSP00000370979",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000383641",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000485269",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "J3QKD1",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q5G7M1",
+        "source": "uniprot_obsolete"
+       },
+       {
+        "id": "Q9H5R3",
+        "source": "uniprot_obsolete"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "Cytokine receptor-like factor 2"
+       },
+       {
+        "label": "TSLP receptor"
+       },
+       {
+        "label": "CRLF2"
+       },
+       {
+        "label": "CRL2"
+       },
+       {
+        "label": "ILXR"
+       },
+       {
+        "label": "TSLPR"
+       },
+       {
+        "label": "CRL2"
+       },
+       {
+        "label": "TSLPR"
+       },
+       {
+        "label": "Cytokine receptor-like 2"
+       },
+       {
+        "label": "IL-XR"
+       },
+       {
+        "label": "Thymic stromal lymphopoietin protein receptor"
+       },
+       {
+        "label": "CRL2"
+       },
+       {
+        "label": "CRLF2Y"
+       },
+       {
+        "label": "TSLPR"
+       },
+       {
+        "label": "cytokine receptor-like factor 2"
+       },
+       {
+        "label": "IL-XR"
+       },
+       {
+        "label": "TSLP receptor"
+       },
+       {
+        "label": "cytokine receptor CRL2 precusor"
+       },
+       {
+        "label": "thymic stromal lymphopoietin protein receptor"
+       },
+       {
+        "label": "thymic stromal-derived lymphopoietin receptor"
+       },
+       {
+        "label": "CRLF2"
+       }
+      ]
+     },
+     {
+      "approvedSymbol": "CRLF2",
+      "id": "ENSG00000292363",
+      "proteinIds": [
+       {
+        "id": "Q9HC73",
+        "source": "uniprot_swissprot"
+       },
+       {
+        "id": "D0E2W4",
+        "source": "uniprot_trembl"
+       },
+       {
+        "id": "ENSP00000518623",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000642756",
+        "source": "ensembl_PRO"
+       },
+       {
+        "id": "ENSP00000642781",
+        "source": "ensembl_PRO"
+       }
+      ],
+      "synonyms": [
+       {
+        "label": "CRL2"
+       },
+       {
+        "label": "CRLF2Y"
+       },
+       {
+        "label": "TSLPR"
+       },
+       {
+        "label": "cytokine receptor-like factor 2"
+       },
+       {
+        "label": "IL-XR"
+       },
+       {
+        "label": "TSLP receptor"
+       },
+       {
+        "label": "cytokine receptor CRL2 precusor"
+       },
+       {
+        "label": "thymic stromal lymphopoietin protein receptor"
+       },
+       {
+        "label": "thymic stromal-derived lymphopoietin receptor"
+       },
+       {
+        "label": "CRLF2"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  targets(ensemblIds: $ids) {\n    id approvedSymbol\n    synonyms { label }\n    proteinIds { id source }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "ENSG00000205755",
+     "ENSG00000292363"
     ]
    }
   }

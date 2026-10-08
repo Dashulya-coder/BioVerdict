@@ -109,6 +109,10 @@ def _parent_links(records: list[dict]) -> dict[str, str]:
     return parent_of
 
 
+def _swissprot(target: dict) -> str | None:
+    return next((p["id"] for p in target["proteinIds"] if p["source"] == "uniprot_swissprot"), None)
+
+
 class OpenTargetsLookup:
     def __init__(self, api: OpenTargetsApi) -> None:
         self._api = api
@@ -177,13 +181,16 @@ class OpenTargetsLookup:
             t for t in targets if wanted in {normalize(s["label"]) for s in t["synonyms"]}
         ]
         found = by_symbol or (by_synonym if len(by_synonym) == 1 else [])
+        proteins = {_swissprot(t) for t in found}
+        if len(found) > 1 and len(proteins) == 1 and None not in proteins:
+            # One gene in the pseudoautosomal region is listed once per sex chromosome (CRLF2:
+            # an X and a Y record, same protein). The older record, the X copy, is the one the
+            # disease evidence is filed under.
+            found = [min(found, key=lambda t: t["id"])]
         if len(found) != 1:
             return None
         target = found[0]
-        uniprot = next(
-            (p["id"] for p in target["proteinIds"] if p["source"] == "uniprot_swissprot"), None
-        )
-        return TargetMatch(target["approvedSymbol"], target["id"], uniprot)
+        return TargetMatch(target["approvedSymbol"], target["id"], _swissprot(target))
 
     async def find_disease(self, name: str) -> DiseaseResolution:
         """A MONDO disease by name or synonym. Other term types only by their exact name.
