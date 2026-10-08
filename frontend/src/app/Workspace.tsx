@@ -4,6 +4,7 @@ import { PageHeading } from '../ui/PageHeading'
 import { AnalysisForm } from '../features/input/AnalysisForm'
 import { ResolvedInput } from '../features/input/ResolvedInput'
 import { EvidenceExplorer } from '../features/evidence/EvidenceExplorer'
+import { CompareRuns } from '../features/compare/CompareRuns'
 import { WorkspaceShell } from './WorkspaceShell'
 import { copy, latestCutoff } from './copy'
 import { useAnalysis } from './useAnalysis'
@@ -53,6 +54,8 @@ export function Workspace() {
               navigate('evidence')
             }}
           />
+        ) : screen === 'compare' ? (
+          <CompareRuns analysis={analysis} />
         ) : (
           <EvidenceExplorer
             key={screen}

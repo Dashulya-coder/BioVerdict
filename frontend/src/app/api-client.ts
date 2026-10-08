@@ -2,14 +2,17 @@ import type { z } from 'zod'
 import {
   apiErrorSchema,
   apiEvidenceListSchema,
+  diffSchema,
   healthSchema,
   inputSchema,
   resolverSchema,
   runCreatedSchema,
+  runListSchema,
+  runSummarySchema,
   traceSchema,
 } from './schemas'
 import { WorkspaceError } from './WorkspaceError'
-import type { AnalysisInput, PreparedAnalysis } from './models'
+import type { AddedEvidence, AnalysisInput, PreparedAnalysis, RunDiff, RunSummary } from './models'
 
 /** Base URL of the BioVerdict API; without it the workspace opens the prepared snapshot. */
 export const apiUrl = (import.meta.env.VITE_API_URL ?? '').trim().replace(/\/+$/, '')
@@ -124,4 +127,47 @@ export async function runAnalysis(
     request(`/runs/${runId}/evidence`, apiEvidenceListSchema, signal),
   ])
   return { origin: mode, runId, input: parsed.data, resolver, evidence }
+}
+
+/** Finished runs, newest first: what a run can be compared with. */
+export async function listFinishedRuns(signal: AbortSignal): Promise<readonly RunSummary[]> {
+  const runs = await request('/runs?limit=100', runListSchema, signal)
+  return runs.filter((run) => run.status === 'done')
+}
+
+/** What differs in `head` compared with `base` (default: the run `head` grew from). */
+export function compareRuns(
+  head: string,
+  base: string | null,
+  signal: AbortSignal,
+): Promise<RunDiff> {
+  const query = base ? `?against=${encodeURIComponent(base)}` : ''
+  return request(`/runs/${head}/diff${query}`, diffSchema, signal)
+}
+
+/**
+ * Adds documents to a finished run and waits for the recomputed run, whose id is returned.
+ * The backend reasons over the new bundle version again; on a live API that calls the model.
+ */
+export async function addEvidence(
+  runId: string,
+  evidence: readonly AddedEvidence[],
+  asOf: string,
+  signal: AbortSignal,
+): Promise<string> {
+  const body = { evidence, as_of: asOf }
+  const created = await request(`/runs/${runId}/evidence`, runCreatedSchema, signal, body)
+  const deadline = Date.now() + RUN_LIMIT_MS
+  for (;;) {
+    const run = await request(`/runs/${created.run_id}`, runSummarySchema, signal)
+    if (run.status === 'done') return run.run_id
+    if (run.status === 'failed') {
+      const { events } = await request(`/runs/${run.run_id}/trace`, traceSchema, signal)
+      const reason = events.findLast((event) => event.status === 'failed')?.detail
+      throw new WorkspaceError(`The recompute failed: ${reason ?? 'no reason given'}`, 'edit')
+    }
+    if (Date.now() > deadline)
+      throw new WorkspaceError(`Run ${run.run_id} is taking too long. Check the backend.`, 'edit')
+    await wait(POLL_MS, signal)
+  }
 }

@@ -1,6 +1,13 @@
 import type { z } from 'zod'
 import type { sourceKinds } from './constants'
-import type { evidenceSchema, inputSchema, resolverSchema } from './schemas'
+import type {
+  addedEvidenceSchema,
+  diffSchema,
+  evidenceSchema,
+  inputSchema,
+  resolverSchema,
+  runSummarySchema,
+} from './schemas'
 
 export type SourceKind = (typeof sourceKinds)[number]
 export type AnalysisInput = z.infer<typeof inputSchema>
@@ -15,7 +22,10 @@ export interface PreparedAnalysis {
   readonly resolver: ResolvedInput
   readonly evidence: readonly Evidence[]
 }
-export type Screen = 'new' | 'resolved' | 'evidence' | 'sources'
+export type RunSummary = Readonly<z.infer<typeof runSummarySchema>>
+export type AddedEvidence = z.infer<typeof addedEvidenceSchema>
+export type RunDiff = Readonly<z.infer<typeof diffSchema>>
+export type Screen = 'new' | 'resolved' | 'evidence' | 'sources' | 'compare'
 export type AnalysisState =
   | { kind: 'idle' }
   | { kind: 'loading'; progress: string }

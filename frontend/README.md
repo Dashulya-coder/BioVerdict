@@ -31,6 +31,11 @@ validated with the schemas in `src/app/schemas.ts`. The header shows `Fixture ru
 (from the API's `/health`) and the run id. Refusals, failed runs and an unreachable API are shown
 with the API's own reason. Wording that differs between the two modes lives in `src/app/copy.ts`.
 
+The **Compare** screen (API mode only, `src/features/compare/`) shows what differs between the
+current run and another finished run, or recomputes the run after an analyst adds a document
+(`POST /runs/{id}/evidence`) and shows the difference. The comparison is the backend's
+`DiffResponse`, computed by code; a fixture API refuses added documents and says why.
+
 Report and trace screens are remaining work; see [both tracks' status](../docs/work-plan.md).
 
 ## Browser checks
@@ -42,9 +47,9 @@ pnpm test:e2e
 
 Two Playwright projects run against production builds. `snapshot` (eight scenarios) covers the
 prepared demo: filters, cutoffs, keyboard/history navigation, exact quote/source provenance,
-mobile overflow and failed-load recovery. `api` (six scenarios) covers the `--mode api` build
+mobile overflow and failed-load recovery. `api` (nine scenarios) covers the `--mode api` build
 with the tests answering for the API: progress, fixture/live labelling, refusals, failed runs,
-an unreachable API and malformed answers. Both reject unexpected external requests; neither
+an unreachable API, malformed answers, comparing runs and adding a document. Both reject unexpected external requests; neither
 needs a backend. CI installs the browser and runs these checks automatically.
 
 Optional `PLAYWRIGHT_CHROMIUM_EXECUTABLE` selects an existing Chromium binary;

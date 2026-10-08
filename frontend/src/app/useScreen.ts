@@ -12,7 +12,9 @@ function subscribe(listener: () => void) {
 }
 function snapshot(): Screen {
   const value = window.location.hash.slice(1)
-  return value === 'resolved' || value === 'evidence' || value === 'sources' ? value : 'new'
+  return value === 'resolved' || value === 'evidence' || value === 'sources' || value === 'compare'
+    ? value
+    : 'new'
 }
 export function useScreen() {
   return useSyncExternalStore<Screen>(subscribe, snapshot, () => 'new')
