@@ -26,14 +26,14 @@ from bioverdict.llm.errors import ConfigError
 from bioverdict.pipeline.fixture_run import fixture_names, run_fixture
 from bioverdict.pipeline.live_llm import live_llm, require_configured
 from bioverdict.pipeline.live_run import LiveRunner, run_live
-from bioverdict.pipeline.live_sources import SourcesFactory, live_sources
+from bioverdict.pipeline.live_sources import SourcesFactory, paced_sources
 from bioverdict.store.runs_repo import create_run, load_events
 
 
 def main(
     argv: list[str] | None = None,
     live: LiveRunner | None = None,
-    sources: SourcesFactory = live_sources,
+    sources: SourcesFactory | None = None,
 ) -> int:
     """`live` replaces the real live pipeline (sources and model) and `sources` what `warm`
     reads; tests pass stand-ins."""
@@ -66,7 +66,7 @@ def main(
     args = parser.parse_args(argv)
 
     if args.command == "warm":
-        return _warm(parser, args, sources)
+        return _warm(parser, args, sources or paced_sources(WARM_INTERVAL_S, WARM_ATTEMPTS))
     fixture_mode = settings.use_fixtures()
     fixtures = args.fixtures if args.fixtures is not None else settings.fixtures_dir()
     if not fixture_mode and live is None:
@@ -106,6 +106,11 @@ def main(
         print(f"{run_id}: {exc}", file=sys.stderr)
         return 1
     return 0
+
+
+# Many assets in a row: one request a second and more patience keep the registry from refusing.
+WARM_INTERVAL_S = 1.0
+WARM_ATTEMPTS = 5
 
 
 def _mode_note(fixture_mode: bool) -> str:

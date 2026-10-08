@@ -21,6 +21,7 @@ from bioverdict.connectors.clinicaltrials import ClinicalTrialsConnector
 from bioverdict.connectors.http import DEFAULT_MIN_INTERVAL_S, CachedHttpClient
 from bioverdict.connectors.opentargets import OpenTargetsApi, OpenTargetsConnector
 from bioverdict.connectors.pubmed import PubMedConnector
+from bioverdict.connectors.retry import MAX_ATTEMPTS
 from bioverdict.contracts import Connector
 from bioverdict.resolver.lookup import OpenTargetsLookup
 from bioverdict.store.http_cache import HttpCache
@@ -105,18 +106,40 @@ class Sources:
 SourcesFactory = Callable[[sqlite3.Connection], AbstractAsyncContextManager[Sources]]
 
 
-@asynccontextmanager
-async def live_sources(conn: sqlite3.Connection) -> AsyncIterator[Sources]:
-    """The public sources: Open Targets, ClinicalTrials.gov and PubMed. None needs a key."""
-    async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_S) as client:
-        http = CachedHttpClient(client, HttpCache(conn), min_interval_s=DEFAULT_MIN_INTERVAL_S)
-        tools: list[Connector] = [
-            OpenTargetsConnector(http),
-            ClinicalTrialsConnector(http),
-            TargetClassTrials(ClinicalTrialsConnector(http)),
-            PubMedConnector(http, api_key=os.environ.get("NCBI_API_KEY") or None),
-        ]
-        yield Sources(
-            lookup=OpenTargetsLookup(OpenTargetsApi(http)),
-            tools={tool.name: tool for tool in tools},
-        )
+def paced_sources(
+    min_interval_s: float = DEFAULT_MIN_INTERVAL_S, max_attempts: int = MAX_ATTEMPTS
+) -> SourcesFactory:
+    """The public sources: Open Targets, ClinicalTrials.gov and PubMed. None needs a key.
+
+    A run keeps the default pace, which fits its time budget. Reading many assets in a row
+    (`bioverdict warm`) has to be slower and more patient, or the registry answers 429.
+    """
+
+    @asynccontextmanager
+    async def opened(conn: sqlite3.Connection) -> AsyncIterator[Sources]:
+        async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_S) as client:
+            http = CachedHttpClient(
+                client,
+                HttpCache(conn),
+                min_interval_s=min_interval_s,
+                max_attempts=max_attempts,
+            )
+            yield _sources(http)
+
+    return opened
+
+
+def _sources(http: CachedHttpClient) -> Sources:
+    tools: list[Connector] = [
+        OpenTargetsConnector(http),
+        ClinicalTrialsConnector(http),
+        TargetClassTrials(ClinicalTrialsConnector(http)),
+        PubMedConnector(http, api_key=os.environ.get("NCBI_API_KEY") or None),
+    ]
+    return Sources(
+        lookup=OpenTargetsLookup(OpenTargetsApi(http)),
+        tools={tool.name: tool for tool in tools},
+    )
+
+
+live_sources = paced_sources()
