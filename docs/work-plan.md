@@ -20,7 +20,7 @@ even for complete components.
 
 | Person | Complete tasks | Partial / pending review | Still to do |
 |---|---|---|---|
-| Arsenii | 1 of 12 whole tasks: A2 | 6: A1, A3, A4, A5, A6, A11 | 5: A7, A8, A9, A10, A12 |
+| Arsenii | 1 of 12 whole tasks: A2 | 7: A1, A3, A4, A5, A6, A7, A11 | 4: A8, A9, A10, A12 |
 | Dasha | 1 of 13: B4 | 6: B1, B2, B3, B8, B10, B11 | 6: B5, B6, B7, B9, B12, B13 |
 
 These are **whole-task counts, not effort percentages**. The Resolver, the
@@ -29,8 +29,8 @@ connectors, collect → freeze, reasoning and scoring are joined into a live run
 stand-in model; it has not been run or evaluated with a real model. The input, resolver and
 evidence screens run on the API (pending review).
 
-**Next for Arsenii:** a first live run with a real model together with Dasha (M2/M3), then recompute and
-diff (A7) and the eval runner (A8). **Next for Dasha:** B5 report UI on the fixture API
+**Next for Arsenii:** a first live run with a real model together with Dasha (M2/M3), then the diff
+screen (A7) and the eval runner (A8). **Next for Dasha:** B5 report UI on the fixture API
 using [the shared styles](design-system.md), and a first live run of B1/B2; B8 needs an
 independent verification implementation. M2/M3 require both tracks.
 
@@ -68,7 +68,7 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 | A4 | Extraction collect agents: quote + value into `Evidence`, section statuses, bounded tool loops | P0 | 4 | yes | [~] | Bounded, injected-tool collection with grounded quote/value extraction, cutoff/latest-wins, honest statuses, budget/deadline handling and collect → freeze DAG (#36). Live connectors and the Resolver registered and wired into the API/CLI run lifecycle (`pipeline/live_run.py`). | Measure live extraction quality, cost and time with a real model; the per-source caps make large sections `incomplete`. |
 | A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [~] | Fixture API/report/drill-down/trace/SSE (#31), CLI (#33) and shared Tailwind UI (#34) and the input/resolver/evidence screens on prepared data (#35) merged. `POST /runs` and the CLI start live runs with `USE_FIXTURES=0`. Resolver and whole-bundle endpoints; the input, resolver and evidence screens run on the API (`pnpm dev:api`), with the snapshot kept as an offline fallback. | Check the screens on a live run with a real model; link to the report and trace screens (B5, B12) when they land. |
 | A6 | Connectors: PubMed / Europe PMC and openFDA / Drugs@FDA | P1 | 4 |  | [~] | PubMed connector merged (#32). | openFDA / Drugs@FDA and any additional Europe PMC coverage; validate PubMed bodies before caching. |
-| A7 | Incremental recompute engine, add-evidence endpoint, diff API and diff screen | P1 | 5 | yes | [ ] | Scoring has a reusable rescore helper; no A7 workflow. | Implement add-evidence, recompute orchestration, report diff API and UI (or the documented full re-run fallback). |
+| A7 | Incremental recompute engine, add-evidence endpoint, diff API and diff screen | P1 | 5 | yes | [~] | Add-evidence endpoint that recomputes as a new run on the next bundle version (the full re-run fallback), and a code-computed diff API between two finished runs. | Diff screen in the UI; check a recompute with a real model. Claim-level incremental recompute is not planned before the demo. |
 | A8 | Eval runner, grounding and citation metrics, leakage probe, cache pre-warm | P1 | 4 |  | [ ] | Evaluation strategy documented. | Implement runner, grounding/citation metrics, leakage probe and cache pre-warm. |
 | A9 | Epidemiology and pricing connectors (SEER, GCO, CMS) and TAM numbers derived by code | P1 | 4 |  | [ ] | TAM contracts/design documented. | Implement epidemiology/pricing retrieval and reproducible TAM calculations. |
 | A10 | Connectors: SEC EDGAR and Tavily | P2 | 3 |  | [ ] | Source strategy documented. | Implement SEC EDGAR and Tavily connectors. |
