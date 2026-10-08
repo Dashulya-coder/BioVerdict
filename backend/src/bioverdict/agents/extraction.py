@@ -8,7 +8,13 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from bioverdict.store.models import Evidence, EvidenceType, ResolverOutput, Section
+from bioverdict.store.models import (
+    Evidence,
+    EvidenceLevel,
+    EvidenceType,
+    ResolverOutput,
+    Section,
+)
 
 
 class FactDraft(BaseModel):
@@ -36,14 +42,36 @@ class RejectedFact:
     reason: str
 
 
+_STRENGTH = {level: rank for rank, level in enumerate(EvidenceLevel)}  # strongest first
+
+
+def prioritise(records: list[Evidence]) -> list[Evidence]:
+    """What to read first when a source returns more than fits: findings before records that a
+    study exists, then the newest (undated records count from their retrieval), then by id.
+
+    The limits cut from the end of this order, so what is left out is the weakest and oldest.
+    """
+    return sorted(
+        records,
+        key=lambda item: (
+            _STRENGTH[item.level],
+            -(item.published_at or item.retrieved_at.date()).toordinal(),
+            item.id,
+        ),
+    )
+
+
 def prepare_prompt(
     records: list[Evidence], query: ResolverOutput, section: Section, max_chars: int
 ) -> tuple[str, dict[str, Evidence], bool]:
-    """Bound source text without letting validation read text omitted from the prompt."""
+    """Bound source text without letting validation read text omitted from the prompt.
+
+    Records are taken in the order given, so the caller decides what the budget is spent on.
+    """
     visible: dict[str, Evidence] = {}
     remaining = max_chars
     truncated = False
-    for record in sorted(records, key=lambda item: item.id):
+    for record in records:
         if record.id in visible:
             raise ValueError("connector returned ambiguous source ids")
         if remaining <= 0:

@@ -67,6 +67,19 @@ Real LLM calls use the existing logger. Cancelling a sync worker cannot terminat
 call; live callers must configure provider timeouts and run deadlines. No late result is
 accepted into the timed-out section.
 
+## What is read first
+
+A source often returns more than the limits allow (a drug with many studies gives over 80
+registry records; the limit is 50 records and 24,000 characters per source). Records are read in
+a fixed order: findings before records that a study exists (evidence level, strongest first),
+then the newest, then by id. The limits cut from the end of that order, and the section is still
+marked `incomplete`. Posted trial results are therefore read before protocol descriptions.
+
+The target-class search (`clinicaltrials_class`) keeps only the status and the design record of
+each study, for up to 12 stopped studies and 12 others, latest phase and newest first. That is
+what the competition section needs (phase, status, why a study stopped), and it fits the limit.
+Sponsor names are not part of those excerpts; they are in the evidence's independence group.
+
 ## Live registration
 
 `pipeline/live_sources.py` is the allowlist of a live run: Open Targets for mechanism,

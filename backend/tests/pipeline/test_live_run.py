@@ -20,7 +20,13 @@ from bioverdict.llm import ConfigError, FakeLLM
 from bioverdict.pipeline.fixture_run import run_fixture
 from bioverdict.pipeline.live_llm import live_llm
 from bioverdict.pipeline.live_run import describe_request, run_live
-from bioverdict.pipeline.live_sources import LIVE_PLANS, Sources, TargetClassTrials
+from bioverdict.pipeline.live_sources import (
+    CLASS_STUDIES,
+    LIVE_PLANS,
+    Sources,
+    TargetClassTrials,
+    class_records,
+)
 from bioverdict.store.db import connect
 from bioverdict.store.evidence_ids import assign_ids
 from bioverdict.store.load_bundle import load_bundle
@@ -29,6 +35,7 @@ from bioverdict.store.models import (
     Asset,
     Basis,
     Bundle,
+    Evidence,
     Indication,
     ResolverOutput,
     Section,
@@ -276,3 +283,52 @@ async def test_the_class_search_needs_an_indication() -> None:
 def test_every_live_plan_names_a_section_once() -> None:
     sections = [plan.section for plan in LIVE_PLANS]
     assert len(sections) == len(set(sections)) and Section.TRANSLATION not in sections
+
+
+def study(nct: str, status: str, phase: str, updated: date) -> list[Evidence]:
+    """The records the registry connector gives for one study, reduced to what matters here."""
+    shared = {
+        "source": "ClinicalTrials.gov",
+        "source_family": "registry",
+        "source_kind": "registry",
+        "url": f"https://clinicaltrials.gov/study/{nct}",
+        "locator": {"type": "nct", "value": nct},
+        "published_at": updated,
+        "retrieved_at": "2026-10-06T00:00:00Z",
+        "level": "registry_record",
+        "independence_group": "sponsor:x",
+        "version": 1,
+    }
+    parts = {
+        "summary": ("A study of a drug.", None),
+        "status": (f'{{"overallStatus": "{status}"}}', f"nct:{nct}:overall_status"),
+        "design": (f'{{"phases": ["{phase}"]}}', f"nct:{nct}:design"),
+    }
+    return [
+        Evidence.model_validate(
+            {**shared, "id": f"{nct}:{part}", "excerpt": text, "status_key": key}
+        )
+        for part, (text, key) in parts.items()
+    ]
+
+
+def test_a_class_search_keeps_the_status_and_design_of_each_study_only() -> None:
+    kept = class_records(study("NCT1", "RECRUITING", "PHASE3", date(2026, 1, 1)))
+
+    assert [e.id for e in kept] == ["NCT1:status", "NCT1:design"]
+
+
+def test_a_class_search_keeps_stopped_and_running_studies_latest_phase_and_newest_first() -> None:
+    records = []
+    for number in range(20):
+        records += study(f"NCT-RUN-{number:02d}", "RECRUITING", "PHASE1", date(2020, 1, number + 1))
+    records += study("NCT-OLD-P3", "COMPLETED", "PHASE3", date(2015, 1, 1))
+    records += study("NCT-STOP-P2", "TERMINATED", "PHASE2", date(2016, 1, 1))
+    records += study("NCT-STOP-P1", "WITHDRAWN", "PHASE1", date(2025, 1, 1))
+
+    kept = [e.locator.value for e in class_records(records) if e.locator and "status" in e.id]
+
+    assert kept[:2] == ["NCT-STOP-P2", "NCT-STOP-P1"]  # stopped: a failed analog is never cut
+    assert kept[2] == "NCT-OLD-P3"  # then the latest phase, however old
+    assert kept[3] == "NCT-RUN-19" and len(kept) == 2 + CLASS_STUDIES  # then the newest
+    assert len(class_records(records)) <= 50  # inside the per-source record limit

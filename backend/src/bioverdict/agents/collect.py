@@ -16,6 +16,7 @@ from bioverdict.agents.extraction import (
     RejectedFact,
     ground_facts,
     prepare_prompt,
+    prioritise,
 )
 from bioverdict.contracts import LLM, Connector
 from bioverdict.llm.errors import (
@@ -81,7 +82,9 @@ async def _collect_section(
             for name in plan.tools[: plan.max_steps]:
                 out.tools_called.append(name)
                 try:
-                    records = select_bundle_evidence(await tools[name].fetch(query, as_of), as_of)
+                    records = prioritise(
+                        select_bundle_evidence(await tools[name].fetch(query, as_of), as_of)
+                    )
                     if not records:
                         completed += 1
                         continue
