@@ -12,6 +12,7 @@ import pytest
 
 from bioverdict import settings
 from bioverdict.cli import main
+from bioverdict.pipeline.fixture_run import run_fixture
 from bioverdict.store.as_of import is_visible_as_of
 from bioverdict.store.load_bundle import load_bundle
 from bioverdict.store.runs_repo import list_runs, load_claims, load_events
@@ -91,12 +92,51 @@ def test_invalid_input_creates_no_database(tmp_path, extra):
     assert exc.value.code == 2 and not db.exists()
 
 
-def test_live_mode_is_rejected_before_writing(tmp_path, monkeypatch):
+def test_a_live_run_without_a_model_key_is_rejected_before_writing(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("USE_FIXTURES", "0")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     db = tmp_path / "absent.sqlite"
     with pytest.raises(SystemExit) as exc:
         main(["run", "--asset", "divarasib", "--db", str(db)])
     assert exc.value.code == 2 and not db.exists()
+    assert "ANTHROPIC_API_KEY" in capsys.readouterr().err
+
+
+def test_free_text_needs_a_live_run(tmp_path):
+    db = tmp_path / "absent.sqlite"
+    with pytest.raises(SystemExit) as exc:
+        main(["run", "--query", "KRAS G12C inhibitor in NSCLC", "--db", str(db)])
+    assert exc.value.code == 2 and not db.exists()
+
+
+def test_a_live_run_passes_the_typed_request_on_and_prints_its_report(
+    tmp_path, monkeypatch, capsys
+):
+    monkeypatch.setenv("USE_FIXTURES", "0")
+    db, asked = tmp_path / "run.sqlite", []
+
+    def stand_in(conn, run_id, text):
+        asked.append(text)
+        return run_fixture(conn, run_id, "divarasib", FIXTURES)
+
+    assert main(["run", "--query", " KRAS G12C in NSCLC ", "--db", str(db)], live=stand_in) == 0
+
+    streams = capsys.readouterr()
+    assert asked == ["KRAS G12C in NSCLC"] and "live" in streams.err
+    assert json.loads(streams.out)["executive"]["verdict"]
+    with closing(settings.open_database(db)) as conn:
+        assert list_runs(conn)[0].input["query"] == "KRAS G12C in NSCLC"
+
+
+def test_a_failed_live_run_exits_with_its_reason(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("USE_FIXTURES", "0")
+
+    def stand_in(conn, run_id, text):
+        return run_fixture(conn, run_id, "no-such-drug", FIXTURES)
+
+    assert main(["run", "--asset", "x", "--db", str(tmp_path / "run.sqlite")], live=stand_in) == 1
+    streams = capsys.readouterr()
+    assert not streams.out and "failed" in streams.err
 
 
 def test_tampered_fixture_is_recorded_as_failed_before_rehashing(tmp_path, capsys):

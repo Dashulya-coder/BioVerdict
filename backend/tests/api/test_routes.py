@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from bioverdict import settings
 from bioverdict.api.main import create_app
 from bioverdict.api.schemas import ClaimView, EvidenceView, ReportResponse, TraceResponse
+from bioverdict.pipeline.fixture_run import run_fixture
 from bioverdict.store.runs_repo import create_run
 
 FIXTURES = Path(__file__).parents[3] / "fixtures"
@@ -106,11 +107,60 @@ def test_a_run_without_an_asset_is_refused(client: TestClient) -> None:
     assert response.status_code == 422
 
 
-def test_the_live_pipeline_is_not_pretended(
+def test_a_live_run_without_a_model_key_is_refused_before_it_starts(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("USE_FIXTURES", "0")
-    assert client.post("/runs", json={"asset": "divarasib"}).status_code == 501
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    response = client.post("/runs", json={"asset": "divarasib"})
+
+    assert response.status_code == 503 and "ANTHROPIC_API_KEY" in response.json()["detail"]
+    assert client.get("/runs").json() == []  # no run was created, and no fixture answered
+
+
+def live_client(db_path: Path, monkeypatch: pytest.MonkeyPatch, asked: list[str]) -> TestClient:
+    """The API in live mode, with the fixture run standing in for the sources and the model."""
+    monkeypatch.setenv("USE_FIXTURES", "0")
+
+    def stand_in(conn, run_id, text):
+        asked.append(text)
+        return run_fixture(conn, run_id, "divarasib", FIXTURES)
+
+    return TestClient(create_app(db_path, FIXTURES, live=stand_in))
+
+
+@pytest.mark.parametrize(
+    "body,text",
+    [
+        ({"asset": " GDC-6036 "}, "GDC-6036"),
+        (
+            {"indication": "NSCLC", "mechanism": "KRAS G12C inhibitor"},
+            "KRAS G12C inhibitor for NSCLC",
+        ),
+    ],
+)
+def test_a_live_run_takes_any_asset_or_an_indication_with_a_mechanism(
+    db_path: Path, monkeypatch: pytest.MonkeyPatch, body: dict, text: str
+) -> None:
+    asked: list[str] = []
+    client = live_client(db_path, monkeypatch, asked)
+
+    run_id = client.post("/runs", json=body).json()["run_id"]
+
+    assert asked == [text]
+    assert client.get(f"/runs/{run_id}").json()["status"] == "done"
+    assert client.get(f"/runs/{run_id}/report").status_code == 200
+
+
+def test_a_live_run_about_nothing_is_refused(
+    db_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    asked: list[str] = []
+    client = live_client(db_path, monkeypatch, asked)
+
+    assert client.post("/runs", json={"asset": "  "}).status_code == 422
+    assert asked == [] and client.get("/runs").json() == []
 
 
 def test_unknown_runs_and_items_are_404(client: TestClient) -> None:
