@@ -19,9 +19,19 @@ The latest selectable cutoff is 2026-10-07. Published records use publication da
 undated records use retrieval date. Changing the date filters visible items only: it does
 not reconstruct source revisions, rerun reasoning, verify assumptions or validate bundle hashes.
 
-The UI does not yet call the backend API. Report, trace, live Resolver and API integration
-are remaining work; see [both tracks' status](../docs/work-plan.md). Demo view models are
-intentionally separate from the pending API response models.
+## Running on the API
+
+`pnpm dev:api` (`vite --mode api`) points the workspace at `http://127.0.0.1:8000`;
+`VITE_API_URL` selects another address and also enables the API for `pnpm dev` and `pnpm build`.
+Without either, the build opens the snapshot above and makes no requests.
+
+`src/app/api-client.ts` starts a run (`POST /runs`), polls its trace for progress, and once the
+bundle is frozen reads `GET /runs/{id}/resolver` and `GET /runs/{id}/evidence`. Answers are
+validated with the schemas in `src/app/schemas.ts`. The header shows `Fixture run` or `Live run`
+(from the API's `/health`) and the run id. Refusals, failed runs and an unreachable API are shown
+with the API's own reason. Wording that differs between the two modes lives in `src/app/copy.ts`.
+
+Report and trace screens are remaining work; see [both tracks' status](../docs/work-plan.md).
 
 ## Browser checks
 
@@ -30,10 +40,12 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
-Eight Playwright scenarios exercise the production build, including filters, cutoffs,
-keyboard/history navigation, exact quote/source provenance, mobile overflow and failed-load
-recovery. The tests reject unexpected external requests. CI installs the browser and runs
-these checks automatically.
+Two Playwright projects run against production builds. `snapshot` (eight scenarios) covers the
+prepared demo: filters, cutoffs, keyboard/history navigation, exact quote/source provenance,
+mobile overflow and failed-load recovery. `api` (six scenarios) covers the `--mode api` build
+with the tests answering for the API: progress, fixture/live labelling, refusals, failed runs,
+an unreachable API and malformed answers. Both reject unexpected external requests; neither
+needs a backend. CI installs the browser and runs these checks automatically.
 
 Optional `PLAYWRIGHT_CHROMIUM_EXECUTABLE` selects an existing Chromium binary;
 `PLAYWRIGHT_SCREENSHOT_DIR` exports screenshots to a directory outside the repository.

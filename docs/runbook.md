@@ -24,8 +24,16 @@ uv run bioverdict doctor        # TODO: verifies keys, network, DB, cache dir
 
 ```bash
 cd backend && uv run uvicorn bioverdict.api.main:app --reload
-cd frontend && pnpm dev
+cd frontend && pnpm dev:api     # the workspace runs analyses on the API at 127.0.0.1:8000
+cd frontend && pnpm dev         # or: the prepared Divarasib snapshot, no backend, no network
 ```
+
+`pnpm dev:api` is `vite --mode api`; set `VITE_API_URL` to use another address (it also turns
+the API on for a plain `pnpm dev` or `pnpm build`). The header shows where an analysis came from:
+`Demo mode` (snapshot), `Fixture run` or `Live run` (what the API's `/health` reports), with the
+run id. The workspace follows a run until its evidence is frozen and then shows the resolved
+input and the whole bundle; reasoning and scoring continue in the backend under that run id.
+The API must allow the page's origin: `CORS_ORIGINS` defaults to `http://localhost:5173`.
 
 ## 3. Run an underwriting
 
