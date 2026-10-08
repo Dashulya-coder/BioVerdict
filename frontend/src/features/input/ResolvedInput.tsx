@@ -3,6 +3,7 @@ import { Button } from '../../ui/Button'
 import { Icon } from '../../ui/Icon'
 import { PageHeading } from '../../ui/PageHeading'
 import { AnalysisSteps } from '../../app/AnalysisSteps'
+import { copy } from '../../app/copy'
 import type { PreparedAnalysis } from '../../app/models'
 
 export function ResolvedInput({
@@ -33,7 +34,7 @@ export function ResolvedInput({
       <PageHeading
         eyebrow="02 / Resolve"
         title="Review the resolved input"
-        description="Make the assumptions visible before drawing conclusions. These fields come from the prepared fixture."
+        description={copy.resolvedLead}
       />
       <AnalysisSteps active={1} />
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_280px]">
@@ -50,7 +51,7 @@ export function ResolvedInput({
                   {resolver.assumptions.some((item) => item.startsWith(row.field + ':')) ? (
                     <Badge tone="assumption">Assumption</Badge>
                   ) : (
-                    <Badge>Fixture value</Badge>
+                    <Badge>{copy.resolvedBadge}</Badge>
                   )}
                 </dd>
               </div>
@@ -78,8 +79,7 @@ export function ResolvedInput({
             ))}
           </ul>
           <p className="mt-6 border-t border-assumption/20 pt-4 text-xs leading-6 text-muted">
-            Resolver values remain static when you change the evidence cutoff. This review does not
-            verify the assumptions.
+            {copy.resolvedNote}
           </p>
         </aside>
       </div>

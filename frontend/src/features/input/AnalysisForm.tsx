@@ -4,28 +4,27 @@ import { Icon } from '../../ui/Icon'
 import { Badge } from '../../ui/Badge'
 import { PageHeading } from '../../ui/PageHeading'
 import { AnalysisSteps } from '../../app/AnalysisSteps'
+import { apiMode, copy, latestCutoff } from '../../app/copy'
 import type { AnalysisInput, AnalysisState } from '../../app/models'
 
 export function AnalysisForm({
   draft,
   onChange,
   onSubmit,
-  loading,
+  progress,
   error,
 }: {
   draft: AnalysisInput
   onChange: (input: AnalysisInput) => void
   onSubmit: () => void
-  loading: boolean
+  /** What the run is doing now; null when nothing is running. */
+  progress: string | null
   error: Extract<AnalysisState, { kind: 'error' }> | null
 }) {
+  const loading = progress !== null
   return (
     <>
-      <PageHeading
-        eyebrow="01 / Begin"
-        title="New analysis"
-        description="Start with a drug. Review the resolved input, then explore the evidence behind it."
-      />
+      <PageHeading eyebrow="01 / Begin" title="New analysis" description={copy.intro} />
       <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_280px]">
         <section aria-label="Analysis input" className="min-w-0">
           <AnalysisSteps active={0} />
@@ -47,14 +46,14 @@ export function AnalysisForm({
               onChange={(event) => {
                 onChange({ ...draft, asset: event.currentTarget.value })
               }}
-              hint="Available in this demo: Divarasib, GDC-6036 or RG-6330."
+              hint={copy.assetHint}
             />
             <Field
               id="cutoff"
               label="Evidence cutoff"
               type="date"
               value={draft.as_of}
-              max="2026-10-07"
+              max={latestCutoff()}
               required
               disabled={loading}
               onChange={(event) => {
@@ -83,34 +82,36 @@ export function AnalysisForm({
             ) : null}
             <div className="flex flex-wrap items-center justify-between gap-4 border-t border-rule pt-6">
               <div className="space-y-2">
-                <Badge>Prepared snapshot</Badge>
-                <p className="text-xs text-muted">No live retrieval or model calls.</p>
+                <Badge>{copy.runBadge}</Badge>
+                <p className="text-xs text-muted">{copy.runNote}</p>
               </div>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Opening analysis…' : 'Open analysis'}
+                {loading ? copy.submitting : copy.submit}
                 <Icon name="arrow" />
               </Button>
             </div>
             <p role="status" aria-live="polite" className="text-xs text-accent">
-              {loading ? 'Preparing the demo input and dated evidence.' : ''}
+              {progress ?? ''}
             </p>
           </form>
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border border-rule bg-surface px-5 py-4">
-            <div>
-              <p className="mb-1 text-xs text-muted">Available demo</p>
-              <p className="text-sm">
-                Divarasib <span className="ml-2 font-mono text-xs text-muted">GDC-6036</span>
-              </p>
+          {apiMode ? null : (
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border border-rule bg-surface px-5 py-4">
+              <div>
+                <p className="mb-1 text-xs text-muted">Available demo</p>
+                <p className="text-sm">
+                  Divarasib <span className="ml-2 font-mono text-xs text-muted">GDC-6036</span>
+                </p>
+              </div>
+              <span className="text-xs text-muted">Snapshot / 07 Oct 2026</span>
             </div>
-            <span className="text-xs text-muted">Snapshot / 07 Oct 2026</span>
-          </div>
+          )}
         </section>
         <aside className="border-t border-rule pt-6 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-8">
           <h2 className="mb-6 text-sm font-medium">How this run works</h2>
           <ol className="space-y-6">
             {[
               ['Define the question', 'Choose the drug and the evidence cutoff.'],
-              ['Review the assumptions', 'Check what the fixture resolved and what was inferred.'],
+              ['Review the assumptions', copy.reviewStep],
               [
                 'Read the original evidence',
                 'Keep each quotation beside its source and publication date.',
@@ -126,8 +127,7 @@ export function AnalysisForm({
             ))}
           </ol>
           <p className="mt-8 border-t border-rule pt-5 text-xs leading-6 text-muted">
-            This demo opens prepared data. It does not perform a new underwriting or reconstruct
-            historical source revisions.
+            {copy.formNote}
           </p>
         </aside>
       </div>

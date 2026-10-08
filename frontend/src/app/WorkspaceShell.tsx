@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { Badge } from '../ui/Badge'
 import { Sidebar } from './Sidebar'
+import { apiMode, originLabels } from './copy'
 import { formatDate } from './format'
-import type { Screen } from './models'
+import type { PreparedAnalysis, Screen } from './models'
 
 const titles: Record<Screen, string> = {
   new: 'New analysis',
@@ -15,10 +16,12 @@ const titles: Record<Screen, string> = {
 export function WorkspaceShell({
   screen,
   cutoff,
+  analysis,
   children,
 }: {
   screen: Screen
   cutoff: string
+  analysis: PreparedAnalysis | null
   children: ReactNode
 }) {
   const main = useRef<HTMLElement>(null)
@@ -45,7 +48,14 @@ export function WorkspaceShell({
           <span className="text-ink">{titles[screen]}</span>
         </p>
         <div className="flex items-center gap-4">
-          <Badge tone="fact">Demo mode</Badge>
+          <Badge tone="fact">
+            {analysis ? originLabels[analysis.origin] : apiMode ? 'API' : originLabels.demo}
+          </Badge>
+          {analysis?.runId ? (
+            <span className="font-mono text-xs text-muted" title="Run id">
+              {analysis.runId}
+            </span>
+          ) : null}
           <span className="font-mono text-xs text-muted">{formatDate(cutoff)}</span>
         </div>
       </header>

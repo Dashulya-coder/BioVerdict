@@ -5,13 +5,16 @@ import { AnalysisForm } from '../features/input/AnalysisForm'
 import { ResolvedInput } from '../features/input/ResolvedInput'
 import { EvidenceExplorer } from '../features/evidence/EvidenceExplorer'
 import { WorkspaceShell } from './WorkspaceShell'
-import { DEMO_DATE } from './constants'
+import { copy, latestCutoff } from './copy'
 import { useAnalysis } from './useAnalysis'
 import { navigate, useScreen } from './useScreen'
 import type { AnalysisInput } from './models'
 
 export function Workspace() {
-  const [draft, setDraft] = useState<AnalysisInput>({ asset: 'Divarasib', as_of: DEMO_DATE })
+  const [draft, setDraft] = useState<AnalysisInput>(() => ({
+    asset: 'Divarasib',
+    as_of: latestCutoff(),
+  }))
   const { state, prepare, reset } = useAnalysis()
   const screen = useScreen()
   useEffect(() => {
@@ -26,13 +29,17 @@ export function Workspace() {
     void prepare(draft)
   }
   return (
-    <WorkspaceShell screen={screen} cutoff={analysis?.input.as_of ?? DEMO_DATE}>
+    <WorkspaceShell
+      screen={screen}
+      cutoff={analysis?.input.as_of ?? draft.as_of}
+      analysis={analysis}
+    >
       {screen === 'new' ? (
         <AnalysisForm
           draft={draft}
           onChange={changeInput}
           onSubmit={submit}
-          loading={state.kind === 'loading'}
+          progress={state.kind === 'loading' ? state.progress : null}
           error={state.kind === 'error' ? state : null}
         />
       ) : analysis ? (
@@ -61,7 +68,7 @@ export function Workspace() {
           <PageHeading
             eyebrow="Research workspace"
             title="Start with an analysis"
-            description="Open the prepared Divarasib demo to review its input and explore the dated evidence."
+            description={copy.startHint}
           />
           <Button
             onClick={() => {

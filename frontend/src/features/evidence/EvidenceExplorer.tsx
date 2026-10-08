@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { copy } from '../../app/copy'
 import { formatDate } from '../../app/format'
 import { PageHeading } from '../../ui/PageHeading'
 import { Button } from '../../ui/Button'
@@ -31,7 +32,7 @@ export function EvidenceExplorer({
         <PageHeading
           eyebrow={mode === 'sources' ? '03 / Sources' : '03 / Evidence'}
           title={mode === 'sources' ? 'Original sources' : 'Evidence explorer'}
-          description={`Prepared evidence for ${analysis.input.asset}, visible by ${formatDate(analysis.input.as_of)}. Read the source before the conclusion.`}
+          description={`${copy.evidenceLead} for ${analysis.input.asset}, visible by ${formatDate(analysis.input.as_of)}. Read the source before the conclusion.`}
         />
         <Button variant="secondary" onClick={onBack}>
           <Icon name="back" />
@@ -60,7 +61,7 @@ export function EvidenceExplorer({
           <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-muted">
             {analysis.evidence.length
               ? 'Try a different search or clear the source filters.'
-              : 'This prepared snapshot has no visible evidence for the selected date. Choose another cutoff to explore the fixture.'}
+              : copy.noEvidence}
           </p>
           <Button
             variant="secondary"
