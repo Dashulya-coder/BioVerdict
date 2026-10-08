@@ -151,8 +151,8 @@ Every run has a `run_id`. The trace records each step, tool call, LLM call (mode
 ## 12. API
 
 Implemented in `bioverdict/api/` (response shapes in `api/schemas.py`). Runs are answered from
-fixtures while `USE_FIXTURES=1` (the default until the live pipeline is wired in); the routes and
-shapes do not change when that is replaced. Interactive documentation: `/docs` on a running server.
+fixtures while `USE_FIXTURES=1` (the default) and by the live pipeline with `USE_FIXTURES=0`; the
+routes and shapes are the same for both. Interactive documentation: `/docs` on a running server.
 
 | Method and path | Purpose | State |
 |---|---|---|

@@ -36,15 +36,44 @@ repository root:
 uv run --project backend python scripts/collect_fixture.py --db /tmp/a4.sqlite
 ```
 
-See [collection](collection.md) for cutoffs, statuses, limits and live-integration requirements.
-The commands below describe the full underwriting interface; fixture CLI implementation is
-in pending PR #33 and is not included in this A4 branch.
+See [collection](collection.md) for cutoffs, statuses and limits. The full underwriting, from
+`backend/`:
 
 ```bash
 uv run bioverdict run --asset divarasib --output report.json  # offline fixture demo
-uv run bioverdict run --indication "..." --mechanism "..."    # TODO
-uv run bioverdict run --asset divarasib --as-of 2026-06-30    # time-travel
+uv run bioverdict run --asset divarasib --as-of 2026-06-30    # time-travel on the fixture
+# Live: public sources and paid model calls
+USE_FIXTURES=0 uv run --env-file ../.env bioverdict run --asset HRO761 --output report.json
+USE_FIXTURES=0 uv run --env-file ../.env bioverdict run --query "KRAS G12C inhibitor in NSCLC"
 ```
+
+### Live runs (`USE_FIXTURES=0`)
+
+The same steps, events, SQLite records and report as a fixture run, from real sources:
+
+1. **Resolve.** One model call reads the text; every id comes from Open Targets. What was not
+   confirmed is listed in the report's assumptions. No identifiable target fails the run.
+2. **Collect.** Mechanism: Open Targets. Clinical: ClinicalTrials.gov (by asset) and PubMed.
+   Competition: ClinicalTrials.gov by target within the indication. One extraction call per
+   source that returned records. Other sections stay `not_searched`.
+3. **Freeze**, then **reason** and **score** on the frozen bundle only.
+
+Needs `ANTHROPIC_API_KEY`; without it the API answers 503 and the CLI exits 2 before a run is
+created. `RUN_BUDGET_USD` and `RUN_TIMEOUT_S` cap one run; the deadline counts from its first
+model call. `NCBI_API_KEY` is optional. Source answers are cached in SQLite and model answers in
+`CACHE_DIR/llm`, so a repeated run is cheap and gives the same bundle hash. The API takes
+`{"asset": ...}` or `{"indication": ..., "mechanism": ...}`; start the server with
+`USE_FIXTURES=0 uv run --env-file ../.env uvicorn bioverdict.api.main:app`.
+
+A run fails, with the reason in its last event, when no target is identified, when every planned
+source of a section failed and nothing was collected, or when the budget, the deadline or the
+model configuration stops it. Unexpected errors are recorded by class name only; the text is in
+the server log. A section that was cut short (more than 50 records or 24,000 characters per
+source, a rejected quote, a source error) is `incomplete`, never `found`.
+
+Checked so far: offline tests with stand-in sources and model, and runs against the three real
+sources with a stand-in model. A run with a real model has not been measured yet (cost, time,
+extraction and reasoning quality).
 
 The fixture CLI writes run status, progress events, bundle, evidence and claims to SQLite, and
 returns the API's JSON report on stdout (also in `--output` if supplied). Diagnostics use stderr.
@@ -55,8 +84,8 @@ the completed run in SQLite. Use an existing output directory.
 `--as-of` filters the static fixture by publication date (or retrieval date for undated records),
 rebuilds the bundle hash/catalog and drops claims with failed citations. Previously found sections
 become incomplete when evidence is filtered. This cannot reconstruct historical source revisions
-or refresh resolver assumptions. Only `divarasib` is supported; live input and other commands remain
-TODO. `USE_FIXTURES=0` is rejected. Export environment variables explicitly; `.env` is not auto-loaded.
+or refresh resolver assumptions. Only `divarasib` has a fixture; `doctor`, `warm` and `eval` remain
+TODO. Export environment variables explicitly or use `uv run --env-file`; `.env` is not auto-loaded.
 
 ## 4. Pre-warm the cache
 

@@ -31,8 +31,8 @@ uv run uvicorn bioverdict.api.main:app --reload      # API on :8000
 cd ../frontend && pnpm install && pnpm dev            # UI on :5173
 ```
 
-Run one underwriting through the API. Until the live pipeline is wired in, runs are answered from
-`fixtures/` (`USE_FIXTURES=1`, the default); the only fixture so far is `divarasib`:
+Run one underwriting through the API. By default runs are answered from `fixtures/`
+(`USE_FIXTURES=1`, offline and free); the only fixture so far is `divarasib`:
 
 ```bash
 curl -s -X POST localhost:8000/runs -H 'content-type: application/json' -d '{"asset": "divarasib"}'
@@ -52,8 +52,19 @@ The JSON report goes to stdout and the optional output file; diagnostics go to s
 saved to SQLite, shared with the API when both use the same `DB_PATH`. Use `--db` and `--fixtures`
 to override paths. `python -m bioverdict` provides the same CLI. The current fixture snapshot is
 static; an earlier cutoff filters evidence and drops claims whose citations no longer verify.
-This is an offline demo, not a live underwriting. Export environment variables explicitly;
-the CLI does not automatically load `.env`.
+This is an offline demo, not a live underwriting.
+
+A live run (`USE_FIXTURES=0`) reads Open Targets, ClinicalTrials.gov and PubMed, freezes what it
+found and calls the configured model, which costs money. It takes any drug name or code, or free
+text, through the same routes and the same CLI:
+
+```bash
+USE_FIXTURES=0 uv run --env-file ../.env bioverdict run --asset HRO761 --output report.json
+USE_FIXTURES=0 uv run --env-file ../.env bioverdict run --query "KRAS G12C inhibitor in NSCLC"
+```
+
+Environment variables are not loaded from `.env` automatically: pass `--env-file` to `uv run` or
+export them. See [`docs/runbook.md`](docs/runbook.md) for what a live run does and how it fails.
 
 Full operating procedures, including cache pre-warm and demo-day fallbacks: [`docs/runbook.md`](docs/runbook.md).
 
