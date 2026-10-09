@@ -60,7 +60,15 @@ const diff = {
   },
   verdict_changed: false,
   gates: [{ gate_id: 'S1', kind: 'soft', fired_before: false, fired_after: true }],
-  chain: [{ link: 'patient_benefit', status_before: 'missing', status_after: 'weak' }],
+  chain: [
+    {
+      link: 'patient_benefit',
+      status_before: 'missing',
+      status_after: 'weak',
+      confidence_before: null,
+      confidence_after: 0.45,
+    },
+  ],
   evidence_added: [{ ...evidence[4], claim_ids: ['C-0017'] }],
   evidence_removed: [],
   claims: [
@@ -254,7 +262,9 @@ test('two runs are compared: verdict, gates, new evidence and the claims resting
   await expect(page.getByText('The verdict stayed Conditional.')).toBeVisible()
   expect(asked).toEqual([`/runs/${RUN}/diff?against=${OTHER}`])
   await expect(page.getByText('Gate S1: not fired → fired')).toBeVisible()
-  await expect(page.getByText('Chain link patient benefit: missing → weak')).toBeVisible()
+  await expect(
+    page.getByText('Chain link patient benefit: missing → weak, confidence Not computed → 0.45'),
+  ).toBeVisible()
   const added = page.getByRole('region', { name: 'Evidence only in the later run' })
   await expect(added.getByText('E-0005', { exact: true })).toBeVisible()
   await expect(added.getByText('quoted by C-0017')).toBeVisible()

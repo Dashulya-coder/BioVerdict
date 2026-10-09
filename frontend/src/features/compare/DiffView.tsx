@@ -109,7 +109,11 @@ export function DiffView({ diff }: { diff: RunDiff }) {
             ))}
             {diff.chain.map((link) => (
               <li key={link.link}>
-                Chain link {words(link.link)}: {link.status_before} → {link.status_after}
+                Chain link {words(link.link)}:{' '}
+                {link.status_before === link.status_after
+                  ? link.status_after
+                  : `${link.status_before} → ${link.status_after}`}
+                , confidence {share(link.confidence_before)} → {share(link.confidence_after)}
               </li>
             ))}
           </ul>

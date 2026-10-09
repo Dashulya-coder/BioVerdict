@@ -181,7 +181,8 @@ reworded appears in the diff. `RECOMPUTE_MODE=full` is the fallback of ADR-007: 
 module runs again on the new bundle version.
 
 The diff is computed by code from the stored records. It pairs evidence by address, locator and
-exact excerpt, and claims by section and identical wording. It also compares two runs of one
+exact excerpt, and claims by section and identical wording. A translation-chain link is listed
+when its status or its confidence differs (0.71 to 0.89 within `supported` is a change). It also compares two runs of one
 asset at different cutoffs, which needs no model. A different cutoff ages every claim a little
 (recency), so such a comparison lists claims whose confidence moved only because time passed.
 
