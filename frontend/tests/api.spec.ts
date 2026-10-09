@@ -370,6 +370,16 @@ test('a claim opens onto its verbatim quotation and the original source', async 
   ).toBeVisible()
 })
 
+test('what is unknown is listed by the diligence that could answer it', async ({ page }) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  const unknown = page.getByRole('region', { name: 'What we do not know' })
+  await expect(unknown.getByText('Patient-level data', { exact: true })).toBeVisible()
+  await expect(unknown.getByText('Expert interview', { exact: true })).toBeVisible()
+  await expect(unknown.getByText('Target engagement in tumour tissue is not shown')).toBeVisible()
+})
+
 test('modeled ranges are labelled and shown as P10 to P90', async ({ page }) => {
   const range = (p10: number, p50: number, p90: number) => ({ p10, p50, p90 })
   const modeled = {
