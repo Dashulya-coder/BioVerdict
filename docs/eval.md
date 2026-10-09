@@ -99,9 +99,9 @@ runs; no model judges a report.
 | Source validity | partly | cited evidence whose address is in the bundle catalog; whether the address still resolves is not checked |
 | Coverage | done | required sections (those the reasoning modules write) that have at least one claim, unknowns included; the collected status of every section is in `results.json` |
 | Unknown honesty | partly | `unknown` claims that carry a diligence type; whether the status is *correct* needs a person |
-| Verdict stability | done | same verdict and mean Jaccard overlap of the top-risk lists, between repeats in which a model answered afresh. Repeats served from fixtures or from the model cache are shown as `replayed`: clear `CACHE_DIR/llm` (or use a new one) to measure stability |
+| Verdict stability | done | same verdict and mean Jaccard overlap of the top-risk lists, between repeats that reasoned afresh: every reasoning call of the run was answered by a model, none from the cache (cached extraction is fine, it gives the same bundle). Other repeats are shown as `replayed`: clear `CACHE_DIR/llm` (or use a new one) to measure stability |
 | Verdict distribution, time, cost | done | from `runs` and `llm_calls`; fixture runs cost nothing and take no time |
-| Post-cutoff leakage | done | citations the model proposed and code could not ground, and the claims dropped for it. Every one is a row in `verification_log` |
+| Post-cutoff leakage | partly | counted: citations the model proposed and code could not ground, and the claims dropped for it (every one is a row in `verification_log`). That is an upper bound, not a measurement: a rejected citation is usually a misquote. Matching an unsupported claim to a real event after `as_of` is not done |
 | Expected verdict | done | the verdict is one of `expected_verdict`; an empty list means no expectation |
 | Expected top risks | hint only | each expected risk beside the reported risk that shares most words with it. A person has to read both |
 | Citation support rate, judge agreement | not done | needs the entailment judge (B8) |

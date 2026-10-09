@@ -73,8 +73,8 @@ class CaseResult(BaseModel):
     expected_verdict: list[str]
     runs: list[RunMetrics]
     verdict_as_expected: bool | None  # None: no expectation recorded, or no run finished
-    # Stability is measured between runs in which a model actually answered. A repeat served
-    # from the model cache, or from fixtures, replays the first answer and proves nothing.
+    # Stability is measured between runs that reasoned afresh (`reasoned_afresh`). A repeat
+    # whose reasoning came from the model cache, or from fixtures, replays the first answer.
     fresh_runs: int
     same_verdict_every_run: bool | None  # None with fewer than two fresh runs
     top_risk_overlap: float | None  # mean Jaccard of the top-risk lists between fresh runs
@@ -107,6 +107,16 @@ def match_risks(expected: list[str], reported: list[str]) -> list[RiskMatch]:
     return matches
 
 
+def reasoned_afresh(run: RunMetrics) -> bool:
+    """Whether the run reasoned again: it called the reasoning steps and none was cached.
+
+    One fresh call somewhere in the run is not enough. A run whose extraction was repeated
+    and whose reasoning came from the cache holds the earlier run's claims, and comparing the
+    two would report perfect stability that nothing measured.
+    """
+    return run.reasoning_calls > 0 and run.reasoning_cache_hits == 0
+
+
 def run_case(
     conn: sqlite3.Connection, case: EvalCase, start: StartRun, repeat: int, today: date
 ) -> CaseResult:
@@ -122,7 +132,7 @@ def run_case(
     finished = [run for run in runs if run.verdict is not None]
     verdicts = {run.verdict for run in finished}
     expected = [verdict.value for verdict in case.expected_verdict]
-    fresh = [run for run in finished if run.llm_calls > run.cache_hits]
+    fresh = [run for run in finished if reasoned_afresh(run)]
     pairs = list(combinations(fresh, 2))
     return CaseResult(
         case_id=case.id,
@@ -214,7 +224,8 @@ def summary(report: EvalReport) -> str:
         "",
         f"Mode: **{report.mode}**, {len(report.cases)} case(s), {report.repeat} run(s) each. "
         + "Counted by code from the stored records; no model judged these reports. "
-        + "`Stable` compares runs a model answered afresh; `replayed` means the repeats came "
+        + "`Stable` compares runs whose reasoning calls were all answered afresh; `replayed` "
+        + "means the reasoning of the repeats came "
         + "from fixtures or the model cache and say nothing about stability.",
         "",
         header,
