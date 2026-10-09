@@ -1,6 +1,7 @@
 import pytest
 
 from bioverdict.contracts import Scorer
+from bioverdict.scoring.config import VerdictConfig
 from bioverdict.scoring.verdict import DeterministicScorer, score_verdict
 from bioverdict.store.models import (
     Basis,
@@ -85,10 +86,19 @@ def test_soft_gate_caps_at_conditional() -> None:
     assert gate(r, GateId.S4).fired
 
 
-def test_negative_optimistic_rnpv_is_k5() -> None:
-    r = score_verdict([*strong_chain(), claim("KEY", 0.9, critical=True)], NEGATIVE_EVEN_OPTIMISTIC)
+def test_negative_optimistic_rnpv_is_k5_once_the_inputs_are_calibrated() -> None:
+    claims = [*strong_chain(), claim("KEY", 0.9, critical=True)]
+    r = score_verdict(claims, NEGATIVE_EVEN_OPTIMISTIC, VerdictConfig(rnpv_calibrated=True))
     assert r.verdict is Verdict.DO_NOT_INVEST
     assert gate(r, GateId.K5).fired
+
+
+def test_a_negative_rnpv_on_placeholder_inputs_does_not_kill() -> None:
+    r = score_verdict([*strong_chain(), claim("KEY", 0.9, critical=True)], NEGATIVE_EVEN_OPTIMISTIC)
+    assert r.verdict is Verdict.CONDITIONAL
+    k5 = gate(r, GateId.K5)
+    assert not k5.fired and k5.near_miss is not None and "placeholders" in k5.near_miss
+    assert k5.near_miss in r.what_would_change_our_mind
 
 
 def test_missing_chain_link_fires_s1() -> None:

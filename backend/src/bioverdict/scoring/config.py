@@ -86,4 +86,8 @@ class VerdictConfig(BaseModel):
     chain_min: float = 0.5  # Invest needs chain probability >= this
     key_claim_min: float = 0.7  # Invest needs every critical claim >= this
     rnpv_p50_min: float = 0.0  # Invest needs rNPV P50 above this
+    # K5 is a kill criterion and the rNPV behind it runs on placeholder inputs (peak share,
+    # margin, phase costs and durations have no source yet). Until they are calibrated a negative
+    # rNPV is reported as a near miss and keeps the verdict from Invest; it does not kill.
+    rnpv_calibrated: bool = False
     no_critical_confidence: float = 0.3  # verdict confidence when no claim is marked critical

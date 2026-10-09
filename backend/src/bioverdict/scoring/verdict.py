@@ -111,8 +111,15 @@ def evaluate_gates(
             )
         )
 
-    k5 = rnpv is not None and rnpv.p90 < 0  # needs the investment model's output
-    results.append(GateResult(gate_id=GateId.K5, kind="hard", fired=k5))
+    negative = rnpv is not None and rnpv.p90 < 0  # needs the investment model's output
+    k5 = negative and vcfg.rnpv_calibrated
+    uncalibrated = (
+        f"K5 would fire (rNPV P90 is {rnpv.p90:,.0f}) if the rNPV inputs were calibrated: they "
+        "are placeholders without a source, which is not enough to stop an investment"
+        if rnpv is not None and negative and not k5
+        else None
+    )
+    results.append(GateResult(gate_id=GateId.K5, kind="hard", fired=k5, near_miss=uncalibrated))
 
     raw = chain_confidences(claims)
     # A link with no claim at all is treated as unknown: ai_inference-level confidence.

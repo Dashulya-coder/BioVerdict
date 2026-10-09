@@ -169,10 +169,21 @@ exclusivity ends (no erosion tail). The tornado moves one input at a time betwee
 high end with the others at their base. Capital is the unweighted cost of the remaining phases;
 time to milestone is the length of the current phase.
 
-The stage is the highest `maximumClinicalStage` (Phase 1 to 3) that the bundle reports for the asset
-(Open Targets); the therapy area is oncology when the indication names a cancer, otherwise all
-diseases. If the stage cannot be read, or the market cannot be sized, nothing is computed and the
-response says what is missing; the verdict then has no rNPV and cannot be Invest.
+The stage is the one Open Targets gives the asset in the run's indication (Phase 1 to 3); only
+when the bundle has none for that indication is it the asset's highest `maximumClinicalStage`
+in any indication, and the assumption says which was used. An asset already approved in the
+indication has no phase left and is not modeled. The therapy area is oncology when the
+indication names a cancer, otherwise all diseases. If the stage cannot be read, or the market
+cannot be sized, nothing is computed and the response says what is missing; the verdict then
+has no rNPV and cannot be Invest. The same holds when the market size is a ceiling rather than
+a market: an upper bound above $100 billion a year (`IMPLAUSIBLE_USD`, more than the largest
+drug class earns) counts everyone with the condition, and a share of it is not a sales figure.
+
+**K5 waits for calibration.** rNPV rests on the placeholder inputs above, and a kill criterion
+needs a fact the evidence states. While `VerdictConfig.rnpv_calibrated` is false (the default),
+a negative rNPV at P90 does not fire K5: it is recorded as the gate's `near_miss`, shown under
+"What would change our mind", and the verdict stays at most Conditional because rNPV P50 is not
+above zero. Set the flag only together with sourced inputs in `RnpvConfig`.
 
 ## Layer 5: Capital and time to next milestone
 
