@@ -139,10 +139,11 @@ Resolver → Collect (one bounded tool loop per section) → FREEZE bundle
   row) are stored whole without a model.
 - **Reason.** Mechanism, clinical, competition and translation-chain modules write claims with
   quotes over the frozen bundle only.
-- **Scoring.** Confidence per claim, hard and soft gates, probability of success, verdict.
+- **Scoring.** Confidence per claim, hard and soft gates, probability of success, rNPV by Monte
+  Carlo, verdict.
 
 Designed and not built yet: triage, Bull vs Bear, Chair with targeted second rounds, the
-entailment judge, the rNPV model. Details: [`docs/architecture.md`](docs/architecture.md).
+entailment judge. Details: [`docs/architecture.md`](docs/architecture.md).
 Data contracts: [`docs/data-model.md`](docs/data-model.md). Verdict logic: [`docs/scoring.md`](docs/scoring.md).
 
 ## Documentation
@@ -175,11 +176,13 @@ Task by task, with owners: [`docs/work-plan.md`](docs/work-plan.md). In short:
 
 - Resolver, connectors for every source in the table above, bounded collection with grounded
   extraction, cache, `as_of` cutoff, frozen and hashed bundles.
-- Four reasoning modules, code grounding, deterministic scoring and verdict.
+- Four reasoning modules, code grounding, deterministic scoring and verdict, probability of
+  success and rNPV with capital, time to milestone and a tornado (`GET /runs/{id}/financials`).
 - API with report, drill-down, trace, progress events, market size, add-evidence and diff; CLI
   with `run`, `eval`, `warm`, `doctor`.
 - Web workspace: input, resolved assumptions, evidence explorer, sources, comparing runs and
-  adding a document.
+  adding a document; the report screen with the executive verdict, the translation chain and
+  claim drill-down to verbatim quotes.
 - Two model adapters (Anthropic, and an OpenAI-compatible gateway), with cache, budget, deadline
   and failover.
 - Docker images, `compose.yaml`, and CI that lints, tests and runs a fixture run through the
@@ -188,10 +191,10 @@ Task by task, with owners: [`docs/work-plan.md`](docs/work-plan.md). In short:
 **Not yet**
 
 - **No whole run with a real model has been measured**: quality, cost and time are unknown.
-- The report screen (executive verdict, claim drill-down, chain graph) and the trace panel: the
-  workspace shows the evidence and the run's status, the report itself comes from the API.
-- `Invest` cannot be reached: it needs the rNPV model, so the best verdict today is
-  `Conditional`.
+- The trace panel, and on the report screen the gates list, the ranked diligence questions and
+  the tornado chart.
+- rNPV is not calibrated: peak share, rebates, margin, discount rate and phase costs and
+  durations are placeholders listed with every result, so its figures are modeled, not sourced.
 - The independent entailment judge, Bull/Bear and Chair, unmet-need, commercial and IP modules.
 - Real evaluation cases, the closed-book leakage probe and baselines: the case file holds one
   smoke case.
