@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from bioverdict.api import report
 from bioverdict.api.schemas import (
     ChainLinkChange,
+    ChainLinkView,
     ClaimChange,
     ClaimSnapshot,
     DiffResponse,
@@ -28,6 +29,7 @@ MATCHING = (
     "section and identical wording: a reworded claim is listed as one removed and one added."
 )
 EvidenceKey = tuple[str, str, str]
+MIN_CONFIDENCE_CHANGE = 0.005
 
 
 @dataclass(frozen=True)
@@ -123,6 +125,32 @@ def _claim_changes(
     return changes, unchanged
 
 
+def chain_changes(before: list[ChainLinkView], after: list[ChainLinkView]) -> list[ChainLinkChange]:
+    """The links whose status or confidence differs.
+
+    Evidence often strengthens a link without moving it to another status (0.71 to 0.89, both
+    `supported`); that is the change a reader is looking for, so it is listed too. A difference
+    below `MIN_CONFIDENCE_CHANGE` would not show in the two decimals a report prints.
+    """
+    changes = []
+    for old, new in zip(before, after, strict=True):
+        if old.confidence is None or new.confidence is None:
+            moved = old.confidence != new.confidence
+        else:
+            moved = abs(new.confidence - old.confidence) >= MIN_CONFIDENCE_CHANGE
+        if old.status != new.status or moved:
+            changes.append(
+                ChainLinkChange(
+                    link=new.link,
+                    status_before=old.status,
+                    status_after=new.status,
+                    confidence_before=old.confidence,
+                    confidence_after=new.confidence,
+                )
+            )
+    return changes
+
+
 def build_diff(conn: sqlite3.Connection, base_id: str, head_id: str) -> DiffResponse:
     """Compare run `head_id` with run `base_id`. Both must be finished."""
     base, head = _load(conn, base_id), _load(conn, head_id)
@@ -140,21 +168,9 @@ def build_diff(conn: sqlite3.Connection, base_id: str, head_id: str) -> DiffResp
         for gate in head.result.gates
         if (previous := fired_before.get(gate.gate_id)) is None or previous.fired != gate.fired
     ]
-    chain = [
-        ChainLinkChange(
-            link=new.link,
-            status_before=old.status,
-            status_after=new.status,
-            confidence_before=old.confidence,
-            confidence_after=new.confidence,
-        )
-        for old, new in zip(
-            report.translation_chain(base.claims),
-            report.translation_chain(head.claims),
-            strict=True,
-        )
-        if old.status != new.status
-    ]
+    chain = chain_changes(
+        report.translation_chain(base.claims), report.translation_chain(head.claims)
+    )
     claims, unchanged = _claim_changes(base, head, added)
     return DiffResponse(
         base=_side(base),

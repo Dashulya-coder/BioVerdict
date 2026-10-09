@@ -7,9 +7,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 from bioverdict import settings
+from bioverdict.api.diff import chain_changes
 from bioverdict.api.main import create_app
-from bioverdict.api.schemas import DiffResponse
+from bioverdict.api.schemas import ChainLinkView, DiffResponse
 from bioverdict.llm import FakeLLM
+from bioverdict.store.models import ChainLink
 from bioverdict.store.runs_repo import create_run
 
 FIXTURES = Path(__file__).parents[3] / "fixtures"
@@ -189,3 +191,32 @@ def test_unknown_unfinished_and_unnamed_comparisons(client: TestClient, db_path:
     assert client.get(f"/runs/{run_id}/diff", params={"against": "R-going"}).status_code == 409
     assert client.post("/runs/R-nope/evidence", json={"evidence": [ADDED]}).status_code == 404
     assert client.post("/runs/R-going/evidence", json={"evidence": [ADDED]}).status_code == 422
+
+
+def chain(confidence: float | None, status: str = "supported") -> list[ChainLinkView]:
+    return [
+        ChainLinkView(link=link, status=status, confidence=confidence, claim_ids=[])
+        for link in ChainLink
+    ]
+
+
+def test_a_link_that_grew_stronger_within_one_status_is_a_change() -> None:
+    before, after = chain(0.71), chain(0.71)
+    after[2] = after[2].model_copy(update={"confidence": 0.89})
+
+    (change,) = chain_changes(before, after)
+
+    assert change.link is ChainLink.TARGET_ENGAGEMENT
+    assert (change.status_before, change.status_after) == ("supported", "supported")
+    assert (change.confidence_before, change.confidence_after) == (0.71, 0.89)
+
+
+def test_a_difference_too_small_to_print_is_not_a_change() -> None:
+    before, after = chain(0.71), chain(0.713)
+
+    assert chain_changes(before, after) == []
+
+
+def test_a_link_that_gained_or_lost_its_evidence_is_a_change() -> None:
+    assert len(chain_changes(chain(None, "missing"), chain(0.5, "weak"))) == len(ChainLink)
+    assert chain_changes(chain(None, "missing"), chain(None, "missing")) == []
