@@ -158,7 +158,21 @@ indication, and the price is before rebates. Each of these is written into the r
 `assumptions`, and what could not be computed into `missing`. For a very common condition the
 product is far above any plausible sales and must not be read as one.
 
-Run N draws (TODO N, for example 10,000). Report P10 / P50 / P90 and a tornado chart showing which assumption moves rNPV most. Every input shows its assumption and label `modeled`.
+**Implementation (`scoring/rnpv.py`, `scoring/financials.py`, `GET /runs/{id}/financials`).** 10,000
+draws (fixed seed: the same bundle gives the same range). PoS comes from Layer 3 phase by phase,
+so a phase's cost is weighted by the probability of reaching it. Patients and analog price are the
+P10/P50/P90 of the market estimate above, read as a triangle. The other inputs (peak share of
+patients treated, rebates, contribution margin, years to peak, years of exclusivity, discount
+rate, phase durations and costs) have **no source in the bundle: they are placeholders in
+`RnpvConfig`, returned with every result as assumptions, and must be calibrated**. Sales stop when
+exclusivity ends (no erosion tail). The tornado moves one input at a time between its low and
+high end with the others at their base. Capital is the unweighted cost of the remaining phases;
+time to milestone is the length of the current phase.
+
+The stage is the highest `maximumClinicalStage` (Phase 1 to 3) that the bundle reports for the asset
+(Open Targets); the therapy area is oncology when the indication names a cancer, otherwise all
+diseases. If the stage cannot be read, or the market cannot be sized, nothing is computed and the
+response says what is missing; the verdict then has no rNPV and cannot be Invest.
 
 ## Layer 5: Capital and time to next milestone
 

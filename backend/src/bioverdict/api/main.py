@@ -31,6 +31,7 @@ from bioverdict.api.schemas import (
     ClaimView,
     DiffResponse,
     EvidenceView,
+    FinancialsResponse,
     MarketResponse,
     ReportResponse,
     RunCreated,
@@ -175,6 +176,17 @@ def create_app(
         with database(request) as conn:
             try:
                 return report.build_market(conn, run_id)
+            except report.RunNotFoundError as exc:
+                raise _not_found(exc) from exc
+            except report.RunNotReadyError as exc:
+                raise HTTPException(409, str(exc)) from exc
+
+    @app.get("/runs/{run_id}/financials")
+    def run_financials(run_id: str, request: Request) -> FinancialsResponse:
+        """PoS, rNPV, capital, time to milestone and tornado, computed by code from the bundle."""
+        with database(request) as conn:
+            try:
+                return report.build_financials(conn, run_id)
             except report.RunNotFoundError as exc:
                 raise _not_found(exc) from exc
             except report.RunNotReadyError as exc:
