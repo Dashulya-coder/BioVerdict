@@ -44,6 +44,8 @@ from bioverdict.llm.types import (
 )
 from bioverdict.store.models import LLMResult
 
+_CHARS_PER_TOKEN = 3  # fewer than real text has, so a prompt is never under-counted
+
 
 @dataclass
 class _Usage:
@@ -231,17 +233,17 @@ class LLMClient:
         text = prompt
         last: InvalidOutputError | None = None
         for attempt in range(1, cfg.max_validation_retries + 2):
-            self._budget.check(run_id)
             left = self._deadline.check(run_id)
             request = request_for(ref, text, min(cfg.timeout_s, left))
             self._check_size(provider, request)
             try:
-                try:
-                    response = provider.complete(request)
-                except LLMError as exc:  # an answer that was unusable still cost money
-                    self._charge_tokens(run_id, ref, exc.input_tokens, exc.output_tokens, usage)
-                    raise
-                self._charge(run_id, ref, response, usage)
+                with self._budget.hold(run_id, self._worst_case(ref, cfg, text)):
+                    try:
+                        response = provider.complete(request)
+                    except LLMError as exc:  # an answer that was unusable still cost money
+                        self._charge_tokens(run_id, ref, exc.input_tokens, exc.output_tokens, usage)
+                        raise
+                    self._charge(run_id, ref, response, usage)
                 schema.model_validate_json(response.text)
                 return response, attempt
             except (ValidationError, InvalidOutputError) as exc:
@@ -253,6 +255,15 @@ class LLMClient:
         assert last is not None
         last.attempts = cfg.max_validation_retries + 1  # type: ignore[attr-defined]
         raise last
+
+    def _worst_case(self, ref: str, cfg: StepConfig, prompt: str) -> float:
+        """The most one call can cost: the whole prompt read and every allowed token written.
+        Three characters a token over-counts the prompt, which is the safe side."""
+        price = self._config.prices[ref]
+        prompt_tokens = len(prompt) / _CHARS_PER_TOKEN
+        return (
+            prompt_tokens * price.input_per_mtok + cfg.max_tokens * price.output_per_mtok
+        ) / 1_000_000
 
     def _charge(
         self, run_id: str | None, ref: str, response: ProviderResponse, usage: _Usage

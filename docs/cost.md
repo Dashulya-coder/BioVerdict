@@ -117,7 +117,7 @@ FROM llm_calls GROUP BY run_id;
 - Development and debugging: free tiers where available (note: free tiers may use content to improve products; our inputs are public).
 - Paid credit only for: bake-off, judge, baseline, final showcase runs.
 - Cache everything: LLM responses by hash, HTTP responses by key, frozen bundles by hash.
-- Per-run hard cap: `RUN_BUDGET_USD`.
+- Per-run hard cap: `RUN_BUDGET_USD`. A call starts only while the money spent plus the worst case of the calls still under way (whole prompt read, every allowed output token written) is under the cap. Calls of one run are made in parallel, so a run can pass its cap by at most one call, not by all the calls that started together.
 - Demo: replay recorded runs from cache; keep one live-capable path as a fallback.
 
 ## Consumer subscriptions
