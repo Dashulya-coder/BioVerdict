@@ -38,6 +38,12 @@ def _clean(name: str) -> list[str]:
     return words
 
 
+def company_key(name: str) -> str:
+    """A company name without case, punctuation and legal form: 'Revolution Medicines, Inc.'
+    and 'REVOLUTION MEDICINES INC' give the same key."""
+    return " ".join(_clean(name)).lower()
+
+
 def sponsor_group(name: str | None) -> str:
     """`sponsor:<canonical name>`, or `sponsor:unknown` when the record names none."""
     words = _clean(name or "")

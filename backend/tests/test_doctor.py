@@ -8,7 +8,7 @@ import httpx
 import pytest
 
 from bioverdict.cli import main
-from bioverdict.doctor import Check, _openfda, check_sources, render, run_checks
+from bioverdict.doctor import Check, _openfda, _sec, check_sources, render, run_checks
 
 FIXTURES = Path(__file__).parents[2] / "fixtures"
 UP = {"Registry": lambda client: "data as of today"}
@@ -159,3 +159,19 @@ def test_a_key_the_fda_rejects_fails_the_check(monkeypatch) -> None:
 
     with pytest.raises(httpx.HTTPStatusError):
         _openfda(_fda([], status=403))
+
+
+def test_the_sec_check_declares_the_contact_and_is_skipped_without_one(monkeypatch) -> None:
+    seen: list[httpx.Request] = []
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json={"filings": {}})
+
+    client = httpx.Client(transport=httpx.MockTransport(answer))
+    monkeypatch.delenv("SEC_USER_AGENT", raising=False)
+    assert _sec(client).startswith("not asked") and seen == []
+
+    monkeypatch.setenv("SEC_USER_AGENT", "Test Person test@example.org")
+    assert _sec(client) == "answers to the declared contact"
+    assert seen[0].headers["user-agent"] == "Test Person test@example.org"

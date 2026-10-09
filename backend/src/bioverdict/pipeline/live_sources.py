@@ -19,6 +19,7 @@ import httpx
 from bioverdict import settings
 from bioverdict.agents.collect import CollectPlan
 from bioverdict.connectors.clinicaltrials import ClinicalTrialsConnector
+from bioverdict.connectors.edgar import EdgarConnector
 from bioverdict.connectors.epidemiology import (
     CancerIncidenceConnector,
     CdcIndicatorsConnector,
@@ -50,6 +51,8 @@ LIVE_PLANS = (
     CollectPlan(section=Section.CLINICAL, tools=("clinicaltrials", "pubmed", "pmc_fulltext")),
     # The class in the registry, then what the FDA approved in it and what those labels say.
     CollectPlan(section=Section.COMPETITION, tools=("clinicaltrials_class", "openfda")),
+    # What the sponsor told its investors: designations, holds, programs it stopped.
+    CollectPlan(section=Section.FLAGS, tools=("sec_edgar",)),
     # Market records are status facts: stored whole, read by code (`market/tam.py`), no model.
     CollectPlan(
         section=Section.COMMERCIAL,
@@ -157,10 +160,12 @@ def paced_sources(
 
 def _sources(http: CachedHttpClient) -> Sources:
     pubmed = PubMedConnector(http, api_key=os.environ.get("NCBI_API_KEY") or None)
+    registry = ClinicalTrialsConnector(http)
     tools: list[Connector] = [
         OpenTargetsConnector(http),
-        ClinicalTrialsConnector(http),
+        registry,
         TargetClassTrials(ClinicalTrialsConnector(http)),
+        EdgarConnector(http, registry, os.environ.get("SEC_USER_AGENT")),
         pubmed,
         PmcFullTextConnector(http, pubmed),
         EuropePmcConnector(http),

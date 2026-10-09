@@ -119,7 +119,7 @@ The same steps, events, SQLite records and report as a fixture run, from real so
 
 Needs `ANTHROPIC_API_KEY`; without it the API answers 503 and the CLI exits 2 before a run is
 created. `RUN_BUDGET_USD` and `RUN_TIMEOUT_S` cap one run; the deadline counts from its first
-model call. `NCBI_API_KEY` and `OPENFDA_API_KEY` are optional (openFDA allows 1,000 requests a day without a key). Source answers are cached in SQLite and model answers in
+model call. `SEC_USER_AGENT` ("Name email", the contact the SEC asks for) turns on company filings; without it they are not read. `NCBI_API_KEY` and `OPENFDA_API_KEY` are optional (openFDA allows 1,000 requests a day without a key). Source answers are cached in SQLite and model answers in
 `CACHE_DIR/llm`, so a repeated run is cheap and gives the same bundle hash. The API takes
 `{"asset": ...}` or `{"indication": ..., "mechanism": ...}`; start the server with
 `USE_FIXTURES=0 uv run --env-file ../.env uvicorn bioverdict.api.main:app`.

@@ -35,7 +35,7 @@ When two sources disagree:
 | Epidemiology | Orphanet (Orphadata, CC BY 4.0) | https://www.orphadata.com | Prevalence of rare diseases, by the Orphanet code Open Targets cross-references (implemented) |
 | Population | World Bank | https://api.worldbank.org | US population the rates are applied to (implemented) |
 | Epidemiology (not read) | SEER, IARC/GCO, WHO | various | SEER needs a key; no documented open API was found for GCO; the WHO API did not answer |
-| Company | SEC EDGAR | https://www.sec.gov/edgar | Filings, 8-K exhibits, pipeline statements |
+| Company | SEC EDGAR: company list, `data.sec.gov` submissions, filing archives | https://www.sec.gov/edgar | The newest 8-K and 6-K filings of the asset's sponsor and their press-release exhibits; only the paragraphs that name the asset (implemented, `connectors/edgar.py`). The sponsor comes from the registry and its CIK from the SEC's company list, by whole name. Full-text search is not used: it refuses automated requests. Needs `SEC_USER_AGENT` |
 | Company | Tavily | https://tavily.com | Press releases and presentations |
 | IP | Google Patents (deep links only) | https://patents.google.com | Patent links; no API |
 | Ontologies | MONDO / EFO via Open Targets and EBI OLS | | Disease identity |
@@ -50,6 +50,7 @@ All assets in our test list are unapproved as of 2026-10-03 (list provided by th
 - **openFDA labels and adverse-event data** are empty for unapproved drugs. Safety comes from trial data and, as analogy only, from approved drugs in the same class (labelled as analogy: the source of each such record reads "FDA label of approved analog ...", and its source family is `regulatory_analog`).
 - **A label has no history in openFDA.** Only the current text is served, dated by its effective date, so a run replayed before that date does not see the label. Approvals are dated by their own approval day.
 - **CMS prices** apply to analogs only. Any price for the candidate is `modeled`.
+- **A company statement is not a finding.** A filing has source kind `company` and the level `registry_record`: it can support a fact about a program (stopped, started, designated) and adds no weight to a claim that the drug works. It shares the sponsor's independence group with the registry records.
 - **Company coverage varies.** Companies filing 8-Ks on EDGAR give richer text than those filing foreign-issuer forms. A thin result is reported as `not_reported` or `none_found`, never filled from model memory.
 
 ## Benchmarks used as priors

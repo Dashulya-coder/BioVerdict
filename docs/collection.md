@@ -128,6 +128,13 @@ before the tables; a longer paper is read in part and makes the section `incompl
 that does not mark a Results section (Nature's main text) gives only its tables. A piece carries
 the level, date and independence group of its paper, so a paper read twice counts once.
 
+The flags section reads SEC EDGAR (`sec_edgar`): for up to two sponsors of the asset's studies,
+the eight newest 8-K filings that report on the pipeline (items 2.02, 7.01, 8.01) or 6-K
+filings, the main document and up to two exhibits 99 of each, and from those only the paragraphs
+that name the asset. A sponsor that is not an SEC registrant under its registry name (Roche)
+gives nothing; that is `none_found`, not an error. Without `SEC_USER_AGENT` the SEC is not asked
+and the section is `incomplete`.
+
 Checkpointing and independent verification (B8) remain subsequent work. Tests verify the offline
 boundary and mocked call logging; runs against the real sources used a stand-in model. Neither
 establishes live-provider or medical extraction quality.
