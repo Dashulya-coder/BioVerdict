@@ -57,7 +57,7 @@ def test_the_prompt_fits_the_budget_and_keeps_the_retry_reserve(budget: int) -> 
 
 def test_a_cut_keeps_the_strongest_evidence_and_names_what_it_left_out() -> None:
     bundle = big_bundle()
-    built = build_prompt(CLINICAL.instruction, bundle, budget=7000, families=CLINICAL.families)
+    built = build_prompt(CLINICAL.instruction, bundle, budget=8000, families=CLINICAL.families)
     pool = [e for e in bundle.evidence if e.source_family in CLINICAL.families]
     assert built.omitted and len(built.omitted) < len(pool)
     shown = [e for e in pool if e.id not in built.omitted]

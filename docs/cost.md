@@ -66,8 +66,10 @@ The organizers give each team a key for an Azure-hosted, OpenAI-compatible gatew
   many characters of prompt a step may use. The adapter sends a schema without `title` and
   `description` (the `ModuleDraft` schema is 1.6 thousand characters instead of 2.8).
 - Reasoning models spend hidden reasoning tokens inside `max_completion_tokens` (they are billed
-  as output), so the gateway preset keeps the limits tight (3,000 for extraction, 8,000 for
-  reasoning).
+  as output), so the gateway preset keeps the limits tight (3,000 for extraction, 4,096 for
+  reasoning and synthesis). **The gateway refuses `max_completion_tokens` above about 4,096**
+  (4,000 accepted, 5,000 refused with `400 Output token limit is outside the supported range`,
+  measured on all three models), so no step can ask for more.
 - Roles used by the preset (`LLMConfig.for_provider("openai")`): resolver and extraction on
   `gpt-6-luna`; reasoning, classification of new evidence and synthesis on `gpt-6.1-sol`, with
   `gpt-5-mini` as the second model. `gpt-6-astra` costs five times `gpt-6.1-sol` and is not used.

@@ -373,3 +373,19 @@ def test_an_error_without_usage_charges_nothing() -> None:
     with pytest.raises(AllModelsFailedError):
         llm.call("s", "p", Answer, run_id="R")
     assert llm.spent("R") == 0.0
+
+
+def test_a_cut_off_answer_is_retried_with_a_request_to_write_less() -> None:
+    from bioverdict.llm.errors import OutputTruncatedError
+
+    class CutOffOnce(FakeProvider):
+        def complete(self, request):
+            if len(self.requests) == 0:
+                self.requests.append(request)
+                raise OutputTruncatedError("answer cut off").with_usage(10, 4096)
+            return super().complete(request)
+
+    provider = CutOffOnce('{"verdict": "ok", "score": 1}', name="anthropic")
+    client = LLMClient(LLMConfig.default(), {"anthropic": provider})
+    client.call("reasoning.clinical", "prompt", Answer)
+    assert "cut off because it was too long" in provider.requests[-1].prompt

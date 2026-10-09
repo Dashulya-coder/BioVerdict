@@ -20,6 +20,7 @@ from pydantic import BaseModel, ValidationError
 from bioverdict.llm.errors import (
     FatalProviderError,
     InvalidOutputError,
+    OutputTruncatedError,
     RefusalError,
     TransientProviderError,
 )
@@ -152,7 +153,7 @@ class OpenAIProvider:
                 *tokens
             )
         if choice.finish_reason == "length":
-            raise FatalProviderError(
+            raise OutputTruncatedError(
                 f"answer cut off at max_completion_tokens={request.max_tokens}; "
                 "raise it for this step (reasoning tokens count too)"
             ).with_usage(*tokens)

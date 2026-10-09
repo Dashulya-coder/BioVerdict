@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from bioverdict.llm.errors import (
     FatalProviderError,
     InvalidOutputError,
+    OutputTruncatedError,
     RefusalError,
     TransientProviderError,
 )
@@ -107,7 +108,7 @@ def test_response_is_mapped_to_json_text_and_tokens() -> None:
     [
         ("stop", "I cannot help with that.", "I cannot help with that.", RefusalError),
         ("content_filter", None, None, RefusalError),
-        ("length", '{"verdict": "ok', None, FatalProviderError),  # cut off mid-JSON
+        ("length", '{"verdict": "ok', None, OutputTruncatedError),  # cut off mid-JSON
         ("stop", "", None, InvalidOutputError),
         ("stop", "not json", None, InvalidOutputError),
         ("stop", '{"verdict": 3, "score": 1}', None, InvalidOutputError),  # wrong type
