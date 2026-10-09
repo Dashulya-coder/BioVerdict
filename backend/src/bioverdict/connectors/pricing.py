@@ -21,6 +21,7 @@ import httpx
 
 from bioverdict.connectors.http import CachedHttpClient
 from bioverdict.connectors.opentargets import SITE_URL, OpenTargetsApi
+from bioverdict.connectors.validate import json_rows
 from bioverdict.resolver.names import normalize
 from bioverdict.store.as_of import filter_as_of
 from bioverdict.store.models import Evidence, EvidenceLevel, Locator, ResolverOutput, SourceKind
@@ -183,7 +184,7 @@ class AnalogPricingConnector:
             url = f"{CMS_API}/{dataset}/data"
             params = {"keyword": analog, "size": "50"}
             try:
-                response = await self._http.get(url, params)
+                response = await self._http.get(url, params, validate=json_rows)
                 rows = json.loads(response.body)
             except (httpx.HTTPError, ValueError) as exc:
                 log.warning("%s spending of %s not read: %s", program, analog, exc)

@@ -69,6 +69,15 @@ Real LLM calls use the existing logger. Cancelling a sync worker cannot terminat
 call; live callers must configure provider timeouts and run deadlines. No late result is
 accepted into the timed-out section.
 
+## Answers that are not cached
+
+Source answers are cached without an expiry, so a bad answer stored once would be replayed in
+every later run. Each connector therefore checks the shape of a fresh body before it is stored
+(`connectors/validate.py`, and the checks of PubMed, Europe PMC, openFDA and Open Targets): an
+error object, a maintenance page or a download cut short inside an HTTP 200 answer is refused,
+the request fails like any other and the next run asks again. An empty result list is a valid
+answer and is cached.
+
 ## What is read first
 
 A source often returns more than the limits allow (a drug with many studies gives over 80

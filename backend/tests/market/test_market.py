@@ -200,7 +200,7 @@ async def test_a_cancer_report_without_a_national_row_is_an_error_not_a_zero(
     http = make_http(tmp_path, server)
     http._client = httpx.AsyncClient(transport=httpx.MockTransport(broken))
 
-    with pytest.raises(ValueError, match="no national row"):
+    with pytest.raises(ValueError, match="expected content"):  # refused before caching
         await CancerIncidenceConnector(http).fetch(query(), TODAY)
 
 
