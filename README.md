@@ -13,12 +13,27 @@ Output: an Investment Underwriting Report with a verdict of **Invest / Condition
 Most "AI due diligence" output looks confident whether it is right or wrong. We designed around that failure.
 
 1. **Closed world.** The network is touched once, in a *collect* phase. The results are frozen into a content-hashed evidence bundle. The *reasoning* phase has no network access: if a fact is not in the bundle, it does not exist for this run.
-2. **Grounded or dropped.** Every claim carries a verbatim quote. A verifier keeps the claim only if the quote appears in the bundle. URLs and IDs are accepted only if they were actually fetched in this run.
-3. **Unknown is a result.** Missing information is reported with a reason (`not_reported`, `none_found`, `not_searched`, `error`) and becomes a diligence question that names what kind of data would answer it.
-4. **Code decides, the LLM classifies.** Confidence, probability of success, rNPV, capital and the verdict are computed by deterministic code from the claim ledger.
-5. **New evidence changes the verdict.** Adding a document triggers an incremental recompute and shows a before/after diff.
+2. **Grounded or dropped.** Every claim carries a verbatim quote. Code keeps the claim only if the quote appears in the evidence it names; a claim with a failed citation is dropped, not softened. URLs and IDs come from retrieval, never from a model.
+3. **Unknown is a result.** Missing information is reported with a reason (`not_reported`, `none_found`, `not_searched`, `error`, `incomplete`) and becomes a diligence question that names what kind of data would answer it.
+4. **Code decides, the LLM classifies.** Claim confidence, the gates, the probability of success, the market size and the verdict are computed by deterministic code from the claim ledger. A model never produces a number the verdict depends on.
+5. **New evidence changes the verdict.** Adding a document starts a recompute as a new run: the model only places the new evidence on existing claims, code recomputes, and a diff shows what moved.
 
 ## Quick start
+
+### With Docker
+
+Needs only Docker. From the repository root:
+
+```bash
+docker compose up --build                 # open http://localhost:8080
+python3 scripts/check_containers.py       # optional: one run, the page and CORS, end to end
+```
+
+Runs are answered offline from the prepared Divarasib fixture: no keys, no network, no cost.
+For live runs put the keys into `.env` (see "Configuration") and start with
+`USE_FIXTURES=0 docker compose up`. Details: [`docs/runbook.md`](docs/runbook.md), "Docker".
+
+### From source
 
 Prerequisites: Python 3.14, [`uv`](https://docs.astral.sh/uv/), Node 24 LTS and [`pnpm`](https://pnpm.io/) (see [`docs/stack.md`](docs/stack.md)).
 
@@ -27,45 +42,67 @@ git clone <repo-url> bioverdict && cd bioverdict
 cp .env.example .env            # add API keys, see "Configuration"
 cd backend && uv sync
 uv run python ../scripts/check_compat.py   # expects "17/17 checks passed"
+uv run bioverdict doctor                   # is this machine ready: keys, caches, sources
 uv run uvicorn bioverdict.api.main:app --reload      # API on :8000
 cd ../frontend && pnpm install && pnpm dev:api        # UI on :5173, running analyses on the API
 # `pnpm dev` instead opens the prepared Divarasib snapshot: no backend, no network
 ```
 
-Run one underwriting through the API. By default runs are answered from `fixtures/`
-(`USE_FIXTURES=1`, offline and free); the only fixture so far is `divarasib`:
+### One underwriting
+
+Through the API. By default runs are answered from `fixtures/` (`USE_FIXTURES=1`, offline and
+free); the only fixture so far is `divarasib`:
 
 ```bash
 curl -s -X POST localhost:8000/runs -H 'content-type: application/json' -d '{"asset": "divarasib"}'
 curl -s localhost:8000/runs/<run_id>/report      # executive verdict, claims, chain, sources
+curl -s localhost:8000/runs/<run_id>/market      # patients, analog price, market size
 curl -N localhost:8000/runs/<run_id>/events      # progress as server-sent events
 ```
 
 The routes and response shapes are described in [`docs/architecture.md`](docs/architecture.md)
-(section 12); a running server also serves them at `/docs`. Run the same fixture pipeline without
-starting the server (from `backend/`, no API keys needed):
+(section 12); a running server also serves them at `/docs`. The same pipeline without a server
+(from `backend/`, no keys needed):
 
 ```bash
 uv run bioverdict run --asset divarasib --as-of 2026-10-07 --output report.json
 ```
 
 The JSON report goes to stdout and the optional output file; diagnostics go to stderr. Runs are
-saved to SQLite, shared with the API when both use the same `DB_PATH`. Use `--db` and `--fixtures`
-to override paths. `python -m bioverdict` provides the same CLI. The current fixture snapshot is
-static; an earlier cutoff filters evidence and drops claims whose citations no longer verify.
-This is an offline demo, not a live underwriting.
+saved to SQLite, shared with the API when both use the same `DB_PATH`. An earlier `--as-of`
+filters the evidence by date and drops claims whose citations no longer verify.
 
-A live run (`USE_FIXTURES=0`) reads Open Targets, ClinicalTrials.gov and PubMed, freezes what it
-found and calls the configured model, which costs money. It takes any drug name or code, or free
-text, through the same routes and the same CLI:
+### Live runs
+
+With `USE_FIXTURES=0` a run reads the public sources below, freezes what it found and calls the
+configured model, which costs money. It takes a drug name or code, or free text:
 
 ```bash
 USE_FIXTURES=0 uv run --env-file ../.env bioverdict run --asset HRO761 --output report.json
 USE_FIXTURES=0 uv run --env-file ../.env bioverdict run --query "KRAS G12C inhibitor in NSCLC"
 ```
 
-Environment variables are not loaded from `.env` automatically: pass `--env-file` to `uv run` or
-export them. See [`docs/runbook.md`](docs/runbook.md) for what a live run does and how it fails.
+| Section | Sources read |
+|---|---|
+| Mechanism | Open Targets; preprints from Europe PMC |
+| Clinical | ClinicalTrials.gov (with posted results); PubMed; full texts of open-access papers (PubMed Central) |
+| Competition | ClinicalTrials.gov by target within the indication; openFDA approvals and labels of approved analogs |
+| Flags | SEC EDGAR: the sponsor's 8-K and 6-K filings that name the asset |
+| Commercial | CMS Medicare spending on analogs; NCI cancer incidence; CDC; Orphanet; World Bank; cBioPortal for how common the asset's mutation is |
+
+Unmet need and IP/regulatory are not searched and say so. Source rules and attribution:
+[`docs/sources.md`](docs/sources.md).
+
+Environment variables are not loaded from `.env` automatically outside Docker: pass `--env-file`
+to `uv run` or export them.
+
+### Other commands
+
+```bash
+uv run bioverdict eval --cases ../eval/cases.yaml --out ../eval/results/<date>   # regression cases and metrics
+uv run bioverdict warm --list ../eval/assets_example.tsv                         # fill the source cache, no model
+uv run bioverdict doctor                                                         # readiness of this machine
+```
 
 Full operating procedures, including cache pre-warm and demo-day fallbacks: [`docs/runbook.md`](docs/runbook.md).
 
@@ -91,11 +128,22 @@ The full list with comments is [`.env.example`](.env.example).
 ## How it works
 
 ```
-Resolver → Triage → Collect (parallel agents) → FREEZE bundle → Reason (Bull/Bear/Chair, no network)
-        → Scoring (code) → Verification → Report
+Resolver → Collect (one bounded tool loop per section) → FREEZE bundle
+        → Reason (four modules, no network) → Grounding (code) → Scoring (code) → Report
 ```
 
-Details: [`docs/architecture.md`](docs/architecture.md). Data contracts: [`docs/data-model.md`](docs/data-model.md). Verdict logic: [`docs/scoring.md`](docs/scoring.md).
+- **Resolver.** One model call reads the text; every identifier comes from a database lookup.
+  What was inferred is listed as an assumption.
+- **Collect.** A fixed list of connectors per section, with limits on requests, records and time.
+  Extraction picks verbatim quotes; status records (a trial's status, an approval, a spending
+  row) are stored whole without a model.
+- **Reason.** Mechanism, clinical, competition and translation-chain modules write claims with
+  quotes over the frozen bundle only.
+- **Scoring.** Confidence per claim, hard and soft gates, probability of success, verdict.
+
+Designed and not built yet: triage, Bull vs Bear, Chair with targeted second rounds, the
+entailment judge, the rNPV model. Details: [`docs/architecture.md`](docs/architecture.md).
+Data contracts: [`docs/data-model.md`](docs/data-model.md). Verdict logic: [`docs/scoring.md`](docs/scoring.md).
 
 ## Documentation
 
@@ -121,25 +169,60 @@ Details: [`docs/architecture.md`](docs/architecture.md). Data contracts: [`docs/
 
 ## Status
 
-- [x] P0: schema, evidence store with versions and `as_of`, deterministic scoring, resolver
-- [ ] P0: eval set
-- [ ] P1: five core agents (mechanism and translation done), connectors (ClinicalTrials.gov and Open Targets done; PubMed and openFDA pending), executive verdict and drill-down API (done, on fixtures), drill-down UI, trace and cost panel
-- [ ] P1: incremental re-underwrite, diff screen, "add evidence"
-- [ ] P2: Bull/Bear, targeted second round, translation chain graph, diligence ranking by value of information
-- [ ] P3: IP/CMC, red/green flags, market sentiment, more playbooks
+Task by task, with owners: [`docs/work-plan.md`](docs/work-plan.md). In short:
+
+**Works**
+
+- Resolver, connectors for every source in the table above, bounded collection with grounded
+  extraction, cache, `as_of` cutoff, frozen and hashed bundles.
+- Four reasoning modules, code grounding, deterministic scoring and verdict.
+- API with report, drill-down, trace, progress events, market size, add-evidence and diff; CLI
+  with `run`, `eval`, `warm`, `doctor`.
+- Web workspace: input, resolved assumptions, evidence explorer, sources, comparing runs and
+  adding a document.
+- Two model adapters (Anthropic, and an OpenAI-compatible gateway), with cache, budget, deadline
+  and failover.
+- Docker images, `compose.yaml`, and CI that lints, tests and runs a fixture run through the
+  containers.
+
+**Not yet**
+
+- **No whole run with a real model has been measured**: quality, cost and time are unknown.
+- The report screen (executive verdict, claim drill-down, chain graph) and the trace panel: the
+  workspace shows the evidence and the run's status, the report itself comes from the API.
+- `Invest` cannot be reached: it needs the rNPV model, so the best verdict today is
+  `Conditional`.
+- The independent entailment judge, Bull/Bear and Chair, unmet-need, commercial and IP modules.
+- Real evaluation cases, the closed-book leakage probe and baselines: the case file holds one
+  smoke case.
+- The API has no authentication: do not expose a live instance, anyone could spend the model
+  key.
+
+What the system cannot know at all: [`docs/limitations.md`](docs/limitations.md).
+
+## Checks
+
+```bash
+cd backend && uv run pytest && uv run ruff check . && uv run ruff format --check .
+uv run --project backend python scripts/check_compat.py     # from the repository root
+cd frontend && pnpm lint && pnpm typecheck && pnpm format:check && pnpm build
+```
+
+CI runs the same on every pull request.
 
 ## Results
 
-TODO: fill from `eval/results/` after the evaluation run. Table template is in [`docs/eval.md`](docs/eval.md).
+Nothing is measured yet; this table is filled from `eval/results/` after the first evaluation
+run with a real model. Template: [`docs/eval.md`](docs/eval.md).
 
 | Metric | Result |
 |---|---|
-| Citation support rate | TODO |
-| Source validity | TODO |
-| Verdict stability (3 runs) | TODO |
-| Verdict change on strong counter-evidence | TODO |
-| Median cost per run | TODO |
-| Median time per run | TODO |
+| Citation support rate | not measured |
+| Source validity | not measured |
+| Verdict stability (3 runs) | not measured |
+| Verdict change on strong counter-evidence | not measured |
+| Median cost per run | not measured |
+| Median time per run | not measured |
 
 ## Team
 
