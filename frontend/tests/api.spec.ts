@@ -326,6 +326,40 @@ test('the report opens with the verdict, the modeled figures and what is missing
   await expect(summary.getByText('Not computed: the market could not be sized.')).toBeVisible()
 })
 
+test('the translation chain names every link and draws a missing one as missing', async ({
+  page,
+}) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  const chain = page.getByRole('region', { name: 'Translation chain' })
+  await expect(chain.getByRole('listitem')).toHaveCount(5)
+  await expect(chain.getByText('Human exposure')).toBeVisible()
+  await expect(chain.getByText('Missing', { exact: true }).first()).toBeVisible()
+  await expect(chain.getByText('Supported', { exact: true }).first()).toBeVisible()
+})
+
+test('a claim opens onto its verbatim quotation and the original source', async ({ page }) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  const claim = page.getByText('KRAS G12C is a frequent, poor-prognosis driver mutation in NSCLC')
+  await expect(claim).toBeVisible()
+  await expect(page.getByText('found in approximately 14% of NSCLC cases')).toBeHidden()
+  await claim.click()
+  await expect(
+    page.getByText(
+      '“found in approximately 14% of NSCLC cases and associated with poor prognosis”',
+    ),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('link', { name: 'Open the original source: Roche press release' }).first(),
+  ).toHaveAttribute('href', 'https://www.roche.com/media/releases/med-cor-2026-07-02')
+  await expect(
+    page.getByText('Not searched: this proves nothing either way.').first(),
+  ).toBeVisible()
+})
+
 test('modeled ranges are labelled and shown as P10 to P90', async ({ page }) => {
   const range = (p10: number, p50: number, p90: number) => ({ p10, p50, p90 })
   const modeled = {
