@@ -9,9 +9,12 @@ from tenacity import wait_none
 from bioverdict.connectors.http import CachedHttpClient
 from bioverdict.connectors.pubmed import (
     PubMedConnector,
+    PubMedError,
     build_terms,
     classify,
     parse_articles,
+    require_articles,
+    require_search_result,
 )
 from bioverdict.contracts import Connector
 from bioverdict.store.db import connect
@@ -287,3 +290,43 @@ async def test_the_number_of_papers_per_search_is_limited(tmp_path: Path) -> Non
     server = FakeNCBI()
     await make_connector(tmp_path, server, retmax=7).fetch(query([]), date(2026, 10, 7))
     assert {r.url.params["retmax"] for r in server.calls("esearch.fcgi")} == {"7"}
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        b'{"error": "API rate limit exceeded", "count": "11"}',
+        b'{"esearchresult": {"ERROR": "Search Backend failed"}}',
+        b"<html>Service unavailable</html>",
+    ],
+)
+def test_a_search_answer_without_an_id_list_is_refused(body: bytes) -> None:
+    with pytest.raises(PubMedError):
+        require_search_result(body)
+
+
+@pytest.mark.parametrize("body", [b"<eFetchResult><ERROR>x</ERROR></eFetchResult>", b"<Pubmed"])
+def test_a_fetch_answer_that_is_not_an_article_set_is_refused(body: bytes) -> None:
+    with pytest.raises(PubMedError):
+        require_articles(body)
+
+
+async def test_a_rate_limit_inside_a_200_answer_is_raised_and_never_cached(tmp_path: Path) -> None:
+    class Limited(FakeNCBI):
+        limited = True
+
+        def __call__(self, request: httpx.Request) -> httpx.Response:
+            if self.limited and request.url.path.endswith("esearch.fcgi"):
+                self.requests.append(request)
+                return httpx.Response(200, json={"error": "API rate limit exceeded"})
+            return super().__call__(request)
+
+    server = Limited()
+    connector = make_connector(tmp_path, server)
+    with pytest.raises(PubMedError):
+        await connector.fetch(query(["divarasib"]), date(2026, 10, 6))
+
+    server.limited = False
+    evidence = await connector.fetch(query(["divarasib"]), date(2026, 10, 6))
+
+    assert evidence  # the refused answer was not replayed as "no papers"

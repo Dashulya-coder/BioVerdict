@@ -1,0 +1,72 @@
+{
+ "meta": {
+  "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+  "terms": "https://open.fda.gov/terms/",
+  "license": "https://open.fda.gov/license/",
+  "last_updated": "2026-10-08",
+  "results": {
+   "skip": 0,
+   "limit": 5,
+   "total": 1
+  }
+ },
+ "results": [
+  {
+   "set_id": "0b8bf078-34c2-4f45-9012-38a8ac082b01",
+   "effective_time": "20260325",
+   "version": "13",
+   "openfda": {
+    "application_number": [
+     "NDA216340"
+    ],
+    "brand_name": [
+     "KRAZATI"
+    ],
+    "generic_name": [
+     "ADAGRASIB"
+    ],
+    "manufacturer_name": [
+     "Mirati Therapeutics, Inc"
+    ],
+    "product_ndc": [
+     "80739-812"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "ORAL"
+    ],
+    "substance_name": [
+     "ADAGRASIB"
+    ],
+    "rxcui": [
+     "2625917",
+     "2625923"
+    ],
+    "spl_id": [
+     "65724d4c-78ab-4d85-83b5-73b9da5c2cc3"
+    ],
+    "spl_set_id": [
+     "0b8bf078-34c2-4f45-9012-38a8ac082b01"
+    ],
+    "package_ndc": [
+     "80739-812-12",
+     "80739-812-18"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "unii": [
+     "8EOO6HQF8Y"
+    ]
+   },
+   "clinical_studies": [
+    "14 CLINICAL STUDIES 14.1 Non-Small Cell Lung Cancer The efficacy of adagrasib was evaluated in KRYSTAL-1 (NCT03785249), a multicenter, single-arm, open-label expansion cohort study. Eligible patients were required to have locally advanced or metastatic KRAS G12C-mutated NSCLC who previously received treatment with a platinum-based regimen and an immune checkpoint inhibitor, an Eastern Cooperative Oncology Group Performance Status (ECOG PS) of 0 or 1, and at least one measurable lesion as defined by Response Evaluation criteria in Solid Tumors (RECIST v1.1). Identification of a KRAS G12C mutation was prospectively determined by local testing using tissue specimens. Patients received adagrasib 600 mg orally twice daily until unacceptable toxicity or disease progression. Tumor assessments were performed every 6 weeks. The major efficacy outcome measures were confirmed objective response rate (ORR) and duration of response (DOR) as evaluated by blinded independent central review (BICR) according to RECIST v1.1. In the efficacy population, KRAS G12C mutation status was determined by prospective local testing using tumor tissue specimens. Of the 112 patients with KRAS G12C mutation, tissue samples from 88% (98/112) patients were tested retrospectively using the QIAGEN therascreen KRAS RGQ PCR Kit. While 89% (87/98) of patients were positive for KRAS G12C mutation, 11% (11/98) did not have a KRAS G12C mutation identified. In addition, plasma samples from 63% (71/112) patients were tested retrospectively using Agilent Resolution ctDx FIRST assay. While 66% (47/71) of patients were positive for KRAS G12C mutation, 34% (24/71) did not have a KRAS G12C mutation identified. A total of 112 patients had at least one measurable lesion at baseline as assessed by BICR according to RECIST v1.1. The baseline demographic and disease characteristics in the efficacy population were: median age 64 years (range: 25 to 89), 55% female, 83% White, 8% were Black or African American, 4% Asian, 4% race not reported, 0.9% American Indian or Alaska Native, 16% Eastern Cooperative Oncology Group (ECOG) performance status (PS) 0 and 83% ECOG PS 1. Tumor histology was 97% adenocarcinoma and 89% of patients had metastatic disease. Patients received a median of 2 prior systemic therapies (range 1 to 7); 43% received 1 prior line, 35% received 2 prior lines, 10% received 3 prior lines and 12% received 4 or more prior lines, 98% received both prior platinum and prior anti-PD-1/PD-L1 therapy. Sites of extra-thoracic disease included bone 42%, brain 30%, adrenals 21%, and liver 21%. Efficacy results are summarized in Table 9. Table 9: Efficacy Results for KRYSTAL-1 CI = Confidence Interval Efficacy Parameter Adagrasib (n = 112) Objective Response Rate (95% CI) Assessed by BICR. 43 (34, 53) Complete response rate, % 0.9 Partial response rate, % 42 Duration of Response Median Estimate using Kaplan-Meier method. in months (95% CI) 8.5 (6.2, 13.8) Patients with duration ≥ 6 months Observed proportion of patients with duration of response beyond landmark time. , % 58 14.2 Colorectal Cancer The efficacy of adagrasib in combination with cetuximab was evaluated in KRYSTAL-1, a multicenter, single-arm, open-label expansion cohort study. Eligible patients were required to have locally advanced or metastatic KRAS G12C-mutated CRC and to have previously received therapy with fluoropyrimidine-, oxaliplatin-, and irinotecan-based chemotherapy, a VEGF inhibitor if eligible, and an ECOG PS of 0 or 1. Patients initiated treatment with adagrasib 600 mg orally twice daily in combination with cetuximab administered either biweekly (77 patients with 500 mg/m 2 every two weeks) or weekly (17 patients with 400 mg/m 2 initial dose followed by 250 mg/m 2 weekly). Treatment continued until unacceptable toxicity or disease progression. Tumor assessments were performed every 6 weeks. Adagrasib discontinuation required cetuximab discontinuation, however patients could continue to receive adagrasib if cetuximab was discontinued [see Dosage and Administration (2.3) ] . Six patients continued with adagrasib single agent therapy after discontinuing cetuximab. The length of time these 6 patients received adagrasib alone ranged from 43 days to 3 years. Patient treatment with adagrasib after disease progression continued if a patient was clinically stable and considered to be deriving clinical benefit by the investigator. The major efficacy outcome measures were confirmed ORR and DOR according to RECIST v1.1 as assessed by BICR. In the efficacy population, KRAS G12C mutation status was determined by prospective local testing using tumor tissue specimens. Of the 94 patients with KRAS G12C mutation, tissue samples from 79% (74/94) patients were tested retrospectively using the QIAGEN therascreen KRAS RGQ PCR Kit. Of the 74 tissue samples submitted, 81% (60/74) yielded a result with 93% (56/60) positive for KRAS G12C and 7% (4/60) without a KRAS G12C mutation identified. The baseline demographic and disease characteristics in the efficacy population were: median age 57 years (range: 24 to 75 years), 53% female, 71% White, 14% were Black or African American, 5% Asian, 1.1% American Indian or Alaska Native, 9% reported as other; 51% ECOG PS 0 and 49% ECOG PS 1. Tumor histology was 100% adenocarcinoma and 99% of patients had metastatic disease. Patients received a median of 3 prior systemic therapies (range 1 to 9); 9% received 1 prior line, 36% received 2 prior lines, 31% received 3 prior lines and 25% received 4 or more prior lines. Sites of metastatic disease included lung (71%), liver (64%) and bone (14%). Efficacy results are summarized in Table 10. Table 10: Efficacy Results for KRYSTAL-1 CI = Confidence Interval Efficacy Parameter Adagrasib (n = 94) Objective Response Rate (95% CI) Assessed by BICR. 34 (25, 45) Complete response rate, % 0 Partial response rate, % 34.0 Duration of Response Median Estimate using Kaplan-Meier method. in months (95% CI) 5.8 (4.2, 7.6) Patients with duration ≥ 6 months Observed proportion of patients with duration of response beyond landmark time. , % 31"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE KRAZATI is an inhibitor of the RAS GTPase family indicated for: Non-small cell lung cancer (NSCLC)* • As a single agent, for the treatment of adult patients with KRAS G12C-mutated locally advanced or metastatic NSCLC, as determined by an FDA-approved test, who have received at least one prior systemic therapy. ( 1.1 ) Colorectal cancer (CRC)* • In combination with cetuximab, for the treatment of adult patients with KRAS G12C-mutated locally advanced or metastatic CRC, as determined by an FDA-approved test, who have received prior treatment with fluoropyrimidine-, oxaliplatin-, and irinotecan-based chemotherapy. ( 1.2 ) *These indications are approved under accelerated approval based on objective response rate (ORR) and duration of response (DOR). Continued approval for these indications may be contingent upon verification and description of a clinical benefit in confirmatory trials. ( 1.1 , 1.2 ) 1.1 KRAS G12C-Mutated Locally Advanced or Metastatic Non-Small Cell Lung Cancer KRAZATI, as a single-agent, is indicated for the treatment of adult patients with KRAS G12C-mutated locally advanced or metastatic non-small cell lung cancer (NSCLC), as determined by an FDA-approved test [see Dosage and Administration (2.1) ] , who have received at least one prior systemic therapy. This indication is approved under accelerated approval based on objective response rate (ORR) and duration of response (DOR) [see Clinical Studies (14.1) ]. Continued approval for this indication may be contingent upon verification and description of a clinical benefit in a confirmatory trial. 1.2 KRAS G12C-Mutated Locally Advanced or Metastatic Colorectal Cancer KRAZATI in combination with cetuximab is indicated for the treatment of adult patients with KRAS G12C-mutated locally advanced or metastatic colorectal cancer (CRC), as determined by an FDA-approved test [see Dosage and Administration (2.1) ] , who have received prior treatment with fluoropyrimidine-, oxaliplatin-, and irinotecan-based chemotherapy. This indication is approved under accelerated approval based on ORR and DOR [see Clinical Studies (14.2) ] . Continued approval for this indication may be contingent upon verification and description of a clinical benefit in a confirmatory trial."
+   ]
+  }
+ ]
+}

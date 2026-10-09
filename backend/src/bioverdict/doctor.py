@@ -7,6 +7,7 @@ key that is set is not proven to be valid. Secrets are never printed, only wheth
 
 from __future__ import annotations
 
+import os
 import sqlite3
 import sys
 import tempfile
@@ -65,10 +66,50 @@ def _pubmed(client: httpx.Client) -> str:
     return "answers"
 
 
+def _europepmc(client: httpx.Client) -> str:
+    url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+    answer = client.get(url, params={"query": "SRC:PPR", "format": "json", "pageSize": "1"})
+    answer.raise_for_status()
+    return f"{answer.json()['hitCount']} preprints indexed"
+
+
+def _sec(client: httpx.Client) -> str:
+    """The SEC refuses a request without a declared contact, so the check needs one too."""
+    contact = os.environ.get("SEC_USER_AGENT", "").strip()
+    if not contact:  # an optional source: nothing is wrong, company filings are just not read
+        return "not asked: SEC_USER_AGENT is not set, so company filings will not be read"
+    url = "https://data.sec.gov/submissions/CIK0000318154.json"  # any registrant
+    answer = client.get(url, headers={"User-Agent": contact})
+    answer.raise_for_status()
+    answer.json()["filings"]  # an error page would not have it
+    return "answers to the declared contact"
+
+
+def _cbioportal(client: httpx.Client) -> str:
+    headers = {"User-Agent": "bioverdict-hackathon", "Accept": "application/json"}
+    answer = client.get("https://www.cbioportal.org/api/studies/msk_impact_2017", headers=headers)
+    answer.raise_for_status()
+    return f"{answer.json()['allSampleCount']} samples in the cohort"
+
+
+def _openfda(client: httpx.Client) -> str:
+    """Sent with the key when one is set, so a key the FDA rejects fails here and not in a run."""
+    key = os.environ.get("OPENFDA_API_KEY")
+    url = "https://api.fda.gov/drug/drugsfda.json"
+    answer = client.get(url, params={"limit": "1"}, auth=(key, "") if key else None)
+    answer.raise_for_status()
+    limit = "key accepted" if key else "no key: 1,000 requests a day"
+    return f"data as of {answer.json()['meta']['last_updated']}, {limit}"
+
+
 SOURCES: dict[str, Probe] = {
     "ClinicalTrials.gov": _clinicaltrials,
     "Open Targets": _opentargets,
     "PubMed": _pubmed,
+    "Europe PMC": _europepmc,
+    "cBioPortal": _cbioportal,
+    "openFDA": _openfda,
+    "SEC EDGAR": _sec,
 }
 
 

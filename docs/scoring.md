@@ -143,6 +143,11 @@ the Monte Carlo exists, the bundle's market records are combined by plain arithm
   Cancer Profiles); else the CDC's measured adult prevalence times the population aged 15 and
   over; else Orphanet's point prevalence class (for the US, the world or Europe) times the whole
   US population, the class bounds giving the range.
+- *Biomarker fraction*, for a cancer site only: when the asset's registry records name one
+  variant of a target clearly (KRAS G12C), the new cases are multiplied by the share of patients
+  with that protein change among the patients of that cancer type in the MSK-IMPACT cohort
+  (cBioPortal), counted by code; the range uses the 95% Wilson interval of that share. For
+  divarasib it is 194 of 1,567 patients (12.4%). No stage or line-of-therapy fraction exists.
 - *Price*: Medicare's average spending per beneficiary, latest reported year, on each product
   approved against the same target (Open Targets names them): lowest, median, highest.
 - *Market size*: patients times price, bound by bound.

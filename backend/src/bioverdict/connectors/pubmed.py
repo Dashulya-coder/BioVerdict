@@ -68,6 +68,31 @@ _ANIMAL_MESH = {
 }
 
 
+class PubMedError(ValueError):
+    """PubMed answered HTTP 200 with something that is not the data that was asked for."""
+
+
+def require_search_result(body: bytes) -> None:
+    """Refuse a search answer without an id list. NCBI reports a rate limit and a bad query
+    inside a 200 answer; cached, it would be replayed as "no papers" for ever."""
+    try:
+        result = json.loads(body)["esearchresult"]
+    except (ValueError, KeyError, TypeError) as exc:
+        raise PubMedError("the search answer has no result") from exc
+    if not isinstance(result, dict) or "ERROR" in result or "idlist" not in result:
+        raise PubMedError("the search answer has no id list")
+
+
+def require_articles(body: bytes) -> None:
+    """Refuse a fetch answer that is not an article set (an error page, a cut-off download)."""
+    try:
+        root = ET.fromstring(body)
+    except ET.ParseError as exc:
+        raise PubMedError("the fetch answer is not XML") from exc
+    if root.tag != "PubmedArticleSet":
+        raise PubMedError("the fetch answer is not an article set")
+
+
 def classify(types: list[str], mesh: list[str]) -> tuple[EvidenceLevel, SourceKind] | None:
     """The level and kind of a paper from its PubMed labels, or None for a paper to skip."""
     if _SKIP_TYPES & set(types):
@@ -211,7 +236,9 @@ class PubMedConnector:
             "retmax": str(self._retmax),
             "retmode": "json",
         }
-        response = await self._http.get(f"{BASE_URL}/esearch.fcgi", params)
+        response = await self._http.get(
+            f"{BASE_URL}/esearch.fcgi", params, validate=require_search_result
+        )
         return json.loads(response.body)["esearchresult"].get("idlist", [])
 
     async def fetch(self, query: ResolverOutput, as_of: date) -> list[Evidence]:
@@ -229,6 +256,8 @@ class PubMedConnector:
                 "id": ",".join(ids[start : start + FETCH_BATCH]),
                 "retmode": "xml",
             }
-            response = await self._http.get(f"{BASE_URL}/efetch.fcgi", params)
+            response = await self._http.get(
+                f"{BASE_URL}/efetch.fcgi", params, validate=require_articles
+            )
             evidence += parse_articles(response.body, response.fetched_at)
         return filter_as_of(evidence, as_of)

@@ -1,0 +1,27 @@
+{
+ "51": {
+  "cik_str": 1114448,
+  "ticker": "NVS",
+  "title": "NOVARTIS AG"
+ },
+ "66": {
+  "cik_str": 318154,
+  "ticker": "AMGN",
+  "title": "AMGEN INC"
+ },
+ "379": {
+  "cik_str": 1628171,
+  "ticker": "RVMD",
+  "title": "Revolution Medicines, Inc."
+ },
+ "7485": {
+  "cik_str": 1114448,
+  "ticker": "NVSEF",
+  "title": "NOVARTIS AG"
+ },
+ "8785": {
+  "cik_str": 1628171,
+  "ticker": "RVMDW",
+  "title": "Revolution Medicines, Inc."
+ }
+}

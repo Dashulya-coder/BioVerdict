@@ -73,12 +73,20 @@ Full operating procedures, including cache pre-warm and demo-day fallbacks: [`do
 
 | Variable | Purpose |
 |---|---|
-| `LLM_PRIMARY` | Primary provider and model per step, see [`docs/cost.md`](docs/cost.md) |
-| `LLM_FALLBACKS` | Ordered failover list |
-| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` | Provider keys (never commit) |
-| `NCBI_API_KEY`, `TAVILY_API_KEY`, `SEC_USER_AGENT` | Data-source access |
+| `USE_FIXTURES` | `1` (default): runs are answered offline from fixtures. `0`: live runs |
+| `LLM_PROVIDER` | `anthropic` or `openai` (the organizers' gateway). Unset: the one whose key is set |
+| `ANTHROPIC_API_KEY` | Key of Anthropic's own API (never commit) |
+| `TEAM_API_KEY`, `LLM_BASE_URL` | Key and base URL of the OpenAI-compatible gateway; `OPENAI_API_KEY` is used when `TEAM_API_KEY` is empty |
+| `LLM_MAX_INPUT_CHARS` | Largest request the gateway accepts, in characters; see [`docs/cost.md`](docs/cost.md) |
+| `NCBI_API_KEY`, `OPENFDA_API_KEY` | Optional: higher request limits of PubMed and openFDA |
+| `SEC_USER_AGENT` | "Name email", the contact the SEC asks for; without it company filings are not read |
 | `RUN_BUDGET_USD`, `RUN_TIMEOUT_S` | Hard limits per run |
-| `DB_PATH`, `CACHE_DIR` | SQLite file and HTTP/LLM cache |
+| `RECOMPUTE_MODE` | How added evidence is recomputed: `classify` (default) or `full` |
+| `DB_PATH`, `CACHE_DIR`, `HTTP_CACHE_MAX_AGE_H` | SQLite file, HTTP/LLM cache, and how long a source answer is reused (unset: for ever) |
+| `CORS_ORIGINS` | Origins the API accepts from a browser |
+
+`GEMINI_API_KEY` and `TAVILY_API_KEY` are in `.env.example` and are not read by any code yet.
+The full list with comments is [`.env.example`](.env.example).
 
 ## How it works
 

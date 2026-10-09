@@ -1,0 +1,270 @@
+[
+ {
+  "source": "PMC",
+  "date": "20240203",
+  "key": "pmc.key",
+  "infons": {},
+  "documents": [
+   {
+    "id": "10803265",
+    "infons": {
+     "license": "CC BY"
+    },
+    "passages": [
+     {
+      "offset": 0,
+      "infons": {
+       "article-id_doi": "10.1038/s41591-023-02696-8",
+       "article-id_pmc": "10803265",
+       "article-id_pmid": "38052910",
+       "article-id_publisher-id": "2696",
+       "fpage": "271",
+       "issue": "1",
+       "kwd": "Drug development Colorectal cancer",
+       "license": "Open Access This article is licensed under a Creative Commons Attribution 4.0 International License, which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide a link to the Creative Commons license, and indicate if changes were made. The images or other third party material in this article are included in the article’s Creative Commons license, unless indicated otherwise in a credit line to the material. If material is not included in the article’s Creative Commons license and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission directly from the copyright holder. To view a copy of this license, visit http://creativecommons.org/licenses/by/4.0/.",
+       "lpage": "278",
+       "section_type": "TITLE",
+       "title": "Subject terms",
+       "type": "front",
+       "volume": "30",
+       "year": "2024"
+      },
+      "text": "Divarasib plus cetuximab in KRAS G12C-positive colorectal cancer: a phase 1b trial"
+     },
+     {
+      "offset": 4826,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "title_1"
+      },
+      "text": "Results"
+     },
+     {
+      "offset": 4834,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "title_2"
+      },
+      "text": "Patient disposition and baseline demographics"
+     },
+     {
+      "offset": 4999,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "paragraph"
+      },
+      "text": "A total of 29 patients were enrolled into arm C from 17 sites in 10 countries between 28 July 2021 and 07 October 2022 (Fig. 1). Key inclusion criteria were CRC with documentation of the KRAS G12C mutation from either central testing of blood samples (FoundationOne Liquid CDx/F1LCDx) or local testing of tumor tissue or blood samples (using a validated molecular testing method) and evaluable or measurable disease per Response Evaluation Criteria in Solid Tumors (RECIST) v1.1. Patients with prior KRAS G12C inhibitor treatment must not have discontinued due to toxicity related to the prior KRAS G12C inhibitor. Key exclusion criteria were active, untreated central nervous system (CNS) metastases (previously treated CNS metastases were allowed); treatment with another anticancer therapy within 3 weeks or five half-lives before initiation of study treatment, whichever is shorter; and radiation therapy as cancer therapy within 4 weeks before initiation of divarasib."
+     },
+     {
+      "offset": 5973,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "paragraph"
+      },
+      "text": "Patients received oral divarasib at 200 mg (n = 3) or 400 mg (n = 26) once daily, plus intravenous cetuximab (400 mg/m2 on cycle 1 day 1 (C1D1) only, then 250 mg/m2 once weekly) in 21-d cycles. The selected expansion dose for the divarasib combination with cetuximab was 400 mg and ongoing dose investigations are still occurring in other combinations. The data cutoff date was 01 April 2023 with an enrollment cutoff of 07 October 2022. This analysis included patients who received at least one dose of divarasib and cetuximab. The median time on divarasib treatment was 7.1 months (range: 2.6–12.6), and on cetuximab treatment was 6.7 months (range: 0.5–12.2). Study treatment was discontinued in 20 patients (69.0%), with the reasons being progressive disease according to RECIST (n = 18, 62.1%), clinical progression (n = 1, 3.4%) or physician decision (n = 1, 3.4%)."
+     },
+     {
+      "offset": 6879,
+      "infons": {
+       "file": "Tab1.xml",
+       "id": "Tab1",
+       "section_type": "TABLE",
+       "type": "table_caption"
+      },
+      "text": "Baseline demographics and disease characteristics"
+     },
+     {
+      "offset": 6929,
+      "infons": {
+       "file": "Tab1.xml",
+       "id": "Tab1",
+       "section_type": "TABLE",
+       "type": "table",
+       "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<table frame=\"hsides\" rules=\"groups\"><thead><tr><th/><th>All patients (<italic>N</italic> = 29)</th></tr></thead><tbody><tr><td>Median age (range), years</td><td>59 (33–87)</td></tr><tr><td>Female, <italic>n</italic> (%)</td><td>15 (51.7)</td></tr><tr><td>Race, <italic>n</italic> (%)</td><td/></tr><tr><td> White</td><td>20 (69.0)</td></tr><tr><td> Asian</td><td>6 (20.7)</td></tr><tr><td> Multiple</td><td>1 (3.4)</td></tr><tr><td> Unknown</td><td>2 (6.9)</td></tr><tr><td>ECOG, <italic>n</italic> (%)</td><td/></tr><tr><td> 0</td><td>16 (55.2)</td></tr><tr><td> 1</td><td>13 (44.8)</td></tr><tr><td>Location of tumor, <italic>n</italic> (%)</td><td/></tr><tr><td> Left side</td><td>18 (62.1)</td></tr><tr><td> Right side<sup>a</sup></td><td>9 (31.0)</td></tr><tr><td> Unknown</td><td>2 (6.9)</td></tr><tr><td>Prior systemic therapies, <italic>n</italic> (%)</td><td/></tr><tr><td> 1</td><td>5 (17.2)</td></tr><tr><td> 2</td><td>10 (34.5)</td></tr><tr><td> 3</td><td>4 (13.8)</td></tr><tr><td> ≥4</td><td>10 (34.5)</td></tr><tr><td>Prior 5-FU/capecitabine, <italic>n</italic> (%)</td><td>29 (100.0)</td></tr><tr><td>Prior oxaliplatin, <italic>n</italic> (%)</td><td>27 (93.1)</td></tr><tr><td>Prior irinotecan, <italic>n</italic> (%)</td><td>24 (82.8)</td></tr><tr><td>Prior bevacizumab, <italic>n</italic> (%)</td><td>24 (82.8)</td></tr><tr><td>Prior KRAS G12C inhibitor, <italic>n</italic> (%)</td><td>5 (17.2)</td></tr></tbody></table>\n"
+      },
+      "text": "\tAll patients (N = 29)\t \tMedian age (range), years\t59 (33–87)\t \tFemale, n (%)\t15 (51.7)\t \tRace, n (%)\t\t \t White\t20 (69.0)\t \t Asian\t6 (20.7)\t \t Multiple\t1 (3.4)\t \t Unknown\t2 (6.9)\t \tECOG, n (%)\t\t \t 0\t16 (55.2)\t \t 1\t13 (44.8)\t \tLocation of tumor, n (%)\t\t \t Left side\t18 (62.1)\t \t Right sidea\t9 (31.0)\t \t Unknown\t2 (6.9)\t \tPrior systemic therapies, n (%)\t\t \t 1\t5 (17.2)\t \t 2\t10 (34.5)\t \t 3\t4 (13.8)\t \t ≥4\t10 (34.5)\t \tPrior 5-FU/capecitabine, n (%)\t29 (100.0)\t \tPrior oxaliplatin, n (%)\t27 (93.1)\t \tPrior irinotecan, n (%)\t24 (82.8)\t \tPrior bevacizumab, n (%)\t24 (82.8)\t \tPrior KRAS G12C inhibitor, n (%)\t5 (17.2)\t \t"
+     },
+     {
+      "offset": 7576,
+      "infons": {
+       "file": "Tab1.xml",
+       "id": "Tab1",
+       "section_type": "TABLE",
+       "type": "table_foot"
+      },
+      "text": "a‘Right side’ includes tumor location reported as both right side and midline. ECOG, Eastern Cooperative Oncology Group."
+     },
+     {
+      "offset": 7701,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "paragraph"
+      },
+      "text": "Baseline demographics are summarized in Table 1. The median age was 59 years (range: 33–87) and patients received a median of 2 (range: 1–8) prior systemic therapies. All 29 (100.0%) patients received prior 5-fluorouracil (5-FU) or capecitabine, 27 (93.1%) received oxaliplatin, 24 (82.8%) received irinotecan, 24 (82.8%) received bevacizumab and 5 (17.2%) received a prior KRAS G12C inhibitor as a single agent or as a combination therapy (2 patients had single-agent divarasib, 1 had single-agent sotorasib, 1 had sotorasib with bevacizumab, and 1 had adagrasib with an inhibitor of Src homology region 2–containing protein tyrosine phosphatase-2 (SHP2))."
+     },
+     {
+      "offset": 8365,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "title_2"
+      },
+      "text": "Safety"
+     },
+     {
+      "offset": 8372,
+      "infons": {
+       "file": "Tab2.xml",
+       "id": "Tab2",
+       "section_type": "TABLE",
+       "type": "table_caption"
+      },
+      "text": "TRAEs occurring in ≥10% of patients"
+     },
+     {
+      "offset": 8410,
+      "infons": {
+       "file": "Tab2.xml",
+       "id": "Tab2",
+       "section_type": "TABLE",
+       "type": "table",
+       "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<table frame=\"hsides\" rules=\"groups\"><thead><tr><th/><th>TRAEs</th><th>Grade 3–4<sup>b</sup> TRAEs</th></tr></thead><tbody><tr><td>Total number of patients with at least one AE, <italic>n</italic> (%)</td><td>29 (100)</td><td>13 (44.8)</td></tr><tr><td>Rash<sup>a</sup></td><td>28 (96.6)</td><td>2 (6.9)</td></tr><tr><td>Diarrhea</td><td>24 (82.8)</td><td>3 (10.3)</td></tr><tr><td>Nausea</td><td>21 (72.4)</td><td>0</td></tr><tr><td>Vomiting</td><td>14 (48.3)</td><td>0</td></tr><tr><td>Dry skin</td><td>10 (34.5)</td><td>1 (3.4)</td></tr><tr><td>Paronychia</td><td>6 (20.7)</td><td>1 (3.4)</td></tr><tr><td>Hypomagnesemia</td><td>4 (13.8)</td><td>2 (6.9)</td></tr><tr><td>Pruritus</td><td>4 (13.8)</td><td>1 (3.4)</td></tr><tr><td>Infusion-related reaction</td><td>4 (13.8)</td><td>1 (3.4)</td></tr><tr><td>Asthenia</td><td>4 (13.8)</td><td>0</td></tr><tr><td>Fatigue</td><td>4 (13.8)</td><td>0</td></tr><tr><td>Abdominal pain</td><td>3 (10.3)</td><td>1 (3.4)</td></tr><tr><td>Amylase increased</td><td>3 (10.3)</td><td>0</td></tr><tr><td>Pyrexia</td><td>3 (10.3)</td><td>0</td></tr><tr><td>Dysgeusia</td><td>3 (10.3)</td><td>0</td></tr></tbody></table>\n"
+      },
+      "text": "\tTRAEs\tGrade 3–4b TRAEs\t \tTotal number of patients with at least one AE, n (%)\t29 (100)\t13 (44.8)\t \tRasha\t28 (96.6)\t2 (6.9)\t \tDiarrhea\t24 (82.8)\t3 (10.3)\t \tNausea\t21 (72.4)\t0\t \tVomiting\t14 (48.3)\t0\t \tDry skin\t10 (34.5)\t1 (3.4)\t \tParonychia\t6 (20.7)\t1 (3.4)\t \tHypomagnesemia\t4 (13.8)\t2 (6.9)\t \tPruritus\t4 (13.8)\t1 (3.4)\t \tInfusion-related reaction\t4 (13.8)\t1 (3.4)\t \tAsthenia\t4 (13.8)\t0\t \tFatigue\t4 (13.8)\t0\t \tAbdominal pain\t3 (10.3)\t1 (3.4)\t \tAmylase increased\t3 (10.3)\t0\t \tPyrexia\t3 (10.3)\t0\t \tDysgeusia\t3 (10.3)\t0\t \t"
+     },
+     {
+      "offset": 8931,
+      "infons": {
+       "file": "Tab2.xml",
+       "id": "Tab2",
+       "section_type": "TABLE",
+       "type": "table_foot"
+      },
+      "text": "aRash grouped terms: dermatitis acneiform, rash, rash pustular, rash follicular and rash maculo-papular."
+     },
+     {
+      "offset": 9036,
+      "infons": {
+       "file": "Tab2.xml",
+       "id": "Tab2",
+       "section_type": "TABLE",
+       "type": "table_foot"
+      },
+      "text": "bNo grade 5 TRAEs reported."
+     },
+     {
+      "offset": 9064,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "paragraph"
+      },
+      "text": "The primary objective of this study was to evaluate the safety of divarasib plus cetuximab. No dose-limiting toxicities were reported. All (100.0%) patients experienced at least one treatment-related adverse event (TRAE), with the majority of events being grade 1–2 (91.6%). The most common TRAEs included rash (96.6%; grouped term including dermatitis acneiform, rash, rash pustular, rash follicular and rash maculo-papular), diarrhea (82.8%), nausea (72.4%) and vomiting (48.3%). TRAEs occurring in ≥10% of patients are summarized in Table 2 and fully described in Extended Data Table 1. Grade 3 TRAEs occurred in 11 patients (37.9%) and included diarrhea (n = 3), increased lipase (n = 2), rash (n = 2) and abdominal pain, upper abdominal pain, dry skin, headache, hypomagnesemia, infusion-related reaction, insomnia, paronychia, pruritus and white blood cell count decrease (n = 1 for each). Grade 4 TRAEs occurred in 2 patients (6.9%) and included hypomagnesemia (n = 1) and neutropenia (n = 1). No grade 5 TRAEs occurred. Serious adverse events (AEs) occurred in 7 patients (24.1%), with none related to study treatment. Three deaths due to CRC progression occurred during safety follow-up."
+     },
+     {
+      "offset": 10289,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "paragraph"
+      },
+      "text": "TRAEs led to divarasib dose modifications (interruption, reduction or withdrawal) in 10 patients (34.5%), with divarasib dose interruptions in 7 patients (24.1%), divarasib dose reductions in 4 patients (13.8%) and no divarasib treatment withdrawals. TRAEs that led to divarasib dose reduction included diarrhea in 3 patients (10.3%, all grade 3) and vomiting in 1 patient (3.4%, grade 1). TRAEs led to cetuximab dose modifications (interruption, reduction or withdrawal) in 11 patients (37.9%), with cetuximab dose interruptions in 9 patients (31.0%), cetuximab dose reductions in 4 patients (13.8%) and cetuximab withdrawal in 1 patient (3.4%). TRAEs that led to cetuximab dose reduction include infusion-related reactions in 2 patients (6.9%, one grade 2 and one grade 1), and dermatitis acneiform, paronychia and pustular rash in 1 patient each (3.4%, grade 2 pustular rash, grade 2 paronychia and grade 3 dermatitis acneiform). Treatment-related grade 3 rash led to cetuximab withdrawal in 1 patient who continued to receive divarasib."
+     },
+     {
+      "offset": 11330,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "title_2"
+      },
+      "text": "Antitumor activity"
+     },
+     {
+      "offset": 12080,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "paragraph"
+      },
+      "text": "A secondary objective of this study was to assess the preliminary antitumor activity of divarasib plus cetuximab. Antitumor activity was determined by the investigator according to RECIST v1.1 (see the study end points in the Methods for further definitions), and all 29 patients had measurable disease at baseline (Fig. 2). Of the 24 patients who had not previously received a KRAS G12C inhibitor before enrollment, 1 patient received divarasib at 200 mg in combination with cetuximab and 23 patients received divarasib at 400 mg in combination with cetuximab. Among the 24 patients, 1 patient (4.2%; 1/1 confirmed) had a complete response (CR), 15 (62.5%; 14/15 confirmed) had a partial response (PR), and 8 (33.3%) had stable disease (SD) as their best response, for a confirmed ORR of 62.5% (95% confidence interval (CI): 40.6%, 81.2%). As an ad hoc end point, the median time to response was 1.4 months (range: 1.2–9.8). The median duration of response was 6.9 months (95% CI: 5.6, not estimable; Fig. 3). The median PFS was 8.1 months (95% CI: 5.5, 12.3). One patient experienced a 33.3% increase from baseline in the target lesion sum of diameters, but was assessed with a best response of SD based on the investigator’s interpretation of RECIST v1.1 in light of the response observed in the non-target lesions. Among the 5 patients who had received KRAS G12C inhibitors before enrollment, 3 (60.0%; 3/3 confirmed) had a PR and 2 (40.0%) had SD as their best response."
+     },
+     {
+      "offset": 13564,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "title_2"
+      },
+      "text": "Pharmacokinetics"
+     },
+     {
+      "offset": 13581,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "paragraph"
+      },
+      "text": "Another secondary objective in this study was to characterize the pharmacokinetic profile of divarasib plus cetuximab. We previously reported that the mean half-life of a single dose of divarasib 400 mg administered as a single agent was 17.6 ± 2.7 h and the corresponding accumulation index after daily dosing to steady state (area under the concentration–time curve from 0 to 24 h (RAUC0–24)) was 1.4 ± 0.4 (ref. ). The steady-state pharmacokinetic profile and RAUC0–24 of divarasib (400 mg once daily) in combination with cetuximab were similar to single-agent divarasib (Extended Data Table 2 and Extended Data Fig. 1)."
+     },
+     {
+      "offset": 14229,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "title_2"
+      },
+      "text": "Biomarker analysis"
+     },
+     {
+      "offset": 14248,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "paragraph"
+      },
+      "text": "Circulating tumor DNA (ctDNA) is an emerging biomarker for monitoring treatment effect, tracking tumor evolution and identifying potential mechanisms of resistance to treatment. As an exploratory objective in this study, retrospective ctDNA profiling was conducted with longitudinal plasma samples collected at baseline (C1D1), on-treatment (multiple time points) and end-of-treatment (EoT) visits."
+     },
+     {
+      "offset": 15694,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "paragraph"
+      },
+      "text": "KRAS G12C variant allele frequency (VAF) from circulating cell-free DNA (cfDNA) was monitored at baseline (C1D1) and at early on-treatment time points (cycle 1 day 15 (C1D15) and cycle 3 day 1 (C3D1)). At C1D1, the KRAS G12C mutation was detected from cfDNA in 22 of 25 patients evaluated. Decline in KRAS G12C VAF as early as C1D15 was observed in patients who had a response or SD. At C3D1, the VAF of KRAS G12C was <0.5% in 17 of these 22 patients (77.3%) including patients with a response or SD (Fig. 4a)."
+     },
+     {
+      "offset": 16205,
+      "infons": {
+       "section_type": "RESULTS",
+       "type": "paragraph"
+      },
+      "text": "To explore the mechanisms of potential acquired resistance, we conducted ctDNA profiling from paired baseline and disease progression/EoT plasma samples. Of the 14 patients profiled, 13 patients (92.9%) had at least one acquired genomic alteration that may be associated with treatment resistance at EoT. Ten patients had at least one alteration in the KRAS gene (excluding the G12C mutation), including copy number gain/amplification, non-G12C pathogenic mutations that can result in oncogenic activation of KRAS, and secondary mutations that may diminish the binding of divarasib to the KRAS G12C protein. Other acquired genomic alterations observed at EoT include alterations in NRAS/HRAS (observed in 4/14 patients), genes in the MAPK pathway (8/14 patients), PI3K pathway (4/14 patients), RTK pathway (8/14 patients) and others (for example, MYC copy number gain; 2/14 patients; Fig. 4b)."
+     },
+     {
+      "offset": 36370,
+      "infons": {
+       "file": null,
+       "id": "Tab3",
+       "section_type": "TABLE",
+       "type": "table_caption"
+      },
+      "text": "All TRAEs"
+     },
+     {
+      "offset": 36380,
+      "infons": {
+       "file": null,
+       "id": "Tab4",
+       "section_type": "TABLE",
+       "type": "table_caption"
+      },
+      "text": "Pharmacokinetic parameters of divarasib in combination with cetuximab following multiple doses"
+     },
+     {
+      "offset": 36475,
+      "infons": {
+       "file": null,
+       "id": "Tab4",
+       "section_type": "TABLE",
+       "type": "table_foot"
+      },
+      "text": "Pharmacokinetic data from capsule and tablet formulations were pooled for this analysis. Analysis was performed with nominal time. Tmax is presented as median (range). All other statistics are presented as the mean ± s.d. Concentration values below the lower limit of quantification (BLLQ) before administration of the first dose were set to 0 and concentration values (BLLQ) after administration of the first dose administration were set to half the lower limit of quantification. Participants with dose reductions/interruptions were excluded from steady-state pharmacokinetic parameter analyses."
+     }
+    ],
+    "annotations": [],
+    "relations": []
+   }
+  ]
+ }
+]

@@ -1,0 +1,205 @@
+{
+  "meta": {
+    "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+    "terms": "https://open.fda.gov/terms/",
+    "license": "https://open.fda.gov/license/",
+    "last_updated": "2026-10-07",
+    "results": {
+      "skip": 0,
+      "limit": 5,
+      "total": 1
+    }
+  },
+  "results": [
+    {
+      "submissions": [
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "9",
+          "submission_status": "AP",
+          "submission_status_date": "20260325",
+          "review_priority": "STANDARD",
+          "submission_class_code": "LABELING",
+          "submission_class_code_description": "Labeling",
+          "submission_property_type": [
+            {
+              "code": "Orphan"
+            }
+          ],
+          "application_docs": [
+            {
+              "id": "85543",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2026/216340s009lbl.pdf",
+              "date": "20260327",
+              "type": "Label"
+            },
+            {
+              "id": "85544",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2026/216340Orig1s009ltr.pdf",
+              "date": "20260327",
+              "type": "Letter"
+            }
+          ]
+        },
+        {
+          "submission_type": "ORIG",
+          "submission_number": "1",
+          "submission_status": "AP",
+          "submission_status_date": "20221212",
+          "review_priority": "STANDARD",
+          "submission_class_code": "TYPE 1",
+          "submission_class_code_description": "Type 1 - New Molecular Entity",
+          "submission_property_type": [
+            {
+              "code": "Orphan"
+            }
+          ],
+          "application_docs": [
+            {
+              "id": "72869",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2022/216340Orig1s000Corrected_lbl.pdf",
+              "date": "20221220",
+              "type": "Label"
+            },
+            {
+              "id": "72870",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2022/216340Orig1s000ltr.pdf",
+              "date": "20221213",
+              "type": "Letter"
+            },
+            {
+              "id": "73141",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2023/216340Orig1s000TOC.html",
+              "date": "20230111",
+              "type": "Review"
+            }
+          ]
+        },
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "5",
+          "submission_status": "AP",
+          "submission_status_date": "20240621",
+          "review_priority": "PRIORITY",
+          "submission_class_code": "EFFICACY",
+          "submission_class_code_description": "Efficacy",
+          "submission_property_type": [
+            {
+              "code": "Orphan"
+            }
+          ],
+          "application_docs": [
+            {
+              "id": "78862",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2024/216340s005lbl.pdf",
+              "date": "20240621",
+              "type": "Label"
+            },
+            {
+              "id": "79124",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2024/216340Orig1s005ltr.pdf",
+              "date": "20240718",
+              "type": "Letter"
+            },
+            {
+              "id": "80194",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2024/216340Orig1s005.pdf",
+              "date": "20241112",
+              "type": "Review"
+            }
+          ]
+        },
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "11",
+          "submission_status": "AP",
+          "submission_status_date": "20260901",
+          "review_priority": "STANDARD",
+          "submission_class_code": "LABELING",
+          "submission_class_code_description": "Labeling",
+          "submission_property_type": [
+            {
+              "code": "Orphan"
+            }
+          ],
+          "application_docs": [
+            {
+              "id": "87132",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2026/216340Orig1s011ltr.pdf",
+              "date": "20260902",
+              "type": "Letter"
+            },
+            {
+              "id": "87167",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2026/216340s011lbl.pdf",
+              "date": "20260908",
+              "type": "Label"
+            }
+          ]
+        }
+      ],
+      "application_number": "NDA216340",
+      "sponsor_name": "BRISTOL",
+      "openfda": {
+        "application_number": [
+          "NDA216340"
+        ],
+        "brand_name": [
+          "KRAZATI"
+        ],
+        "generic_name": [
+          "ADAGRASIB"
+        ],
+        "manufacturer_name": [
+          "Mirati Therapeutics, Inc"
+        ],
+        "product_ndc": [
+          "80739-812"
+        ],
+        "product_type": [
+          "HUMAN PRESCRIPTION DRUG"
+        ],
+        "route": [
+          "ORAL"
+        ],
+        "substance_name": [
+          "ADAGRASIB"
+        ],
+        "rxcui": [
+          "2625917",
+          "2625923"
+        ],
+        "spl_id": [
+          "65724d4c-78ab-4d85-83b5-73b9da5c2cc3"
+        ],
+        "spl_set_id": [
+          "0b8bf078-34c2-4f45-9012-38a8ac082b01"
+        ],
+        "package_ndc": [
+          "80739-812-12",
+          "80739-812-18"
+        ],
+        "unii": [
+          "8EOO6HQF8Y"
+        ]
+      },
+      "products": [
+        {
+          "product_number": "001",
+          "reference_drug": "Yes",
+          "brand_name": "KRAZATI",
+          "active_ingredients": [
+            {
+              "name": "ADAGRASIB",
+              "strength": "200MG"
+            }
+          ],
+          "reference_standard": "Yes",
+          "dosage_form": "TABLET",
+          "route": "ORAL",
+          "marketing_status": "Prescription"
+        }
+      ]
+    }
+  ]
+}

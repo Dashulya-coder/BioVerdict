@@ -23,6 +23,7 @@ import httpx
 
 from bioverdict.connectors.http import CachedHttpClient
 from bioverdict.connectors.opentargets import OpenTargetsApi
+from bioverdict.connectors.validate import contains, json_rows, world_bank_page
 from bioverdict.store.as_of import filter_as_of
 from bioverdict.store.models import Evidence, EvidenceLevel, Locator, ResolverOutput, SourceKind
 
@@ -126,6 +127,9 @@ def parse_orphanet(xml: bytes, codes: list[str], retrieved_at: datetime) -> list
     return evidence
 
 
+_ORPHANET_FILE = contains(b"<JDBOR", b"<DisorderList", b"</JDBOR>")  # whole, not cut short
+
+
 class OrphanetConnector:
     """Satisfies `Connector`. Prevalence of the resolved disease when Orphanet lists it.
 
@@ -146,7 +150,7 @@ class OrphanetConnector:
         codes = orphanet_codes(answer)
         if not codes:
             return []
-        response = await self._http.get(ORPHANET_URL)
+        response = await self._http.get(ORPHANET_URL, validate=_ORPHANET_FILE)
         return filter_as_of(parse_orphanet(response.body, codes, response.fetched_at), as_of)
 
 
@@ -197,7 +201,7 @@ class CdcIndicatorsConnector:
         if question is None:
             return []
         params = cdc_params(question)
-        response = await self._http.get(CDC_URL, params)
+        response = await self._http.get(CDC_URL, params, validate=json_rows)
         source = str(httpx.URL(CDC_URL, params=params))
         rows = json.loads(response.body)
         return filter_as_of(parse_cdc(rows, source, response.fetched_at), as_of)
@@ -250,7 +254,7 @@ class PopulationConnector:
         for indicator in POPULATION_INDICATORS:
             url = WORLD_BANK_URL + indicator
             params = {"format": "json", "mrnev": "1"}
-            response = await self._http.get(url, params)
+            response = await self._http.get(url, params, validate=world_bank_page)
             source = str(httpx.URL(url, params=params))
             evidence += parse_population(response.body, source, response.fetched_at)
         return filter_as_of(evidence, as_of)
@@ -306,6 +310,9 @@ def parse_cancer(body: bytes, site: str, url: str, retrieved_at: datetime) -> li
     ]
 
 
+_CANCER_REPORT = contains(b"State,FIPS", f'"{_US_ROW}'.encode())
+
+
 class CancerIncidenceConnector:
     """Satisfies `Connector`. New cases a year in the US for the sites in `CANCER_SITES`."""
 
@@ -319,6 +326,6 @@ class CancerIncidenceConnector:
         if site is None:
             return []
         params = cancer_params(site)
-        response = await self._http.get(CANCER_URL, params)
+        response = await self._http.get(CANCER_URL, params, validate=_CANCER_REPORT)
         source = str(httpx.URL(CANCER_URL, params=params))
         return filter_as_of(parse_cancer(response.body, site, source, response.fetched_at), as_of)
