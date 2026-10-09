@@ -25,6 +25,7 @@ from bioverdict.connectors.epidemiology import (
     OrphanetConnector,
     PopulationConnector,
 )
+from bioverdict.connectors.europepmc import EuropePmcConnector
 from bioverdict.connectors.http import DEFAULT_MIN_INTERVAL_S, CachedHttpClient
 from bioverdict.connectors.openfda import OpenFdaConnector
 from bioverdict.connectors.opentargets import OpenTargetsApi, OpenTargetsConnector
@@ -41,7 +42,8 @@ NO_INDICATION = "not specified"  # what the Resolver writes when the input names
 
 # Translation is reasoned from the mechanism and clinical evidence; it has no source of its own.
 LIVE_PLANS = (
-    CollectPlan(section=Section.MECHANISM, tools=("opentargets",)),
+    # Preprints are mostly laboratory work on the mechanism; published papers are in PubMed.
+    CollectPlan(section=Section.MECHANISM, tools=("opentargets", "europepmc")),
     CollectPlan(section=Section.CLINICAL, tools=("clinicaltrials", "pubmed")),
     # The class in the registry, then what the FDA approved in it and what those labels say.
     CollectPlan(section=Section.COMPETITION, tools=("clinicaltrials_class", "openfda")),
@@ -126,7 +128,7 @@ def paced_sources(
     max_attempts: int = MAX_ATTEMPTS,
     refresh: bool = False,
 ) -> SourcesFactory:
-    """The public sources: Open Targets, ClinicalTrials.gov, PubMed, openFDA and the market
+    """The public sources: Open Targets, ClinicalTrials.gov, PubMed, Europe PMC, openFDA and the market
     sources. None needs a key; `NCBI_API_KEY` and `OPENFDA_API_KEY` only raise the limits.
 
     A run keeps the default pace, which fits its time budget. Reading many assets in a row
@@ -156,6 +158,7 @@ def _sources(http: CachedHttpClient) -> Sources:
         ClinicalTrialsConnector(http),
         TargetClassTrials(ClinicalTrialsConnector(http)),
         PubMedConnector(http, api_key=os.environ.get("NCBI_API_KEY") or None),
+        EuropePmcConnector(http),
         OpenFdaConnector(http, api_key=os.environ.get("OPENFDA_API_KEY") or None),
         AnalogPricingConnector(http),
         CancerIncidenceConnector(http),

@@ -287,10 +287,11 @@ def test_every_live_plan_names_a_section_once() -> None:
     assert len(sections) == len(set(sections)) and Section.TRANSLATION not in sections
 
 
-def test_the_competition_section_reads_the_registry_class_and_the_fda() -> None:
+def test_preprints_and_fda_records_are_planned_beside_the_first_sources() -> None:
     plans = {plan.section: plan.tools for plan in LIVE_PLANS}
 
     assert plans[Section.COMPETITION] == ("clinicaltrials_class", "openfda")
+    assert plans[Section.MECHANISM] == ("opentargets", "europepmc")
 
 
 def study(nct: str, status: str, phase: str, updated: date) -> list[Evidence]:

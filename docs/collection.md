@@ -96,7 +96,8 @@ left unread makes the section `incomplete`, as before.
 
 ## Live registration
 
-`pipeline/live_sources.py` is the allowlist of a live run: Open Targets for mechanism,
+`pipeline/live_sources.py` is the allowlist of a live run: Open Targets and Europe PMC
+preprints (`europepmc`) for mechanism,
 ClinicalTrials.gov by asset and PubMed for clinical, ClinicalTrials.gov by target within the
 indication (`clinicaltrials_class`) and openFDA (`openfda`) for competition. `pipeline/live_run.py` runs the Resolver and
 this graph, writes each section's status, fact count, rejections and issues into the `collect`

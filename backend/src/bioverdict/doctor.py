@@ -66,6 +66,13 @@ def _pubmed(client: httpx.Client) -> str:
     return "answers"
 
 
+def _europepmc(client: httpx.Client) -> str:
+    url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+    answer = client.get(url, params={"query": "SRC:PPR", "format": "json", "pageSize": "1"})
+    answer.raise_for_status()
+    return f"{answer.json()['hitCount']} preprints indexed"
+
+
 def _openfda(client: httpx.Client) -> str:
     """Sent with the key when one is set, so a key the FDA rejects fails here and not in a run."""
     key = os.environ.get("OPENFDA_API_KEY")
@@ -80,6 +87,7 @@ SOURCES: dict[str, Probe] = {
     "ClinicalTrials.gov": _clinicaltrials,
     "Open Targets": _opentargets,
     "PubMed": _pubmed,
+    "Europe PMC": _europepmc,
     "openFDA": _openfda,
 }
 

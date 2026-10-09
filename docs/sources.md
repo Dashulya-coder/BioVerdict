@@ -23,7 +23,7 @@ When two sources disagree:
 | Targets and drugs | ChEMBL | https://www.ebi.ac.uk/chembl | Drug and mechanism resolution |
 | Targets and drugs | UniProt, Reactome, STRING | various | Protein and pathway context |
 | Literature | PubMed / PMC (E-utilities) | https://pubmed.ncbi.nlm.nih.gov | Publications, abstracts |
-| Literature (add) | Europe PMC (includes preprints) | https://europepmc.org | bioRxiv and medRxiv coverage |
+| Literature | Europe PMC, preprints only | https://europepmc.org | bioRxiv, medRxiv and other preprint servers, which PubMed does not carry (implemented, `connectors/europepmc.py`). Weakest evidence level and source kind `preprint`; a preprint is not linked to its later paper |
 | Genetics (add) | GWAS Catalog | https://www.ebi.ac.uk/gwas | Human genetic evidence |
 | Regulatory | openFDA: Drugs@FDA and drug labels | https://open.fda.gov | Approvals (original and efficacy supplements) and the current label (indications, boxed warning, clinical studies) of drugs approved against the same target (implemented, `connectors/openfda.py`). Always an analog, never the asset. Adverse-event reports and DailyMed are not read |
 | Regulatory (add) | EMA documents | https://www.ema.europa.eu | EU regulatory context |
