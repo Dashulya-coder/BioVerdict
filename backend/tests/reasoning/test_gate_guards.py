@@ -203,3 +203,46 @@ def test_a_k3_claim_needs_human_genetics_through_the_reasoner() -> None:
 
     assert mechanism_gates(animal) == []  # a mouse is not human genetics
     assert mechanism_gates(human) == [GateId.K3]
+
+
+# --- a negated phrase states the opposite --------------------------------------------------
+
+
+def company(text: str) -> Evidence:
+    return publication("E-0900", text, "company:X")
+
+
+def test_a_negated_safety_action_does_not_support_k2() -> None:
+    for text in (
+        "The sponsor confirmed there was no clinical hold and no boxed warning.",
+        "The program was never placed on clinical hold.",
+        "Without a clinical hold, enrolment continued.",
+        "FDA has not issued a boxed warning for the class.",
+    ):
+        assert evidence_guard(GateId.K2, [pair(company(text))]), text
+
+
+def test_a_real_safety_action_still_supports_k2() -> None:
+    for text in (
+        "FDA placed a clinical hold after two deaths.",
+        "No new patients were enrolled because FDA placed the program on clinical hold.",
+        "Earlier, a boxed warning was added to the class label.",
+    ):
+        assert evidence_guard(GateId.K2, [pair(company(text))]) is None, text
+
+
+def test_a_negated_discontinuation_does_not_support_k4() -> None:
+    for text in (
+        "Development was not discontinued; the program continues.",
+        "There is no plan to discontinue development of the asset.",
+        "The company has not deprioritized the program.",
+    ):
+        assert evidence_guard(GateId.K4, [pair(company(text))]), text
+    assert (
+        evidence_guard(GateId.K4, [pair(company("The company discontinued the program."))]) is None
+    )
+
+
+def test_a_negation_in_an_earlier_sentence_does_not_cancel_a_later_fact() -> None:
+    text = "There were no safety concerns at the interim. FDA then placed a clinical hold."
+    assert evidence_guard(GateId.K2, [pair(company(text))]) is None

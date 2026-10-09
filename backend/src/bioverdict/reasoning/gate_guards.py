@@ -12,6 +12,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 
+from bioverdict.reasoning.negation import has_unnegated
 from bioverdict.reasoning.stop_reason import (
     StopReason,
     classify_stop_reason,
@@ -58,7 +59,7 @@ def evidence_guard(gate: GateId, support: Support) -> str | None:
         return "no cited evidence states a stop for lack of efficacy (futility, endpoint not met)"
     if gate is GateId.K2:
         if any(
-            stop_reason_of(ev) is StopReason.SAFETY or _SAFETY_ACTION.search(ev.excerpt)
+            stop_reason_of(ev) is StopReason.SAFETY or has_unnegated(_SAFETY_ACTION, ev.excerpt)
             for ev in evidence
         ):
             return None
@@ -70,7 +71,10 @@ def evidence_guard(gate: GateId, support: Support) -> str | None:
     if gate is GateId.K4:
         if any(
             _stopped_in_registry(ev)
-            or (not ev.excerpt.lstrip().startswith("{") and _PROGRAM_STOPPED.search(ev.excerpt))
+            or (
+                not ev.excerpt.lstrip().startswith("{")
+                and has_unnegated(_PROGRAM_STOPPED, ev.excerpt)
+            )
             for ev in evidence
         ):
             return None

@@ -13,6 +13,8 @@ import json
 import re
 from enum import StrEnum
 
+from bioverdict.reasoning.negation import has_unnegated
+
 
 class StopReason(StrEnum):
     EFFICACY = "efficacy"  # futility, lack of efficacy, endpoint not met
@@ -23,12 +25,6 @@ class StopReason(StrEnum):
     UNKNOWN = "unknown"  # no reason is given
 
 
-# "not based on any safety or efficacy concerns" says the opposite of what its words say.
-_NEGATED = re.compile(
-    r"\b(?:not|no|nor|without|neither|unrelated|independent of|irrespective of|other than)\b[^.;:]{0,40}?\b"
-    r"(?:safety|efficacy|toxicity|futility|adverse|tolerability)\b[^.;:]{0,20}",
-    re.IGNORECASE,
-)
 _EFFICACY = re.compile(
     r"futil|lack of (?:efficacy|benefit|effect)|insufficient (?:efficacy|benefit)|inefficac"
     r"|no (?:efficacy|clinical benefit)|(?:did not|failed to|not) (?:meet|achieve|reach|show)"
@@ -52,9 +48,8 @@ _BUSINESS = re.compile(
 def classify_stop_reason(text: str | None) -> StopReason:
     if not text or not text.strip():
         return StopReason.UNKNOWN
-    cleaned = _NEGATED.sub(" ", text)
-    efficacy = bool(_EFFICACY.search(cleaned))
-    safety = bool(_SAFETY.search(cleaned))
+    efficacy = has_unnegated(_EFFICACY, text)  # "not based on any safety or efficacy concerns"
+    safety = has_unnegated(_SAFETY, text)  # says neither
     business = bool(_BUSINESS.search(text))  # business wording stays even beside a negation
     scientific = efficacy or safety
     if business and scientific:
