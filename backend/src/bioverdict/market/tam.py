@@ -14,12 +14,14 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import re
 import statistics
 from collections.abc import Iterable
 
 from pydantic import BaseModel, ConfigDict
 
+from bioverdict.connectors.biomarker import FAMILY as BIOMARKER_FAMILY
 from bioverdict.connectors.epidemiology import (
     CANCER_FAMILY,
     CDC_FAMILY,
@@ -39,6 +41,7 @@ ORPHANET_CLASSES = {
     "6-9 / 10 000": (60.0, 90.0),
 }
 # Whose prevalence may stand for the United States, best first. A single country's figure may not.
+_Z95 = 1.959964  # the normal quantile of a two-sided 95% interval
 ORPHANET_REGIONS = ("United States", "Worldwide", "Europe")
 _PER_BENEFICIARY = re.compile(r"^Avg_Spnd(?:ng)?_Per_Bene_\d{4}$")
 _BENEFICIARIES = re.compile(r"^Tot_Benes_\d{4}$")
@@ -113,6 +116,52 @@ def _cancer(evidence: list[Evidence], out: MarketEstimate) -> bool:
         ]
         return True
     return False
+
+
+def wilson_interval(successes: int, trials: int) -> tuple[float, float]:
+    """The 95% Wilson score interval of a proportion: honest also for a rare variant, where
+    the plain interval would go below zero."""
+    share = successes / trials
+    spread = _Z95 * math.sqrt(share * (1 - share) / trials + _Z95**2 / (4 * trials**2))
+    centre, scale = share + _Z95**2 / (2 * trials), 1 + _Z95**2 / trials
+    # At the ends the bound is exact; the formula only reaches it up to rounding.
+    low = 0.0 if successes == 0 else max((centre - spread) / scale, 0.0)
+    high = 1.0 if successes == trials else min((centre + spread) / scale, 1.0)
+    return low, high
+
+
+def _biomarker(evidence: list[Evidence], out: MarketEstimate) -> None:
+    """Narrow a cancer's new cases to the patients whose tumour carries the asset's variant."""
+    for item in _of(evidence, BIOMARKER_FAMILY):
+        record = json.loads(item.excerpt)
+        carriers, sequenced = record.get("patients_with_variant"), record.get("patients_sequenced")
+        if out.patients is None or not isinstance(carriers, int) or not sequenced:
+            continue
+        low, high = wilson_interval(carriers, sequenced)
+        share = carriers / sequenced
+        cases = out.patients
+        out.patients = Range(p10=cases.p10 * low, p50=cases.p50 * share, p90=cases.p90 * high)
+        variant = f"{record.get('gene')} {record.get('protein_change')}"
+        out.patients_basis = f"new cases a year in the United States with {variant}"
+        out.evidence_ids.append(item.id)
+        out.assumptions[0] = out.assumptions[0].replace(
+            "no biomarker, stage or line-of-therapy fraction is applied",
+            "no stage or line-of-therapy fraction is applied",
+        )
+        out.assumptions += [
+            (
+                f"Only patients with {variant} are counted: {carriers} of {sequenced} patients "
+                f"({share:.1%}, 95% interval {low:.1%} to {high:.1%}) with "
+                f"{record.get('cancer_type')} in {record.get('study_name')}. The variant is the "
+                "one the asset's registry records name."
+            ),
+            (
+                "That cohort is one cancer centre's patients, mostly with advanced disease, and "
+                "its cancer type can be narrower than the registry's site (non-small cell within "
+                "lung and bronchus): the fraction is applied to every new case of the site."
+            ),
+        ]
+        return
 
 
 def _cdc(evidence: list[Evidence], out: MarketEstimate) -> bool:
@@ -251,7 +300,9 @@ def estimate_market(bundle: Bundle) -> MarketEstimate:
     out = MarketEstimate()
     evidence = bundle.evidence
     # A measured national count first, then a measured US rate, then a rare-disease class.
-    if not (_cancer(evidence, out) or _cdc(evidence, out) or _orphanet(evidence, out)):
+    if _cancer(evidence, out):
+        _biomarker(evidence, out)
+    elif not (_cdc(evidence, out) or _orphanet(evidence, out)):
         out.missing.append(
             "patients: the bundle has no usable epidemiology for the indication (covered: cancer "
             "sites of the US registry report, the CDC's chronic disease indicators, Orphanet "

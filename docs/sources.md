@@ -31,6 +31,7 @@ When two sources disagree:
 | Payer and market | CMS Medicare Part D and Part B Spending by Drug | https://data.cms.gov | Spending per beneficiary on approved analogs (implemented, `connectors/pricing.py`); ASP and NADAC are not read |
 | Analogs | Open Targets, drugs approved against the target | https://platform.opentargets.org | Which approved drugs count as price analogs (implemented) |
 | Epidemiology | NCI State Cancer Profiles | https://statecancerprofiles.cancer.gov | US new cases a year by cancer site: lung, pancreas, colorectal (implemented, `connectors/epidemiology.py`) |
+| Epidemiology | cBioPortal: MSK-IMPACT Clinical Sequencing Cohort (Zehir et al., Nat Med 2017) | https://www.cbioportal.org | How many patients of a cancer type carry the asset's variant: lung (non-small cell), pancreas, colorectal (implemented, `connectors/biomarker.py`). Point mutations of a target gene only; one referral centre's patients, mostly with advanced disease |
 | Epidemiology | CDC Chronic Disease Indicators | https://data.cdc.gov | US adult prevalence: obesity, high blood pressure, asthma (implemented) |
 | Epidemiology | Orphanet (Orphadata, CC BY 4.0) | https://www.orphadata.com | Prevalence of rare diseases, by the Orphanet code Open Targets cross-references (implemented) |
 | Population | World Bank | https://api.worldbank.org | US population the rates are applied to (implemented) |

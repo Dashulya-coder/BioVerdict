@@ -114,7 +114,7 @@ progress event, and hands the frozen bundle to the shared reason → score step.
 [runbook](runbook.md) for how to start a live run and how it fails.
 
 The commercial section reads the market sources (`analog_pricing`, `cancer_incidence`,
-`cdc_indicators`, `orphanet`, `population`). All of their records are status facts, so no model
+`cdc_indicators`, `orphanet`, `population`, `biomarker_frequency`). All of their records are status facts, so no model
 reads them; `market/tam.py` computes the market size from them (see [scoring](scoring.md)).
 
 openFDA reads the drugs approved against the same target (the analogs Open Targets names; generic

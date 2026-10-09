@@ -87,7 +87,12 @@ class CachedHttpClient:
         return self._store(key, url, response, validate)
 
     async def post_json(
-        self, url: str, payload: dict, *, validate: Validator | None = None
+        self,
+        url: str,
+        payload: dict,
+        *,
+        validate: Validator | None = None,
+        headers: dict[str, str] | None = None,
     ) -> HttpResponse:
         # Sorted keys make the body, and therefore the cache key, deterministic.
         body = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -99,7 +104,7 @@ class CachedHttpClient:
         response = await self._send(
             url,
             lambda: self._client.post(
-                url, content=body, headers={"Content-Type": "application/json"}
+                url, content=body, headers={**(headers or {}), "Content-Type": "application/json"}
             ),
         )
         return self._store(key, url, response, validate)

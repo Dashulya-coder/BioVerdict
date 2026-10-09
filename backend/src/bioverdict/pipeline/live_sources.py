@@ -18,6 +18,7 @@ import httpx
 
 from bioverdict import settings
 from bioverdict.agents.collect import CollectPlan
+from bioverdict.connectors.biomarker import BiomarkerFrequencyConnector
 from bioverdict.connectors.clinicaltrials import ClinicalTrialsConnector
 from bioverdict.connectors.edgar import EdgarConnector
 from bioverdict.connectors.epidemiology import (
@@ -56,7 +57,14 @@ LIVE_PLANS = (
     # Market records are status facts: stored whole, read by code (`market/tam.py`), no model.
     CollectPlan(
         section=Section.COMMERCIAL,
-        tools=("analog_pricing", "cancer_incidence", "cdc_indicators", "orphanet", "population"),
+        tools=(
+            "analog_pricing",
+            "cancer_incidence",
+            "cdc_indicators",
+            "orphanet",
+            "population",
+            "biomarker_frequency",  # last: its first download of the cohort is the slowest
+        ),
     ),
 )
 
@@ -166,6 +174,7 @@ def _sources(http: CachedHttpClient) -> Sources:
         registry,
         TargetClassTrials(ClinicalTrialsConnector(http)),
         EdgarConnector(http, registry, os.environ.get("SEC_USER_AGENT")),
+        BiomarkerFrequencyConnector(http, registry),
         pubmed,
         PmcFullTextConnector(http, pubmed),
         EuropePmcConnector(http),

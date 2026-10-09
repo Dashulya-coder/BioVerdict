@@ -85,6 +85,13 @@ def _sec(client: httpx.Client) -> str:
     return "answers to the declared contact"
 
 
+def _cbioportal(client: httpx.Client) -> str:
+    headers = {"User-Agent": "bioverdict-hackathon", "Accept": "application/json"}
+    answer = client.get("https://www.cbioportal.org/api/studies/msk_impact_2017", headers=headers)
+    answer.raise_for_status()
+    return f"{answer.json()['allSampleCount']} samples in the cohort"
+
+
 def _openfda(client: httpx.Client) -> str:
     """Sent with the key when one is set, so a key the FDA rejects fails here and not in a run."""
     key = os.environ.get("OPENFDA_API_KEY")
@@ -100,6 +107,7 @@ SOURCES: dict[str, Probe] = {
     "Open Targets": _opentargets,
     "PubMed": _pubmed,
     "Europe PMC": _europepmc,
+    "cBioPortal": _cbioportal,
     "openFDA": _openfda,
     "SEC EDGAR": _sec,
 }
