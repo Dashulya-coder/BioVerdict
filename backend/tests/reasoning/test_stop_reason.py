@@ -45,3 +45,15 @@ def test_fields_are_read_from_a_registry_status_record_only() -> None:
     assert why_stopped(record) == "Futility" and overall_status(record) == "TERMINATED"
     assert why_stopped("Plain text, not JSON") is None and overall_status("[1, 2]") is None
     assert why_stopped('{"overallStatus": "COMPLETED"}') is None
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "There was no clinical hold",
+        "No deaths were reported and the study was stopped",
+        "The trial did not fail for futility",
+    ],
+)
+def test_a_negated_reason_is_not_that_reason(text: str) -> None:
+    assert classify_stop_reason(text) in (StopReason.OTHER, StopReason.UNKNOWN)
