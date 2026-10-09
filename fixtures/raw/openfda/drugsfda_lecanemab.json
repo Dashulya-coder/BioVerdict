@@ -1,0 +1,464 @@
+{
+  "meta": {
+    "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+    "terms": "https://open.fda.gov/terms/",
+    "license": "https://open.fda.gov/license/",
+    "last_updated": "2026-10-07",
+    "results": {
+      "skip": 0,
+      "limit": 5,
+      "total": 2
+    }
+  },
+  "results": [
+    {
+      "submissions": [
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "5",
+          "submission_status": "AP",
+          "submission_status_date": "20250124",
+          "review_priority": "STANDARD",
+          "submission_class_code": "EFFICACY",
+          "submission_class_code_description": "Efficacy",
+          "application_docs": [
+            {
+              "id": "80982",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2025/761269s005lbl.pdf",
+              "date": "20250205",
+              "type": "Label"
+            },
+            {
+              "id": "81107",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2025/761269Orig1s005ltr.pdf",
+              "date": "20250206",
+              "type": "Letter"
+            }
+          ]
+        },
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "1",
+          "submission_status": "AP",
+          "submission_status_date": "20230706",
+          "review_priority": "PRIORITY",
+          "submission_class_code": "EFFICACY",
+          "submission_class_code_description": "Efficacy",
+          "application_docs": [
+            {
+              "id": "74690",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2023/761269Orig1s001lbl.pdf",
+              "date": "20230905",
+              "type": "Label"
+            },
+            {
+              "id": "74712",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2023/761269Orig1s001ltr.pdf",
+              "date": "20230905",
+              "type": "Letter"
+            },
+            {
+              "id": "78096",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2024/761269Orig1s001.pdf",
+              "date": "20240409",
+              "type": "Review"
+            }
+          ]
+        },
+        {
+          "submission_type": "ORIG",
+          "submission_number": "1",
+          "submission_status": "AP",
+          "submission_status_date": "20230106",
+          "review_priority": "PRIORITY",
+          "submission_class_code": "TYPE 1",
+          "submission_class_code_description": "Type 1 - New Molecular Entity",
+          "application_docs": [
+            {
+              "id": "73114",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2023/761269Orig1s000ltr.pdf",
+              "date": "20230106",
+              "type": "Letter"
+            },
+            {
+              "id": "73115",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/summary_review/2023/761269Orig1s000SumR.pdf",
+              "date": "20230106",
+              "type": "Summary Review"
+            },
+            {
+              "id": "73116",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2023/761269Orig1s000lbl.pdf",
+              "date": "20230106",
+              "type": "Label"
+            },
+            {
+              "id": "73385",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2023/761269Orig1s000TOC.html",
+              "date": "20230206",
+              "type": "Review"
+            }
+          ]
+        },
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "12",
+          "submission_status": "AP",
+          "submission_status_date": "20251215",
+          "review_priority": "STANDARD",
+          "submission_class_code": "LABELING",
+          "submission_class_code_description": "Labeling",
+          "application_docs": [
+            {
+              "id": "84458",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2025/761269s012s015lbl.pdf",
+              "date": "20251218",
+              "type": "Label"
+            },
+            {
+              "id": "84497",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2025/761269Orig1s012; s015ltr.pdf",
+              "date": "20251222",
+              "type": "Letter"
+            }
+          ]
+        },
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "8",
+          "submission_status": "AP",
+          "submission_status_date": "20241114",
+          "review_priority": "STANDARD",
+          "submission_class_code": "LABELING",
+          "submission_class_code_description": "Labeling",
+          "application_docs": [
+            {
+              "id": "80219",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2024/761269s008lbl.pdf",
+              "date": "20241115",
+              "type": "Label"
+            },
+            {
+              "id": "80222",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2024/761269Orig1s008ltr.pdf",
+              "date": "20241115",
+              "type": "Letter"
+            }
+          ]
+        },
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "15",
+          "submission_status": "AP",
+          "submission_status_date": "20251215",
+          "review_priority": "STANDARD",
+          "submission_class_code": "LABELING",
+          "submission_class_code_description": "Labeling",
+          "application_docs": [
+            {
+              "id": "84457",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2025/761269s012s015lbl.pdf",
+              "date": "20251218",
+              "type": "Label"
+            },
+            {
+              "id": "84498",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2025/761269Orig1s012; s015ltr.pdf",
+              "date": "20251222",
+              "type": "Letter"
+            }
+          ]
+        },
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "13",
+          "submission_status": "AP",
+          "submission_status_date": "20250821",
+          "review_priority": "STANDARD",
+          "submission_class_code": "LABELING",
+          "submission_class_code_description": "Labeling",
+          "application_docs": [
+            {
+              "id": "83171",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2025/716269Orig1s013ltr.pdf",
+              "date": "20250822",
+              "type": "Letter"
+            },
+            {
+              "id": "83187",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2025/761269s013lbl.pdf",
+              "date": "20250825",
+              "type": "Label"
+            }
+          ]
+        },
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "11",
+          "submission_status": "AP",
+          "submission_status_date": "20260116",
+          "review_priority": "STANDARD",
+          "submission_class_code": "LABELING",
+          "submission_class_code_description": "Labeling",
+          "application_docs": [
+            {
+              "id": "84800",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2026/761269s011lbl.pdf",
+              "date": "20260121",
+              "type": "Label"
+            },
+            {
+              "id": "84801",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2026/761269s011lbl.pdf#page=26",
+              "date": "20260121",
+              "type": "Medication Guide"
+            },
+            {
+              "id": "84812",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2026/761269Orig1s011ltr.pdf",
+              "date": "20260122",
+              "type": "Letter"
+            }
+          ]
+        }
+      ],
+      "application_number": "BLA761269",
+      "sponsor_name": "EISAI INC",
+      "openfda": {
+        "application_number": [
+          "BLA761269"
+        ],
+        "brand_name": [
+          "LEQEMBI"
+        ],
+        "generic_name": [
+          "LECANEMAB"
+        ],
+        "manufacturer_name": [
+          "Eisai Inc."
+        ],
+        "product_ndc": [
+          "62856-212",
+          "62856-215",
+          "62856-220",
+          "62856-222"
+        ],
+        "product_type": [
+          "HUMAN PRESCRIPTION DRUG"
+        ],
+        "route": [
+          "INTRAVENOUS"
+        ],
+        "substance_name": [
+          "LECANEMAB"
+        ],
+        "rxcui": [
+          "2626147",
+          "2626153",
+          "2626155",
+          "2626156",
+          "2723406",
+          "2747782"
+        ],
+        "spl_id": [
+          "5bf59fb4-34d6-40dd-9061-a74173f14f58"
+        ],
+        "spl_set_id": [
+          "9d1ff786-e577-410a-a273-c4d7d0e4e975"
+        ],
+        "package_ndc": [
+          "62856-215-01",
+          "62856-212-01",
+          "62856-220-10",
+          "62856-220-01",
+          "62856-222-10",
+          "62856-222-02"
+        ],
+        "nui": [
+          "N0000193951",
+          "N0000193950"
+        ],
+        "pharm_class_epc": [
+          "Amyloid Beta-directed Antibody [EPC]"
+        ],
+        "pharm_class_moa": [
+          "Amyloid Beta-directed Antibody Interactions [MoA]"
+        ],
+        "unii": [
+          "12PYH0FTU9"
+        ]
+      },
+      "products": [
+        {
+          "product_number": "002",
+          "reference_drug": "TBD",
+          "brand_name": "LEQEMBI",
+          "active_ingredients": [
+            {
+              "name": "LECANEMAB-IRMB",
+              "strength": "200MG/2ML"
+            }
+          ],
+          "reference_standard": "No",
+          "dosage_form": "INJECTABLE",
+          "route": "INJECTION",
+          "marketing_status": "Prescription"
+        },
+        {
+          "product_number": "001",
+          "reference_drug": "TBD",
+          "brand_name": "LEQEMBI",
+          "active_ingredients": [
+            {
+              "name": "LECANEMAB-IRMB",
+              "strength": "500MG/5ML"
+            }
+          ],
+          "reference_standard": "No",
+          "dosage_form": "INJECTABLE",
+          "route": "INJECTION",
+          "marketing_status": "Prescription"
+        }
+      ]
+    },
+    {
+      "submissions": [
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "1",
+          "submission_status": "AP",
+          "submission_status_date": "20260713",
+          "review_priority": "PRIORITY",
+          "submission_class_code": "EFFICACY",
+          "submission_class_code_description": "Efficacy",
+          "application_docs": [
+            {
+              "id": "86568",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2026/761375s001lbl.pdf",
+              "date": "20260715",
+              "type": "Label"
+            },
+            {
+              "id": "86569",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2026/761375s001lbl.pdf#page=28",
+              "date": "20260715",
+              "type": "Medication Guide"
+            },
+            {
+              "id": "86607",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2026/761375Orig1s001ltr.pdf",
+              "date": "20260720",
+              "type": "Letter"
+            }
+          ]
+        },
+        {
+          "submission_type": "ORIG",
+          "submission_number": "1",
+          "submission_status": "AP",
+          "submission_status_date": "20250829",
+          "review_priority": "STANDARD",
+          "submission_class_code": "TYPE 3",
+          "submission_class_code_description": "Type 3 - New Dosage Form",
+          "application_docs": [
+            {
+              "id": "83253",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2025/761375s000lbl.pdf",
+              "date": "20250902",
+              "type": "Label"
+            },
+            {
+              "id": "83271",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2025/761375Orig1s000ltr.pdf",
+              "date": "20250903",
+              "type": "Letter"
+            }
+          ]
+        }
+      ],
+      "application_number": "BLA761375",
+      "sponsor_name": "EISAI INC",
+      "openfda": {
+        "application_number": [
+          "BLA761375"
+        ],
+        "brand_name": [
+          "LECANEMAB AUTOINJECTOR"
+        ],
+        "generic_name": [
+          "LECANEMAB-IRMB"
+        ],
+        "manufacturer_name": [
+          "Eisai Inc."
+        ],
+        "product_ndc": [
+          "62856-220",
+          "62856-215",
+          "62856-212",
+          "62856-222"
+        ],
+        "product_type": [
+          "HUMAN PRESCRIPTION DRUG"
+        ],
+        "route": [
+          "SUBCUTANEOUS"
+        ],
+        "substance_name": [
+          "LECANEMAB-IRMB"
+        ],
+        "rxcui": [
+          "2626147",
+          "2626153",
+          "2626155",
+          "2626156",
+          "2723406",
+          "2747782"
+        ],
+        "spl_id": [
+          "5bf59fb4-34d6-40dd-9061-a74173f14f58"
+        ],
+        "spl_set_id": [
+          "9d1ff786-e577-410a-a273-c4d7d0e4e975"
+        ],
+        "package_ndc": [
+          "62856-215-01",
+          "62856-212-01",
+          "62856-220-10",
+          "62856-220-01",
+          "62856-222-10",
+          "62856-222-02"
+        ],
+        "nui": [
+          "N0000193951",
+          "N0000193950"
+        ],
+        "pharm_class_epc": [
+          "Amyloid Beta-directed Antibody [EPC]"
+        ],
+        "pharm_class_moa": [
+          "Amyloid Beta-directed Antibody Interactions [MoA]"
+        ],
+        "unii": [
+          "12PYH0FTU9"
+        ]
+      },
+      "products": [
+        {
+          "product_number": "003",
+          "reference_drug": "No",
+          "brand_name": "LEQEMBI IQLIK",
+          "active_ingredients": [
+            {
+              "name": "LECANEMAB-IRMB",
+              "strength": "360MG/1.8ML(200MG/ML)"
+            }
+          ],
+          "reference_standard": "No",
+          "dosage_form": "INJECTABLE",
+          "route": "SUBCUTANEOUS",
+          "marketing_status": "Prescription"
+        }
+      ]
+    }
+  ]
+}

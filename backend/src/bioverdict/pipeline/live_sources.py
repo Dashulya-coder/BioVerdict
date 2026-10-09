@@ -26,6 +26,7 @@ from bioverdict.connectors.epidemiology import (
     PopulationConnector,
 )
 from bioverdict.connectors.http import DEFAULT_MIN_INTERVAL_S, CachedHttpClient
+from bioverdict.connectors.openfda import OpenFdaConnector
 from bioverdict.connectors.opentargets import OpenTargetsApi, OpenTargetsConnector
 from bioverdict.connectors.pricing import AnalogPricingConnector
 from bioverdict.connectors.pubmed import PubMedConnector
@@ -42,7 +43,8 @@ NO_INDICATION = "not specified"  # what the Resolver writes when the input names
 LIVE_PLANS = (
     CollectPlan(section=Section.MECHANISM, tools=("opentargets",)),
     CollectPlan(section=Section.CLINICAL, tools=("clinicaltrials", "pubmed")),
-    CollectPlan(section=Section.COMPETITION, tools=("clinicaltrials_class",)),
+    # The class in the registry, then what the FDA approved in it and what those labels say.
+    CollectPlan(section=Section.COMPETITION, tools=("clinicaltrials_class", "openfda")),
     # Market records are status facts: stored whole, read by code (`market/tam.py`), no model.
     CollectPlan(
         section=Section.COMMERCIAL,
@@ -124,7 +126,8 @@ def paced_sources(
     max_attempts: int = MAX_ATTEMPTS,
     refresh: bool = False,
 ) -> SourcesFactory:
-    """The public sources: Open Targets, ClinicalTrials.gov and PubMed. None needs a key.
+    """The public sources: Open Targets, ClinicalTrials.gov, PubMed, openFDA and the market
+    sources. None needs a key; `NCBI_API_KEY` and `OPENFDA_API_KEY` only raise the limits.
 
     A run keeps the default pace, which fits its time budget. Reading many assets in a row
     (`bioverdict warm`) has to be slower and more patient, or the registry answers 429.
@@ -153,6 +156,7 @@ def _sources(http: CachedHttpClient) -> Sources:
         ClinicalTrialsConnector(http),
         TargetClassTrials(ClinicalTrialsConnector(http)),
         PubMedConnector(http, api_key=os.environ.get("NCBI_API_KEY") or None),
+        OpenFdaConnector(http, api_key=os.environ.get("OPENFDA_API_KEY") or None),
         AnalogPricingConnector(http),
         CancerIncidenceConnector(http),
         CdcIndicatorsConnector(http),

@@ -7,6 +7,7 @@ key that is set is not proven to be valid. Secrets are never printed, only wheth
 
 from __future__ import annotations
 
+import os
 import sqlite3
 import sys
 import tempfile
@@ -65,10 +66,21 @@ def _pubmed(client: httpx.Client) -> str:
     return "answers"
 
 
+def _openfda(client: httpx.Client) -> str:
+    """Sent with the key when one is set, so a key the FDA rejects fails here and not in a run."""
+    key = os.environ.get("OPENFDA_API_KEY")
+    url = "https://api.fda.gov/drug/drugsfda.json"
+    answer = client.get(url, params={"limit": "1"}, auth=(key, "") if key else None)
+    answer.raise_for_status()
+    limit = "key accepted" if key else "no key: 1,000 requests a day"
+    return f"data as of {answer.json()['meta']['last_updated']}, {limit}"
+
+
 SOURCES: dict[str, Probe] = {
     "ClinicalTrials.gov": _clinicaltrials,
     "Open Targets": _opentargets,
     "PubMed": _pubmed,
+    "openFDA": _openfda,
 }
 
 

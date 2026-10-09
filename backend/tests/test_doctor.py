@@ -8,7 +8,7 @@ import httpx
 import pytest
 
 from bioverdict.cli import main
-from bioverdict.doctor import Check, check_sources, render, run_checks
+from bioverdict.doctor import Check, _openfda, check_sources, render, run_checks
 
 FIXTURES = Path(__file__).parents[2] / "fixtures"
 UP = {"Registry": lambda client: "data as of today"}
@@ -128,3 +128,34 @@ def test_doctor_names_the_provider_of_the_gateway_key(monkeypatch) -> None:
     checks = {c.name: c for c in check_mode_and_model()}
     assert checks["model key"].status == "ok" and "openai" in checks["model key"].detail
     assert "gateway-secret" not in " ".join(c.detail for c in checks.values())  # never printed
+
+
+def _fda(seen: list[httpx.Request], status: int = 200) -> httpx.Client:
+    def answer(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(status, json={"meta": {"last_updated": "2026-10-07"}})
+
+    return httpx.Client(transport=httpx.MockTransport(answer))
+
+
+def test_the_fda_check_sends_the_key_in_a_header_and_never_prints_it(monkeypatch) -> None:
+    seen: list[httpx.Request] = []
+    monkeypatch.setenv("OPENFDA_API_KEY", "secret-key")
+
+    note = _openfda(_fda(seen))
+
+    assert note == "data as of 2026-10-07, key accepted"
+    assert "authorization" in seen[0].headers and "secret-key" not in str(seen[0].url)
+
+
+def test_the_fda_check_names_the_daily_limit_without_a_key(monkeypatch) -> None:
+    monkeypatch.delenv("OPENFDA_API_KEY", raising=False)
+
+    assert _openfda(_fda([])).endswith("no key: 1,000 requests a day")
+
+
+def test_a_key_the_fda_rejects_fails_the_check(monkeypatch) -> None:
+    monkeypatch.setenv("OPENFDA_API_KEY", "secret-key")
+
+    with pytest.raises(httpx.HTTPStatusError):
+        _openfda(_fda([], status=403))

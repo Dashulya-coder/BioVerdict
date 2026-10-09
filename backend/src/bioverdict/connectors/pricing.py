@@ -92,7 +92,7 @@ def analog_name(evidence: Evidence) -> str:
     return json.loads(evidence.excerpt)["drug"]["name"]
 
 
-def _same_drug(generic: str, analog: str) -> bool:
+def same_drug(generic: str, analog: str) -> bool:
     """CMS writes 'Lecanemab-Irmb' and 'Sotorasib'; a combination product is another drug."""
     name = _SUFFIX.sub("", generic.strip().casefold())
     return normalize(name) == normalize(analog)
@@ -116,7 +116,7 @@ def parse_spending(
     for row in rows:
         year = latest_year(row)
         overall = row.get("Mftr_Name", "Overall") == "Overall"  # Part B has no manufacturer rows
-        if year is None or not overall or not _same_drug(row.get("Gnrc_Name", ""), analog):
+        if year is None or not overall or not same_drug(row.get("Gnrc_Name", ""), analog):
             continue
         fields = ("Brnd_Name", "Gnrc_Name", "HCPCS_Cd", "HCPCS_Desc")
         fragment = {"program": program, "year": year}

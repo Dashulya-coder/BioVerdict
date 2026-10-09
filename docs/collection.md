@@ -98,7 +98,7 @@ left unread makes the section `incomplete`, as before.
 
 `pipeline/live_sources.py` is the allowlist of a live run: Open Targets for mechanism,
 ClinicalTrials.gov by asset and PubMed for clinical, ClinicalTrials.gov by target within the
-indication (`clinicaltrials_class`) for competition. `pipeline/live_run.py` runs the Resolver and
+indication (`clinicaltrials_class`) and openFDA (`openfda`) for competition. `pipeline/live_run.py` runs the Resolver and
 this graph, writes each section's status, fact count, rejections and issues into the `collect`
 progress event, and hands the frozen bundle to the shared reason → score step. See the
 [runbook](runbook.md) for how to start a live run and how it fails.
@@ -106,6 +106,12 @@ progress event, and hands the frozen bundle to the shared reason → score step.
 The commercial section reads the market sources (`analog_pricing`, `cancer_incidence`,
 `cdc_indicators`, `orphanet`, `population`). All of their records are status facts, so no model
 reads them; `market/tam.py` computes the market size from them (see [scoring](scoring.md)).
+
+openFDA reads the drugs approved against the same target (the analogs Open Targets names; generic
+copies are left out). Approvals, indications and boxed warnings are status facts. The clinical
+studies section of each label is text for the model, in verbatim pieces of up to 6,000 characters
+cut between sentences. A class with many approved drugs (GLP-1 agonists) has more label text than
+the three prompts hold, so its competition section is `incomplete`.
 
 Checkpointing and independent verification (B8) remain subsequent work. Tests verify the offline
 boundary and mocked call logging; runs against the real sources used a stand-in model. Neither

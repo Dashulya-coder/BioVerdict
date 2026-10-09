@@ -76,7 +76,7 @@ Full operating procedures, including cache pre-warm and demo-day fallbacks: [`do
 | `LLM_PRIMARY` | Primary provider and model per step, see [`docs/cost.md`](docs/cost.md) |
 | `LLM_FALLBACKS` | Ordered failover list |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` | Provider keys (never commit) |
-| `NCBI_API_KEY`, `TAVILY_API_KEY`, `SEC_USER_AGENT` | Data-source access |
+| `NCBI_API_KEY`, `OPENFDA_API_KEY`, `TAVILY_API_KEY`, `SEC_USER_AGENT` | Data-source access |
 | `RUN_BUDGET_USD`, `RUN_TIMEOUT_S` | Hard limits per run |
 | `DB_PATH`, `CACHE_DIR` | SQLite file and HTTP/LLM cache |
 

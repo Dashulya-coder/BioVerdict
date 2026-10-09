@@ -1,0 +1,104 @@
+{
+ "meta": {
+  "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+  "terms": "https://open.fda.gov/terms/",
+  "license": "https://open.fda.gov/license/",
+  "last_updated": "2026-10-08",
+  "results": {
+   "skip": 0,
+   "limit": 5,
+   "total": 1
+  }
+ },
+ "results": [
+  {
+   "set_id": "9d1ff786-e577-410a-a273-c4d7d0e4e975",
+   "effective_time": "20260721",
+   "version": "24",
+   "openfda": {
+    "application_number": [
+     "BLA761269",
+     "BLA761375"
+    ],
+    "brand_name": [
+     "LEQEMBI",
+     "LECANEMAB AUTOINJECTOR"
+    ],
+    "generic_name": [
+     "LECANEMAB",
+     "LECANEMAB-IRMB"
+    ],
+    "manufacturer_name": [
+     "Eisai Inc."
+    ],
+    "product_ndc": [
+     "62856-212",
+     "62856-215",
+     "62856-220",
+     "62856-222"
+    ],
+    "product_type": [
+     "HUMAN PRESCRIPTION DRUG"
+    ],
+    "route": [
+     "INTRAVENOUS",
+     "SUBCUTANEOUS"
+    ],
+    "substance_name": [
+     "LECANEMAB",
+     "LECANEMAB-IRMB"
+    ],
+    "rxcui": [
+     "2626147",
+     "2626153",
+     "2626155",
+     "2626156",
+     "2723406",
+     "2747782"
+    ],
+    "spl_id": [
+     "5bf59fb4-34d6-40dd-9061-a74173f14f58"
+    ],
+    "spl_set_id": [
+     "9d1ff786-e577-410a-a273-c4d7d0e4e975"
+    ],
+    "package_ndc": [
+     "62856-215-01",
+     "62856-212-01",
+     "62856-220-10",
+     "62856-220-01",
+     "62856-222-10",
+     "62856-222-02"
+    ],
+    "is_original_packager": [
+     true
+    ],
+    "upc": [
+     "0362856222105"
+    ],
+    "nui": [
+     "N0000193951",
+     "N0000193950"
+    ],
+    "pharm_class_epc": [
+     "Amyloid Beta-directed Antibody [EPC]"
+    ],
+    "pharm_class_moa": [
+     "Amyloid Beta-directed Antibody Interactions [MoA]"
+    ],
+    "unii": [
+     "12PYH0FTU9"
+    ]
+   },
+   "clinical_studies": [
+    "14 CLINICAL STUDIES The efficacy of LEQEMBI was evaluated in two double-blind, placebo-controlled, parallel-group, randomized studies (Study 1, NCT01767311; Study 2 NCT03887455) in patients with Alzheimer’s disease (patients with confirmed presence of amyloid pathology and mild cognitive impairment [64% of patients in Study 1; 62% of patients in Study 2] or mild dementia stage of disease [36% of patients in Study 1; 38% of patients in Study 2], consistent with Stage 3 and Stage 4 Alzheimer’s disease). In both studies, patients were enrolled with a Clinical Dementia Rating (CDR) global score of 0.5 or 1.0 and a Memory Box score of 0.5 or greater. All patients had a Mini-Mental State Examination (MMSE) score of ≥22 and ≤30, and had objective impairment in episodic memory as indicated by at least 1 standard deviation below age-adjusted mean in the Wechsler-Memory Scale-IV Logical Memory II (subscale) (WMS-IV LMII). Patients were enrolled with or without concomitant approved therapies (cholinesterase inhibitors and the N-methyl-D-aspartate antagonist memantine) for Alzheimer’s disease. The dosage of 10 mg/kg administered once every 2 weeks by intravenous infusion was assessed in the 18-month placebo-controlled portions of Study 1 and Study 2 and continued in the optional long-term extension in each study. The effectiveness of subcutaneous LEQEMBI is based on the established effectiveness of intravenous LEQEMBI supported by comparable pharmacokinetic exposures and reductions of amyloid beta plaque level. Transitioning to intravenous 10 mg/kg once every 4 weeks or subcutaneous 360 mg every week after 18 months of dosing is supported by pharmacokinetic and pharmacodynamic modeling using observed data [see Clinical Pharmacology ( 12.2 )] ; however, there are limited data to assess the long-term clinical benefit of transitioning to the dosing regimen of intravenous 10 mg/kg once every 4 weeks or subcutaneous 360 mg every week [see Dosage and Administration ( 2.2 )] . Study 1 In Study 1, 856 patients were randomized to receive one of 5 doses (161 of which were randomized to the recommended dosing regimen of 10 mg/kg every two weeks) of intravenous infusion of LEQEMBI or placebo (n=247). Of the total number of patients randomized, 71.4% were ApoE ε4 carriers and 28.6% were ApoE ε4 non-carriers. During the study, the protocol was amended to no longer randomize ApoE ε4 carriers to the 10 mg/kg every two weeks dose arm. ApoE ε4 carriers who had been receiving LEQEMBI 10 mg/kg every two weeks for 6 months or less were discontinued from study drug. As a result, in the LEQEMBI 10 mg/kg every two weeks arm, 30.3% of patients were ApoE ε4 carriers and 69.7% were ApoE ε4 non-carriers. At baseline, the mean age of randomized patients was 71 years, with a range of 50 to 90 years. Fifty percent of patients were male and 90% were White. In Study 1, a subgroup of 315 patients were enrolled in the amyloid PET substudy; of these, 277 were evaluated at Week 79. Results from the amyloid beta PET substudy are described in Figure 1 and Table 10. Plasma biomarkers are described in Table 8. Figure 1 : Reduction in Brain Amyloid Beta Plaque (Adjusted Mean Change from Baseline in Amyloid Beta PET Composite, SUVR and Centiloids) in Study 1 Table 10: Results for Amyloid Beta PET in Study 1 Biomarker Endpoints LEQEMBI 10 mg/kg Every Two Weeks Placebo Amyloid Beta PET Composite SUVR N=44 N=98 Mean baseline 1.373 1.402 Adjusted mean change from baseline at Week 79 Difference from placebo -0.306 -0.310 ( P <0.001) 1 0.004 Amyloid Beta PET Centiloid N=44 N=98 Mean baseline 78.0 84.8 Adjusted mean change from baseline at Week 79 Difference from placebo -72.5 -73.5 ( P <0.001) 1 1.0 N is the number of patients with baseline value. 1 P values were not statistically controlled for multiple comparisons. The primary endpoint was change from baseline on a weighted composite score consisting of selected items from the Clinical Dementia Rating scale Sum of Boxes (CDR-SB), MMSE, and Alzheimer Disease Assessment Scale – Cognitive Subscale 14 (ADAS-Cog14) at Week 53. LEQEMBI had a 64% likelihood of 25% or greater slowing of progression on the primary endpoint relative to placebo at Week 53, which did not meet the prespecified success criterion of 80%. Key secondary efficacy endpoints included the change from baseline in amyloid PET SUVR composite at Week 79 and change from baseline in the CDR-SB and ADAS-Cog14 at Week 79. Results for clinical assessments showed less change from baseline in CDR-SB and ADAS-Cog14 scores at Week 79 in the LEQEMBI group than in patients on placebo (CDR-SB: -0.40 [26%], 90% CI [-0.82, 0.03]; ADAS-Cog14: -2.31 [47%], 90% CI [-3.91, -0.72]). After the 79-week double-blind, placebo-controlled period of Study 1, patients could enroll in an open-label extension period for up to 260 weeks, which was initiated after a gap period (range 9 to 59 months; mean 24 months) off treatment. Study 2 In Study 2, 1795 patients were enrolled and randomized 1:1 to receive intravenous infusion of LEQEMBI 10 mg/kg or placebo once every 2 weeks. Of the total number of patients randomized, 69% were ApoE ε4 carriers and 31% were ApoE ε4 non-carriers. Overall median age of patients was 72 years, with a range of 50 to 90 years. Fifty-two percent were women, and 1381 (77%) were White, 303 (17%) were Asian, and 47 (3%) were Black. The randomization was stratified according to clinical subgroup (mild cognitive impairment or mild dementia stage of the disease); the presence or absence of concomitant approved therapies for Alzheimer’s disease at baseline (cholinesterase inhibitors and the N-methyl-D-aspartate antagonist memantine); ApoE ε4 carrier status; and geographical region. The primary efficacy outcome was change from baseline at 18 months in the CDR-SB. Key secondary endpoints included change from baseline at 18 months for the following measures: amyloid Positron Emission Tomography (PET) using Centiloids, ADAS-Cog14, and Alzheimer's Disease Cooperative Study-Activities of Daily Living Scale for Mild Cognitive Impairment (ADCS MCI-ADL). LEQEMBI treatment met the primary endpoint and reduced clinical decline on the global cognitive and functional scale, CDR-SB, compared to placebo at 18 months (-0.45 [-27%], P <0.0001). Statistically significant differences ( P <0.01) between treatment groups were also seen in the results for ADAS-Cog14 and ADCS MCI-ADL at 18 months, as presented in Table 11. Both ApoE ε4 carriers and ApoE ε4 noncarriers showed statistically significant treatment differences for the primary endpoint and all secondary endpoints. In an exploratory subgroup analysis of ApoE ε4 homozygotes, which represented 15% of the trial population, a treatment effect was not observed with LEQEMBI treatment on the primary endpoint, CDR-SB, compared to placebo, although treatment effects that favored LEQEMBI were observed for the secondary clinical endpoints, ADAS-Cog14 and ADCS MCI-ADL. Treatment effects on disease-relevant biomarkers (amyloid beta PET, plasma Aβ42/40 ratio, plasma p-tau 181) also favored LEQEMBI in the ApoE ε4 homozygous subgroup. Starting at six months, across all time points, LEQEMBI treatment showed statistically significant changes in the primary and all key secondary endpoints from baseline compared to placebo; see Figure 2. Table 11: Results for CDR-SB, ADAS-Cog14, and ADCS MCI-ADL in Study 2 Clinical Endpoints LEQEMBI 10 mg/kg Every Two Weeks Placebo CDR-SB N=859 N=875 Mean baseline 3.17 3.22 Adjusted mean change from baseline at 18 months (%) Difference from placebo 1.21 -0.45 (-27%) ( P <0.0001) 1.66 ADAS-Cog14 N=854 N=872 Mean baseline 24.45 24.37 Adjusted mean change from baseline at 18 months (%) Difference from placebo 4.14 -1.44 (-26%) ( P =0.0007) 5.58 ADCS MCI-ADL N=783 N=796 Mean baseline 41.2 40.9 Adjusted mean change from baseline at 18 months Difference from placebo -3.5 (-37%) 2.0 ( P <0.0001) -5.5 Figure 2 : Adjusted Mean Change from Baseline in CDR-SB in Study 2 Figure 1: Reduction in Brain Amyloid Beta Plaque (Adjusted Mean Change from Baseline in Amyloid Beta PET Composite, SUVR and Centiloids) in Study 1 Figure 2: Adjusted Mean Change from Baseline in CDR-SB in Study 2"
+   ],
+   "indications_and_usage": [
+    "1 INDICATIONS AND USAGE LEQEMBI is indicated for the treatment of Alzheimer’s disease. Treatment with LEQEMBI should be initiated in patients with mild cognitive impairment or mild dementia stage of disease, the population in which treatment was initiated in clinical trials. LEQEMBI is an amyloid beta-directed antibody indicated for the treatment of Alzheimer’s disease. Treatment with LEQEMBI should be initiated in patients with mild cognitive impairment or mild dementia stage of disease, the population in which treatment was initiated in clinical trials. ( 1 )"
+   ],
+   "boxed_warning": [
+    "WARNING: AMYLOID RELATED IMAGING ABNORMALITIES Monoclonal antibodies directed against aggregated forms of beta amyloid, including LEQEMBI, can cause amyloid related imaging abnormalities (ARIA), characterized as ARIA with edema (ARIA-E) and ARIA with hemosiderin deposition (ARIA-H). Incidence and timing of ARIA vary among treatments. ARIA usually occurs early in treatment and is usually asymptomatic, although serious and life-threatening events can occur. ARIA can be fatal. Serious intracerebral hemorrhage s > 1 cm, some of which have been fatal, have been observed in patients treated with this class of medications. Because ARIA-E can cause focal neurologic deficits that can mimic an ischemic stroke, treating clinicians should consider whether such symptoms could be due to ARIA-E before giving thrombolytic therapy to a patient being treated with LEQEMBI [see Warnings and Precautions ( 5.1 ), Adverse Reactions ( 6.1 )]. ApoE ε4 Homozygotes Patients who are apolipoprotein E ε4 (ApoE ε4) homozygotes (approximately 15% of Alzheimer’s disease patients) treated with this class of medications, including LEQEMBI, have a higher incidence of ARIA, including symptomatic, serious, and severe radiographic ARIA, compared to heterozygotes and noncarriers. Testing for ApoE ε4 status should be performed prior to initiation of treatment to inform the risk of developing ARIA. Prior to testing, prescribers should discuss with patients the risk of ARIA across genotypes and the implications of genetic testing results. Prescribers should inform patients that if genotype testing is not performed they can still be treated with LEQEMBI; however, it cannot be determined if they are ApoE ε4 homozygotes and at higher risk for ARIA [see Warnings and Precautions ( 5.1 )]. Consider the benefit of LEQEMBI for the treatment of Alzheimer’s disease and potential risk of serious adverse events associated with ARIA when deciding to initiate treatment with LEQEMBI [see Warnings and Precautions ( 5.1 ) and Clinical Studies ( 14 )]. WARNING: AMYLOID RELATED IMAGING ABNORMALITIES See full prescribing information for complete boxed warning. Monoclonal antibodies directed against aggregated forms of beta amyloid, including LEQEMBI, can cause amyloid related imaging abnormalities (ARIA), as ARIA with edema (ARIA-E) and ARIA with hemosiderin deposition (ARIA-H). ARIA is usually asymptomatic, although serious and life-threatening events can occur. ARIA can be fatal. Serious intracerebral hemorrhages > 1 cm have occurred in patients treated with this class of medications. ARIA-E can cause focal neurologic deficits that can mimic ischemic stroke. ( 5.1 , 6.1 ) ApoE ε4 Homozygotes Patients treated with this class of medications, including LEQEMBI, who are ApoE ε4 homozygotes have a higher incidence of ARIA, including symptomatic and serious ARIA, compared to heterozygotes and noncarriers. Testing for ApoE ε4 status should be performed prior to initiation of treatment to inform the risk of developing ARIA. Prior to testing, the risk of ARIA across genotypes and implications of genetic testing results should be discussed with patients. ( 5.1 ) Consider the benefit for the treatment of Alzheimer’s disease and risk of ARIA when deciding to treat with LEQEMBI. ( 5.1 , 14 )"
+   ]
+  }
+ ]
+}
