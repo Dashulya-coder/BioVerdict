@@ -205,6 +205,9 @@ class MarketResponse(_View):
     patients_basis: str | None
     annual_price_usd: Range | None
     tam_usd: Range | None
+    range_basis: str = Field(
+        description="What p10, p50 and p90 are in the ranges above: bounds, not percentiles"
+    )
     assumptions: list[str]
     warnings: list[str] = Field(
         default_factory=list, description="Why a number should not be read as a market"

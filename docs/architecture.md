@@ -163,7 +163,7 @@ routes and shapes are the same for both. Interactive documentation: `/docs` on a
 | `GET /runs/{id}/report` | `ReportResponse`: executive verdict, sections with claims and links, translation chain, gates, diligence questions, assumptions, cited sources, bundle identity. 409 while the run is going | done |
 | `GET /runs/{id}/resolver` | The resolved input (`ResolverOutput`) with its assumptions. 409 until the resolve step has finished | done |
 | `GET /runs/{id}/evidence` | Every evidence item of the frozen bundle, cited or not. 409 until the bundle is frozen | done |
-| `GET /runs/{id}/market` | `MarketResponse`: patients, price of approved analogs and market size as P10/P50/P90, each with the bundle records it was read from, the assumptions made, and what is missing. Computed by code from the bundle; labelled `modeled`. 409 until the bundle is frozen | done |
+| `GET /runs/{id}/market` | `MarketResponse`: patients, price of approved analogs and market size as low / middle / high bounds (in the fields `p10`/`p50`/`p90` of the shared range type; they are not percentiles, and `range_basis` says so), each with the bundle records it was read from, the assumptions made, and what is missing. Computed by code from the bundle; labelled `modeled`. 409 until the bundle is frozen | done |
 | `GET /runs/{id}/claims/{claim_id}` | One claim with its links | done |
 | `GET /runs/{id}/evidence/{evidence_id}` | One evidence item with excerpt, source and the claims that quote it | done |
 | `GET /runs/{id}/trace` | Steps, model calls, tokens and cost | done |
