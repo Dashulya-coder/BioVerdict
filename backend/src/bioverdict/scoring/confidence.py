@@ -122,9 +122,13 @@ def claim_confidence(
         return _unsupported(cfg)
 
     weights = _weights(claim, items, as_of, cfg)
-    support_ws, contra_ws, rec = [], [], []
-    for (link, _), (w, r) in zip(items, weights, strict=True):
-        (support_ws if link.direction is Direction.SUPPORTS else contra_ws).append(w)
+    support_ws, contra_ws, rec, support_groups = [], [], [], set()
+    for (link, ev), (w, r) in zip(items, weights, strict=True):
+        if link.direction is Direction.SUPPORTS:
+            support_ws.append(w)
+            support_groups.add(ev.independence_group)
+        else:
+            contra_ws.append(w)
         rec.append(r)
 
     support_sum, contra_sum = sum(support_ws), sum(contra_ws)
@@ -141,6 +145,7 @@ def claim_confidence(
         support=1 - prod(1 - min(w, 1.0) for w in support_ws),
         contra=1 - prod(1 - min(w, 1.0) for w in contra_ws),
         freshness=sum(rec) / len(rec),
+        independent_groups=len(support_groups),
     )
     return ConfidenceResult(confidence, parts, flags, support_sum, contra_sum)
 
