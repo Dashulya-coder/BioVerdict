@@ -10,11 +10,12 @@ available.
 
 from __future__ import annotations
 
+import json
 import os
 from typing import Any
 
 import openai
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from bioverdict.llm.errors import (
     FatalProviderError,
@@ -25,9 +26,37 @@ from bioverdict.llm.errors import (
 from bioverdict.llm.types import ProviderRequest, ProviderResponse
 
 SCHEMA_NAME = "answer"
+_OVERHEAD = 100  # characters the gateway counts besides the text and the schema
 REASONING_EFFORTS = {"low", "medium", "high"}
 KEY_VARIABLES = ("TEAM_API_KEY", "OPENAI_API_KEY")  # the first one set is used
 BASE_URL_VARIABLE = "LLM_BASE_URL"
+
+
+_ANNOTATIONS = {"title", "description"}
+
+
+def slim_schema(node: Any) -> Any:
+    """The schema without `title` and `description`. They are for people: the prompt already says
+    what each field means, and every character counts against the endpoint's request limit.
+    A field that is itself called `description` is kept (`properties` maps names to schemas)."""
+    if isinstance(node, list):
+        return [slim_schema(item) for item in node]
+    if not isinstance(node, dict):
+        return node
+    return {
+        key: (
+            {name: slim_schema(sub) for name, sub in value.items()}
+            if key in {"properties", "$defs"}
+            else slim_schema(value)
+        )
+        for key, value in node.items()
+        if key not in _ANNOTATIONS or not isinstance(value, str)
+    }
+
+
+def strict_schema(model: type[BaseModel]) -> dict[str, Any]:
+    full = openai.pydantic_function_tool(model, name=SCHEMA_NAME)["function"]["parameters"]
+    return slim_schema(full)
 
 
 def configured_key() -> str | None:
@@ -76,13 +105,17 @@ class OpenAIProvider:
             )
         return self._client
 
+    def input_chars(self, request: ProviderRequest) -> int:
+        """What the gateway counts against its request limit: the text of every message, the
+        schema in compact JSON and about 100 characters of its own (measured, 2026-10-09)."""
+        schema = json.dumps(strict_schema(request.schema), separators=(",", ":"))
+        return len(request.system or "") + len(request.prompt) + len(schema) + _OVERHEAD
+
     def complete(self, request: ProviderRequest) -> ProviderResponse:
         """One structured answer. The reply is read here, so that the tokens of an answer that
         turns out unusable (cut off, refused, not JSON) are still known and charged."""
         # openai's own strict-schema form of the Pydantic model (all fields required, no extras)
-        schema = openai.pydantic_function_tool(request.schema, name=SCHEMA_NAME)["function"][
-            "parameters"
-        ]
+        schema = strict_schema(request.schema)
         messages: list[dict[str, str]] = []
         if request.system:
             messages.append({"role": "system", "content": request.system})

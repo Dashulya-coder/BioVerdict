@@ -28,13 +28,20 @@ from bioverdict.llm.errors import (
     BudgetExceededError,
     ConfigError,
     FatalProviderError,
+    InputTooLargeError,
     InvalidOutputError,
     LLMError,
     RefusalError,
     RunTimeoutError,
     TransientProviderError,
 )
-from bioverdict.llm.types import Provider, ProviderRequest, ProviderResponse, split_model_ref
+from bioverdict.llm.types import (
+    Provider,
+    ProviderRequest,
+    ProviderResponse,
+    SizedProvider,
+    split_model_ref,
+)
 from bioverdict.store.models import LLMResult
 
 
@@ -164,6 +171,31 @@ class LLMClient:
         """
         return BoundLLM(self, run_id)
 
+    def input_budget(
+        self, step: str, schema: type[BaseModel], system: str | None = None
+    ) -> int | None:
+        """Characters left for the prompt of `step` after the response schema and the system
+        message, or None if the endpoint has no known limit. Callers size their prompts by it:
+        a request over the limit is refused before it is sent."""
+        limit = self._config.max_input_chars
+        if limit is None:
+            return None
+        cfg = self._config.step(step)
+        provider = self._providers[split_model_ref(cfg.models[0])[0]]
+        if not isinstance(provider, SizedProvider):
+            return limit
+        empty = ProviderRequest(
+            model=split_model_ref(cfg.models[0])[1], prompt="", schema=schema, system=system
+        )
+        return max(0, limit - provider.input_chars(empty))
+
+    def _check_size(self, provider: Provider, request: ProviderRequest) -> None:
+        limit = self._config.max_input_chars
+        if limit is not None and isinstance(provider, SizedProvider):
+            size = provider.input_chars(request)
+            if size > limit:
+                raise InputTooLargeError(size, limit)
+
     def mixed_models(self, run_id: str | None) -> bool:
         """True when any call of the run was answered by a failover model (flag for the trace)."""
         with self._lock:
@@ -201,9 +233,11 @@ class LLMClient:
         for attempt in range(1, cfg.max_validation_retries + 2):
             self._budget.check(run_id)
             left = self._deadline.check(run_id)
+            request = request_for(ref, text, min(cfg.timeout_s, left))
+            self._check_size(provider, request)
             try:
                 try:
-                    response = provider.complete(request_for(ref, text, min(cfg.timeout_s, left)))
+                    response = provider.complete(request)
                 except LLMError as exc:  # an answer that was unusable still cost money
                     self._charge_tokens(run_id, ref, exc.input_tokens, exc.output_tokens, usage)
                     raise
@@ -353,6 +387,9 @@ class BoundLLM:
 
     def call(self, step: str, prompt: str, schema: type[BaseModel]) -> LLMResult:
         return self._client.call(step, prompt, schema, run_id=self.run_id)
+
+    def input_budget(self, step: str, schema: type[BaseModel]) -> int | None:
+        return self._client.input_budget(step, schema)
 
 
 def _short(exc: Exception, limit: int = 400) -> str:
