@@ -16,8 +16,9 @@ from urllib.parse import urlsplit
 
 from bioverdict.contracts import LLM
 from bioverdict.llm.errors import ConfigError
-from bioverdict.pipeline.reason_score import drop_checks, reason_and_score
+from bioverdict.pipeline.reason_score import drop_checks, indication_of, reason_and_score
 from bioverdict.reasoning.classify_evidence import classify_new_evidence
+from bioverdict.scoring.financials import financial_model, with_financials
 from bioverdict.scoring.verdict import rescore
 from bioverdict.store.as_of import is_visible_as_of
 from bioverdict.store.copy_run import copy_evidence_history
@@ -174,7 +175,15 @@ def classify_and_score(
     found = classify_new_evidence(llm, run_id, claims, links, added, bundle)
     merged_claims = [c.model_copy(update={"run_id": run_id}) for c in claims] + found.new_claims
     merged_links = [*links, *found.links, *found.new_claim_links]
-    scored, result = rescore(merged_claims, merged_links, bundle.evidence_by_id(), bundle.as_of)
+    fin = financial_model(bundle, indication_of(conn, run_id))
+    scored, result = rescore(
+        merged_claims,
+        merged_links,
+        bundle.evidence_by_id(),
+        bundle.as_of,
+        fin.rnpv.rnpv if fin.rnpv else None,
+    )
+    result = with_financials(result, fin)
     save_claims(conn, run_id, scored, merged_links, bundle.version)
     save_checks(conn, run_id, drop_checks(found.drops, set()))
     add_event(
