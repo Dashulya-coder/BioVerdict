@@ -22,6 +22,9 @@ from bioverdict.store.verification_repo import load_checks
 REQUIRED_SECTIONS = tuple(dict.fromkeys(module.section for module in ALL_MODULES))
 
 
+REASONING_STEPS = "reasoning.%"  # the step names of the reasoning modules, as SQL LIKE
+
+
 class RunMetrics(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -50,6 +53,10 @@ class RunMetrics(BaseModel):
     seconds: float | None = None
     llm_calls: int = 0
     cache_hits: int = 0
+    # The calls that write the claims. A run repeats the reasoning only if none of them was
+    # served from the cache; a cached answer is the earlier run's answer, word for word.
+    reasoning_calls: int = 0
+    reasoning_cache_hits: int = 0
     input_tokens: int = 0
     output_tokens: int = 0
     cost_usd: float = 0.0
@@ -65,10 +72,15 @@ def run_metrics(conn: sqlite3.Connection, run_id: str) -> RunMetrics:
     calls = conn.execute(
         "SELECT COUNT(*) AS calls, COALESCE(SUM(cache_hit), 0) AS hits, "
         "COALESCE(SUM(input_tokens), 0) AS input, COALESCE(SUM(output_tokens), 0) AS output, "
-        "COALESCE(SUM(cost_usd), 0) AS cost FROM llm_calls WHERE run_id = ?",
-        (run_id,),
+        "COALESCE(SUM(cost_usd), 0) AS cost, "
+        "COALESCE(SUM(step LIKE ?), 0) AS reasoning, "
+        "COALESCE(SUM(step LIKE ? AND cache_hit), 0) AS reasoning_hits "
+        "FROM llm_calls WHERE run_id = ?",
+        (REASONING_STEPS, REASONING_STEPS, run_id),
     ).fetchone()
     metrics.llm_calls, metrics.cache_hits = calls["calls"], calls["hits"]
+    metrics.reasoning_calls = calls["reasoning"]
+    metrics.reasoning_cache_hits = calls["reasoning_hits"]
     metrics.input_tokens, metrics.output_tokens = calls["input"], calls["output"]
     metrics.cost_usd = calls["cost"]
 
