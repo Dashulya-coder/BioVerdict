@@ -184,7 +184,12 @@ def classify_and_score(
         "done",
         f"{len(found.links)} link(s) and {len(found.new_claims)} new claim(s) from the new "
         f"evidence, {len(found.unmatched)} item(s) bearing on nothing, "
-        f"{len(found.drops)} proposal(s) dropped by code",
+        f"{len(found.drops)} proposal(s) dropped by code"
+        + (
+            f", {len(found.unread)} item(s) not read (too long for the endpoint)"
+            if found.unread
+            else ""
+        ),
     )
     add_event(conn, run_id, "score", "started")
     add_event(conn, run_id, "score", "done", f"{result.verdict.value} ({result.confidence:.2f})")
