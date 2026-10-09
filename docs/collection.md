@@ -67,6 +67,15 @@ Real LLM calls use the existing logger. Cancelling a sync worker cannot terminat
 call; live callers must configure provider timeouts and run deadlines. No late result is
 accepted into the timed-out section.
 
-Checkpointing, live connector registration, full reason/score/verify/report wiring and the
-API/CLI lifecycle remain subsequent work. Tests verify the offline boundary and mocked call
-logging; they do not establish live-provider or medical extraction quality.
+## Live registration
+
+`pipeline/live_sources.py` is the allowlist of a live run: Open Targets for mechanism,
+ClinicalTrials.gov by asset and PubMed for clinical, ClinicalTrials.gov by target within the
+indication (`clinicaltrials_class`) for competition. `pipeline/live_run.py` runs the Resolver and
+this graph, writes each section's status, fact count, rejections and issues into the `collect`
+progress event, and hands the frozen bundle to the shared reason → score step. See the
+[runbook](runbook.md) for how to start a live run and how it fails.
+
+Checkpointing and independent verification (B8) remain subsequent work. Tests verify the offline
+boundary and mocked call logging; runs against the real sources used a stand-in model. Neither
+establishes live-provider or medical extraction quality.

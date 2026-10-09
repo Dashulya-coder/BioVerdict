@@ -1,5 +1,5 @@
 import json
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import httpx
@@ -15,7 +15,8 @@ from bioverdict.store.migrations import migrate
 from bioverdict.store.models import Asset, EvidenceLevel, Indication, ResolverOutput, Target
 
 RAW = Path(__file__).parents[3] / "fixtures" / "raw"
-TODAY = date(2026, 10, 7)
+# Open Targets records are undated snapshots, visible only from the day they were downloaded.
+TODAY = datetime.now(UTC).date()
 
 
 def answer(path: str) -> bytes:

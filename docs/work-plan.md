@@ -7,7 +7,7 @@ Two people, one goal: **near-equal workload, and both of us busy from the first 
 | **Arsenii** | **A: Evidence and platform** | Everything from the question to a frozen, versioned evidence bundle; the API; the evidence and sources UI; incremental recompute; the eval harness |
 | **Dasha** | **B: Reasoning and verdict** | Everything from the frozen bundle to the verdict: LLM layer, reasoning modules, scoring, verification, report UI, eval cases |
 
-## Progress snapshot — 2026-10-07
+## Progress snapshot — 2026-10-08
 
 Checked against merged `main`, the repository files and the open pull requests. Unpublished
 teammate work is not included. Update this snapshot when a task changes state, not on every PR:
@@ -23,13 +23,14 @@ even for complete components.
 | Arsenii | 1 of 12 whole tasks: A2 | 6: A1, A3, A4, A5, A6, A11 | 5: A7, A8, A9, A10, A12 |
 | Dasha | 1 of 13: B4 | 6: B1, B2, B3, B8, B10, B11 | 6: B5, B6, B7, B9, B12, B13 |
 
-These are **whole-task counts, not effort percentages**. The collect → freeze path, the
-connectors, the fixture API/CLI and the first UI screens are merged but not yet joined into a live
-run, and the merged reasoning and scoring have not been evaluated on a full pipeline or called on a
-real model.
+These are **whole-task counts, not effort percentages**. The Resolver, the
+connectors, collect → freeze, reasoning and scoring are joined into a live run behind
+`USE_FIXTURES=0` (pending review). It was exercised offline and against the real sources with a
+stand-in model; it has not been run or evaluated with a real model, and the UI still shows
+prepared data.
 
-**Next for Arsenii:** wire the frontend to the fixture API, then the live Resolver and collect →
-frozen bundle (M2). **Next for Dasha:** B5 report UI on the fixture API
+**Next for Arsenii:** a first live run with a real model together with Dasha (M2/M3), then wire the
+frontend to the API. **Next for Dasha:** B5 report UI on the fixture API
 using [the shared styles](design-system.md), and a first live run of B1/B2; B8 needs an
 independent verification implementation. M2/M3 require both tracks.
 
@@ -61,11 +62,11 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 
 | ID | Task | Priority | Points | Demo-critical | Status | Implemented / evidence | Remaining |
 |---|---|---|---|---|---|---|---|
-| A1 | Resolver: input formats (indication+mechanism, drug name, company code) to MONDO/EFO, UniProt/Ensembl, ChEMBL/Open Targets IDs; alias disambiguation | P0 | 3 | yes | [~] | Drug, target and disease id lookup with strict name matching merged (#30, part 1). | Free-text parsing with the LLM, `Resolver.resolve()` with `assumptions`, ChEMBL ids in `ResolverOutput`; expose live resolution to the API/UI. |
+| A1 | Resolver: input formats (indication+mechanism, drug name, company code) to MONDO/EFO, UniProt/Ensembl, ChEMBL/Open Targets IDs; alias disambiguation | P0 | 3 | yes | [~] | Drug, target and disease id lookup with strict name matching (#30), one-call text parsing and `Resolver.resolve()` with `assumptions`; runs first in a live run. | Validate parsing with a real model on the test-list assets; show live resolution in the UI. |
 | A2 | Connectors: ClinicalTrials.gov v2 and Open Targets, returning `Evidence` objects | P0 | 4 | yes | [x] | ClinicalTrials.gov (#19), its posted results, stopped studies and pagination (#32) and Open Targets (#28) merged. | Wire the connectors into live collection and verify a real bundle handoff (M2). |
-| A3 | HTTP cache, `as_of` filter, source catalog (allowlist), bundle freeze, hash and versions | P0 | 3 | yes | [~] | SQLite, cache/retries/pacing, cutoff, canonical ids, latest-wins, catalog, hash (fixture hash #14), freeze/load and versions merged. | Validate the complete live collect → freeze flow. |
-| A4 | Extraction collect agents: quote + value into `Evidence`, section statuses, bounded tool loops | P0 | 4 | yes | [~] | Bounded, injected-tool collection with grounded quote/value extraction, cutoff/latest-wins, honest statuses, budget/deadline handling and collect → freeze DAG (#36). | Register live connectors and the Resolver, then wire the API/CLI lifecycle. Live extraction quality and full graph integration still need validation. |
-| A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [~] | Fixture API/report/drill-down/trace/SSE (#31), CLI (#33) and shared Tailwind UI (#34) and the input/resolver/evidence screens on prepared data (#35) merged. | Connect the UI to the API and add live collection. Resolver and full evidence-list endpoints still needed. |
+| A3 | HTTP cache, `as_of` filter, source catalog (allowlist), bundle freeze, hash and versions | P0 | 3 | yes | [~] | SQLite, cache/retries/pacing, cutoff, canonical ids, latest-wins, catalog, hash (fixture hash #14), freeze/load and versions merged. | Validate the live collect → freeze flow with a real model. |
+| A4 | Extraction collect agents: quote + value into `Evidence`, section statuses, bounded tool loops | P0 | 4 | yes | [~] | Bounded, injected-tool collection with grounded quote/value extraction, cutoff/latest-wins, honest statuses, budget/deadline handling and collect → freeze DAG (#36). Live connectors and the Resolver registered and wired into the API/CLI run lifecycle (`pipeline/live_run.py`). | Measure live extraction quality, cost and time with a real model; the per-source caps make large sections `incomplete`. |
+| A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [~] | Fixture API/report/drill-down/trace/SSE (#31), CLI (#33) and shared Tailwind UI (#34) and the input/resolver/evidence screens on prepared data (#35) merged. `POST /runs` and the CLI start live runs with `USE_FIXTURES=0`. | Connect the UI to the API. Resolver and full evidence-list endpoints still needed. |
 | A6 | Connectors: PubMed / Europe PMC and openFDA / Drugs@FDA | P1 | 4 |  | [~] | PubMed connector merged (#32). | openFDA / Drugs@FDA and any additional Europe PMC coverage; validate PubMed bodies before caching. |
 | A7 | Incremental recompute engine, add-evidence endpoint, diff API and diff screen | P1 | 5 | yes | [ ] | Scoring has a reusable rescore helper; no A7 workflow. | Implement add-evidence, recompute orchestration, report diff API and UI (or the documented full re-run fallback). |
 | A8 | Eval runner, grounding and citation metrics, leakage probe, cache pre-warm | P1 | 4 |  | [ ] | Evaluation strategy documented. | Implement runner, grounding/citation metrics, leakage probe and cache pre-warm. |

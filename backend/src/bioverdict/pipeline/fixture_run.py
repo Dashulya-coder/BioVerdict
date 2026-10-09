@@ -13,22 +13,12 @@ import sqlite3
 from pathlib import Path
 
 from bioverdict.llm import FakeLLM
-from bioverdict.reasoning import ModuleReasoner
-from bioverdict.reasoning.grounding import fill_missing_chain_links
-from bioverdict.scoring.verdict import score_verdict
+from bioverdict.pipeline.reason_score import reason_and_score
 from bioverdict.store.bundle import compute_content_hash, select_bundle_evidence
 from bioverdict.store.bundle_repo import save_bundle
 from bioverdict.store.freeze import build_catalog
-from bioverdict.store.models import Basis, Bundle, ResolverOutput, SectionStatus, VerdictResult
-from bioverdict.store.runs_repo import (
-    DONE,
-    FAILED,
-    add_event,
-    finish_run,
-    get_run,
-    save_claims,
-    save_resolver,
-)
+from bioverdict.store.models import Bundle, ResolverOutput, SectionStatus, VerdictResult
+from bioverdict.store.runs_repo import FAILED, add_event, finish_run, get_run, save_resolver
 
 log = logging.getLogger(__name__)
 
@@ -122,36 +112,5 @@ def _run(conn: sqlite3.Connection, run_id: str, name: str, fixtures: Path) -> Ve
         conn, run_id, "freeze", "done", f"bundle v{bundle.version} {bundle.content_hash[:19]}"
     )
 
-    add_event(conn, run_id, "reason", "started", "mechanism, translation")
     answers = json.loads(_load(fixtures, "reasoning", name))
-    reasoner = ModuleReasoner(FakeLLM(answers), run_id)
-    claims, links = reasoner.reason(bundle)
-    # Canned answers are fixed in time. A failed citation must remove the whole claim,
-    # including a claim with other surviving citations, rather than soften it to inference.
-    rejected = {
-        d.claim_id for d in reasoner.trace.drops if d.what.startswith("E-") or d.what == "basis"
-    }
-    cited = {link.claim_id for link in links}
-    rejected |= {c.id for c in claims if c.basis is not Basis.UNKNOWN and c.id not in cited}
-    next_number = max((int(c.id.removeprefix("C-")) for c in claims), default=0) + 1
-    claims = [c for c in claims if c.id not in rejected]
-    links = [link for link in links if link.claim_id not in rejected]
-    claims += fill_missing_chain_links(claims, bundle, run_id, next_number)
-    save_claims(conn, run_id, claims, links, bundle.version)
-    dropped = len(reasoner.trace.drops) + len(rejected)
-    add_event(
-        conn,
-        run_id,
-        "reason",
-        "done",
-        f"{len(claims)} claims, {dropped} dropped by code; rejected claims: "
-        f"{', '.join(sorted(rejected)) or 'none'}",
-    )
-
-    add_event(conn, run_id, "score", "started")
-    result = score_verdict(claims)
-    add_event(conn, run_id, "score", "done", f"{result.verdict.value} ({result.confidence:.2f})")
-
-    finish_run(conn, run_id, DONE, result)
-    add_event(conn, run_id, "run", "done")
-    return result
+    return reason_and_score(conn, run_id, bundle, FakeLLM(answers))

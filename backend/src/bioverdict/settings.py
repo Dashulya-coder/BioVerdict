@@ -12,6 +12,7 @@ from bioverdict.store.migrations import migrate
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_DB_PATH = "data/bioverdict.sqlite"
+DEFAULT_CACHE_DIR = "data/cache"
 
 
 def fixtures_dir() -> Path:
@@ -20,6 +21,10 @@ def fixtures_dir() -> Path:
 
 def db_path() -> Path:
     return Path(os.environ.get("DB_PATH", DEFAULT_DB_PATH))
+
+
+def cache_dir() -> Path:
+    return Path(os.environ.get("CACHE_DIR", DEFAULT_CACHE_DIR))
 
 
 def today() -> date:
@@ -32,7 +37,7 @@ def today() -> date:
 
 
 def use_fixtures() -> bool:
-    """Runs are answered from fixtures until the live pipeline is wired in."""
+    """Fixture runs are the default: offline and free. `USE_FIXTURES=0` makes runs live."""
     return os.environ.get("USE_FIXTURES", "1") not in {"0", "false", "False", ""}
 
 

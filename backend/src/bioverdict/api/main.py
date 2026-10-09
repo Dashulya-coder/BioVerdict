@@ -1,8 +1,7 @@
 """The HTTP API (docs/architecture.md, section 12).
 
-Runs are answered from fixtures until the live pipeline is wired in (`USE_FIXTURES`). The routes
-and the response shapes are the stable part: the UI is built on them and does not change when the
-fixtures are replaced.
+Runs are answered from fixtures by default and from the live pipeline with `USE_FIXTURES=0`. The
+routes and the response shapes are the same for both: the UI does not tell them apart.
 
 Every route opens its own SQLite connection inside its body and closes it again, so no connection
 ever crosses a thread.
@@ -35,7 +34,10 @@ from bioverdict.api.schemas import (
     RunSummary,
     TraceResponse,
 )
+from bioverdict.llm.errors import ConfigError
 from bioverdict.pipeline.fixture_run import fixture_names, run_fixture
+from bioverdict.pipeline.live_llm import live_llm, require_configured
+from bioverdict.pipeline.live_run import LiveRunner, describe_request, run_live
 from bioverdict.store.runs_repo import DONE, FAILED, create_run, get_run, list_runs, load_events
 
 POLL_SECONDS = 0.2
@@ -50,7 +52,10 @@ def _not_found(exc: Exception) -> HTTPException:
     return HTTPException(status_code=404, detail=str(exc))
 
 
-def create_app(db_path: Path | None = None, fixtures: Path | None = None) -> FastAPI:
+def create_app(
+    db_path: Path | None = None, fixtures: Path | None = None, live: LiveRunner | None = None
+) -> FastAPI:
+    """`live` replaces the real live pipeline (sources and model); tests pass a stand-in."""
     app = FastAPI(title="BioVerdict API", version="0.1.0")
     app.state.db_path = db_path
     app.state.fixtures = fixtures
@@ -75,18 +80,31 @@ def create_app(db_path: Path | None = None, fixtures: Path | None = None) -> Fas
 
     @app.post("/runs", status_code=202)
     def start_run(body: RunRequest, tasks: BackgroundTasks, request: Request) -> RunCreated:
-        if not settings.use_fixtures():
-            raise HTTPException(501, "the live pipeline is not wired in yet; set USE_FIXTURES=1")
+        db = request.app.state.db_path
+        fixture_mode = settings.use_fixtures()
         asset = (body.asset or "").strip()
-        known = fixture_names(fixtures_dir(request))
-        if asset.casefold() not in known:
-            detail = f"fixture mode knows only these assets: {', '.join(known) or 'none'}"
-            raise HTTPException(422, detail)
+        text = describe_request(body.asset, body.indication, body.mechanism)
+        if fixture_mode:
+            known = fixture_names(fixtures_dir(request))
+            if asset.casefold() not in known:
+                detail = f"fixture mode knows only these assets: {', '.join(known) or 'none'}"
+                raise HTTPException(422, detail)
+        else:
+            if not text:
+                raise HTTPException(422, "give an asset, or an indication with a mechanism")
+            if live is None:
+                try:
+                    require_configured()
+                except ConfigError as exc:
+                    raise HTTPException(503, str(exc)) from exc
 
         run_id, as_of = new_run_id(), body.as_of or settings.today()
         with database(request) as conn:
             create_run(conn, run_id, body.model_dump(mode="json"), as_of)
-        tasks.add_task(_execute, request.app.state.db_path, run_id, asset, fixtures_dir(request))
+        if fixture_mode:
+            tasks.add_task(_execute, db, run_id, asset, fixtures_dir(request))
+        else:
+            tasks.add_task(_execute_live, db, run_id, text, live)
         return RunCreated(run_id=run_id, status="running")
 
     @app.get("/runs")
@@ -156,6 +174,14 @@ def create_app(db_path: Path | None = None, fixtures: Path | None = None) -> Fas
 def _execute(db_path: Path | None, run_id: str, asset: str, fixtures: Path) -> None:
     with closing(settings.open_database(db_path)) as conn:
         run_fixture(conn, run_id, asset, fixtures)
+
+
+def _execute_live(db_path: Path | None, run_id: str, text: str, live: LiveRunner | None) -> None:
+    with closing(settings.open_database(db_path)) as conn:
+        if live is not None:
+            live(conn, run_id, text)
+        else:
+            run_live(conn, run_id, text, lambda run: live_llm(run, db_path))
 
 
 def _run_status(db_path: Path | None, run_id: str) -> str | None:
