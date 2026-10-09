@@ -7,32 +7,32 @@ Two people, one goal: **near-equal workload, and both of us busy from the first 
 | **Arsenii** | **A: Evidence and platform** | Everything from the question to a frozen, versioned evidence bundle; the API; the evidence and sources UI; incremental recompute; the eval harness |
 | **Dasha** | **B: Reasoning and verdict** | Everything from the frozen bundle to the verdict: LLM layer, reasoning modules, scoring, verification, report UI, eval cases |
 
-## Progress snapshot — 2026-10-08
+## Progress snapshot — 2026-10-09
 
-Checked against merged `main`, the repository files and the open pull requests. Unpublished
-teammate work is not included. Update this snapshot when a task changes state, not on every PR:
+Checked against merged `main` and the repository files. Unpublished work is not included. Update this snapshot when a task changes state, not on every PR:
 the per-task detail lives in the tables below.
 
-**Legend:** `[x]` complete task implementation merged; `[~]` partial implementation or pending
-review; `[ ]` task implementation still to do. A prototype, contract, plan or helper does not
+**Legend:** `[x]` complete task implementation merged; `[~]` partial implementation merged;
+`[ ]` task implementation still to do. A prototype, contract, plan or helper does not
 complete the whole task. The **Remaining** column includes integration/calibration follow-up
 even for complete components.
 
-| Person | Complete tasks | Partial / pending review | Still to do |
+| Person | Complete tasks | Partial | Still to do |
 |---|---|---|---|
 | Arsenii | 1 of 12 whole tasks: A2 | 9: A1, A3, A4, A5, A6, A7, A8, A9, A11 | 2: A10, A12 |
 | Dasha | 1 of 13: B4 | 6: B1, B2, B3, B8, B10, B11 | 6: B5, B6, B7, B9, B12, B13 |
 
-These are **whole-task counts, not effort percentages**. The Resolver, the
-connectors, collect → freeze, reasoning and scoring are joined into a live run behind
-`USE_FIXTURES=0` (pending review). It was exercised offline and against the real sources with a
-stand-in model; it has not been run or evaluated with a real model. The input, resolver and
-evidence screens run on the API (pending review).
+These are **whole-task counts, not effort percentages**. The Resolver, the connectors,
+collect → freeze, reasoning and scoring are joined into a live run behind `USE_FIXTURES=0`, and
+the input, resolver, evidence and compare screens run on the API; all of it is merged. It was
+exercised offline and against the real sources with a stand-in model. **No run with a real model
+has been measured yet**: that single step is what most of the `[~]` rows of track A still wait for.
 
-**Next for Arsenii:** a first live run with a real model together with Dasha (M2/M3), then eval and
-pre-warm runs on the real case set and asset list (A8). **Next for Dasha:** B5 report UI on the fixture API
-using [the shared styles](design-system.md), and a first live run of B1/B2; B8 needs an
-independent verification implementation. M2/M3 require both tracks.
+**Next for Arsenii:** the first measured live run with a real model, together with Dasha
+(M2/M3): keep its report, bundle hash, trace, rejected claims, time and cost. Then eval and
+pre-warm on the real case set and asset list (A8). **Next for Dasha:** B5 report UI on the API
+using [the shared styles](design-system.md); B8 needs an independent verification
+implementation. M2/M3 require both tracks.
 
 ## What this plan satisfies
 
@@ -140,34 +140,30 @@ Do these in parallel where possible, then review each other's work.
 - [~] **Dasha:** `reason`, `score`, `verify` signatures and stubs, `FakeLLM`, fixture bundle `fixtures/bundles/hro761.json` and hand-written fixture claims, `reason_nodes.py` for the reasoning-side DAG nodes.
 - [~] Both: `tests/contract/` with one test per contract (a real bundle validates against the schema; the fixtures load; the fakes satisfy the protocols).
 
-Phase 0 evidence: contracts, `FakeConnector`, `FakeLLM`, Divarasib's 15-item bundle and
-contract tests exist. Compatibility 17/17 and 369 backend tests passed on the CLI branch;
-the second machine is unconfirmed. A4 adds collect/freeze graph nodes and grounded extraction
-(29 cases, 332 backend tests). HRO761 fixture, reason-side graph nodes and full API
-fixture handoff are still outstanding. ADRs remain **Proposed**; code-freeze date remains TODO.
-CLI execution is implemented in pending #33, so M0 is not fully merged.
+Phase 0 evidence: contracts, `FakeConnector`, `FakeLLM`, Divarasib's 15-item bundle, the
+contract tests, the collect → freeze graph, the fixture API and the CLI are merged. Still open:
+the HRO761 fixture, reason-side graph nodes (`reason_nodes.py`), a confirmed setup on the second
+machine. ADRs remain **Proposed**; the code-freeze date remains TODO.
 
 Exit criterion (milestone M0): both can run `uv run bioverdict run --asset divarasib` with `USE_FIXTURES=1` and see the DAG finish, and both UIs can be developed against fixture JSON.
 
-CLI status (2026-10-07): the offline command now runs the fixture pipeline through resolve,
-collect, freeze, mechanism/translation reasoning, scoring and JSON report export. It uses the A5
-fixture API's SQLite records; live orchestration and the remaining Phase 0 sign-offs are pending.
+CLI status: `bioverdict run` runs the fixture pipeline offline and, with `USE_FIXTURES=0`, the
+live one; `eval`, `warm` and `doctor` are described in the [runbook](runbook.md).
 
 ## 6. Milestones
 
-Frontend status (2026-10-07): approved English dark console; Tailwind 4, shared tokens and
-typed primitives in #34. Input → resolved assumptions → evidence explorer and original sources
-are implemented in #35 with search, filters, cutoffs, verbatim quotes,
-original links, keyboard navigation and mobile layout. Prepared Divarasib data only; API wiring
-and report/trace remain outstanding. The shared style document is in #34; it is not yet present in this main-based A4 branch.
+Frontend status: the English dark console with shared tokens and typed primitives. Input →
+resolved assumptions → evidence explorer and sources, and comparing runs, work on the API
+(`pnpm dev:api`) and on the prepared Divarasib snapshot. The report and trace screens (B5, B12)
+are not built.
 
 | Milestone | Meaning | Who | Status / remaining |
 |---|---|---|---|
-| M0 | Contracts, fixtures and fakes merged; both start parallel work | both | [~] Contracts/fakes/Divarasib exist; merge CLI/API, merge A4 collection; complete reasoning graph/HRO761 and verify both machines. |
-| M1 | `llm.call` works for one provider; extraction switches from `FakeLLM` to real | Dasha delivers, Arsenii switches | [~] One-provider LLM layer merged; fixture extraction in A4; live extraction switch remains. |
-| M2 | **Bundle handoff:** a real bundle for divarasib from real connectors passes the bundle contract test; reasoning runs on it | Arsenii delivers, Dasha consumes; short pairing session | [ ] Connectors partly pending; live collection → frozen bundle → reasoning not integrated. |
-| M3 | **Walking skeleton:** one asset end to end (low quality is fine); both UIs show real data; recompute works at least as "re-run reason and score on bundle v2" | both | [~] Fixture backend path in #31/#33 and demo UI prepared; API-driven UIs/live path/recompute still missing. |
-| M4 | Eval run, leakage probe, calibration of thresholds; fix the worst failures | both, joint | [ ] Eval runner/cases, leakage runs and calibration outstanding. |
+| M0 | Contracts, fixtures and fakes merged; both start parallel work | both | [~] Contracts, fakes, the Divarasib fixture, collection, API and CLI are merged. Open: HRO761 fixture, reason-side graph nodes, the second machine. |
+| M1 | `llm.call` works for one provider; extraction switches from `FakeLLM` to real | Dasha delivers, Arsenii switches | [~] One-provider LLM layer merged and extraction wired to it in the live run. Open: a call to a real model has not been made. |
+| M2 | **Bundle handoff:** a real bundle for divarasib from real connectors passes the bundle contract test; reasoning runs on it | Arsenii delivers, Dasha consumes; short pairing session | [~] Live collection → frozen bundle → reasoning is integrated and merged. Open: a real bundle from a run with a real model, handed over in a pairing session. |
+| M3 | **Walking skeleton:** one asset end to end (low quality is fine); both UIs show real data; recompute works at least as "re-run reason and score on bundle v2" | both | [~] One asset runs end to end on fixtures and, with a stand-in model, on real sources; the evidence UI runs on the API; recompute re-runs reasoning on bundle v2 and the diff screen shows it. Open: a real-model run; the report UI (B5). |
+| M4 | Eval run, leakage probe, calibration of thresholds; fix the worst failures | both, joint | [ ] The eval runner and its metrics are merged; the case set has one smoke case. Open: real cases (B10), closed-book leakage probe, baseline, calibration. |
 | M5 | Demo freeze, rehearsal, recorded runs | both | [ ] Freeze date, rehearsal and recorded runs outstanding. |
 
 ## 7. Working rules
