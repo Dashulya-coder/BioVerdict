@@ -227,7 +227,8 @@ class ConfidenceParts(_Model):
     independent_groups: int = Field(
         default=0,
         ge=0,
-        description="Distinct independence groups among the supporting evidence (hard gates need 2)",
+        description="Distinct independence groups among the supporting evidence that carries "
+        "weight (hard gates need 2)",
     )
 
 

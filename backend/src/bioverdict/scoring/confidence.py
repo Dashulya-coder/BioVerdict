@@ -126,7 +126,8 @@ def claim_confidence(
     for (link, ev), (w, r) in zip(items, weights, strict=True):
         if link.direction is Direction.SUPPORTS:
             support_ws.append(w)
-            support_groups.add(ev.independence_group)
+            if w > 0:  # evidence that adds no weight is not a source the claim rests on
+                support_groups.add(ev.independence_group)
         else:
             contra_ws.append(w)
         rec.append(r)
