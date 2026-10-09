@@ -9,7 +9,11 @@ const snapshotLinks = [
 ] as const
 // Comparing runs and adding evidence need the API.
 const links = apiMode
-  ? ([...snapshotLinks, { screen: 'compare', label: 'Compare', icon: 'check' }] as const)
+  ? ([
+      ...snapshotLinks,
+      { screen: 'report', label: 'Report', icon: 'check' },
+      { screen: 'compare', label: 'Compare', icon: 'check' },
+    ] as const)
   : snapshotLinks
 
 export function Sidebar({ screen }: { screen: Screen }) {
@@ -47,9 +51,6 @@ export function Sidebar({ screen }: { screen: Screen }) {
       </nav>
       <div className="mx-6 mt-7 hidden border-t border-rule pt-5 text-sm text-muted lg:block">
         <p>Underwriting</p>
-        <p className="mt-3 flex justify-between text-muted/70">
-          Report <span className="text-xs">Coming soon</span>
-        </p>
         <p className="mt-3 flex justify-between text-muted/70">
           Trace <span className="text-xs">Coming soon</span>
         </p>

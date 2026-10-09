@@ -20,6 +20,9 @@ const bundle = JSON.parse(readFileSync(join(fixtures, 'bundles', 'divarasib.json
 const resolver: unknown = JSON.parse(
   readFileSync(join(fixtures, 'resolver', 'divarasib.json'), 'utf8'),
 )
+const report = JSON.parse(readFileSync(join(import.meta.dirname, 'report.json'), 'utf8')) as {
+  executive: Record<string, unknown>
+}
 const evidence = bundle.evidence.map(({ type, ...item }) => ({
   ...item,
   badge: type,
@@ -98,6 +101,8 @@ interface Api {
   traces?: Event[][]
   start?: { status: number; body: unknown }
   posted?: unknown[]
+  /** The report the API serves for RUN; default: the fixture run's. */
+  report?: unknown
 }
 
 async function serve(page: Page, api: Api = {}) {
@@ -138,6 +143,8 @@ async function serve(page: Page, api: Api = {}) {
         ? json(route, api.grow.body, api.grow.status)
         : json(route, { run_id: GROWN, status: 'running' }, 202)
     }
+    if (url.pathname === `/runs/${RUN}`) return json(route, summary(RUN, '2026-10-07'))
+    if (url.pathname === `/runs/${RUN}/report`) return json(route, api.report ?? report)
     if (url.pathname === `/runs/${GROWN}`) return json(route, summary(GROWN, '2026-10-08'))
     if (url.pathname === `/runs/${RUN}/resolver`) return json(route, resolver)
     if (url.pathname === `/runs/${RUN}/evidence`) return json(route, evidence)
@@ -149,6 +156,14 @@ async function run(page: Page, asset: string) {
   await page.goto('/')
   await page.getByLabel('Asset / drug').fill(asset)
   await page.getByRole('button', { name: 'Run analysis' }).click()
+}
+
+/** Runs and waits until the analysis is ready, so that a later navigation is not overridden. */
+async function openRun(page: Page, asset: string) {
+  await run(page, asset)
+  await expect(
+    page.getByRole('heading', { name: 'Review the resolved input', exact: true }),
+  ).toBeVisible()
 }
 
 test('a run on the API shows its progress, its resolved input and its whole bundle', async ({
@@ -231,7 +246,7 @@ test('two runs are compared: verdict, gates, new evidence and the claims resting
 }) => {
   const asked: string[] = []
   await serve(page, { asked })
-  await run(page, 'divarasib')
+  await openRun(page, 'divarasib')
   await page.getByRole('link', { name: 'Compare', exact: true }).click()
   await page.getByRole('combobox', { name: 'Earlier run' }).selectOption(OTHER)
   await page.getByRole('button', { name: 'Compare', exact: true }).click()
@@ -267,7 +282,7 @@ test('an added document starts a recompute and shows what it changed', async ({ 
   const posted: unknown[] = []
   const asked: string[] = []
   await serve(page, { posted, asked })
-  await run(page, 'divarasib')
+  await openRun(page, 'divarasib')
   await fillDocument(page)
 
   await expect(page.getByText('The verdict stayed Conditional.')).toBeVisible()
@@ -291,9 +306,50 @@ test('a fixture API that cannot reason over new evidence says so', async ({ page
     mode: 'fixtures',
     grow: { status: 422, body: { detail: 'fixture runs cannot reason over new evidence' } },
   })
-  await run(page, 'divarasib')
+  await openRun(page, 'divarasib')
   await fillDocument(page)
   await expect(page.getByRole('alert')).toContainText(
     'fixture runs cannot reason over new evidence',
   )
+})
+
+test('the report opens with the verdict, the modeled figures and what is missing', async ({
+  page,
+}) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  const summary = page.getByRole('region', { name: 'Executive verdict' })
+  await expect(summary.getByText('Conditional', { exact: true })).toBeVisible()
+  await expect(summary.getByText('Top risks')).toBeVisible()
+  await expect(summary.getByText('What would change our mind')).toBeVisible()
+  await expect(summary.getByText('Not computed: the market could not be sized.')).toBeVisible()
+})
+
+test('modeled ranges are labelled and shown as P10 to P90', async ({ page }) => {
+  const range = (p10: number, p50: number, p90: number) => ({ p10, p50, p90 })
+  const modeled = {
+    ...report,
+    executive: {
+      ...report.executive,
+      pos: range(0.2, 0.4, 0.6),
+      rnpv: range(-18_000_000, -8_700_000, 6_300_000),
+      capital: range(98_000_000, 136_000_000, 191_000_000),
+      months_to_milestone: range(15, 20, 25),
+    },
+  }
+  await serve(page, { report: modeled })
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  const summary = page.getByRole('region', { name: 'Executive verdict' })
+  await expect(summary.getByText('−$8.7M')).toBeVisible()
+  await expect(summary.getByText('P10 to P90: −$18.0M to $6.3M')).toBeVisible()
+  await expect(summary.getByText('Modeled').first()).toBeVisible()
+})
+
+test('a report that is not ready or failed says so', async ({ page }) => {
+  await serve(page, { report: { detail: 'unexpected' } })
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  await expect(page.getByRole('alert')).toContainText('shape this workspace does not understand')
 })
