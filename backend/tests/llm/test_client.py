@@ -1,3 +1,5 @@
+import threading
+
 import pytest
 from pydantic import BaseModel, ValidationError
 
@@ -17,7 +19,7 @@ from bioverdict.llm import (
     TransientProviderError,
 )
 from bioverdict.llm.breaker import CircuitBreaker
-from bioverdict.llm.budget import Deadline
+from bioverdict.llm.budget import Budget, Deadline
 from bioverdict.llm.cache import DiskCache, MemoryCache
 from bioverdict.llm.call_log import MemoryCallLog, SqliteCallLog
 from bioverdict.llm.config import DEFAULT_PRICES, HAIKU, OPUS, SONNET
@@ -145,6 +147,53 @@ def test_budget_cap_stops_further_calls() -> None:
     with pytest.raises(BudgetExceededError):
         llm.call("s", "second", Answer, run_id="R")
     assert llm.call("s", "other run", Answer, run_id="R2")  # budgets are per run
+
+
+def test_money_held_by_calls_under_way_counts_against_the_cap() -> None:
+    budget = Budget(1.0)
+    with budget.hold("R", 0.6), budget.hold("R", 0.6):  # 0.6 held is still under the cap
+        # 1.2 held: nothing more may start
+        with pytest.raises(BudgetExceededError, match="under way"), budget.hold("R", 0.1):
+            pass
+        with budget.hold("other run", 0.6):  # holds are per run
+            pass
+    with budget.hold("R", 0.6):  # both calls ended and charged nothing: the hold is gone
+        budget.charge("R", 1.0)
+    with pytest.raises(BudgetExceededError), budget.hold("R", 0.1):
+        pass
+
+
+def test_a_hold_is_dropped_when_the_call_fails() -> None:
+    budget = Budget(1.0)
+    with pytest.raises(RuntimeError), budget.hold("R", 5.0):
+        raise RuntimeError("provider down")
+
+    with budget.hold("R", 0.1):
+        pass
+
+
+def test_parallel_calls_cannot_pass_the_cap_together() -> None:
+    """Reasoning modules call the model at the same time. Each used to see only the money
+    already spent (none, until the first answer) and all of them started."""
+    started, release = threading.Event(), threading.Event()
+
+    def slow(request):
+        started.set()
+        assert release.wait(5)
+        return FakeProvider(GOOD, name="anthropic").complete(request)
+
+    # One call may cost up to 8000 output tokens at $5 per million: $0.04, over this cap.
+    llm = client(config(HAIKU, budget_usd=0.01), anthropic=FakeProvider(slow, name="anthropic"))
+    first = threading.Thread(target=llm.call, args=("s", "first", Answer), kwargs={"run_id": "R"})
+    first.start()
+    assert started.wait(5)
+    try:
+        with pytest.raises(BudgetExceededError):
+            llm.call("s", "second", Answer, run_id="R")
+    finally:
+        release.set()
+        first.join(5)
+    assert llm.call("s", "third", Answer, run_id="R")  # only $0.00035 was really spent
 
 
 def test_cache_returns_the_same_answer_without_calling_or_paying() -> None:

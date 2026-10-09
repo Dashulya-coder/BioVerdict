@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 
 from bioverdict.llm.errors import BudgetExceededError, RunTimeoutError
 
@@ -15,6 +16,7 @@ class Budget:
     def __init__(self, cap_usd: float) -> None:
         self._cap = cap_usd
         self._spent: dict[str, float] = {}
+        self._held: dict[str, float] = {}  # worst case of the calls that have not answered yet
         self._lock = threading.Lock()
 
     def spent(self, run_id: str | None) -> float:
@@ -33,6 +35,31 @@ class Budget:
         with self._lock:
             key = run_id or _NO_RUN
             self._spent[key] = self._spent.get(key, 0.0) + usd
+
+    @contextmanager
+    def hold(self, run_id: str | None, worst_case_usd: float) -> Iterator[None]:
+        """Admit one call and set aside what it may cost until it has been charged.
+
+        Calls of one run are made in parallel. Checking only what is already spent lets every
+        call that starts before the first answer through, and together they can pass the cap by
+        the cost of all of them. Here a call starts only while the money spent plus the money
+        the calls in flight may still cost is under the cap, so a run passes its cap by at most
+        one call. Charge the real cost inside the block; the hold is dropped when it ends.
+        """
+        key = run_id or _NO_RUN
+        with self._lock:
+            spent, held = self._spent.get(key, 0.0), self._held.get(key, 0.0)
+            if spent + held >= self._cap:
+                raise BudgetExceededError(
+                    f"run {run_id or '(none)'} spent ${spent:.4f} and has ${held:.4f} in calls "
+                    f"under way, of its ${self._cap:.2f} cap"
+                )
+            self._held[key] = held + worst_case_usd
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._held[key] = max(self._held.get(key, 0.0) - worst_case_usd, 0.0)
 
 
 class Deadline:
