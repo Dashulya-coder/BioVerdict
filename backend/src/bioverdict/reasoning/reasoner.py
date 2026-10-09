@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 from bioverdict.contracts import LLM
@@ -40,23 +41,41 @@ class ModuleReasoner:
         modules: tuple[ReasoningModule, ...] = ALL_MODULES,
         confidence: ConfidenceConfig | None = None,
         max_evidence_chars: int = MAX_EVIDENCE_CHARS,
+        max_parallel: int | None = None,
     ) -> None:
         self._llm = llm
         self._run_id = run_id
         self._modules = modules
         self._confidence = confidence
         self._max_evidence_chars = max_evidence_chars
+        self._max_parallel = max_parallel  # None: one call per module at once; 1: one after another
         self.trace = ReasoningTrace()
+
+    def _workers(self) -> int:
+        return max(1, min(self._max_parallel or len(self._modules), len(self._modules)))
 
     def reason(self, bundle: Bundle) -> tuple[list[Claim], list[ClaimEvidenceLink]]:
         claims: list[Claim] = []
         links: list[ClaimEvidenceLink] = []
         self.trace = ReasoningTrace()
 
-        for module in self._modules:
-            prompt = build_prompt(module.instruction, bundle, self._max_evidence_chars)
+        # The modules read the bundle and nothing else, so their model calls are independent: they
+        # run together (a run has a wall-clock limit and a call is a minute or two). Grounding and
+        # numbering then follow the order of the modules, so the claim ids do not depend on which
+        # call finished first.
+        prompts = [
+            build_prompt(m.instruction, bundle, self._max_evidence_chars) for m in self._modules
+        ]
+        for prompt in prompts:
             self.trace.omitted_evidence += prompt.omitted
-            result = self._llm.call(module.step, prompt.text, ModuleDraft)
+        with ThreadPoolExecutor(max_workers=self._workers()) as pool:
+            futures = [
+                pool.submit(self._llm.call, module.step, prompt.text, ModuleDraft)
+                for module, prompt in zip(self._modules, prompts, strict=True)
+            ]
+            results = [future.result() for future in futures]  # the first failure, in module order
+
+        for module, result in zip(self._modules, results, strict=True):
             self.trace.llm_results.append(result)
             grounded = ground_draft(
                 ModuleDraft.model_validate(result.parsed),
