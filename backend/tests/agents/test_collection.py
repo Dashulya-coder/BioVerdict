@@ -487,3 +487,10 @@ async def test_extraction_prompts_fit_the_endpoint_limit():
     model = SizedLLM(5_000)
     await run(records, model)
     assert model.sizes and max(model.sizes) + 700 <= 5_000
+
+
+async def test_a_few_long_records_still_fit_the_endpoint_limit():
+    records = [evidence(id=f"raw-{i}", excerpt="Response seen. " * 300) for i in range(4)]
+    model = SizedLLM(5_000)
+    await run(records, model)
+    assert model.sizes and max(model.sizes) + 700 <= 5_000
