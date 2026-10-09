@@ -97,8 +97,9 @@ def _fit(
     The limit counts the whole request, so the text allowance is lowered by however much the
     prompt (instructions, JSON framing, escaping) is over the room left for a retry.
     """
-    room = plan.max_chars
-    for _ in range(4):
+    # Start from the text the prompt can really hold: lowering a bigger allowance cuts nothing.
+    room = min(plan.max_chars, sum(len(record.excerpt) for record in records))
+    for _ in range(8):
         prompt, supplied, _ = prepare_prompt(records, query, plan.section, room, whole_records=True)
         over = 0 if limit is None else len(prompt) + RETRY_RESERVE - limit
         if over <= 0 or room <= 128:
