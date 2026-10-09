@@ -120,10 +120,15 @@ def test_unknown_in_an_unsearched_section_is_not_searched() -> None:
 
 
 def test_gate_outside_the_modules_remit_is_removed() -> None:
-    g = ground(draft(claim("x", gate_signals=["K3", "K1"])), MECHANISM)
+    g = ground(
+        draft(claim("x", gate_signals=["K3", "K1"], links=[link("E-0006", G12C)])), MECHANISM
+    )
     assert g.claims[0].gate_signals == [GateId.K3]
     assert any(d.what == "K1" for d in g.drops)
-    assert ground(draft(claim("x", gate_signals=["K3"])), TRANSLATION).claims[0].gate_signals == []
+    in_translation = ground(
+        draft(claim("x", gate_signals=["K3"], links=[link("E-0006", G12C)])), TRANSLATION
+    )
+    assert in_translation.claims[0].gate_signals == []
 
 
 def test_chain_link_is_kept_only_in_the_translation_module() -> None:
