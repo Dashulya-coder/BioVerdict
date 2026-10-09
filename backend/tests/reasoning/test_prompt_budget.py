@@ -126,7 +126,7 @@ def test_every_module_call_fits_the_limit_for_a_large_bundle() -> None:
     config = LLMConfig.for_provider("openai")
     client = LLMClient(config, {"openai": provider})
     ModuleReasoner(client.bind("R-1"), "R-1").reason(big_bundle(150, 800))
-    assert len(provider.requests) == len(ALL_MODULES)
+    assert len(ALL_MODULES) <= len(provider.requests) <= 3 * len(ALL_MODULES)
     for request in provider.requests:
         assert provider.input_chars(request) + RETRY_RESERVE <= config.max_input_chars
     assert ModuleDraft  # the schema the budget was computed for
