@@ -1,0 +1,314 @@
+{
+  "meta": {
+    "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+    "terms": "https://open.fda.gov/terms/",
+    "license": "https://open.fda.gov/license/",
+    "last_updated": "2026-10-07",
+    "results": {
+      "skip": 0,
+      "limit": 5,
+      "total": 1
+    }
+  },
+  "results": [
+    {
+      "submissions": [
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "2",
+          "submission_status": "AP",
+          "submission_status_date": "20221121",
+          "review_priority": "STANDARD",
+          "submission_class_code": "LABELING",
+          "submission_class_code_description": "Labeling",
+          "submission_property_type": [
+            {
+              "code": "Orphan"
+            }
+          ],
+          "application_docs": [
+            {
+              "id": "72668",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2022/214665Orig1s002ltr.pdf",
+              "date": "20221122",
+              "type": "Letter"
+            },
+            {
+              "id": "72672",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2022/214665s002lbl.pdf",
+              "date": "20221123",
+              "type": "Label"
+            }
+          ]
+        },
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "9",
+          "submission_status": "AP",
+          "submission_status_date": "20250116",
+          "review_priority": "PRIORITY",
+          "submission_class_code": "EFFICACY",
+          "submission_class_code_description": "Efficacy",
+          "submission_property_type": [
+            {
+              "code": "Orphan"
+            }
+          ],
+          "application_docs": [
+            {
+              "id": "80859",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2025/214665Orig1s009correctedlbl.pdf",
+              "date": "20250224",
+              "type": "Label"
+            },
+            {
+              "id": "80871",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2025/214665Orig1s009correctedltr.pdf",
+              "date": "20250224",
+              "type": "Letter"
+            },
+            {
+              "id": "82805",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/nda/2025/214665Orig1s009.pdf",
+              "date": "20250711",
+              "type": "Review"
+            }
+          ]
+        },
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "7",
+          "submission_status": "AP",
+          "submission_status_date": "20230317",
+          "review_priority": "STANDARD",
+          "submission_class_code": "LABELING",
+          "submission_class_code_description": "Labeling",
+          "submission_property_type": [
+            {
+              "code": "Orphan"
+            }
+          ],
+          "application_docs": [
+            {
+              "id": "73807",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2023/214665Orig1s007ltr.pdf",
+              "date": "20230320",
+              "type": "Letter"
+            }
+          ]
+        },
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "3",
+          "submission_status": "AP",
+          "submission_status_date": "20230120",
+          "review_priority": "STANDARD",
+          "submission_class_code": "LABELING",
+          "submission_class_code_description": "Labeling",
+          "application_docs": [
+            {
+              "id": "73265",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2023/214665s003lbl.pdf",
+              "date": "20230123",
+              "type": "Label"
+            },
+            {
+              "id": "73270",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2023/214665Orig1s003ltr.pdf",
+              "date": "20230123",
+              "type": "Letter"
+            }
+          ]
+        },
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "12",
+          "submission_status": "AP",
+          "submission_status_date": "20240930",
+          "review_priority": "STANDARD",
+          "submission_class_code": "LABELING",
+          "submission_class_code_description": "Labeling",
+          "submission_property_type": [
+            {
+              "code": "Orphan"
+            }
+          ],
+          "application_docs": [
+            {
+              "id": "79794",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2024/214665Orig1s012ltr.pdf",
+              "date": "20241001",
+              "type": "Letter"
+            },
+            {
+              "id": "80002",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2024/214665s012lbl.pdf",
+              "date": "20241028",
+              "type": "Label"
+            }
+          ]
+        },
+        {
+          "submission_type": "ORIG",
+          "submission_number": "1",
+          "submission_status": "AP",
+          "submission_status_date": "20210528",
+          "review_priority": "PRIORITY",
+          "submission_class_code": "TYPE 1",
+          "submission_class_code_description": "Type 1 - New Molecular Entity",
+          "submission_property_type": [
+            {
+              "code": "Orphan"
+            }
+          ],
+          "application_docs": [
+            {
+              "id": "67623",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2021/214665s000lbl.pdf",
+              "date": "20210528",
+              "type": "Label"
+            },
+            {
+              "id": "67636",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/appletter/2021/214665Orig1s000ltr.pdf",
+              "date": "20210601",
+              "type": "Letter"
+            },
+            {
+              "id": "67896",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/nda/2021/214665Orig1s000TOC.html",
+              "date": "20210624",
+              "type": "Review"
+            }
+          ]
+        },
+        {
+          "submission_type": "SUPPL",
+          "submission_number": "4",
+          "submission_status": "AP",
+          "submission_status_date": "20230424",
+          "review_priority": "STANDARD",
+          "submission_class_code": "LABELING",
+          "submission_class_code_description": "Labeling",
+          "application_docs": [
+            {
+              "id": "74056",
+              "url": "http://www.accessdata.fda.gov/drugsatfda_docs/label/2023/214665s004lbl.pdf",
+              "date": "20230425",
+              "type": "Label"
+            },
+            {
+              "id": "74058",
+              "url": "https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2023/214665Orig1s004ltr.pdf",
+              "date": "20230425",
+              "type": "Letter"
+            }
+          ]
+        }
+      ],
+      "application_number": "NDA214665",
+      "sponsor_name": "AMGEN INC",
+      "openfda": {
+        "application_number": [
+          "NDA214665"
+        ],
+        "brand_name": [
+          "LUMAKRAS"
+        ],
+        "generic_name": [
+          "SOTORASIB"
+        ],
+        "manufacturer_name": [
+          "Amgen Inc"
+        ],
+        "product_ndc": [
+          "55513-488",
+          "55513-504",
+          "55513-512"
+        ],
+        "product_type": [
+          "HUMAN PRESCRIPTION DRUG"
+        ],
+        "route": [
+          "ORAL"
+        ],
+        "substance_name": [
+          "SOTORASIB"
+        ],
+        "rxcui": [
+          "2550719",
+          "2550725",
+          "2628240",
+          "2628242",
+          "2687205",
+          "2687207"
+        ],
+        "spl_id": [
+          "8f611e67-8c58-4413-8b81-a200fa7f30e8"
+        ],
+        "spl_set_id": [
+          "c80a362c-7ac3-4894-a076-0691e68ef8c1"
+        ],
+        "package_ndc": [
+          "55513-488-01",
+          "55513-488-02",
+          "55513-488-40",
+          "55513-488-24",
+          "55513-488-96",
+          "55513-504-50",
+          "55513-512-60"
+        ],
+        "unii": [
+          "2B2VM6UC8G"
+        ]
+      },
+      "products": [
+        {
+          "product_number": "002",
+          "reference_drug": "Yes",
+          "brand_name": "LUMAKRAS",
+          "active_ingredients": [
+            {
+              "name": "SOTORASIB",
+              "strength": "320MG"
+            }
+          ],
+          "reference_standard": "Yes",
+          "dosage_form": "TABLET",
+          "route": "ORAL",
+          "marketing_status": "Prescription"
+        },
+        {
+          "product_number": "003",
+          "reference_drug": "Yes",
+          "brand_name": "LUMAKRAS",
+          "active_ingredients": [
+            {
+              "name": "SOTORASIB",
+              "strength": "240MG"
+            }
+          ],
+          "reference_standard": "No",
+          "dosage_form": "TABLET",
+          "route": "ORAL",
+          "marketing_status": "Prescription"
+        },
+        {
+          "product_number": "001",
+          "reference_drug": "Yes",
+          "brand_name": "LUMAKRAS",
+          "active_ingredients": [
+            {
+              "name": "SOTORASIB",
+              "strength": "120MG"
+            }
+          ],
+          "reference_standard": "No",
+          "dosage_form": "TABLET",
+          "route": "ORAL",
+          "marketing_status": "Prescription"
+        }
+      ]
+    }
+  ]
+}

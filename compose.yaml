@@ -1,0 +1,49 @@
+# Both images and the data volume, started with one command from the repository root:
+#
+#   docker compose up --build            # offline fixture runs; open http://localhost:8080
+#   USE_FIXTURES=0 docker compose up     # live runs: needs the keys in .env
+#
+# Keys are read from .env at start (never built into an image); the file may be absent.
+# See docs/runbook.md, "Docker".
+name: bioverdict
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      USE_FIXTURES: ${USE_FIXTURES:-1}
+      # The page's origin, as the browser sees it. Not taken from CORS_ORIGINS: a .env written
+      # for `pnpm dev` names port 5173 there, which would lock this page out.
+      CORS_ORIGINS: ${PAGE_ORIGIN:-http://localhost:${FRONTEND_PORT:-8080}}
+      # Container paths: a .env written for a local run names relative ones.
+      DB_PATH: /app/data/bioverdict.sqlite
+      CACHE_DIR: /app/data/cache
+      FIXTURES_DIR: /app/fixtures
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      # Runs, the source cache and the model cache survive `docker compose down`.
+      - data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        # The API's address as the browser reaches it, fixed when the image is built.
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:${BACKEND_PORT:-8000}}
+    ports:
+      - "${FRONTEND_PORT:-8080}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  data:

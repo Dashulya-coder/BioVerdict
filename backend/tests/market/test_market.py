@@ -200,7 +200,7 @@ async def test_a_cancer_report_without_a_national_row_is_an_error_not_a_zero(
     http = make_http(tmp_path, server)
     http._client = httpx.AsyncClient(transport=httpx.MockTransport(broken))
 
-    with pytest.raises(ValueError, match="no national row"):
+    with pytest.raises(ValueError, match="expected content"):  # refused before caching
         await CancerIncidenceConnector(http).fetch(query(), TODAY)
 
 
@@ -350,3 +350,13 @@ def test_an_upper_bound_above_the_largest_drug_class_is_flagged() -> None:
         update={"tam": out.tam.model_copy(update={"tam_usd": Range(p10=1e9, p50=2e9, p90=3e9)})}
     )
     assert len(_warnings(modest)) == 1  # only the ceiling caution remains
+
+
+async def test_the_ranges_say_that_they_are_bounds_and_not_percentiles(tmp_path: Path) -> None:
+    estimate = estimate_market(bundle(await collect(tmp_path, query())))
+
+    assert estimate.tam is not None
+    assert "not percentiles" in estimate.range_basis
+    # The market's bounds are its factors' bounds multiplied: nothing is sampled.
+    assert estimate.tam.tam_usd.p10 == estimate.patients.p10 * estimate.annual_price_usd.p10
+    assert estimate.tam.tam_usd.p90 == estimate.patients.p90 * estimate.annual_price_usd.p90

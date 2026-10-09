@@ -13,17 +13,21 @@ from bioverdict.api.schemas import (
     EventView,
     EvidenceView,
     ExecutiveVerdict,
+    FinancialsResponse,
     LinkView,
     LLMCallView,
     MarketResponse,
     ReportResponse,
     RunSummary,
     SectionView,
+    TornadoBar,
     TraceResponse,
     TraceTotals,
 )
 from bioverdict.market.tam import estimate_market
+from bioverdict.pipeline.reason_score import indication_of
 from bioverdict.scoring.config import ConfidenceConfig, VerdictConfig
+from bioverdict.scoring.financials import financial_model
 from bioverdict.scoring.verdict import chain_confidences
 from bioverdict.store.load_bundle import load_bundle
 from bioverdict.store.models import (
@@ -283,10 +287,40 @@ def build_market(conn: sqlite3.Connection, run_id: str) -> MarketResponse:
         patients_basis=estimate.patients_basis,
         annual_price_usd=estimate.annual_price_usd,
         tam_usd=estimate.tam.tam_usd if estimate.tam else None,
+        range_basis=estimate.range_basis,
         assumptions=estimate.assumptions,
         warnings=estimate.warnings,
         missing=estimate.missing,
         sources=[evidence_view(by_id[evidence_id], links) for evidence_id in estimate.evidence_ids],
+    )
+
+
+def build_financials(conn: sqlite3.Connection, run_id: str) -> FinancialsResponse:
+    """PoS, rNPV, capital and the tornado of the run's bundle; same bundle, same numbers."""
+    require_run(conn, run_id)
+    try:
+        bundle = load_bundle(conn, run_id)
+    except LookupError as exc:
+        raise RunNotReadyError(f"run {run_id} has no frozen bundle yet") from exc
+    fin = financial_model(bundle, indication_of(conn, run_id))
+    _, links = load_claims(conn, run_id)
+    by_id = bundle.evidence_by_id()
+    rnpv = fin.rnpv
+    return FinancialsResponse(
+        run_id=run_id,
+        stage=fin.stage,
+        area=fin.area,
+        pos=fin.pos.pos if fin.pos else None,
+        rnpv=rnpv.rnpv if rnpv else None,
+        capital_usd=rnpv.capital if rnpv else None,
+        months_to_milestone=rnpv.months_to_milestone if rnpv else None,
+        probability_positive=rnpv.probability_positive if rnpv else None,
+        tornado=[TornadoBar(input=n, at_low=lo, at_high=hi) for n, lo, hi in rnpv.tornado]
+        if rnpv
+        else [],
+        assumptions=fin.assumptions,
+        missing=fin.missing,
+        sources=[evidence_view(by_id[i], links) for i in fin.evidence_ids],
     )
 
 

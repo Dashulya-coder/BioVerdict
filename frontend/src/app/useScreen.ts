@@ -12,7 +12,11 @@ function subscribe(listener: () => void) {
 }
 function snapshot(): Screen {
   const value = window.location.hash.slice(1)
-  return value === 'resolved' || value === 'evidence' || value === 'sources' || value === 'compare'
+  return value === 'resolved' ||
+    value === 'evidence' ||
+    value === 'sources' ||
+    value === 'compare' ||
+    value === 'report'
     ? value
     : 'new'
 }

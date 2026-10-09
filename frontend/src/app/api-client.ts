@@ -41,7 +41,7 @@ function unreachable(): WorkspaceError {
   )
 }
 
-async function request<T>(
+export async function request<T>(
   path: string,
   schema: z.ZodType<T>,
   signal: AbortSignal,
@@ -97,7 +97,7 @@ async function request<T>(
   return parsed.data
 }
 
-function wait(ms: number, signal: AbortSignal): Promise<void> {
+export function wait(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(resolve, ms)
     signal.addEventListener(

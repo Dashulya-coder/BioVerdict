@@ -15,22 +15,61 @@ from bioverdict.llm import ConfigError, LLMClient, LLMConfig
 from bioverdict.llm.cache import DiskCache
 from bioverdict.llm.call_log import SqliteCallLog
 from bioverdict.llm.providers.anthropic import AnthropicProvider
+from bioverdict.llm.providers.openai import OpenAIProvider, configured_key
 
-KEY = "ANTHROPIC_API_KEY"  # the only provider with an adapter today
+ANTHROPIC_KEY = "ANTHROPIC_API_KEY"
+PROVIDER_VARIABLE = "LLM_PROVIDER"  # `anthropic` or `openai`; unset: the one with a key
+
+
+def select_provider() -> str | None:
+    """Which provider a live run uses, or None when no key is set.
+
+    `LLM_PROVIDER` decides when it is set; otherwise the Anthropic key wins, then the key of the
+    OpenAI-compatible gateway (`TEAM_API_KEY`, then `OPENAI_API_KEY`).
+    """
+    chosen = os.environ.get(PROVIDER_VARIABLE, "").strip().lower()
+    if chosen:
+        if chosen not in {"anthropic", "openai"}:
+            raise ConfigError(f"{PROVIDER_VARIABLE}={chosen!r}: use 'anthropic' or 'openai'")
+        return chosen
+    if os.environ.get(ANTHROPIC_KEY):
+        return "anthropic"
+    if configured_key():
+        return "openai"
+    return None
+
+
+def key_variable(provider: str) -> str:
+    return ANTHROPIC_KEY if provider == "anthropic" else "TEAM_API_KEY (or OPENAI_API_KEY)"
+
+
+def has_key(provider: str) -> bool:
+    return (
+        bool(os.environ.get(ANTHROPIC_KEY)) if provider == "anthropic" else bool(configured_key())
+    )
 
 
 def require_configured() -> None:
     """Raise before a run is created when it could not make its first model call."""
-    if not os.environ.get(KEY):
-        raise ConfigError(f"{KEY} is not set: a live run needs a model (see .env.example)")
+    provider = select_provider()
+    if provider is None:
+        raise ConfigError(
+            f"no model key is set ({ANTHROPIC_KEY}, or TEAM_API_KEY for the gateway): "
+            "a live run needs a model (see .env.example)"
+        )
+    if not has_key(provider):
+        raise ConfigError(f"{key_variable(provider)} is not set: a live run needs a model")
 
 
 def live_llm(run_id: str, db_path: Path | None = None) -> LLM:
     """A client for one run: its budget and deadline are counted for this run only."""
     require_configured()
+    provider = select_provider()
+    assert provider is not None
+    adapter = AnthropicProvider() if provider == "anthropic" else OpenAIProvider()
     client = LLMClient(
-        LLMConfig.default(),
-        {AnthropicProvider.name: AnthropicProvider()},
+        LLMConfig.for_provider(provider),
+        {adapter.name: adapter},
         cache=DiskCache(settings.cache_dir() / "llm"),
         call_log=SqliteCallLog(db_path or settings.db_path()),
     )

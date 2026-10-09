@@ -97,6 +97,9 @@ class ReasoningModule:
     gate_guard: GateGuard | None = None
     # Only modules that describe studies and programs may type a claim `study_fact`.
     allow_study_fact: bool = False
+    # The source families this module reads. Market records are for code (market/tam.py) and are
+    # never shown to a model; None means everything.
+    families: frozenset[str] | None = None
 
 
 MECHANISM = ReasoningModule(
@@ -107,6 +110,7 @@ MECHANISM = ReasoningModule(
     allowed_gates=frozenset({GateId.K3}),
     claim_type=ClaimType.TARGET_CAUSAL,
     gate_guard=evidence_guard,
+    families=frozenset({"target_database", "literature"}),
 )
 TRANSLATION = ReasoningModule(
     name="translation",
@@ -115,6 +119,7 @@ TRANSLATION = ReasoningModule(
     instruction=_TRANSLATION,
     chain=True,
     claim_type=ClaimType.DRUG_ACTS_IN_HUMANS,
+    families=frozenset({"literature", "registry"}),
 )
 
 CLINICAL = ReasoningModule(
@@ -125,6 +130,7 @@ CLINICAL = ReasoningModule(
     allowed_gates=frozenset({GateId.K1, GateId.K2, GateId.K4}),
     gate_guard=evidence_guard,
     allow_study_fact=True,
+    families=frozenset({"registry", "literature"}),
 )
 COMPETITION = ReasoningModule(
     name="competition",
@@ -134,6 +140,7 @@ COMPETITION = ReasoningModule(
     allowed_gates=frozenset({GateId.S4}),
     gate_guard=evidence_guard,
     allow_study_fact=True,
+    families=frozenset({"registry", "target_database"}),
 )
 
 # Order of the plan: translation reads what mechanism and clinical established.

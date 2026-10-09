@@ -47,6 +47,38 @@ These are starting hypotheses. The final assignment comes from the bake-off belo
 
 Why Sonnet 5.5 rather than Opus 5.5 for the strongest steps (hypothesis to confirm): third-party tracking reports a closed-book "hallucination rate" of about 47% for Sonnet 5.5 against about 59% for Opus 5.5 on AA-Omniscience, with Opus ahead on factual accuracy. In a closed-world pipeline we want the model that guesses less and follows instructions, not the one that knows more. These are general benchmarks, not our task.
 
+## The hackathon gateway (OpenAI-compatible)
+
+The organizers give each team a key for an Azure-hosted, OpenAI-compatible gateway (set
+`TEAM_API_KEY` and `LLM_BASE_URL`; `LLM_PROVIDER=openai` forces it). Models: `gpt-6-luna`,
+`gpt-6.1-sol`, `gpt-6-astra`, `gpt-5-mini` (from `/v1/models`). Probed on 2026-10-09:
+
+- Chat completions only. Structured output by `response_format` json_schema in strict mode works,
+  and so do a system message, `max_completion_tokens` and `reasoning_effort`.
+- `temperature` and the old `max_tokens` are answered with a **502, and the gateway charges a
+  reserved amount for that failed request**. The adapter never sends them.
+- **A request may be at most about 16,180 characters** (the text of every message, plus the
+  response schema as compact JSON, plus about 100 of the gateway's own); a longer one is refused
+  with `400 Input exceeds the conservative input limit`, the same for every model and counted in
+  characters, not tokens. The organizers do not raise it. `LLMConfig.max_input_chars` (16,000
+  with a margin; `LLM_MAX_INPUT_CHARS` overrides it, 0 means none) makes the client refuse a larger
+  request before it is sent (`InputTooLargeError`, no cost) and `LLMClient.input_budget` says how
+  many characters of prompt a step may use. The adapter sends a schema without `title` and
+  `description` (the `ModuleDraft` schema is 1.6 thousand characters instead of 2.8).
+- Reasoning models spend hidden reasoning tokens inside `max_completion_tokens` (they are billed
+  as output), so the gateway preset keeps the limits tight (3,000 for extraction, 4,096 for
+  reasoning and synthesis). **The gateway refuses `max_completion_tokens` above about 4,096**
+  (4,000 accepted, 5,000 refused with `400 Output token limit is outside the supported range`,
+  measured on all three models), so no step can ask for more.
+- Roles used by the preset (`LLMConfig.for_provider("openai")`): resolver and extraction on
+  `gpt-6-luna`; reasoning, classification of new evidence and synthesis on `gpt-6.1-sol`, with
+  `gpt-5-mini` as the second model. `gpt-6-astra` costs five times `gpt-6.1-sol` and is not used.
+- The gateway has one vendor's models only, so a judge "from a different provider" (B8) cannot be
+  had here; use a different model family if one is added, and say so in the results.
+- Prices in `GATEWAY_PRICES` are the list prices above; `gpt-5-mini` is a public list price not
+  checked against the gateway. The gateway bills its own reserved amounts: compare a run's
+  `llm_calls` cost with the portal after the first runs.
+
 ## Bake-off (one evening)
 
 1. Collect 20 real documents (ClinicalTrials.gov records, PubMed abstracts, an SEC exhibit).
@@ -87,7 +119,7 @@ FROM llm_calls GROUP BY run_id;
 - Development and debugging: free tiers where available (note: free tiers may use content to improve products; our inputs are public).
 - Paid credit only for: bake-off, judge, baseline, final showcase runs.
 - Cache everything: LLM responses by hash, HTTP responses by key, frozen bundles by hash.
-- Per-run hard cap: `RUN_BUDGET_USD`.
+- Per-run hard cap: `RUN_BUDGET_USD`. A call starts only while the money spent plus the worst case of the calls still under way (whole prompt read, every allowed output token written) is under the cap. Calls of one run are made in parallel, so a run can pass its cap by at most one call, not by all the calls that started together.
 - Demo: replay recorded runs from cache; keep one live-capable path as a fallback.
 
 ## Consumer subscriptions

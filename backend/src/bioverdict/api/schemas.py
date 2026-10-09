@@ -205,12 +205,43 @@ class MarketResponse(_View):
     patients_basis: str | None
     annual_price_usd: Range | None
     tam_usd: Range | None
+    range_basis: str = Field(
+        description="What p10, p50 and p90 are in the ranges above: bounds, not percentiles"
+    )
     assumptions: list[str]
     warnings: list[str] = Field(
         default_factory=list, description="Why a number should not be read as a market"
     )
     missing: list[str] = Field(description="What could not be computed, and why")
     sources: list[EvidenceView] = Field(description="The records every number was read from")
+
+
+# --- PoS, rNPV, capital (B7) ----------------------------------------------------------------
+
+
+class TornadoBar(_View):
+    input: str
+    at_low: float = Field(description="rNPV (USD) with this input at its low end, others at base")
+    at_high: float = Field(description="rNPV (USD) with this input at its high end")
+
+
+class FinancialsResponse(_View):
+    """PoS and rNPV computed by code from the run's bundle. Everything is `modeled`: read
+    `assumptions` with every number. Inputs no source supports are placeholders."""
+
+    run_id: str
+    label: Literal["modeled"] = "modeled"
+    stage: str | None
+    area: str | None
+    pos: Range | None
+    rnpv: Range | None
+    capital_usd: Range | None = Field(description="Cost of all remaining phases, not risk-weighted")
+    months_to_milestone: Range | None
+    probability_positive: float | None
+    tornado: list[TornadoBar]
+    assumptions: list[str]
+    missing: list[str] = Field(description="What could not be computed, and why")
+    sources: list[EvidenceView]
 
 
 # --- adding evidence and comparing runs (A7) ---------------------------------------------------

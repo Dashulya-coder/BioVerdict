@@ -287,6 +287,16 @@ def test_every_live_plan_names_a_section_once() -> None:
     assert len(sections) == len(set(sections)) and Section.TRANSLATION not in sections
 
 
+def test_preprints_and_fda_records_are_planned_beside_the_first_sources() -> None:
+    plans = {plan.section: plan.tools for plan in LIVE_PLANS}
+
+    assert plans[Section.COMPETITION] == ("clinicaltrials_class", "openfda")
+    assert plans[Section.MECHANISM] == ("opentargets", "europepmc")
+    assert plans[Section.FLAGS] == ("sec_edgar",)
+    assert plans[Section.COMMERCIAL][-1] == "biomarker_frequency"
+    assert plans[Section.CLINICAL] == ("clinicaltrials", "pubmed", "pmc_fulltext")
+
+
 def study(nct: str, status: str, phase: str, updated: date) -> list[Evidence]:
     """The records the registry connector gives for one study, reduced to what matters here."""
     shared = {

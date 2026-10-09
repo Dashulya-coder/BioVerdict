@@ -12,16 +12,17 @@ from bioverdict.contracts import LLM
 from bioverdict.reasoning import ModuleReasoner
 from bioverdict.reasoning.grounding import Drop, fill_missing_chain_links
 from bioverdict.reasoning.modules import ALL_MODULES
+from bioverdict.scoring.financials import financial_model, with_financials
 from bioverdict.scoring.verdict import score_verdict
 from bioverdict.store.models import Basis, Bundle, VerdictResult, VerificationCheck
-from bioverdict.store.runs_repo import DONE, add_event, finish_run, save_claims
+from bioverdict.store.runs_repo import DONE, add_event, finish_run, get_run, save_claims
 from bioverdict.store.verification_repo import save_checks
 
 QUOTE_CHECK = "quote_in_source"  # a citation that code could not ground in the bundle
 DROPPED_CHECK = "claim_dropped"  # the claim was removed from the report for that reason
 
 
-def _checks(drops: list[Drop], rejected: set[str]) -> list[VerificationCheck]:
+def drop_checks(drops: list[Drop], rejected: set[str]) -> list[VerificationCheck]:
     """What code removed or changed, for the verification log: nothing is dropped silently.
 
     A failed citation is a failed `quote_in_source` check. Other corrections (a gate or a claim
@@ -48,6 +49,13 @@ def _checks(drops: list[Drop], rejected: set[str]) -> list[VerificationCheck]:
     return checks
 
 
+def indication_of(conn: sqlite3.Connection, run_id: str) -> str:
+    """The indication the run was resolved to ("" before the resolver has run)."""
+    record = get_run(conn, run_id)
+    resolver = record.resolver if record is not None else None
+    return resolver.indication.name if resolver is not None else ""
+
+
 def reason_and_score(
     conn: sqlite3.Connection, run_id: str, bundle: Bundle, llm: LLM
 ) -> VerdictResult:
@@ -65,7 +73,7 @@ def reason_and_score(
     links = [link for link in links if link.claim_id not in rejected]
     claims += fill_missing_chain_links(claims, bundle, run_id, next_number)
     save_claims(conn, run_id, claims, links, bundle.version)
-    save_checks(conn, run_id, _checks(reasoner.trace.drops, rejected))
+    save_checks(conn, run_id, drop_checks(reasoner.trace.drops, rejected))
     corrections = sum(not d.is_citation_failure for d in reasoner.trace.drops)
     add_event(
         conn,
@@ -77,7 +85,8 @@ def reason_and_score(
     )
 
     add_event(conn, run_id, "score", "started")
-    result = score_verdict(claims)
+    fin = financial_model(bundle, indication_of(conn, run_id))
+    result = with_financials(score_verdict(claims, fin.rnpv.rnpv if fin.rnpv else None), fin)
     add_event(conn, run_id, "score", "done", f"{result.verdict.value} ({result.confidence:.2f})")
 
     finish_run(conn, run_id, DONE, result)

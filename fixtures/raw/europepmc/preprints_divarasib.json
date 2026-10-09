@@ -1,0 +1,51 @@
+{
+ "version": "6.9",
+ "hitCount": 2,
+ "request": {
+  "queryString": "(TITLE:\"divarasib\" OR ABSTRACT:\"divarasib\" OR TITLE:\"GDC-6036\" OR ABSTRACT:\"GDC-6036\") AND SRC:PPR",
+  "resultType": "core",
+  "cursorMark": "*",
+  "pageSize": 20,
+  "sort": "FIRST_PDATE_D desc",
+  "synonym": false
+ },
+ "resultList": {
+  "result": [
+   {
+    "id": "PPR1302339",
+    "source": "PPR",
+    "doi": "10.64898/2026.08.16.745134",
+    "title": "The KRAS  <sup>G12C</sup>  Inhibitor Divarasib Stabilizes RBM39 and Antagonizes Aryl-Sulfonamide Degraders",
+    "abstractText": "<h4>Summary</h4>  KRAS  G12C inhibitors have demonstrated meaningful clinical benefit in KRAS  G12C -mutant non-small cell lung cancer (NSCLC), yet responses remain heterogeneous and treatment-associated toxicities persist for reasons that are incompletely understood. Cysteine profiling indicates that these covalent inhibitors are highly selective for mutant KRAS; however, such approaches cannot detect noncovalent engagement of additional non-RAS proteins. Here, we used a protein-folding stability profiling technique, stability of proteins from rates of oxidation (SPROX), to identify protein targets of the clinical KRAS  G12C inhibitor, divarasib (GDC-6036), in KRAS-mutant NSCLC lysates. SPROX revealed a focused set of candidate interactors, including the essential splicing factor RBM39, which was reproducibly stabilized at both divarasib concentrations tested. We subsequently confirmed that divarasib directly and noncovalently binds to RBM39 protein. In NSCLC cells, divarasib increased RBM39 protein abundance and antagonized RBM39 degradation induced by the aryl-sulfonamide molecular glue indisulam through a post-transcriptional mechanism. Divarasib and RBM39 degraders reciprocally antagonized each other’s cytotoxicity, and RBM39 knockdown modestly reduced divarasib-induced cell death. Mechanistically, divarasib-mediated RBM39 stabilization regulated both INSR expression and alternative splicing, altered downstream insulin receptor signaling, and contributed to divarasib-associated cytotoxicity. Consistent with these findings, RBM39 and INSR expression were positively correlated across multiple human cancer types. Collectively, these findings identify RBM39 as a previously unrecognized noncovalent target of divarasib and uncover an RBM39–INSR signaling axis that modulates cellular responses to both divarasib and RBM39 degraders.  <h4>Significance</h4>  Covalent KRAS  G12C inhibitors are widely considered highly target-selective because adduct-based chemoproteomics approaches almost exclusively identify mutant KRAS as their target, detecting few proteins beyond it. However, these methods cannot capture noncovalent interactions and can sometimes miss covalent interactors. Using stability-based proteomics, we show that the clinical KRAS  G12C inhibitor divarasib targets RBM39, an essential splicing factor degraded by anticancer aryl-sulfonamide molecular glues. Divarasib opposes degrader-induced RBM39 loss, attenuates degrader cytotoxicity, and preserves RBM39-dependent regulation of the insulin receptor. These findings uncover a previously unrecognized non-KRAS axis of divarasib activity that is invisible to conventional target-deconvolution methods. They also suggest potential liability associated with combining RBM39 degraders with divarasib or other KRAS  G12C inhibitors that engage RBM39. More broadly, our study illustrates how protein folding stability-based profiling can expand the actionable target landscape of small molecules beyond canonical covalent interactions, uncovering noncovalent off-targets that may underlie response heterogeneity and treatment-associated toxicity.  <h4>HIGHLIGHTS</h4>  Protein folding stability profiling identifies RBM39 as a noncovalent target of divarasib. Divarasib stabilizes RBM39 and blocks its degradation by aryl-sulfonamide glues. Divarasib and RBM39 degraders reciprocally antagonize each other’s cytotoxicity. RBM39 supports insulin receptor expression and divarasib-induced cell death. <h4>eTOC BLURB</h4>  Chen et al. apply protein folding stability-based proteomics to the covalent KRAS  G12C inhibitor divarasib and identify the splicing factor RBM39 as a noncovalent target of divarasib. Divarasib stabilizes RBM39, antagonizes aryl-sulfonamide degraders, and preserves RBM39-dependent insulin receptor signaling, revealing a non-KRAS axis invisible to adduct-based target deconvolution.",
+    "firstPublicationDate": "2026-08-20",
+    "bookOrReportDetails": {
+     "publisher": "bioRxiv",
+     "yearOfPublication": 2026
+    },
+    "pubTypeList": {
+     "pubType": [
+      "Preprint"
+     ]
+    }
+   },
+   {
+    "id": "PPR826055",
+    "source": "PPR",
+    "doi": "10.21203/rs.3.rs-4067022/v1",
+    "title": "RIT1M90I is a driver of lung adenocarcinoma tumorigenesis and resistance to targeted therapy",
+    "abstractText": "<title>Abstract</title>  <p>RIT1 is a RAS-family GTPase that is mutated in 2.4% and amplified in up to 14% of lung adenocarcinoma patients. Yet, the oncogenic potential of RIT1 in the lungs is not completely understood. Many patients with RIT1 alterations are considered ‘oncogene-negative’, hence they are not eligible for any targeted therapy in the clinic. The role of RIT1 in cancer has been historically understudied due to the lack of <italic>in vitro</italic> and <italic>in vivo</italic> models harboring RIT1 alterations. In this study, we generated the first murine model of RIT1<sup>M90I</sup>-mutant lung cancer. We found that RIT1<sup>M90I</sup> was tumorigenic in the lungs and the tumors displayed histopathological features similar to lung adenocarcinoma. We leveraged this new model to assess both <italic>ex vivo</italic> and <italic>in vivo</italic> sensitivity of RIT1 tumors to the SHP2 inhibitor, migoprotafib, in combination with other targeted therapies. Finally, we showed that RIT1<sup>M90I</sup> can also drive resistance to the KRAS<sup>G12C</sup> inhibitor, divarasib, and that the combination with migoprotafib can revert this phenotype. Our data shows that RIT1<sup>M90I</sup> is a bona fide oncogenic driver of NSCLC and mediator of targeted therapy resistance as a co-occurring mutation. Taken together, our study suggests that RIT1-altered cancer patients may benefit from combination treatment with SHP2 inhibitor in the primary and resistance setting.</p>",
+    "firstPublicationDate": "2024-03-21",
+    "bookOrReportDetails": {
+     "publisher": "Research Square",
+     "yearOfPublication": 2024
+    },
+    "pubTypeList": {
+     "pubType": [
+      "Preprint"
+     ]
+    },
+    "license": "cc by"
+   }
+  ]
+ }
+}

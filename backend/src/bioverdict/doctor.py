@@ -23,7 +23,7 @@ import httpx
 from bioverdict import settings
 from bioverdict.llm import ConfigError, LLMConfig
 from bioverdict.pipeline.fixture_run import fixture_names
-from bioverdict.pipeline.live_llm import KEY
+from bioverdict.pipeline.live_llm import has_key, key_variable, select_provider
 from bioverdict.store.bundle import compute_content_hash
 from bioverdict.store.migrations import SCHEMA_VERSION, current_version
 from bioverdict.store.models import Bundle
@@ -66,10 +66,50 @@ def _pubmed(client: httpx.Client) -> str:
     return "answers"
 
 
+def _europepmc(client: httpx.Client) -> str:
+    url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+    answer = client.get(url, params={"query": "SRC:PPR", "format": "json", "pageSize": "1"})
+    answer.raise_for_status()
+    return f"{answer.json()['hitCount']} preprints indexed"
+
+
+def _sec(client: httpx.Client) -> str:
+    """The SEC refuses a request without a declared contact, so the check needs one too."""
+    contact = os.environ.get("SEC_USER_AGENT", "").strip()
+    if not contact:  # an optional source: nothing is wrong, company filings are just not read
+        return "not asked: SEC_USER_AGENT is not set, so company filings will not be read"
+    url = "https://data.sec.gov/submissions/CIK0000318154.json"  # any registrant
+    answer = client.get(url, headers={"User-Agent": contact})
+    answer.raise_for_status()
+    answer.json()["filings"]  # an error page would not have it
+    return "answers to the declared contact"
+
+
+def _cbioportal(client: httpx.Client) -> str:
+    headers = {"User-Agent": "bioverdict-hackathon", "Accept": "application/json"}
+    answer = client.get("https://www.cbioportal.org/api/studies/msk_impact_2017", headers=headers)
+    answer.raise_for_status()
+    return f"{answer.json()['allSampleCount']} samples in the cohort"
+
+
+def _openfda(client: httpx.Client) -> str:
+    """Sent with the key when one is set, so a key the FDA rejects fails here and not in a run."""
+    key = os.environ.get("OPENFDA_API_KEY")
+    url = "https://api.fda.gov/drug/drugsfda.json"
+    answer = client.get(url, params={"limit": "1"}, auth=(key, "") if key else None)
+    answer.raise_for_status()
+    limit = "key accepted" if key else "no key: 1,000 requests a day"
+    return f"data as of {answer.json()['meta']['last_updated']}, {limit}"
+
+
 SOURCES: dict[str, Probe] = {
     "ClinicalTrials.gov": _clinicaltrials,
     "Open Targets": _opentargets,
     "PubMed": _pubmed,
+    "Europe PMC": _europepmc,
+    "cBioPortal": _cbioportal,
+    "openFDA": _openfda,
+    "SEC EDGAR": _sec,
 }
 
 
@@ -90,15 +130,29 @@ def check_mode_and_model() -> list[Check]:
         if live
         else "fixtures: runs are answered offline (set USE_FIXTURES=0 for live runs)",
     )
-    has_key = bool(os.environ.get(KEY))
-    if has_key:
-        key = Check("model key", "ok", f"{KEY} is set (not verified: no model is called)")
-    elif live:
-        key = Check("model key", "fail", f"{KEY} is not set: a live run cannot start")
-    else:
-        key = Check("model key", "warn", f"{KEY} is not set: fine for fixtures, not for live runs")
     try:
-        config = LLMConfig.default()
+        provider = select_provider()
+    except ConfigError as exc:
+        provider = None
+        error = str(exc)
+    else:
+        error = None
+    if error is not None:
+        key = Check("model key", "fail" if live else "warn", error)
+    elif provider is not None and has_key(provider):
+        key = Check(
+            "model key",
+            "ok",
+            f"{key_variable(provider)} is set, provider {provider} (not verified: no model is called)",
+        )
+    elif live:
+        key = Check("model key", "fail", "no model key is set: a live run cannot start")
+    else:
+        key = Check(
+            "model key", "warn", "no model key is set: fine for fixtures, not for live runs"
+        )
+    try:
+        config = LLMConfig.for_provider(provider or "anthropic")
         limits = Check(
             "run limits",
             "ok",

@@ -18,15 +18,20 @@ import httpx
 
 from bioverdict import settings
 from bioverdict.agents.collect import CollectPlan
+from bioverdict.connectors.biomarker import BiomarkerFrequencyConnector
 from bioverdict.connectors.clinicaltrials import ClinicalTrialsConnector
+from bioverdict.connectors.edgar import EdgarConnector
 from bioverdict.connectors.epidemiology import (
     CancerIncidenceConnector,
     CdcIndicatorsConnector,
     OrphanetConnector,
     PopulationConnector,
 )
+from bioverdict.connectors.europepmc import EuropePmcConnector
 from bioverdict.connectors.http import DEFAULT_MIN_INTERVAL_S, CachedHttpClient
+from bioverdict.connectors.openfda import OpenFdaConnector
 from bioverdict.connectors.opentargets import OpenTargetsApi, OpenTargetsConnector
+from bioverdict.connectors.pmc import PmcFullTextConnector
 from bioverdict.connectors.pricing import AnalogPricingConnector
 from bioverdict.connectors.pubmed import PubMedConnector
 from bioverdict.connectors.retry import MAX_ATTEMPTS
@@ -40,13 +45,26 @@ NO_INDICATION = "not specified"  # what the Resolver writes when the input names
 
 # Translation is reasoned from the mechanism and clinical evidence; it has no source of its own.
 LIVE_PLANS = (
-    CollectPlan(section=Section.MECHANISM, tools=("opentargets",)),
-    CollectPlan(section=Section.CLINICAL, tools=("clinicaltrials", "pubmed")),
-    CollectPlan(section=Section.COMPETITION, tools=("clinicaltrials_class",)),
+    # Preprints are mostly laboratory work on the mechanism; published papers are in PubMed.
+    CollectPlan(section=Section.MECHANISM, tools=("opentargets", "europepmc")),
+    # Full texts last: they repeat PubMed's searches from the cache, and if the section's time
+    # runs out it is the abstracts and the registry that have been read.
+    CollectPlan(section=Section.CLINICAL, tools=("clinicaltrials", "pubmed", "pmc_fulltext")),
+    # The class in the registry, then what the FDA approved in it and what those labels say.
+    CollectPlan(section=Section.COMPETITION, tools=("clinicaltrials_class", "openfda")),
+    # What the sponsor told its investors: designations, holds, programs it stopped.
+    CollectPlan(section=Section.FLAGS, tools=("sec_edgar",)),
     # Market records are status facts: stored whole, read by code (`market/tam.py`), no model.
     CollectPlan(
         section=Section.COMMERCIAL,
-        tools=("analog_pricing", "cancer_incidence", "cdc_indicators", "orphanet", "population"),
+        tools=(
+            "analog_pricing",
+            "cancer_incidence",
+            "cdc_indicators",
+            "orphanet",
+            "population",
+            "biomarker_frequency",  # last: its first download of the cohort is the slowest
+        ),
     ),
 )
 
@@ -124,7 +142,8 @@ def paced_sources(
     max_attempts: int = MAX_ATTEMPTS,
     refresh: bool = False,
 ) -> SourcesFactory:
-    """The public sources: Open Targets, ClinicalTrials.gov and PubMed. None needs a key.
+    """The public sources: Open Targets, ClinicalTrials.gov, PubMed, Europe PMC, openFDA and the market
+    sources. None needs a key; `NCBI_API_KEY` and `OPENFDA_API_KEY` only raise the limits.
 
     A run keeps the default pace, which fits its time budget. Reading many assets in a row
     (`bioverdict warm`) has to be slower and more patient, or the registry answers 429.
@@ -148,11 +167,18 @@ def paced_sources(
 
 
 def _sources(http: CachedHttpClient) -> Sources:
+    pubmed = PubMedConnector(http, api_key=os.environ.get("NCBI_API_KEY") or None)
+    registry = ClinicalTrialsConnector(http)
     tools: list[Connector] = [
         OpenTargetsConnector(http),
-        ClinicalTrialsConnector(http),
+        registry,
         TargetClassTrials(ClinicalTrialsConnector(http)),
-        PubMedConnector(http, api_key=os.environ.get("NCBI_API_KEY") or None),
+        EdgarConnector(http, registry, os.environ.get("SEC_USER_AGENT")),
+        BiomarkerFrequencyConnector(http, registry),
+        pubmed,
+        PmcFullTextConnector(http, pubmed),
+        EuropePmcConnector(http),
+        OpenFdaConnector(http, api_key=os.environ.get("OPENFDA_API_KEY") or None),
         AnalogPricingConnector(http),
         CancerIncidenceConnector(http),
         CdcIndicatorsConnector(http),

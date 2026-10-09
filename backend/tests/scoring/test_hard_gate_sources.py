@@ -136,3 +136,43 @@ def test_the_unsupported_result_has_no_sources() -> None:
         confidence=0.0,
     )
     assert claim_confidence(claim, [], {}, AS_OF).parts.independent_groups == 0
+
+
+def _k3_claim(*evidence: Evidence) -> Claim:
+    claim = Claim(
+        id="C-1",
+        run_id="R",
+        section=Section.MECHANISM,
+        text="human loss of function of the target is harmful",
+        claim_type=ClaimType.TARGET_CAUSAL,
+        basis=Basis.EXTRACTED,
+        confidence=0.0,
+        gate_signals=[GateId.K3],
+    )
+    links = [
+        ClaimEvidenceLink(
+            claim_id="C-1", evidence_id=e.id, direction=Direction.SUPPORTS, quote="Futility"
+        )
+        for e in evidence
+    ]
+    (out,) = apply_confidence([claim], links, {e.id: e for e in evidence}, AS_OF)
+    return out
+
+
+def test_evidence_that_adds_no_weight_is_not_a_second_source() -> None:
+    """A registry record weighs nothing for a causal claim. Cited beside three records of one
+    genetics group it left the confidence as it was, yet made two groups and fired the gate."""
+    genetics = [
+        record(f"E-{n}", "lab:one", "Futility").model_copy(
+            update={"level": EvidenceLevel.HUMAN_GENETICS, "source_kind": SourceKind.PEER_REVIEWED}
+        )
+        for n in range(1, 4)
+    ]
+    alone = _k3_claim(*genetics)
+    with_registry = _k3_claim(*genetics, record("E-9", "sponsor:Other", STATUS))
+
+    assert with_registry.confidence == alone.confidence  # the record carried no weight
+    assert alone.confidence_parts.independent_groups == 1
+    assert with_registry.confidence_parts.independent_groups == 1
+    k3 = next(g for g in score_verdict([with_registry]).gates if g.gate_id is GateId.K3)
+    assert not k3.fired

@@ -162,14 +162,20 @@ def test_repeats_replayed_from_fixtures_are_not_called_stability(conn) -> None:
     assert "| replayed |" in summary(report)
 
 
-def answered(conn: sqlite3.Connection, cache_hit: bool):
-    """A fixture run that also logs one model call, fresh or served from the cache."""
+def answered(conn: sqlite3.Connection, cache_hit: bool, extraction_cached: bool = False):
+    """A fixture run that also logs its model calls: one extraction call and two reasoning
+    calls, the reasoning fresh or served from the cache."""
 
     def run(connection: sqlite3.Connection, run_id: str, text: str):
+        calls = [
+            ("extraction", extraction_cached),
+            ("reasoning.mechanism", cache_hit),
+            ("reasoning.clinical", False),
+        ]
         with connection:
-            connection.execute(
-                "INSERT INTO llm_calls (run_id, step, cache_hit, cost_usd) VALUES (?, 'x', ?, 0.01)",
-                (run_id, int(cache_hit)),
+            connection.executemany(
+                "INSERT INTO llm_calls (run_id, step, cache_hit, cost_usd) VALUES (?, ?, ?, 0.01)",
+                [(run_id, step, int(hit)) for step, hit in calls],
             )
         return start(connection, run_id, text)
 
@@ -183,6 +189,25 @@ def test_stability_is_measured_between_runs_a_model_answered_afresh(conn) -> Non
     assert fresh.cases[0].fresh_runs == 2 and fresh.cases[0].same_verdict_every_run is True
     assert fresh.cases[0].top_risk_overlap == 1.0 and "| n/a | yes |" in summary(fresh)
     assert cached.cases[0].fresh_runs == 0 and cached.cases[0].same_verdict_every_run is None
+
+
+def test_a_run_with_one_cached_reasoning_call_did_not_reason_afresh(conn) -> None:
+    """It made fresh calls too (extraction, another module), which used to make it `fresh`."""
+    report = run_cases(conn, [case()], answered(conn, True), mode="live", repeat=2, today=TODAY)
+
+    run = report.cases[0].runs[0]
+    assert run.llm_calls > run.cache_hits  # some call was fresh
+    assert (run.reasoning_calls, run.reasoning_cache_hits) == (2, 1)
+    assert report.cases[0].fresh_runs == 0 and "| replayed |" in summary(report)
+
+
+def test_cached_extraction_does_not_hide_fresh_reasoning(conn) -> None:
+    """The same bundle and new reasoning is exactly what stability of reasoning compares."""
+    start_run = answered(conn, False, extraction_cached=True)
+
+    report = run_cases(conn, [case()], start_run, mode="live", repeat=2, today=TODAY)
+
+    assert report.cases[0].fresh_runs == 2 and report.cases[0].same_verdict_every_run is True
 
 
 def test_a_single_run_says_nothing_about_stability(conn) -> None:

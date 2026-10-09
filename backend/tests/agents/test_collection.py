@@ -464,3 +464,33 @@ async def test_what_a_connector_could_not_read_makes_the_section_incomplete():
     (section,) = collected.sections
     assert section.facts and section.status is SectionStatus.INCOMPLETE
     assert section.issues == ["fixture: results of NCT1 could not be read (HTTPStatusError)"]
+
+
+class SizedLLM(FakeLLM):
+    """A model whose endpoint takes `limit` characters per request."""
+
+    def __init__(self, limit: int) -> None:
+        super().__init__({"extraction": {"facts": []}})
+        self.limit = limit
+        self.sizes: list[int] = []
+
+    def input_budget(self, step, schema):
+        return self.limit
+
+    def call(self, step, prompt, schema, *args, **kwargs):
+        self.sizes.append(len(prompt))
+        return super().call(step, prompt, schema, *args, **kwargs)
+
+
+async def test_extraction_prompts_fit_the_endpoint_limit():
+    records = [evidence(id=f"raw-{i}", excerpt="Response seen. " * 100) for i in range(12)]
+    model = SizedLLM(5_000)
+    await run(records, model)
+    assert model.sizes and max(model.sizes) + 700 <= 5_000
+
+
+async def test_a_few_long_records_still_fit_the_endpoint_limit():
+    records = [evidence(id=f"raw-{i}", excerpt="Response seen. " * 300) for i in range(4)]
+    model = SizedLLM(5_000)
+    await run(records, model)
+    assert model.sizes and max(model.sizes) + 700 <= 5_000

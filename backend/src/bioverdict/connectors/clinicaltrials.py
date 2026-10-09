@@ -32,6 +32,7 @@ import httpx
 
 from bioverdict.connectors.http import CachedHttpClient
 from bioverdict.connectors.sponsors import sponsor_group
+from bioverdict.connectors.validate import BodyError, json_object
 from bioverdict.store.as_of import filter_as_of
 from bioverdict.store.models import (
     Evidence,
@@ -305,6 +306,10 @@ def build_queries(query: ResolverOutput, page_size: int = PAGE_SIZE) -> list[dic
     return searches + stopped
 
 
+_SEARCH_PAGE = json_object("studies")
+_STUDY = json_object()  # a study without posted results answers `{}`
+
+
 class ClinicalTrialsConnector:
     """Satisfies `Connector`. Reads up to `MAX_PAGES` pages of each query and posted results.
 
@@ -328,7 +333,7 @@ class ClinicalTrialsConnector:
         token: str | None = None
         for _ in range(self._max_pages):
             page_params = {**params, "pageToken": token} if token else params
-            response = await self._http.get(API_URL, page_params)
+            response = await self._http.get(API_URL, page_params, validate=_SEARCH_PAGE)
             body = json.loads(response.body)
             for study in body.get("studies", []):
                 yield study, response.fetched_at
@@ -352,8 +357,10 @@ class ClinicalTrialsConnector:
         with_results = [nct for nct in sorted(found) if found[nct][0].get("hasResults")]
         for nct in with_results[:MAX_RESULT_STUDIES]:
             try:
-                response = await self._http.get(f"{API_URL}/{nct}", {"fields": RESULT_FIELDS})
-            except httpx.HTTPError as exc:
+                response = await self._http.get(
+                    f"{API_URL}/{nct}", {"fields": RESULT_FIELDS}, validate=_STUDY
+                )
+            except (httpx.HTTPError, BodyError) as exc:
                 log.warning("results of %s not read: %s", nct, exc)
                 self.problems.append(f"results of {nct} could not be read ({type(exc).__name__})")
                 continue

@@ -69,6 +69,15 @@ Real LLM calls use the existing logger. Cancelling a sync worker cannot terminat
 call; live callers must configure provider timeouts and run deadlines. No late result is
 accepted into the timed-out section.
 
+## Answers that are not cached
+
+Source answers are cached without an expiry, so a bad answer stored once would be replayed in
+every later run. Each connector therefore checks the shape of a fresh body before it is stored
+(`connectors/validate.py`, and the checks of PubMed, Europe PMC, openFDA and Open Targets): an
+error object, a maintenance page or a download cut short inside an HTTP 200 answer is refused,
+the request fails like any other and the next run asks again. An empty result list is a valid
+answer and is cached.
+
 ## What is read first
 
 A source often returns more than the limits allow (a drug with many studies gives over 80
@@ -96,16 +105,35 @@ left unread makes the section `incomplete`, as before.
 
 ## Live registration
 
-`pipeline/live_sources.py` is the allowlist of a live run: Open Targets for mechanism,
-ClinicalTrials.gov by asset and PubMed for clinical, ClinicalTrials.gov by target within the
-indication (`clinicaltrials_class`) for competition. `pipeline/live_run.py` runs the Resolver and
+`pipeline/live_sources.py` is the allowlist of a live run: Open Targets and Europe PMC
+preprints (`europepmc`) for mechanism,
+ClinicalTrials.gov by asset, PubMed and open-access full texts (`pmc_fulltext`) for clinical, ClinicalTrials.gov by target within the
+indication (`clinicaltrials_class`) and openFDA (`openfda`) for competition. `pipeline/live_run.py` runs the Resolver and
 this graph, writes each section's status, fact count, rejections and issues into the `collect`
 progress event, and hands the frozen bundle to the shared reason → score step. See the
 [runbook](runbook.md) for how to start a live run and how it fails.
 
 The commercial section reads the market sources (`analog_pricing`, `cancer_incidence`,
-`cdc_indicators`, `orphanet`, `population`). All of their records are status facts, so no model
+`cdc_indicators`, `orphanet`, `population`, `biomarker_frequency`). All of their records are status facts, so no model
 reads them; `market/tam.py` computes the market size from them (see [scoring](scoring.md)).
+
+openFDA reads the drugs approved against the same target (the analogs Open Targets names; generic
+copies are left out). Approvals, indications and boxed warnings are status facts. The clinical
+studies section of each label is text for the model, in verbatim pieces of up to 6,000 characters
+cut between sentences. A class with many approved drugs (GLP-1 agonists) has more label text than
+the three prompts hold, so its competition section is `incomplete`.
+
+Full texts are read for at most four papers, three pieces of 6,000 characters each, the Results
+before the tables; a longer paper is read in part and makes the section `incomplete`. A journal
+that does not mark a Results section (Nature's main text) gives only its tables. A piece carries
+the level, date and independence group of its paper, so a paper read twice counts once.
+
+The flags section reads SEC EDGAR (`sec_edgar`): for up to two sponsors of the asset's studies,
+the eight newest 8-K filings that report on the pipeline (items 2.02, 7.01, 8.01) or 6-K
+filings, the main document and up to two exhibits 99 of each, and from those only the paragraphs
+that name the asset. A sponsor that is not an SEC registrant under its registry name (Roche)
+gives nothing; that is `none_found`, not an error. Without `SEC_USER_AGENT` the SEC is not asked
+and the section is `incomplete`.
 
 Checkpointing and independent verification (B8) remain subsequent work. Tests verify the offline
 boundary and mocked call logging; runs against the real sources used a stand-in model. Neither

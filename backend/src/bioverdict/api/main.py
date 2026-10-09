@@ -31,6 +31,7 @@ from bioverdict.api.schemas import (
     ClaimView,
     DiffResponse,
     EvidenceView,
+    FinancialsResponse,
     MarketResponse,
     ReportResponse,
     RunCreated,
@@ -180,6 +181,17 @@ def create_app(
             except report.RunNotReadyError as exc:
                 raise HTTPException(409, str(exc)) from exc
 
+    @app.get("/runs/{run_id}/financials")
+    def run_financials(run_id: str, request: Request) -> FinancialsResponse:
+        """PoS, rNPV, capital, time to milestone and tornado, computed by code from the bundle."""
+        with database(request) as conn:
+            try:
+                return report.build_financials(conn, run_id)
+            except report.RunNotFoundError as exc:
+                raise _not_found(exc) from exc
+            except report.RunNotReadyError as exc:
+                raise HTTPException(409, str(exc)) from exc
+
     @app.get("/runs/{run_id}/claims/{claim_id}")
     def claim(run_id: str, claim_id: str, request: Request) -> ClaimView:
         with database(request) as conn:
@@ -293,6 +305,7 @@ def _execute_recompute(db_path: Path | None, run_id: str, llm: LLMFactory | None
             run_id,
             lambda: load_bundle(conn, run_id),
             lambda: llm(run_id) if llm is not None else live_llm(run_id, db_path),
+            settings.recompute_mode(),
         )
 
 

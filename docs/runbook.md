@@ -46,6 +46,71 @@ starting another. A request the API accepts and does not answer within 20 second
 message instead of a waiting screen.
 The API must allow the page's origin: `CORS_ORIGINS` defaults to `http://localhost:5173`.
 
+### Docker
+
+Both Dockerfiles use the **repository root** as their build context. They use Python 3.14
+(`backend/.python-version`) and Node 24 (the frontend engine and CI runtime), with frozen
+lockfiles. The frontend builder uses the same pnpm 12.9.1 as CI; its runtime serves static
+assets through Nginx. Both runtime images run as non-root users and have HTTP health checks.
+
+The short way, from the repository root (`compose.yaml` builds both images, creates the data
+volume and sets the page's origin for the API):
+
+```bash
+docker compose up --build              # fixture runs; open http://localhost:8080
+USE_FIXTURES=0 docker compose up       # live runs, with the keys of .env
+python3 scripts/check_containers.py    # a fixture run, the page and CORS, end to end
+docker compose down                    # stop; add -v to delete runs and caches too
+docker compose exec backend bioverdict doctor
+```
+
+`.env` is read when the containers start, if it exists; a value with spaces may be quoted there.
+`BACKEND_PORT` and `FRONTEND_PORT` move the ports (the frontend is rebuilt for a new API port).
+On another host set `VITE_API_URL` (the API as the browser reaches it) and `PAGE_ORIGIN` (the
+page as the browser reaches it) and build again. `CORS_ORIGINS` of `.env` is not used here: it
+names the development server. To pre-warm the cache the demo will use, run `warm` inside the
+container, so that it fills the same volume (the asset list is not in the image, copy it in):
+`docker compose cp eval/assets_example.tsv backend:/tmp/assets.tsv`, then
+`docker compose exec backend bioverdict warm --list /tmp/assets.tsv`.
+CI builds both images and runs `check_containers.py` on every pull request.
+
+The same by hand, from the repository root:
+
+```bash
+docker build -f backend/Dockerfile -t bioverdict-backend .
+docker build -f frontend/Dockerfile -t bioverdict-frontend \
+  --build-arg VITE_API_URL=http://localhost:8000 .
+docker volume create bioverdict-data
+```
+
+Start these in separate terminals, then open `http://localhost:8080`:
+
+```bash
+docker run --rm --name bioverdict-backend -p 8000:8000 \
+  --mount source=bioverdict-data,target=/app/data \
+  -e CORS_ORIGINS=http://localhost:8080 bioverdict-backend
+docker run --rm --name bioverdict-frontend -p 8080:8080 bioverdict-frontend
+```
+
+The backend defaults to offline fixture runs, so Divarasib works without keys or model calls.
+The named volume preserves the database and HTTP/LLM caches across container replacements;
+without a volume they disappear when the container is removed. Runtime paths default to
+`DB_PATH=/app/data/bioverdict.sqlite`, `CACHE_DIR=/app/data/cache`, and
+`FIXTURES_DIR=/app/fixtures`. A bind-mounted data directory must be writable by UID/GID 10001.
+The API uses one Uvicorn worker because background runs execute inside that process.
+
+`VITE_API_URL` is embedded at **build time** and must be reachable from the user's browser.
+Its Docker default is `http://localhost:8000`; for another host, rebuild with that host's API
+URL and set `CORS_ORIGINS` to the page's origin. Pass `--build-arg VITE_API_URL=` for a
+standalone snapshot that needs no API. Setting this variable on `docker run` does not change
+the already built frontend. No keys belong in frontend build arguments.
+
+For live backend runs, add `--env-file .env -e USE_FIXTURES=0` to its `docker run` command;
+the explicit `CORS_ORIGINS` option still applies. `.env` files, local databases, caches and
+dependencies are excluded from the shared Docker build context. Only the prepared bundle,
+resolver and reasoning fixtures are included in the backend image. The installed CLI is also
+available, for example `docker exec bioverdict-backend bioverdict doctor --offline`.
+
 ## 3. Run an underwriting
 
 For the independent A4 collection-only demo (no underwriting or paid calls), run from the
@@ -72,14 +137,15 @@ The same steps, events, SQLite records and report as a fixture run, from real so
 
 1. **Resolve.** One model call reads the text; every id comes from Open Targets. What was not
    confirmed is listed in the report's assumptions. No identifiable target fails the run.
-2. **Collect.** Mechanism: Open Targets. Clinical: ClinicalTrials.gov (by asset) and PubMed.
-   Competition: ClinicalTrials.gov by target within the indication. One extraction call per
+2. **Collect.** Mechanism: Open Targets and preprints from Europe PMC. Clinical: ClinicalTrials.gov (by asset), PubMed, and the full text of open-access papers.
+   Competition: ClinicalTrials.gov by target within the indication, and openFDA for the
+   approvals and labels of drugs already approved against the target. One extraction call per
    source that returned records. Other sections stay `not_searched`.
 3. **Freeze**, then **reason** and **score** on the frozen bundle only.
 
 Needs `ANTHROPIC_API_KEY`; without it the API answers 503 and the CLI exits 2 before a run is
 created. `RUN_BUDGET_USD` and `RUN_TIMEOUT_S` cap one run; the deadline counts from its first
-model call. `NCBI_API_KEY` is optional. Source answers are cached in SQLite and model answers in
+model call. `SEC_USER_AGENT` ("Name email", the contact the SEC asks for) turns on company filings; without it they are not read. `NCBI_API_KEY` and `OPENFDA_API_KEY` are optional (openFDA allows 1,000 requests a day without a key). Source answers are cached in SQLite and model answers in
 `CACHE_DIR/llm`, so a repeated run is cheap and gives the same bundle hash. The API takes
 `{"asset": ...}` or `{"indication": ..., "mechanism": ...}`; start the server with
 `USE_FIXTURES=0 uv run --env-file ../.env uvicorn bioverdict.api.main:app`.

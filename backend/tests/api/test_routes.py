@@ -9,6 +9,7 @@ from bioverdict.api.main import create_app
 from bioverdict.api.schemas import (
     ClaimView,
     EvidenceView,
+    FinancialsResponse,
     MarketResponse,
     ReportResponse,
     TraceResponse,
@@ -145,6 +146,7 @@ def test_the_market_of_a_run_without_market_records_says_what_is_missing(
     market = MarketResponse.model_validate(client.get(f"/runs/{run_id}/market").json())
 
     assert market.label == "modeled" and market.tam_usd is None and market.sources == []
+    assert "not percentiles" in market.range_basis
     assert [reason.split(":")[0] for reason in market.missing] == ["patients", "price"]
 
 
@@ -156,6 +158,26 @@ def test_the_market_is_not_ready_before_the_bundle_and_unknown_runs_are_404(
 
     assert client.get("/runs/R-waiting/market").status_code == 409
     assert client.get("/runs/R-nope/market").status_code == 404
+
+
+def test_financials_give_pos_and_say_why_rnpv_is_missing(client: TestClient) -> None:
+    run_id = start(client)
+
+    fin = FinancialsResponse.model_validate(client.get(f"/runs/{run_id}/financials").json())
+
+    assert fin.label == "modeled" and fin.stage == "phase3" and fin.pos is not None
+    assert fin.rnpv is None and fin.tornado == [] and "market" in fin.missing[0]
+    assert fin.assumptions
+
+
+def test_financials_are_not_ready_before_the_bundle_and_unknown_runs_are_404(
+    client: TestClient, db_path: Path
+) -> None:
+    with settings.open_database(db_path) as conn:
+        create_run(conn, "R-waiting", {"asset": "divarasib"}, settings.today())
+
+    assert client.get("/runs/R-waiting/financials").status_code == 409
+    assert client.get("/runs/R-nope/financials").status_code == 404
 
 
 def test_the_trace_lists_the_steps(client: TestClient) -> None:

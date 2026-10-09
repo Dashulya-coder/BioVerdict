@@ -72,17 +72,27 @@ class CachedHttpClient:
         params: dict[str, str] | None = None,
         *,
         validate: Validator | None = None,
+        headers: dict[str, str] | None = None,
     ) -> HttpResponse:
+        """`headers` carry what must not shape the answer's identity (a credential): they are
+        sent but are not part of the cache key, so an answer cached with a key is found without."""
         key = cache_key("GET", url, params)
         cached = self._fresh(key)
         if cached is not None:
             return HttpResponse(cached.body, cached.fetched_at)
 
-        response = await self._send(url, lambda: self._client.get(url, params=params))
+        response = await self._send(
+            url, lambda: self._client.get(url, params=params, headers=headers)
+        )
         return self._store(key, url, response, validate)
 
     async def post_json(
-        self, url: str, payload: dict, *, validate: Validator | None = None
+        self,
+        url: str,
+        payload: dict,
+        *,
+        validate: Validator | None = None,
+        headers: dict[str, str] | None = None,
     ) -> HttpResponse:
         # Sorted keys make the body, and therefore the cache key, deterministic.
         body = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -94,7 +104,7 @@ class CachedHttpClient:
         response = await self._send(
             url,
             lambda: self._client.post(
-                url, content=body, headers={"Content-Type": "application/json"}
+                url, content=body, headers={**(headers or {}), "Content-Type": "application/json"}
             ),
         )
         return self._store(key, url, response, validate)

@@ -48,3 +48,28 @@ class DraftClaim(_Draft):
 
 class ModuleDraft(_Draft):
     claims: list[DraftClaim]
+
+
+def merge_drafts(drafts: list[ModuleDraft], drop_unknown: bool = False) -> ModuleDraft:
+    """One draft from the drafts of several batches of one module.
+
+    A claim written in more than one batch (the same words) becomes one claim that carries the
+    links of all of them: its gate tags and `critical` are united, the first batch's wording and
+    labels stand. With several batches `unknown` claims are dropped: a batch cannot tell what is
+    unknown when it has not read the others.
+    """
+    merged: dict[str, DraftClaim] = {}
+    for draft in drafts:
+        for claim in draft.claims:
+            if drop_unknown and claim.basis == "unknown":
+                continue
+            key = " ".join(claim.text.casefold().split())
+            if key not in merged:
+                merged[key] = claim.model_copy(deep=True)
+                continue
+            kept = merged[key]
+            have = {link.evidence_id for link in kept.links}
+            kept.links += [link for link in claim.links if link.evidence_id not in have]
+            kept.gate_signals += [g for g in claim.gate_signals if g not in kept.gate_signals]
+            kept.critical = kept.critical or claim.critical
+    return ModuleDraft(claims=list(merged.values()))

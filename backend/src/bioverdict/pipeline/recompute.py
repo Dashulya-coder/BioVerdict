@@ -16,7 +16,10 @@ from urllib.parse import urlsplit
 
 from bioverdict.contracts import LLM
 from bioverdict.llm.errors import ConfigError
-from bioverdict.pipeline.reason_score import reason_and_score
+from bioverdict.pipeline.reason_score import drop_checks, indication_of, reason_and_score
+from bioverdict.reasoning.classify_evidence import classify_new_evidence
+from bioverdict.scoring.financials import financial_model, with_financials
+from bioverdict.scoring.verdict import rescore
 from bioverdict.store.as_of import is_visible_as_of
 from bioverdict.store.copy_run import copy_evidence_history
 from bioverdict.store.evidence_ids import assign_ids, dedup_key
@@ -32,8 +35,11 @@ from bioverdict.store.runs_repo import (
     create_run,
     finish_run,
     get_run,
+    load_claims,
+    save_claims,
     save_resolver,
 )
+from bioverdict.store.verification_repo import save_checks
 
 log = logging.getLogger(__name__)
 
@@ -148,22 +154,81 @@ def _carry_over(
     return bundle
 
 
+def classify_and_score(
+    conn: sqlite3.Connection, run_id: str, bundle: Bundle, llm: LLM
+) -> VerdictResult:
+    """Place the new evidence among the original run's claims, recompute, and finish the run.
+
+    The model says which claims the added evidence supports or contradicts (and, rarely, which
+    new fact it states); code grounds that, keeps every other claim as it was, recomputes all
+    confidences with the scoring formula and scores. So the diff shows what the evidence did and
+    nothing a model reworded.
+    """
+    run = get_run(conn, run_id)
+    parent_id = run.input.get(PARENT) if run is not None else None
+    if not parent_id:
+        raise RecomputeError(f"run {run_id} does not say which run it grew from")
+    claims, links = load_claims(conn, parent_id)
+    added = [e for e in bundle.evidence if e.version == bundle.version]
+
+    add_event(conn, run_id, "reason", "started", f"place {len(added)} new item(s) among claims")
+    found = classify_new_evidence(llm, run_id, claims, links, added, bundle)
+    merged_claims = [c.model_copy(update={"run_id": run_id}) for c in claims] + found.new_claims
+    merged_links = [*links, *found.links, *found.new_claim_links]
+    fin = financial_model(bundle, indication_of(conn, run_id))
+    scored, result = rescore(
+        merged_claims,
+        merged_links,
+        bundle.evidence_by_id(),
+        bundle.as_of,
+        fin.rnpv.rnpv if fin.rnpv else None,
+    )
+    result = with_financials(result, fin)
+    save_claims(conn, run_id, scored, merged_links, bundle.version)
+    save_checks(conn, run_id, drop_checks(found.drops, set()))
+    add_event(
+        conn,
+        run_id,
+        "reason",
+        "done",
+        f"{len(found.links)} link(s) and {len(found.new_claims)} new claim(s) from the new "
+        f"evidence, {len(found.unmatched)} item(s) bearing on nothing, "
+        f"{len(found.drops)} proposal(s) dropped by code"
+        + (
+            f", {len(found.unread)} item(s) not read (too long for the endpoint)"
+            if found.unread
+            else ""
+        ),
+    )
+    add_event(conn, run_id, "score", "started")
+    add_event(conn, run_id, "score", "done", f"{result.verdict.value} ({result.confidence:.2f})")
+    finish_run(conn, run_id, DONE, result)
+    add_event(conn, run_id, "run", "done")
+    return result
+
+
 def finish_recompute(
     conn: sqlite3.Connection,
     run_id: str,
     bundle: Callable[[], Bundle],
     llm: Callable[[], LLM],
+    mode: str = "classify",
 ) -> VerdictResult | None:
     """Reason and score on the new bundle version. A failure is recorded on the run.
 
-    The bundle and the model are obtained here, inside the guard: a missing model key or an
-    unreadable bundle fails the run instead of leaving it `running` for ever.
+    `mode="classify"` places the new evidence among the original claims (`classify_and_score`);
+    `mode="full"` runs every reasoning module again. The bundle and the model are obtained here,
+    inside the guard: a missing model key or an unreadable bundle fails the run instead of
+    leaving it `running` for ever.
     """
     try:
-        return reason_and_score(conn, run_id, bundle(), llm())
+        frozen, model = bundle(), llm()
+        if mode == "full":
+            return reason_and_score(conn, run_id, frozen, model)
+        return classify_and_score(conn, run_id, frozen, model)
     except Exception as exc:  # recorded on the run: the caller polls its status
         log.exception("recompute %s failed", run_id)
-        shown = isinstance(exc, ConfigError)  # our own text, safe and useful to show
+        shown = isinstance(exc, ConfigError | RecomputeError)  # our own text, safe to show
         add_event(
             conn,
             run_id,

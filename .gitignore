@@ -1,10 +1,7 @@
 # Secrets (keep .env.example tracked)
-/.env
-/.env.*
-!/.env.example
-/backend/.env
-/backend/.env.*
-!/backend/.env.example
+.env
+.env.*
+!.env.example
 
 # Backend (Python)
 __pycache__/
@@ -41,6 +38,12 @@ htmlcov/
 *.db-journal
 *.db-wal
 *.db-shm
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
 # DB_PATH and CACHE_DIR default to data/... (.env.example): database, HTTP/LLM cache, runs
 /data/
 /eval/results/

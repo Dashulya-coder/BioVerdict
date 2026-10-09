@@ -73,7 +73,7 @@ def conn(tmp_path: Path) -> sqlite3.Connection:
 
 def recompute(conn: sqlite3.Connection, added: list[Evidence] | None = None, as_of=LATE):
     bundle = prepare_recompute(conn, "R-1", "R-2", added or [STATEMENT], as_of)
-    return finish_recompute(conn, "R-2", lambda: bundle, lambda: FakeLLM(drafts()))
+    return finish_recompute(conn, "R-2", lambda: bundle, lambda: FakeLLM(drafts()), "full")
 
 
 def test_added_evidence_becomes_the_next_bundle_version_of_a_new_run(conn) -> None:
@@ -235,3 +235,105 @@ def test_a_claim_that_quotes_other_words_of_the_same_evidence_has_changed(conn) 
 
     assert changed.change == "changed" and changed.after is not None
     assert changed.after.id == link["claim_id"]
+
+
+# --- the default mode: the model places the new evidence, code recomputes --------------------------
+
+# A document dated before the original run's cutoff, recomputed at the same cutoff: the only thing
+# that differs between the two runs is the document (a later cutoff would also age every claim).
+DOC = STATEMENT.model_copy(update={"published_at": date(2026, 6, 15)})
+QUOTE = "The study met its primary and key secondary endpoint"
+
+
+def classified(conn, answer: dict):
+    bundle = prepare_recompute(conn, "R-1", "R-2", [DOC], EARLY)
+    return finish_recompute(
+        conn, "R-2", lambda: bundle, lambda: FakeLLM({"reasoning.classify": answer})
+    )
+
+
+def key_claim(conn):
+    claims, _ = load_claims(conn, "R-1")
+    return claims, next(c for c in claims if c.text.startswith("In the Phase 1 study divarasib"))
+
+
+def link_to(claim_id: str, direction: str, quote: str = QUOTE) -> dict:
+    return {"claim_id": claim_id, "evidence_id": NEW_ID, "direction": direction, "quote": quote}
+
+
+def test_placing_new_evidence_keeps_every_claim_as_it_was_and_moves_only_the_linked_one(
+    conn,
+) -> None:
+    before, target = key_claim(conn)
+    _, links_before = load_claims(conn, "R-1")
+
+    result = classified(conn, {"links": [link_to(target.id, "contradicts")]})
+
+    assert result is not None and get_run(conn, "R-2").status == DONE
+    after, links_after = load_claims(conn, "R-2")
+    assert [(c.id, c.text) for c in after] == [(c.id, c.text) for c in before]  # same claims
+    moved = {a.id for a, b in zip(after, before, strict=True) if a.confidence != b.confidence}
+    assert moved == {target.id}
+    assert len(links_after) == len(links_before) + 1
+    assert any(e.detail and "place 1 new item" in e.detail for e in load_events(conn, "R-2"))
+
+
+def test_the_diff_of_a_placed_document_names_only_the_claim_it_touches(conn) -> None:
+    _, target = key_claim(conn)
+    classified(conn, {"links": [link_to(target.id, "supports")]})
+
+    diff = build_diff(conn, "R-1", "R-2")
+
+    assert [e.id for e in diff.evidence_added] == [NEW_ID]
+    assert [c.text for c in diff.claims] == [target.text] and diff.claims[0].change == "changed"
+    assert diff.claims[0].new_evidence_ids == [NEW_ID]
+
+
+def test_a_new_fact_becomes_a_claim_numbered_after_the_existing_ones(conn) -> None:
+    before, _ = key_claim(conn)
+    fact = {
+        "text": "The sponsor reports that the Phase 3 trial met its endpoints",
+        "claim_type": "study_fact",
+        "basis": "extracted",
+        "links": [{"evidence_id": NEW_ID, "direction": "supports", "quote": QUOTE}],
+    }
+    classified(conn, {"links": [], "new_claims": [fact]})
+
+    after, _ = load_claims(conn, "R-2")
+
+    assert len(after) == len(before) + 1
+    assert (
+        after[-1].text.startswith("The sponsor reports") and after[-1].section.value == "clinical"
+    )
+
+
+def test_an_invented_quote_places_nothing_and_the_run_still_finishes(conn) -> None:
+    before, _ = key_claim(conn)
+
+    result = classified(
+        conn, {"links": [link_to(before[0].id, "supports", "words that are not there")]}
+    )
+
+    assert result is not None
+    after, _ = load_claims(conn, "R-2")
+    assert [c.confidence for c in after] == [c.confidence for c in before]
+    checks = conn.execute("SELECT check_name FROM verification_log WHERE run_id = 'R-2'").fetchall()
+    assert [row["check_name"] for row in checks] == ["quote_in_source"]
+
+
+def test_a_model_without_a_classification_fails_the_run_with_a_reason(conn) -> None:
+    bundle = prepare_recompute(conn, "R-1", "R-2", [DOC], EARLY)
+
+    assert finish_recompute(conn, "R-2", lambda: bundle, lambda: FakeLLM({})) is None
+    assert get_run(conn, "R-2").status == FAILED
+
+
+def test_the_environment_chooses_the_mode(monkeypatch) -> None:
+    from bioverdict import settings
+
+    monkeypatch.delenv("RECOMPUTE_MODE", raising=False)
+    assert settings.recompute_mode() == "classify"
+    monkeypatch.setenv("RECOMPUTE_MODE", "FULL")
+    assert settings.recompute_mode() == "full"
+    monkeypatch.setenv("RECOMPUTE_MODE", "nonsense")
+    assert settings.recompute_mode() == "classify"

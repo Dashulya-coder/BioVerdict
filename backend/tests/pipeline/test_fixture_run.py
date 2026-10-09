@@ -122,3 +122,14 @@ def test_an_unknown_asset_fails_the_run_and_says_what_exists(conn: sqlite3.Conne
 def test_the_asset_name_is_case_insensitive(conn: sqlite3.Connection) -> None:
     start(conn)
     assert run_fixture(conn, "R-1", "  Divarasib ", FIXTURES) is not None
+
+
+def test_the_fixture_verdict_carries_pos_but_no_rnpv_without_market_records(
+    conn: sqlite3.Connection,
+) -> None:
+    start(conn)
+
+    result = run_fixture(conn, "R-1", "divarasib", FIXTURES)
+
+    assert result is not None and result.pos is not None
+    assert result.rnpv is None  # the fixture has no epidemiology or price records

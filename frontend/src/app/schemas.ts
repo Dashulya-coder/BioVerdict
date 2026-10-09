@@ -99,7 +99,13 @@ export const diffSchema = z.object({
     z.object({ gate_id: z.string(), fired_before: z.boolean(), fired_after: z.boolean() }),
   ),
   chain: z.array(
-    z.object({ link: z.string(), status_before: z.string(), status_after: z.string() }),
+    z.object({
+      link: z.string(),
+      status_before: z.string(),
+      status_after: z.string(),
+      confidence_before: z.number().nullable(),
+      confidence_after: z.number().nullable(),
+    }),
   ),
   evidence_added: z.array(diffEvidenceSchema),
   evidence_removed: z.array(diffEvidenceSchema),

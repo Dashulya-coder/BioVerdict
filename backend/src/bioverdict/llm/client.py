@@ -28,14 +28,24 @@ from bioverdict.llm.errors import (
     BudgetExceededError,
     ConfigError,
     FatalProviderError,
+    InputTooLargeError,
     InvalidOutputError,
     LLMError,
+    OutputTruncatedError,
     RefusalError,
     RunTimeoutError,
     TransientProviderError,
 )
-from bioverdict.llm.types import Provider, ProviderRequest, ProviderResponse, split_model_ref
+from bioverdict.llm.types import (
+    Provider,
+    ProviderRequest,
+    ProviderResponse,
+    SizedProvider,
+    split_model_ref,
+)
 from bioverdict.store.models import LLMResult
+
+_CHARS_PER_TOKEN = 3  # fewer than real text has, so a prompt is never under-counted
 
 
 @dataclass
@@ -164,6 +174,31 @@ class LLMClient:
         """
         return BoundLLM(self, run_id)
 
+    def input_budget(
+        self, step: str, schema: type[BaseModel], system: str | None = None
+    ) -> int | None:
+        """Characters left for the prompt of `step` after the response schema and the system
+        message, or None if the endpoint has no known limit. Callers size their prompts by it:
+        a request over the limit is refused before it is sent."""
+        limit = self._config.max_input_chars
+        if limit is None:
+            return None
+        cfg = self._config.step(step)
+        provider = self._providers[split_model_ref(cfg.models[0])[0]]
+        if not isinstance(provider, SizedProvider):
+            return limit
+        empty = ProviderRequest(
+            model=split_model_ref(cfg.models[0])[1], prompt="", schema=schema, system=system
+        )
+        return max(0, limit - provider.input_chars(empty))
+
+    def _check_size(self, provider: Provider, request: ProviderRequest) -> None:
+        limit = self._config.max_input_chars
+        if limit is not None and isinstance(provider, SizedProvider):
+            size = provider.input_chars(request)
+            if size > limit:
+                raise InputTooLargeError(size, limit)
+
     def mixed_models(self, run_id: str | None) -> bool:
         """True when any call of the run was answered by a failover model (flag for the trace)."""
         with self._lock:
@@ -199,26 +234,40 @@ class LLMClient:
         text = prompt
         last: InvalidOutputError | None = None
         for attempt in range(1, cfg.max_validation_retries + 2):
-            self._budget.check(run_id)
             left = self._deadline.check(run_id)
+            request = request_for(ref, text, min(cfg.timeout_s, left))
+            self._check_size(provider, request)
             try:
-                try:
-                    response = provider.complete(request_for(ref, text, min(cfg.timeout_s, left)))
-                except LLMError as exc:  # an answer that was unusable still cost money
-                    self._charge_tokens(run_id, ref, exc.input_tokens, exc.output_tokens, usage)
-                    raise
-                self._charge(run_id, ref, response, usage)
+                with self._budget.hold(run_id, self._worst_case(ref, cfg, text)):
+                    try:
+                        response = provider.complete(request)
+                    except LLMError as exc:  # an answer that was unusable still cost money
+                        self._charge_tokens(run_id, ref, exc.input_tokens, exc.output_tokens, usage)
+                        raise
+                    self._charge(run_id, ref, response, usage)
                 schema.model_validate_json(response.text)
                 return response, attempt
             except (ValidationError, InvalidOutputError) as exc:
                 last = InvalidOutputError(str(exc))
-                text = (
-                    f"{prompt}\n\nYour previous answer was rejected: {_short(exc)}\n"
-                    "Answer again with only a JSON object that matches the schema."
-                )
+                if isinstance(exc, OutputTruncatedError):
+                    text = f"{prompt}\n\n{_SHORTER}"
+                else:
+                    text = (
+                        f"{prompt}\n\nYour previous answer was rejected: {_short(exc)}\n"
+                        "Answer again with only a JSON object that matches the schema."
+                    )
         assert last is not None
         last.attempts = cfg.max_validation_retries + 1  # type: ignore[attr-defined]
         raise last
+
+    def _worst_case(self, ref: str, cfg: StepConfig, prompt: str) -> float:
+        """The most one call can cost: the whole prompt read and every allowed token written.
+        Three characters a token over-counts the prompt, which is the safe side."""
+        price = self._config.prices[ref]
+        prompt_tokens = len(prompt) / _CHARS_PER_TOKEN
+        return (
+            prompt_tokens * price.input_per_mtok + cfg.max_tokens * price.output_per_mtok
+        ) / 1_000_000
 
     def _charge(
         self, run_id: str | None, ref: str, response: ProviderResponse, usage: _Usage
@@ -353,6 +402,16 @@ class BoundLLM:
 
     def call(self, step: str, prompt: str, schema: type[BaseModel]) -> LLMResult:
         return self._client.call(step, prompt, schema, run_id=self.run_id)
+
+    def input_budget(self, step: str, schema: type[BaseModel]) -> int | None:
+        return self._client.input_budget(step, schema)
+
+
+_SHORTER = (
+    "Your previous answer was cut off because it was too long. Answer again, shorter: at most "
+    "5 claims, each claim under 200 characters, each quote under 150 characters, and only a "
+    "JSON object that matches the schema."
+)
 
 
 def _short(exc: Exception, limit: int = 400) -> str:

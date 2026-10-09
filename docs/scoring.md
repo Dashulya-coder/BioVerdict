@@ -29,7 +29,7 @@ Source of truth: the Unobio plan (PDF). The LLM only establishes a fact and atta
 | S5 | The biomarker or endpoint is not recognised by the regulator as a surrogate | FDA guidance, trial design |
 | S6 | IP protection ends soon after the expected launch, or ownership is unclear | Orange/Purple Book, patents |
 
-A hard gate (K1-K5) fires only on a claim with confidence of at least `t_hard_gate` (0.85); a soft gate (S1-S6) fires at `t_gate` (0.6). A hard gate means Do Not Invest, so it needs more than one registry record (about 0.77 alone): a stop reason may be a business decision. A hard-gate claim between 0.6 and 0.85 does not fire, but it caps the verdict at Conditional and asks for a second independent source. Confidence alone is not a second source: two records of one study share an independence group and reach about 0.86, so a hard gate also needs supporting evidence from at least two independence groups (`hard_gate_min_groups`, read from `confidence_parts.independent_groups`); otherwise it is reported as not yet confirmed. Thresholds are config parameters, calibrated on the eval set. A criterion that nearly fired is recorded in `GateResult.near_miss` and becomes a line in "What would change our mind" (for example: "S4 fires if one more competitor reaches Phase 3").
+A hard gate (K1-K5) fires only on a claim with confidence of at least `t_hard_gate` (0.85); a soft gate (S1-S6) fires at `t_gate` (0.6). A hard gate means Do Not Invest, so it needs more than one registry record (about 0.77 alone): a stop reason may be a business decision. A hard-gate claim between 0.6 and 0.85 does not fire, but it caps the verdict at Conditional and asks for a second independent source. Confidence alone is not a second source: two records of one study share an independence group and reach about 0.86, so a hard gate also needs supporting evidence from at least two independence groups (`hard_gate_min_groups`, read from `confidence_parts.independent_groups`). Only evidence that adds weight to the claim counts as a source: a record whose level weighs nothing for the claim type (a registry record under a causal claim) does not make a second group. Otherwise it is reported as not yet confirmed. Thresholds are config parameters, calibrated on the eval set. A criterion that nearly fired is recorded in `GateResult.near_miss` and becomes a line in "What would change our mind" (for example: "S4 fires if one more competitor reaches Phase 3").
 
 **Gate guards (code).** The model tags a claim with the gate it asserts; code keeps the tag only if the cited evidence shows that kind of fact (`reasoning/gate_guards.py`). The guard is a necessary condition: scoring still weighs the claim. A removed tag is recorded as a drop of kind `gate`; the claim stays.
 
@@ -143,6 +143,11 @@ the Monte Carlo exists, the bundle's market records are combined by plain arithm
   Cancer Profiles); else the CDC's measured adult prevalence times the population aged 15 and
   over; else Orphanet's point prevalence class (for the US, the world or Europe) times the whole
   US population, the class bounds giving the range.
+- *Biomarker fraction*, for a cancer site only: when the asset's registry records name one
+  variant of a target clearly (KRAS G12C), the new cases are multiplied by the share of patients
+  with that protein change among the patients of that cancer type in the MSK-IMPACT cohort
+  (cBioPortal), counted by code; the range uses the 95% Wilson interval of that share. For
+  divarasib it is 194 of 1,567 patients (12.4%). No stage or line-of-therapy fraction exists.
 - *Price*: Medicare's average spending per beneficiary, latest reported year, on each product
   approved against the same target (Open Targets names them): lowest, median, highest.
 - *Market size*: patients times price, bound by bound.
@@ -153,7 +158,21 @@ indication, and the price is before rebates. Each of these is written into the r
 `assumptions`, and what could not be computed into `missing`. For a very common condition the
 product is far above any plausible sales and must not be read as one.
 
-Run N draws (TODO N, for example 10,000). Report P10 / P50 / P90 and a tornado chart showing which assumption moves rNPV most. Every input shows its assumption and label `modeled`.
+**Implementation (`scoring/rnpv.py`, `scoring/financials.py`, `GET /runs/{id}/financials`).** 10,000
+draws (fixed seed: the same bundle gives the same range). PoS comes from Layer 3 phase by phase,
+so a phase's cost is weighted by the probability of reaching it. Patients and analog price are the
+P10/P50/P90 of the market estimate above, read as a triangle. The other inputs (peak share of
+patients treated, rebates, contribution margin, years to peak, years of exclusivity, discount
+rate, phase durations and costs) have **no source in the bundle: they are placeholders in
+`RnpvConfig`, returned with every result as assumptions, and must be calibrated**. Sales stop when
+exclusivity ends (no erosion tail). The tornado moves one input at a time between its low and
+high end with the others at their base. Capital is the unweighted cost of the remaining phases;
+time to milestone is the length of the current phase.
+
+The stage is the highest `maximumClinicalStage` (Phase 1 to 3) that the bundle reports for the asset
+(Open Targets); the therapy area is oncology when the indication names a cancer, otherwise all
+diseases. If the stage cannot be read, or the market cannot be sized, nothing is computed and the
+response says what is missing; the verdict then has no rNPV and cannot be Invest.
 
 ## Layer 5: Capital and time to next milestone
 
