@@ -29,11 +29,21 @@ def db_path(tmp_path: Path) -> Path:
     return tmp_path / "api.sqlite"
 
 
+# The stand-in model finds the added document bearing on nothing in the report.
+NOTHING_TO_PLACE = {"links": [], "new_claims": [], "unmatched": []}
+
+
 @pytest.fixture
 def client(db_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     monkeypatch.setenv("USE_FIXTURES", "1")
     drafts = json.loads((FIXTURES / "reasoning" / "divarasib.json").read_text(encoding="utf-8"))
-    return TestClient(create_app(db_path, FIXTURES, llm=lambda _: FakeLLM(drafts)))
+    return TestClient(
+        create_app(
+            db_path,
+            FIXTURES,
+            llm=lambda _: FakeLLM({**drafts, "reasoning.classify": NOTHING_TO_PLACE}),
+        )
+    )
 
 
 def start(client: TestClient, as_of: str) -> str:

@@ -167,15 +167,23 @@ routes and shapes are the same for both. Interactive documentation: `/docs` on a
 | `GET /runs/{id}/claims/{claim_id}` | One claim with its links | done |
 | `GET /runs/{id}/evidence/{evidence_id}` | One evidence item with excerpt, source and the claims that quote it | done |
 | `GET /runs/{id}/trace` | Steps, model calls, tokens and cost | done |
-| `POST /runs/{id}/evidence` | Add up to ten documents (verbatim text with its address, source, kind, level and date) to a finished run. Starts a new run that holds the original bundle as version 1 and the added evidence as version 2, and reasons and scores again; returns the new `run_id` (202). Needs a model: a fixture API answers 422 | done (full re-run, see below) |
+| `POST /runs/{id}/evidence` | Add up to ten documents (verbatim text with its address, source, kind, level and date) to a finished run. Starts a new run that holds the original bundle as version 1 and the added evidence as version 2, and recomputes (the model places the new evidence among the claims, code recomputes; see below); returns the new `run_id` (202). Needs a model: a fixture API answers 422 | done |
 | `GET /runs/{id}/diff?against={other}` | `DiffResponse`: verdict, gates, chain links, evidence and claims that differ between two finished runs. `against` defaults to the run this one grew from | done |
 
-Recompute is the fallback of ADR-007: the whole reasoning runs again on the new bundle version,
-as a new run, so the original run and its report stay as they were. The diff is computed by code
-from the stored records. It pairs evidence by address, locator and exact excerpt, and claims by
-section and identical wording, so a claim the model rewords appears as one removed and one added.
-It also compares two runs of one asset at different cutoffs, which needs no model. Claim-level
-incremental recompute is not implemented.
+Recompute runs as a new run, so the original run and its report stay as they were. By default
+(`RECOMPUTE_MODE=classify`) it follows section 8: the model is asked only where the added
+evidence belongs (`reasoning/classify_evidence.py`): which existing claims it supports or
+contradicts, with a verbatim quote, and rarely a new fact no claim states. Code grounds every
+quote, keeps all other claims exactly as they were, recomputes every confidence with the scoring
+formula and scores. So a weak contradiction moves one claim a little, a strong one moves it
+clearly, and a safety fact from two independent sources can flip the verdict; nothing a model
+reworded appears in the diff. `RECOMPUTE_MODE=full` is the fallback of ADR-007: every reasoning
+module runs again on the new bundle version.
+
+The diff is computed by code from the stored records. It pairs evidence by address, locator and
+exact excerpt, and claims by section and identical wording. It also compares two runs of one
+asset at different cutoffs, which needs no model. A different cutoff ages every claim a little
+(recency), so such a comparison lists claims whose confidence moved only because time passed.
 
 Every claim and evidence item carries a badge: `source_fact` (copied from a source),
 `ai_inference` (a model's judgement) or `unknown` (a gap, with the kind of data that would answer it).
