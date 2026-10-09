@@ -1,6 +1,7 @@
 import { Button } from '../../ui/Button'
 import { PageHeading } from '../../ui/PageHeading'
 import { navigate } from '../../app/useScreen'
+import { ClaimList } from './ClaimList'
 import { ExecutiveSummary } from './ExecutiveSummary'
 import { TranslationChain } from './TranslationChain'
 import { useReport } from './useReport'
@@ -54,6 +55,7 @@ function LoadedReport({ runId }: { runId: string }) {
     <>
       <ExecutiveSummary report={state.report} />
       <TranslationChain report={state.report} />
+      <ClaimList report={state.report} />
     </>
   )
 }
