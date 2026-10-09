@@ -49,6 +49,9 @@ class PosResult:
     transitions: dict[str, float]
     modifiers: list[Modifier]
     assumptions: list[str] = field(default_factory=list)
+    draws: np.ndarray | None = field(default=None, repr=False, compare=False)
+    # draws[i, k]: sampled success probability of the k-th remaining phase (before modifiers)
+    factor: float = 1.0  # the product of the bounded modifiers
 
 
 def phase_transitions(area: str | None = None) -> tuple[dict[str, float], str, list[str]]:
@@ -115,4 +118,6 @@ def probability_of_success(
         transitions={p: float(transitions[p]) for p in remaining},
         modifiers=modifiers,
         assumptions=assumptions,
+        draws=draws,
+        factor=factor,
     )
