@@ -192,6 +192,24 @@ class TraceResponse(_View):
     totals: TraceTotals
 
 
+# --- market size (A9) ----------------------------------------------------------------------
+
+
+class MarketResponse(_View):
+    """Market size computed by code from the run's bundle. A model's judgement is nowhere in it,
+    but its simplifications are: read `assumptions` with every number."""
+
+    run_id: str
+    label: Literal["modeled"] = "modeled"
+    patients: Range | None
+    patients_basis: str | None
+    annual_price_usd: Range | None
+    tam_usd: Range | None
+    assumptions: list[str]
+    missing: list[str] = Field(description="What could not be computed, and why")
+    sources: list[EvidenceView] = Field(description="The records every number was read from")
+
+
 # --- adding evidence and comparing runs (A7) ---------------------------------------------------
 
 

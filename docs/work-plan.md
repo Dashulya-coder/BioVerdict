@@ -20,7 +20,7 @@ even for complete components.
 
 | Person | Complete tasks | Partial / pending review | Still to do |
 |---|---|---|---|
-| Arsenii | 1 of 12 whole tasks: A2 | 8: A1, A3, A4, A5, A6, A7, A8, A11 | 3: A9, A10, A12 |
+| Arsenii | 1 of 12 whole tasks: A2 | 9: A1, A3, A4, A5, A6, A7, A8, A9, A11 | 2: A10, A12 |
 | Dasha | 1 of 13: B4 | 6: B1, B2, B3, B8, B10, B11 | 6: B5, B6, B7, B9, B12, B13 |
 
 These are **whole-task counts, not effort percentages**. The Resolver, the
@@ -70,7 +70,7 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 | A6 | Connectors: PubMed / Europe PMC and openFDA / Drugs@FDA | P1 | 4 |  | [~] | PubMed connector merged (#32). | openFDA / Drugs@FDA and any additional Europe PMC coverage; validate PubMed bodies before caching. |
 | A7 | Incremental recompute engine, add-evidence endpoint, diff API and diff screen | P1 | 5 | yes | [~] | Add-evidence endpoint that recomputes as a new run on the next bundle version (the full re-run fallback), and a code-computed diff API between two finished runs. Compare screen in the UI (API mode). | Check a recompute with a real model. Claim-level incremental recompute is not planned before the demo. |
 | A8 | Eval runner, grounding and citation metrics, leakage probe, cache pre-warm | P1 | 4 |  | [~] | `bioverdict eval` (cases file, repeats, grounding/coverage/stability/cost metrics, post-cutoff citation count, JSON and Markdown report) and `bioverdict warm` (retrieval cache and readiness table for an asset list). Grounding drops are written to `verification_log`. | Run on the real case set and the test-list assets; closed-book leakage probe and bare-LLM baseline; citation support needs the judge (B8). |
-| A9 | Epidemiology and pricing connectors (SEER, GCO, CMS) and TAM numbers derived by code | P1 | 4 |  | [ ] | TAM contracts/design documented. | Implement epidemiology/pricing retrieval and reproducible TAM calculations. |
+| A9 | Epidemiology and pricing connectors (SEER, GCO, CMS) and TAM numbers derived by code | P1 | 4 |  | [~] | Connectors for analog prices (Open Targets approved drugs + CMS Medicare Part D/B spending), cancer incidence (NCI State Cancer Profiles), prevalence (CDC, Orphanet) and US population (World Bank); `market/tam.py` computes patients, price and market size by code; `GET /runs/{id}/market`. | Diseases without an open source (Alzheimer's, MS, MASH, ulcerative colitis, cardiovascular risk); biomarker and treated fractions; feed B6 and B7. |
 | A10 | Connectors: SEC EDGAR and Tavily | P2 | 3 |  | [ ] | Source strategy documented. | Implement SEC EDGAR and Tavily connectors. |
 | A11 | Ops: runbook upkeep, cost measurement from the trace table, model bake-off run, demo recordings | P2 | 3 |  | [~] | Runbook covers fixture and live runs, eval, warm and `bioverdict doctor` (setup, caches, fixtures and source reachability, no model call). | Measure real run cost/time/cache/failover; run bake-off; record demos. |
 | A12 | Patent/IP connectors (Google Patents links, Orange/Purple Book) and market-sentiment module | P3 | 3 |  | [ ] | Scope documented. | Implement patent/IP sources and market sentiment. |

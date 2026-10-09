@@ -6,7 +6,13 @@ from fastapi.testclient import TestClient
 
 from bioverdict import settings
 from bioverdict.api.main import create_app
-from bioverdict.api.schemas import ClaimView, EvidenceView, ReportResponse, TraceResponse
+from bioverdict.api.schemas import (
+    ClaimView,
+    EvidenceView,
+    MarketResponse,
+    ReportResponse,
+    TraceResponse,
+)
 from bioverdict.pipeline.fixture_run import run_fixture
 from bioverdict.store.models import ResolverOutput
 from bioverdict.store.runs_repo import create_run
@@ -129,6 +135,27 @@ def test_resolver_and_evidence_are_not_ready_before_their_steps(
     assert client.get("/runs/R-waiting/evidence").status_code == 409
     assert client.get("/runs/R-nope/resolver").status_code == 404
     assert client.get("/runs/R-nope/evidence").status_code == 404
+
+
+def test_the_market_of_a_run_without_market_records_says_what_is_missing(
+    client: TestClient,
+) -> None:
+    run_id = start(client)
+
+    market = MarketResponse.model_validate(client.get(f"/runs/{run_id}/market").json())
+
+    assert market.label == "modeled" and market.tam_usd is None and market.sources == []
+    assert [reason.split(":")[0] for reason in market.missing] == ["patients", "price"]
+
+
+def test_the_market_is_not_ready_before_the_bundle_and_unknown_runs_are_404(
+    client: TestClient, db_path: Path
+) -> None:
+    with settings.open_database(db_path) as conn:
+        create_run(conn, "R-waiting", {"asset": "divarasib"}, settings.today())
+
+    assert client.get("/runs/R-waiting/market").status_code == 409
+    assert client.get("/runs/R-nope/market").status_code == 404
 
 
 def test_the_trace_lists_the_steps(client: TestClient) -> None:
