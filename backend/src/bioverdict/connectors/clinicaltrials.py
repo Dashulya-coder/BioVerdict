@@ -154,6 +154,10 @@ def parse_study(study: dict, retrieved_at: datetime | None = None) -> list[Evide
 
     first_posted = parse_ct_date(status.get("studyFirstPostDateStruct", {}).get("date"))
     last_updated = parse_ct_date(status.get("lastUpdatePostDateStruct", {}).get("date"))
+    # The registry serves the current text of a record, not its history. A summary or an
+    # endpoint may have been rewritten at any update, so it is dated by the last one: dating it
+    # by the first posting would show today's wording to a run replayed years earlier.
+    described = last_updated or first_posted
     sponsor = _sponsor(study)
     record = EvidenceLevel.REGISTRY_RECORD
 
@@ -162,7 +166,7 @@ def parse_study(study: dict, retrieved_at: datetime | None = None) -> list[Evide
             nct,
             "summary",
             protocol.get("descriptionModule", {}).get("briefSummary"),
-            first_posted,
+            described,
             record,
             sponsor,
             retrieved_at,
@@ -175,7 +179,7 @@ def parse_study(study: dict, retrieved_at: datetime | None = None) -> list[Evide
                 nct,
                 f"primary-outcome-{number + 1}",
                 text,
-                first_posted,
+                described,
                 record,
                 sponsor,
                 retrieved_at,

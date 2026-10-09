@@ -245,3 +245,41 @@ async def test_validator_is_not_applied_again_to_a_cached_body(tmp_path: Path) -
     await client.get(URL, validate=spy)
     await client.get(URL, validate=spy)
     assert len(calls) == 1
+
+
+def aged_client(tmp_path: Path, server: Server, max_age_s: float | None) -> CachedHttpClient:
+    conn = connect(tmp_path / "t.db")
+    migrate(conn)
+    http = httpx.AsyncClient(transport=httpx.MockTransport(server))
+    return CachedHttpClient(http, HttpCache(conn), wait=wait_none(), max_age_s=max_age_s)
+
+
+async def test_without_a_maximum_age_a_cached_answer_never_expires(tmp_path: Path) -> None:
+    server = Server()
+    await aged_client(tmp_path, server, None).get(URL)
+
+    await aged_client(tmp_path, server, None).get(URL)
+
+    assert len(server.requests) == 1
+
+
+async def test_an_answer_older_than_the_maximum_age_is_fetched_again_and_replaced(
+    tmp_path: Path,
+) -> None:
+    server = Server()
+    first = await aged_client(tmp_path, server, None).get(URL)
+
+    refreshed = await aged_client(tmp_path, server, 0).get(URL)  # 0: refresh everything
+    kept = await aged_client(tmp_path, server, 3600).get(URL)  # young enough: reused
+
+    assert len(server.requests) == 2
+    assert refreshed.fetched_at > first.fetched_at and kept.fetched_at == refreshed.fetched_at
+
+
+async def test_a_refresh_that_fails_does_not_fall_back_to_the_stale_answer(tmp_path: Path) -> None:
+    server = Server()
+    await aged_client(tmp_path, server, None).get(URL)
+    failing = Server(404)
+
+    with pytest.raises(httpx.HTTPStatusError):
+        await aged_client(tmp_path, failing, 0).get(URL)

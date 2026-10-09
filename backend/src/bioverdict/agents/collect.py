@@ -150,6 +150,13 @@ async def _collect_section(
                     records = prioritise(
                         select_bundle_evidence(await tools[name].fetch(query, as_of), as_of)
                     )
+                    # A connector may read most of a source and name what it could not read
+                    # (`problems`). That is a partial answer, never a complete one.
+                    unread = [
+                        f"{name}: {problem}" for problem in getattr(tools[name], "problems", [])
+                    ]
+                    out.issues += unread
+                    incomplete |= bool(unread)
                     if not records:
                         completed += 1
                         continue

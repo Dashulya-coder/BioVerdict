@@ -16,6 +16,7 @@ from datetime import date
 
 import httpx
 
+from bioverdict import settings
 from bioverdict.agents.collect import CollectPlan
 from bioverdict.connectors.clinicaltrials import ClinicalTrialsConnector
 from bioverdict.connectors.http import DEFAULT_MIN_INTERVAL_S, CachedHttpClient
@@ -107,12 +108,16 @@ SourcesFactory = Callable[[sqlite3.Connection], AbstractAsyncContextManager[Sour
 
 
 def paced_sources(
-    min_interval_s: float = DEFAULT_MIN_INTERVAL_S, max_attempts: int = MAX_ATTEMPTS
+    min_interval_s: float = DEFAULT_MIN_INTERVAL_S,
+    max_attempts: int = MAX_ATTEMPTS,
+    refresh: bool = False,
 ) -> SourcesFactory:
     """The public sources: Open Targets, ClinicalTrials.gov and PubMed. None needs a key.
 
     A run keeps the default pace, which fits its time budget. Reading many assets in a row
     (`bioverdict warm`) has to be slower and more patient, or the registry answers 429.
+    Cached answers are reused for as long as `HTTP_CACHE_MAX_AGE_H` allows (for ever when it is
+    unset); `refresh` downloads everything again and replaces what was cached.
     """
 
     @asynccontextmanager
@@ -123,6 +128,7 @@ def paced_sources(
                 HttpCache(conn),
                 min_interval_s=min_interval_s,
                 max_attempts=max_attempts,
+                max_age_s=0 if refresh else settings.http_cache_max_age_s(),
             )
             yield _sources(http)
 

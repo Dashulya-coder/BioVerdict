@@ -27,6 +27,16 @@ def cache_dir() -> Path:
     return Path(os.environ.get("CACHE_DIR", DEFAULT_CACHE_DIR))
 
 
+def http_cache_max_age_s() -> float | None:
+    """How old a cached source answer may be, from `HTTP_CACHE_MAX_AGE_H` (hours).
+
+    Unset, answers never expire: every run replays the same downloads, which a demo and a
+    comparison of two runs need. Set it for live work, where a registry record changes.
+    """
+    hours = os.environ.get("HTTP_CACHE_MAX_AGE_H", "").strip()
+    return float(hours) * 3600 if hours else None
+
+
 def today() -> date:
     """Today's date where the server runs, which is the analyst's day (not the UTC day).
 

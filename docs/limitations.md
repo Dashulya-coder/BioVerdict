@@ -29,6 +29,9 @@ These become diligence questions with the data type named.
 - **Priors are coarse.** Base rates are class-level benchmarks; asset-specific adjustments are modeled and uncertain.
 - **Coverage varies by asset.** Companies disclose different amounts; sparse assets get wider ranges, never filled gaps.
 - **Free tiers and rate limits** constrain throughput and may constrain data handling; our inputs are public.
+- **A registry has no history here.** ClinicalTrials.gov serves the current text of a record. Every part of it (summary, endpoints, status, design) is dated by the record's last update, so a run replayed at an earlier date does not see that study at all rather than seeing wording that may have been written later. Posted results are dated by their own posting date.
+- **A positive verdict is not reachable yet.** `Invest` needs a positive rNPV from the investment model, which is not built (B7); until then the best verdict a run can give is `Conditional`, and the report says which condition is missing.
+- **A model call that timed out keeps running in its thread** until the provider answers; its late answer is discarded.
 
 ## Out of scope
 

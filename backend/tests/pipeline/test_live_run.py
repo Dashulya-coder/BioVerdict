@@ -1,6 +1,7 @@
 """A live run with every outside party replaced: recorded Open Targets answers for the Resolver,
 the divarasib bundle as the only source, canned model answers. No network, no key."""
 
+import asyncio
 import json
 import re
 import sqlite3
@@ -333,3 +334,31 @@ def test_a_class_search_keeps_stopped_and_running_studies_latest_phase_and_newes
     assert kept[2] == "NCT-OLD-P3"  # then the latest phase, however old
     assert kept[3] == "NCT-RUN-19" and len(kept) == 2 + CLASS_STUDIES  # then the newest
     assert len(class_records(records)) <= 50  # inside the per-source record limit
+
+
+class Slow:
+    """A source that answers after the section's deadline."""
+
+    name = "fixture"
+
+    async def fetch(self, query: ResolverOutput, as_of: date) -> list:
+        await asyncio.sleep(1)
+        return []
+
+
+def test_a_search_that_timed_out_with_nothing_fails_the_run(conn, tmp_path) -> None:
+    @asynccontextmanager
+    async def opened(connection: sqlite3.Connection) -> AsyncIterator[Sources]:
+        yield Sources(
+            lookup=make_lookup(tmp_path),
+            tools={"fixture": Slow()},
+            plans=(CollectPlan(section=Section.CLINICAL, tools=("fixture",), timeout_s=0.05),),
+        )
+
+    create_run(conn, "R-1", {"asset": "divarasib"}, AS_OF)
+    model = FakeLLM(answers())
+
+    result = run_live(conn, "R-1", "divarasib", lambda _: model, opened)
+
+    assert result is None and "clinical incomplete" in last_event(conn).detail
+    assert not any(step.startswith("reasoning.") for step, _ in model.calls)

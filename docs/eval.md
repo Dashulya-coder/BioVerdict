@@ -99,7 +99,7 @@ runs; no model judges a report.
 | Source validity | partly | cited evidence whose address is in the bundle catalog; whether the address still resolves is not checked |
 | Coverage | done | required sections (those the reasoning modules write) that have at least one claim, unknowns included; the collected status of every section is in `results.json` |
 | Unknown honesty | partly | `unknown` claims that carry a diligence type; whether the status is *correct* needs a person |
-| Verdict stability | done | same verdict across `--repeat` runs; mean Jaccard overlap of the top-risk lists |
+| Verdict stability | done | same verdict and mean Jaccard overlap of the top-risk lists, between repeats in which a model answered afresh. Repeats served from fixtures or from the model cache are shown as `replayed`: clear `CACHE_DIR/llm` (or use a new one) to measure stability |
 | Verdict distribution, time, cost | done | from `runs` and `llm_calls`; fixture runs cost nothing and take no time |
 | Post-cutoff leakage | done | citations the model proposed and code could not ground, and the claims dropped for it. Every one is a row in `verification_log` |
 | Expected verdict | done | the verdict is one of `expected_verdict`; an empty list means no expectation |

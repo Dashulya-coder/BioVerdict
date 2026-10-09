@@ -94,8 +94,20 @@ def test_dates_follow_the_record() -> None:
     status_module = DIVARASIB[0]["protocolSection"]["statusModule"]
     posted = date.fromisoformat(status_module["studyFirstPostDateStruct"]["date"])
     updated = date.fromisoformat(status_module["lastUpdatePostDateStruct"]["date"])
-    assert by_part(evidence, "summary")[0].published_at == posted
+    assert posted < updated
     assert by_part(evidence, "status")[0].published_at == updated
+    # The registry gives the current wording only, so no part is dated before the last update:
+    # a run replayed between the two dates must not read text that may have been written later.
+    assert {item.published_at for item in evidence} == {updated}
+
+
+def test_a_record_without_an_update_date_falls_back_to_its_first_posting() -> None:
+    study = json.loads(json.dumps(DIVARASIB[0]))
+    status_module = study["protocolSection"]["statusModule"]
+    del status_module["lastUpdatePostDateStruct"]
+    posted = date.fromisoformat(status_module["studyFirstPostDateStruct"]["date"])
+
+    assert by_part(parse_study(study, NOW), "summary")[0].published_at == posted
 
 
 def test_reason_for_stopping_is_part_of_the_status() -> None:

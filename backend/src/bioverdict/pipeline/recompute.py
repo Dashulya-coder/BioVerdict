@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+from collections.abc import Callable
 from datetime import UTC, date, datetime
 from urllib.parse import urlsplit
 
 from bioverdict.contracts import LLM
+from bioverdict.llm.errors import ConfigError
 from bioverdict.pipeline.reason_score import reason_and_score
 from bioverdict.store.as_of import is_visible_as_of
 from bioverdict.store.copy_run import copy_evidence_history
@@ -25,6 +27,7 @@ from bioverdict.store.models import Bundle, Evidence, EvidenceLevel, SourceKind,
 from bioverdict.store.runs_repo import (
     DONE,
     FAILED,
+    RunRecord,
     add_event,
     create_run,
     finish_run,
@@ -105,6 +108,26 @@ def prepare_recompute(
         )
 
     create_run(conn, run_id, {**parent.input, PARENT: parent_id}, cutoff)
+    try:
+        return _carry_over(conn, parent, run_id, added, cutoff, len(existing), len(new))
+    except Exception as exc:  # the run exists now: it must not be left `running`
+        log.exception("recompute %s could not be prepared", run_id)
+        add_event(conn, run_id, "run", "failed", type(exc).__name__)
+        finish_run(conn, run_id, FAILED)
+        raise
+
+
+def _carry_over(
+    conn: sqlite3.Connection,
+    parent: RunRecord,
+    run_id: str,
+    added: list[Evidence],
+    cutoff: date,
+    carried: int,
+    new: int,
+) -> Bundle:
+    assert parent.resolver is not None
+    parent_id = parent.run_id
     add_event(conn, run_id, "resolve", "started")
     save_resolver(conn, run_id, parent.resolver)
     add_event(conn, run_id, "resolve", "done", f"carried over from run {parent_id}")
@@ -115,7 +138,7 @@ def prepare_recompute(
         run_id,
         "collect",
         "done",
-        f"{len(existing)} evidence items carried over, {len(new)} added",
+        f"{carried} evidence items carried over, {new} added",
     )
     add_event(conn, run_id, "freeze", "started")
     bundle = freeze(conn, run_id, added, cutoff)
@@ -126,13 +149,27 @@ def prepare_recompute(
 
 
 def finish_recompute(
-    conn: sqlite3.Connection, run_id: str, bundle: Bundle, llm: LLM
+    conn: sqlite3.Connection,
+    run_id: str,
+    bundle: Callable[[], Bundle],
+    llm: Callable[[], LLM],
 ) -> VerdictResult | None:
-    """Reason and score on the new bundle version. A failure is recorded on the run."""
+    """Reason and score on the new bundle version. A failure is recorded on the run.
+
+    The bundle and the model are obtained here, inside the guard: a missing model key or an
+    unreadable bundle fails the run instead of leaving it `running` for ever.
+    """
     try:
-        return reason_and_score(conn, run_id, bundle, llm)
+        return reason_and_score(conn, run_id, bundle(), llm())
     except Exception as exc:  # recorded on the run: the caller polls its status
         log.exception("recompute %s failed", run_id)
-        add_event(conn, run_id, "run", "failed", type(exc).__name__)
+        shown = isinstance(exc, ConfigError)  # our own text, safe and useful to show
+        add_event(
+            conn,
+            run_id,
+            "run",
+            "failed",
+            f"{type(exc).__name__}: {exc}" if shown else type(exc).__name__,
+        )
         finish_run(conn, run_id, FAILED)
         return None

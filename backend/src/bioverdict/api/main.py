@@ -276,8 +276,12 @@ def _execute_live(db_path: Path | None, run_id: str, text: str, live: LiveRunner
 
 def _execute_recompute(db_path: Path | None, run_id: str, llm: LLMFactory | None) -> None:
     with closing(settings.open_database(db_path)) as conn:
-        model = llm(run_id) if llm is not None else live_llm(run_id, db_path)
-        finish_recompute(conn, run_id, load_bundle(conn, run_id), model)
+        finish_recompute(
+            conn,
+            run_id,
+            lambda: load_bundle(conn, run_id),
+            lambda: llm(run_id) if llm is not None else live_llm(run_id, db_path),
+        )
 
 
 def _run_status(db_path: Path | None, run_id: str) -> str | None:
