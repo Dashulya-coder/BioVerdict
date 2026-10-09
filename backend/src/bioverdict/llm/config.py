@@ -24,6 +24,22 @@ ASTRA = "openai:gpt-6-astra"
 MINI = "openai:gpt-5-mini"
 
 
+# The gateway rejects a request above about 16,180 characters (the text of every message plus the
+# response schema in compact JSON plus about 100 of its own), measured 2026-10-09; the margin keeps
+# an estimate that is a little low from costing a refused request.
+GATEWAY_INPUT_CHARS = 16_000
+
+
+def _input_limit(default: int | None) -> int | None:
+    value = os.environ.get("LLM_MAX_INPUT_CHARS", "").strip()
+    if not value:
+        return default
+    try:
+        return int(value) if int(value) > 0 else None  # 0 or less: no limit
+    except ValueError as exc:
+        raise ConfigError(f"LLM_MAX_INPUT_CHARS={value!r} is not a whole number") from exc
+
+
 class ModelPrice(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -78,6 +94,9 @@ class LLMConfig(BaseModel):
     breaker_threshold: int = 3  # consecutive failures that open a provider's breaker
     breaker_cooldown_s: float = 180.0  # "a few minutes"
     run_timeout_s: float = 420.0  # RUN_TIMEOUT_S: hard wall-clock limit per run
+    # Characters an endpoint accepts in one request (messages and response schema together); None:
+    # no known limit. The gateway's is measured; LLM_MAX_INPUT_CHARS overrides it.
+    max_input_chars: int | None = None
 
     def step(self, name: str) -> StepConfig:
         try:
@@ -116,7 +135,9 @@ class LLMConfig(BaseModel):
             synthesis = StepConfig(
                 models=[SOL, MINI], effort="high", max_tokens=8000, timeout_s=240.0
             )
-            return cls._build(extraction, reasoning, synthesis, dict(GATEWAY_PRICES))
+            config = cls._build(extraction, reasoning, synthesis, dict(GATEWAY_PRICES))
+            config.max_input_chars = _input_limit(GATEWAY_INPUT_CHARS)
+            return config
         raise ConfigError(f"unknown provider {provider!r}: use 'anthropic' or 'openai'")
 
     @classmethod

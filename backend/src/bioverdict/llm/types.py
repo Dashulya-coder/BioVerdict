@@ -37,6 +37,13 @@ class Provider(Protocol):
     def complete(self, request: ProviderRequest) -> ProviderResponse: ...
 
 
+@runtime_checkable
+class SizedProvider(Protocol):
+    """An adapter whose endpoint limits the size of a request and can say how big one would be."""
+
+    def input_chars(self, request: ProviderRequest) -> int: ...
+
+
 def split_model_ref(ref: str) -> tuple[str, str]:
     """'anthropic:claude-haiku-4-5' -> ('anthropic', 'claude-haiku-4-5')."""
     provider, sep, model = ref.partition(":")

@@ -57,6 +57,14 @@ The organizers give each team a key for an Azure-hosted, OpenAI-compatible gatew
   and so do a system message, `max_completion_tokens` and `reasoning_effort`.
 - `temperature` and the old `max_tokens` are answered with a **502, and the gateway charges a
   reserved amount for that failed request**. The adapter never sends them.
+- **A request may be at most about 16,180 characters** (the text of every message, plus the
+  response schema as compact JSON, plus about 100 of the gateway's own); a longer one is refused
+  with `400 Input exceeds the conservative input limit`, the same for every model and counted in
+  characters, not tokens. The organizers do not raise it. `LLMConfig.max_input_chars` (16,000
+  with a margin; `LLM_MAX_INPUT_CHARS` overrides it, 0 means none) makes the client refuse a larger
+  request before it is sent (`InputTooLargeError`, no cost) and `LLMClient.input_budget` says how
+  many characters of prompt a step may use. The adapter sends a schema without `title` and
+  `description` (the `ModuleDraft` schema is 1.6 thousand characters instead of 2.8).
 - Reasoning models spend hidden reasoning tokens inside `max_completion_tokens` (they are billed
   as output), so the gateway preset keeps the limits tight (3,000 for extraction, 8,000 for
   reasoning).

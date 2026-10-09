@@ -31,6 +31,15 @@ class FatalProviderError(LLMError):
     """Authentication, permission or a bad request: failing over would not help."""
 
 
+class InputTooLargeError(FatalProviderError):
+    """The request is longer than the endpoint accepts. Detected before it is sent, so it costs
+    nothing; the caller must send less (see `LLMClient.input_budget`)."""
+
+    def __init__(self, size: int, limit: int) -> None:
+        super().__init__(f"the request is {size:,} characters, the endpoint accepts {limit:,}")
+        self.size, self.limit = size, limit
+
+
 class RefusalError(LLMError):
     """The model declined (safety classifier). Try another model; the provider is healthy."""
 
