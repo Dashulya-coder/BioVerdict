@@ -62,3 +62,17 @@ def test_a_gate_claim_is_never_critical() -> None:
     )
     (claim,) = g.claims
     assert claim.claim_type is ClaimType.STUDY_FACT and not claim.critical
+
+
+def test_a_gate_tag_on_an_unknown_claim_is_removed_in_grounding() -> None:
+    g = ground(
+        BASE,
+        draft(basis="unknown", diligence_type="proprietary_data", gate_signals=["K4"]),
+        allowed_gates=frozenset({GateId.K4}),
+        allow_study_fact=True,
+    )
+    (claim,) = g.claims
+    assert claim.gate_signals == []
+    assert any(
+        d.kind is DropKind.GATE and "unknown claim cannot assert" in d.reason for d in g.drops
+    )

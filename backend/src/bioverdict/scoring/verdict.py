@@ -12,6 +12,7 @@ from typing import Literal
 from bioverdict.scoring.confidence import apply_confidence, chain_probability
 from bioverdict.scoring.config import ConfidenceConfig, VerdictConfig
 from bioverdict.store.models import (
+    Basis,
     ChainLink,
     Claim,
     ClaimEvidenceLink,
@@ -37,8 +38,18 @@ GATE_TEXT: dict[GateId, str] = {
     GateId.S5: "The biomarker or endpoint is not recognised by the regulator as a surrogate",
     GateId.S6: "IP protection ends soon after the expected launch, or ownership is unclear",
 }
+# What may assert a gate. A kill criterion needs a fact the evidence states (a quote, or a number
+# derived from quotes); a soft one may also rest on a conclusion drawn from the evidence. Never a
+# gap (`unknown`) or a guess (`hypothesis`).
+_HARD_BASES = {Basis.EXTRACTED, Basis.DERIVED}
+_SOFT_BASES = {*_HARD_BASES, Basis.INFERRED}
+
 HARD = {GateId.K1, GateId.K2, GateId.K3, GateId.K4, GateId.K5}
 _SIGNAL_ONLY = [GateId.K1, GateId.K2, GateId.K3, GateId.K4, GateId.S4, GateId.S5, GateId.S6]
+
+
+def basis_can_assert(gate: GateId, basis: Basis) -> bool:
+    return basis in (_HARD_BASES if gate in HARD else _SOFT_BASES)
 
 
 def _kind(gate: GateId) -> Literal["hard", "soft"]:
@@ -60,7 +71,7 @@ def evaluate_gates(
     results: list[GateResult] = []
 
     for gate in _SIGNAL_ONLY:  # gates asserted by a claim with enough confidence
-        signals = [c for c in claims if gate in c.gate_signals]
+        signals = [c for c in claims if gate in c.gate_signals and basis_can_assert(gate, c.basis)]
         threshold = vcfg.t_hard_gate if gate in HARD else vcfg.t_gate
         firing = [c for c in signals if c.confidence >= threshold]
         near = [c for c in signals if vcfg.t_near <= c.confidence < threshold]
@@ -133,7 +144,12 @@ def score_verdict(
         for g in gates
         if g.kind == "hard"
         and not g.fired
-        and any(c.confidence >= vcfg.t_gate and g.gate_id in c.gate_signals for c in claims)
+        and any(
+            c.confidence >= vcfg.t_gate
+            and g.gate_id in c.gate_signals
+            and basis_can_assert(g.gate_id, c.basis)
+            for c in claims
+        )
     ]
 
     conditions: list[str] = []

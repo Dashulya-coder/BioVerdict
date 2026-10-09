@@ -15,6 +15,7 @@ from enum import StrEnum
 
 from bioverdict.reasoning.gate_guards import GateGuard
 from bioverdict.reasoning.schemas import DraftClaim, ModuleDraft
+from bioverdict.scoring.verdict import basis_can_assert
 from bioverdict.store.models import (
     Basis,
     Bundle,
@@ -272,6 +273,21 @@ def _build_claim(
                 DropKind.BASIS,
             )
         )
+    kept = []
+    for g in gates:
+        if basis_can_assert(g, basis):
+            kept.append(g)
+        else:
+            out.drops.append(
+                Drop(
+                    claim_id,
+                    g.value,
+                    f"a {basis.value} claim cannot assert a gate",
+                    DropKind.GATE,
+                )
+            )
+    gates = kept
+
     if basis is Basis.UNKNOWN:
         diligence = diligence or (
             DEFAULT_DILIGENCE[chain_link] if chain_link else DiligenceType.PROPRIETARY_DATA

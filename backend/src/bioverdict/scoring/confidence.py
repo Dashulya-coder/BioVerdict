@@ -11,6 +11,7 @@ from math import prod
 from bioverdict.scoring.config import ConfidenceConfig
 from bioverdict.store.as_of import is_visible_as_of
 from bioverdict.store.models import (
+    Basis,
     Claim,
     ClaimEvidenceLink,
     ConfidenceParts,
@@ -78,6 +79,19 @@ def _weights(
     return out
 
 
+_NO_EVIDENCE_BASES = (Basis.UNKNOWN, Basis.HYPOTHESIS)
+
+
+def _unsupported(cfg: ConfidenceConfig) -> ConfidenceResult:
+    return ConfidenceResult(
+        confidence=cfg.no_evidence_confidence,
+        parts=ConfidenceParts(support=0.0, contra=0.0, freshness=0.0),
+        flags=[ServiceFlag.SPARSE],
+        support_sum=0.0,
+        contra_sum=0.0,
+    )
+
+
 def claim_confidence(
     claim: Claim,
     links: list[ClaimEvidenceLink],
@@ -91,6 +105,10 @@ def claim_confidence(
     not occur in the excerpt (not grounded), and evidence not yet visible at `as_of`.
     """
     cfg = cfg or ConfidenceConfig()
+    if claim.basis in _NO_EVIDENCE_BASES:
+        # "the evidence does not say" and "plausible, unsupported" cannot gain confidence from
+        # evidence the claim happens to cite: a contradiction in the draft, not a finding.
+        return _unsupported(cfg)
     items = [
         (link, evidence[link.evidence_id])
         for link in links
@@ -101,13 +119,7 @@ def claim_confidence(
         and is_visible_as_of(evidence[link.evidence_id], as_of)
     ]
     if not items:
-        return ConfidenceResult(
-            confidence=cfg.no_evidence_confidence,
-            parts=ConfidenceParts(support=0.0, contra=0.0, freshness=0.0),
-            flags=[ServiceFlag.SPARSE],
-            support_sum=0.0,
-            contra_sum=0.0,
-        )
+        return _unsupported(cfg)
 
     weights = _weights(claim, items, as_of, cfg)
     support_ws, contra_ws, rec = [], [], []
