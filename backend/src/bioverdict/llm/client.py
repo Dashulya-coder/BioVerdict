@@ -29,6 +29,7 @@ from bioverdict.llm.errors import (
     ConfigError,
     FatalProviderError,
     InvalidOutputError,
+    LLMError,
     RefusalError,
     RunTimeoutError,
     TransientProviderError,
@@ -201,7 +202,11 @@ class LLMClient:
             self._budget.check(run_id)
             left = self._deadline.check(run_id)
             try:
-                response = provider.complete(request_for(ref, text, min(cfg.timeout_s, left)))
+                try:
+                    response = provider.complete(request_for(ref, text, min(cfg.timeout_s, left)))
+                except LLMError as exc:  # an answer that was unusable still cost money
+                    self._charge_tokens(run_id, ref, exc.input_tokens, exc.output_tokens, usage)
+                    raise
                 self._charge(run_id, ref, response, usage)
                 schema.model_validate_json(response.text)
                 return response, attempt
@@ -218,10 +223,20 @@ class LLMClient:
     def _charge(
         self, run_id: str | None, ref: str, response: ProviderResponse, usage: _Usage
     ) -> None:
-        cost = self._cost(ref, response)
+        self._charge_tokens(run_id, ref, response.input_tokens, response.output_tokens, usage)
+
+    def _charge_tokens(
+        self, run_id: str | None, ref: str, input_tokens: int, output_tokens: int, usage: _Usage
+    ) -> None:
+        if not (input_tokens or output_tokens):
+            return
+        price = self._config.prices[ref]
+        cost = (
+            input_tokens * price.input_per_mtok + output_tokens * price.output_per_mtok
+        ) / 1_000_000
         self._budget.charge(run_id, cost)
-        usage.input_tokens += response.input_tokens
-        usage.output_tokens += response.output_tokens
+        usage.input_tokens += input_tokens
+        usage.output_tokens += output_tokens
         usage.cost_usd += cost
 
     def _cost(self, ref: str, response: ProviderResponse) -> float:

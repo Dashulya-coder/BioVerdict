@@ -4,7 +4,19 @@ from __future__ import annotations
 
 
 class LLMError(Exception):
-    """Base class of every error raised by the LLM layer."""
+    """Base class of every error raised by the LLM layer.
+
+    An error raised after the provider answered (a refusal, a cut-off answer, unreadable JSON)
+    still cost money: the adapter attaches the tokens with `with_usage` so the client can charge
+    the budget and the log for them.
+    """
+
+    input_tokens: int = 0
+    output_tokens: int = 0
+
+    def with_usage(self, input_tokens: int, output_tokens: int):
+        self.input_tokens, self.output_tokens = input_tokens, output_tokens
+        return self
 
 
 class TransientProviderError(LLMError):

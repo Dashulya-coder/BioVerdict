@@ -8,6 +8,7 @@ from bioverdict.llm import (
     ConfigError,
     FakeLLM,
     FatalProviderError,
+    InvalidOutputError,
     LLMClient,
     LLMConfig,
     RefusalError,
@@ -322,3 +323,53 @@ def test_the_default_config_gives_reasoning_a_second_model_and_more_time() -> No
     assert cfg.step("reasoning").models == [SONNET, OPUS]
     assert cfg.step("synthesis").timeout_s > cfg.step("extraction").timeout_s == 90.0
     assert cfg.run_timeout_s == 420.0
+
+
+# --- an unusable answer is still paid for ------------------------------------------------
+
+
+def test_the_budget_and_the_log_see_the_tokens_of_a_failed_answer() -> None:
+    """Reproduced by the review of #51: a cut-off answer (1000 in, 4000 out) was recorded as $0."""
+    from bioverdict.llm.errors import FatalProviderError
+
+    cutoff = FatalProviderError("answer cut off at max_tokens").with_usage(1000, 4000)
+    log = MemoryCallLog()
+    llm = LLMClient(
+        config(HAIKU), {"anthropic": FakeProvider(cutoff, name="anthropic")}, call_log=log
+    )
+    with pytest.raises(FatalProviderError):
+        llm.call("s", "p", Answer, run_id="R")
+    billed = (1000 * 1.0 + 4000 * 5.0) / 1_000_000
+    assert llm.spent("R") == pytest.approx(billed)
+    assert log.entries[0].cost_usd == pytest.approx(billed)
+    assert (log.entries[0].input_tokens, log.entries[0].output_tokens) == (1000, 4000)
+
+
+def test_a_refusal_before_a_failover_is_charged_and_counted_in_the_result() -> None:
+    refusal = RefusalError("declined (category: bio)").with_usage(500, 20)
+    fake = FakeProvider(refusal, GOOD, name="anthropic")
+    llm = LLMClient(config(HAIKU, SONNET), {"anthropic": fake})
+    result = llm.call("s", "p", Answer, run_id="R")
+    wasted = (500 * 1.0 + 20 * 5.0) / 1_000_000
+    good = (100 * 2.0 + 50 * 10.0) / 1_000_000
+    assert result.cost_usd == pytest.approx(wasted + good)
+    assert result.cost_usd == pytest.approx(llm.spent("R"))
+
+
+def test_unreadable_json_from_the_provider_is_charged_for_each_attempt() -> None:
+    bad = InvalidOutputError("not json").with_usage(200, 300)
+    fake = FakeProvider(bad, bad, GOOD, name="anthropic")
+    llm = LLMClient(config(HAIKU), {"anthropic": fake})
+    result = llm.call("s", "p", Answer, run_id="R")
+    spent = 2 * (200 * 1.0 + 300 * 5.0) / 1_000_000 + (100 * 1.0 + 50 * 5.0) / 1_000_000
+    assert result.cost_usd == pytest.approx(spent) == pytest.approx(llm.spent("R"))
+
+
+def test_an_error_without_usage_charges_nothing() -> None:
+    llm = LLMClient(
+        config(HAIKU),
+        {"anthropic": FakeProvider(TransientProviderError("429", "rate_limit"), name="anthropic")},
+    )
+    with pytest.raises(AllModelsFailedError):
+        llm.call("s", "p", Answer, run_id="R")
+    assert llm.spent("R") == 0.0
