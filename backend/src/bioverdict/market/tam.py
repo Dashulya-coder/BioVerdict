@@ -56,6 +56,7 @@ class MarketEstimate(BaseModel):
     evidence_ids: list[str] = []
     assumptions: list[str] = []
     missing: list[str] = []
+    warnings: list[str] = []  # why a number should not be read as a market, when that is likely
 
 
 def _of(evidence: Iterable[Evidence], family: str) -> list[Evidence]:
@@ -224,6 +225,27 @@ def _price(evidence: list[Evidence], out: MarketEstimate) -> None:
     ]
 
 
+# More than the world's largest drug class earns a year (GLP-1 agonists, about $50-70 billion).
+IMPLAUSIBLE_USD = 100e9
+_PREVALENT = "people in the United States with"
+
+
+def _warnings(out: MarketEstimate) -> list[str]:
+    """Plain-language cautions: arithmetic over everyone with a condition is a ceiling."""
+    warnings = []
+    if out.patients_basis and out.patients_basis.startswith(_PREVALENT):
+        warnings.append(
+            "The patient count is everyone with the condition. Most are not diagnosed, eligible "
+            "or treated with a new drug, so a market size built on it is a ceiling, not a market."
+        )
+    if out.tam is not None and out.tam.tam_usd.p90 > IMPLAUSIBLE_USD:
+        warnings.append(
+            f"The upper bound is above ${IMPLAUSIBLE_USD / 1e9:,.0f} billion a year, more than "
+            "the largest drug class earns today. Read it as arithmetic, not as a market."
+        )
+    return warnings
+
+
 def estimate_market(bundle: Bundle) -> MarketEstimate:
     """Patients, analog price and their product, from the bundle alone."""
     out = MarketEstimate()
@@ -255,4 +277,5 @@ def estimate_market(bundle: Bundle) -> MarketEstimate:
             evidence_ids=out.evidence_ids,
             assumptions=out.assumptions,
         )
+    out.warnings = _warnings(out)
     return out
