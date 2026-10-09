@@ -26,11 +26,11 @@ even for complete components.
 These are **whole-task counts, not effort percentages**. The Resolver, the
 connectors, collect → freeze, reasoning and scoring are joined into a live run behind
 `USE_FIXTURES=0` (pending review). It was exercised offline and against the real sources with a
-stand-in model; it has not been run or evaluated with a real model, and the UI still shows
-prepared data.
+stand-in model; it has not been run or evaluated with a real model. The input, resolver and
+evidence screens run on the API (pending review).
 
-**Next for Arsenii:** a first live run with a real model together with Dasha (M2/M3), then wire the
-frontend to the API. **Next for Dasha:** B5 report UI on the fixture API
+**Next for Arsenii:** a first live run with a real model together with Dasha (M2/M3), then recompute and
+diff (A7) and the eval runner (A8). **Next for Dasha:** B5 report UI on the fixture API
 using [the shared styles](design-system.md), and a first live run of B1/B2; B8 needs an
 independent verification implementation. M2/M3 require both tracks.
 
@@ -66,7 +66,7 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 | A2 | Connectors: ClinicalTrials.gov v2 and Open Targets, returning `Evidence` objects | P0 | 4 | yes | [x] | ClinicalTrials.gov (#19), its posted results, stopped studies and pagination (#32) and Open Targets (#28) merged. | Wire the connectors into live collection and verify a real bundle handoff (M2). |
 | A3 | HTTP cache, `as_of` filter, source catalog (allowlist), bundle freeze, hash and versions | P0 | 3 | yes | [~] | SQLite, cache/retries/pacing, cutoff, canonical ids, latest-wins, catalog, hash (fixture hash #14), freeze/load and versions merged. | Validate the live collect → freeze flow with a real model. |
 | A4 | Extraction collect agents: quote + value into `Evidence`, section statuses, bounded tool loops | P0 | 4 | yes | [~] | Bounded, injected-tool collection with grounded quote/value extraction, cutoff/latest-wins, honest statuses, budget/deadline handling and collect → freeze DAG (#36). Live connectors and the Resolver registered and wired into the API/CLI run lifecycle (`pipeline/live_run.py`). | Measure live extraction quality, cost and time with a real model; the per-source caps make large sections `incomplete`. |
-| A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [~] | Fixture API/report/drill-down/trace/SSE (#31), CLI (#33) and shared Tailwind UI (#34) and the input/resolver/evidence screens on prepared data (#35) merged. `POST /runs` and the CLI start live runs with `USE_FIXTURES=0`. | Connect the UI to the API. Resolver and full evidence-list endpoints still needed. |
+| A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [~] | Fixture API/report/drill-down/trace/SSE (#31), CLI (#33) and shared Tailwind UI (#34) and the input/resolver/evidence screens on prepared data (#35) merged. `POST /runs` and the CLI start live runs with `USE_FIXTURES=0`. Resolver and whole-bundle endpoints; the input, resolver and evidence screens run on the API (`pnpm dev:api`), with the snapshot kept as an offline fallback. | Check the screens on a live run with a real model; link to the report and trace screens (B5, B12) when they land. |
 | A6 | Connectors: PubMed / Europe PMC and openFDA / Drugs@FDA | P1 | 4 |  | [~] | PubMed connector merged (#32). | openFDA / Drugs@FDA and any additional Europe PMC coverage; validate PubMed bodies before caching. |
 | A7 | Incremental recompute engine, add-evidence endpoint, diff API and diff screen | P1 | 5 | yes | [ ] | Scoring has a reusable rescore helper; no A7 workflow. | Implement add-evidence, recompute orchestration, report diff API and UI (or the documented full re-run fallback). |
 | A8 | Eval runner, grounding and citation metrics, leakage probe, cache pre-warm | P1 | 4 |  | [ ] | Evaluation strategy documented. | Implement runner, grounding/citation metrics, leakage probe and cache pre-warm. |

@@ -28,7 +28,8 @@ cp .env.example .env            # add API keys, see "Configuration"
 cd backend && uv sync
 uv run python ../scripts/check_compat.py   # expects "17/17 checks passed"
 uv run uvicorn bioverdict.api.main:app --reload      # API on :8000
-cd ../frontend && pnpm install && pnpm dev            # UI on :5173
+cd ../frontend && pnpm install && pnpm dev:api        # UI on :5173, running analyses on the API
+# `pnpm dev` instead opens the prepared Divarasib snapshot: no backend, no network
 ```
 
 Run one underwriting through the API. By default runs are answered from `fixtures/`

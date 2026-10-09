@@ -38,6 +38,7 @@ from bioverdict.llm.errors import ConfigError
 from bioverdict.pipeline.fixture_run import fixture_names, run_fixture
 from bioverdict.pipeline.live_llm import live_llm, require_configured
 from bioverdict.pipeline.live_run import LiveRunner, describe_request, run_live
+from bioverdict.store.models import ResolverOutput
 from bioverdict.store.runs_repo import DONE, FAILED, create_run, get_run, list_runs, load_events
 
 POLL_SECONDS = 0.2
@@ -76,7 +77,8 @@ def create_app(
 
     @app.get("/health")
     def health() -> dict[str, str]:
-        return {"status": "ok"}
+        """`mode` tells a client whether runs are answered from fixtures or are live."""
+        return {"status": "ok", "mode": "fixtures" if settings.use_fixtures() else "live"}
 
     @app.post("/runs", status_code=202)
     def start_run(body: RunRequest, tasks: BackgroundTasks, request: Request) -> RunCreated:
@@ -125,6 +127,27 @@ def create_app(
         with database(request) as conn:
             try:
                 return report.build_report(conn, run_id)
+            except report.RunNotFoundError as exc:
+                raise _not_found(exc) from exc
+            except report.RunNotReadyError as exc:
+                raise HTTPException(409, str(exc)) from exc
+
+    @app.get("/runs/{run_id}/resolver")
+    def run_resolver(run_id: str, request: Request) -> ResolverOutput:
+        with database(request) as conn:
+            try:
+                return report.get_resolver(conn, run_id)
+            except report.RunNotFoundError as exc:
+                raise _not_found(exc) from exc
+            except report.RunNotReadyError as exc:
+                raise HTTPException(409, str(exc)) from exc
+
+    @app.get("/runs/{run_id}/evidence")
+    def run_evidence(run_id: str, request: Request) -> list[EvidenceView]:
+        """Every evidence item of the run's bundle; the report lists only the cited ones."""
+        with database(request) as conn:
+            try:
+                return report.list_evidence(conn, run_id)
             except report.RunNotFoundError as exc:
                 raise _not_found(exc) from exc
             except report.RunNotReadyError as exc:

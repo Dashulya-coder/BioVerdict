@@ -8,6 +8,7 @@ from bioverdict import settings
 from bioverdict.api.main import create_app
 from bioverdict.api.schemas import ClaimView, EvidenceView, ReportResponse, TraceResponse
 from bioverdict.pipeline.fixture_run import run_fixture
+from bioverdict.store.models import ResolverOutput
 from bioverdict.store.runs_repo import create_run
 
 FIXTURES = Path(__file__).parents[3] / "fixtures"
@@ -31,7 +32,14 @@ def start(client: TestClient) -> str:
 
 
 def test_health(client: TestClient) -> None:
-    assert client.get("/health").json() == {"status": "ok"}
+    assert client.get("/health").json() == {"status": "ok", "mode": "fixtures"}
+
+
+def test_health_tells_a_client_when_runs_are_live(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("USE_FIXTURES", "0")
+    assert client.get("/health").json()["mode"] == "live"
 
 
 def test_starting_a_run_returns_its_id_at_once(client: TestClient) -> None:
@@ -83,6 +91,44 @@ def test_a_claim_and_its_evidence_can_be_drilled_into(client: TestClient) -> Non
     assert ClaimView.model_validate(claim_response.json()).id == claim["id"]
     evidence = EvidenceView.model_validate(evidence_response.json())
     assert claim["id"] in evidence.claim_ids and claim["links"][0]["quote"] in evidence.excerpt
+
+
+def test_the_resolved_input_of_a_run_is_served(client: TestClient) -> None:
+    run_id = start(client)
+
+    resolved = ResolverOutput.model_validate(client.get(f"/runs/{run_id}/resolver").json())
+
+    assert resolved.targets[0].symbol == "KRAS" and resolved.assumptions
+
+
+def test_the_whole_bundle_is_listed_not_only_what_the_report_cites(client: TestClient) -> None:
+    run_id = start(client)
+
+    listed = [EvidenceView.model_validate(e) for e in client.get(f"/runs/{run_id}/evidence").json()]
+    cited = client.get(f"/runs/{run_id}/report").json()["sources"]
+
+    assert len(listed) == 15 and len(cited) < len(listed)
+    assert [e.id for e in listed] == sorted(e.id for e in listed)
+    assert any(e.claim_ids for e in listed) and any(not e.claim_ids for e in listed)
+
+
+def test_a_cutoff_limits_the_listed_evidence(client: TestClient) -> None:
+    run_id = client.post("/runs", json={"asset": "divarasib", "as_of": "2026-06-30"}).json()[
+        "run_id"
+    ]
+    assert len(client.get(f"/runs/{run_id}/evidence").json()) == 10
+
+
+def test_resolver_and_evidence_are_not_ready_before_their_steps(
+    client: TestClient, db_path: Path
+) -> None:
+    with settings.open_database(db_path) as conn:
+        create_run(conn, "R-waiting", {"asset": "divarasib"}, settings.today())
+
+    assert client.get("/runs/R-waiting/resolver").status_code == 409
+    assert client.get("/runs/R-waiting/evidence").status_code == 409
+    assert client.get("/runs/R-nope/resolver").status_code == 404
+    assert client.get("/runs/R-nope/evidence").status_code == 404
 
 
 def test_the_trace_lists_the_steps(client: TestClient) -> None:

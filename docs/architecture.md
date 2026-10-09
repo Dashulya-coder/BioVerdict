@@ -156,10 +156,13 @@ routes and shapes are the same for both. Interactive documentation: `/docs` on a
 
 | Method and path | Purpose | State |
 |---|---|---|
-| `POST /runs` | Start a run: `{ asset, as_of? }`, returns `run_id` at once (202). Fixture mode knows the assets listed in `fixtures/`; others get 422 with the list | done |
+| `GET /health` | `status`, and `mode`: `fixtures` or `live` | done |
+| `POST /runs` | Start a run: `{ asset, as_of? }` or `{ indication, mechanism, as_of? }`, returns `run_id` at once (202). Fixture mode knows the assets listed in `fixtures/`; others get 422 with the list. A live run without a model key gets 503 | done |
 | `GET /runs`, `GET /runs/{id}` | List runs, one run's status and verdict | done |
 | `GET /runs/{id}/events` | SSE progress: one event per step and status, then `end`; resumes from `Last-Event-ID` | done |
 | `GET /runs/{id}/report` | `ReportResponse`: executive verdict, sections with claims and links, translation chain, gates, diligence questions, assumptions, cited sources, bundle identity. 409 while the run is going | done |
+| `GET /runs/{id}/resolver` | The resolved input (`ResolverOutput`) with its assumptions. 409 until the resolve step has finished | done |
+| `GET /runs/{id}/evidence` | Every evidence item of the frozen bundle, cited or not. 409 until the bundle is frozen | done |
 | `GET /runs/{id}/claims/{claim_id}` | One claim with its links | done |
 | `GET /runs/{id}/evidence/{evidence_id}` | One evidence item with excerpt, source and the claims that quote it | done |
 | `GET /runs/{id}/trace` | Steps, model calls, tokens and cost | done |

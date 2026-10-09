@@ -32,6 +32,7 @@ from bioverdict.store.models import (
     ClaimEvidenceLink,
     Evidence,
     EvidenceType,
+    ResolverOutput,
     Section,
     SectionStatus,
 )
@@ -243,6 +244,25 @@ def get_evidence(conn: sqlite3.Connection, run_id: str, evidence_id: str) -> Evi
         raise ItemNotFoundError(f"evidence {evidence_id} is not in run {run_id}")
     _, links = load_claims(conn, run_id)
     return _evidence_view(item, links)
+
+
+def get_resolver(conn: sqlite3.Connection, run_id: str) -> ResolverOutput:
+    """What the run resolved its input to; not ready until the resolve step has finished."""
+    record = _require_run(conn, run_id)
+    if record.resolver is None:
+        raise RunNotReadyError(f"run {run_id} has not resolved its input yet")
+    return record.resolver
+
+
+def list_evidence(conn: sqlite3.Connection, run_id: str) -> list[EvidenceView]:
+    """The whole frozen bundle, cited or not; not ready until the bundle is frozen."""
+    _require_run(conn, run_id)
+    try:
+        bundle = load_bundle(conn, run_id)
+    except LookupError as exc:
+        raise RunNotReadyError(f"run {run_id} has no frozen bundle yet") from exc
+    _, links = load_claims(conn, run_id)
+    return [_evidence_view(item, links) for item in bundle.evidence]
 
 
 def build_trace(conn: sqlite3.Connection, run_id: str) -> TraceResponse:

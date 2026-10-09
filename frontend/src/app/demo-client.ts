@@ -1,12 +1,12 @@
 import rawBundle from '../../../fixtures/bundles/divarasib.json'
 import rawResolver from './fixtures/divarasib-resolver.json'
-import { bundleSchema, inputSchema, resolverSchema } from './schemas'
+import { bundleSchema, demoInputSchema, resolverSchema } from './schemas'
 import { WorkspaceError } from './WorkspaceError'
 import type { AnalysisInput, PreparedAnalysis } from './models'
 
 /** Reads a prepared snapshot only; it performs no underwriting or network calls. */
 export function prepareDemo(input: AnalysisInput): PreparedAnalysis {
-  const parsed = inputSchema.safeParse(input)
+  const parsed = demoInputSchema.safeParse(input)
   if (!parsed.success)
     throw new WorkspaceError(
       parsed.error.issues[0]?.message ?? 'Check the analysis inputs.',
@@ -27,6 +27,8 @@ export function prepareDemo(input: AnalysisInput): PreparedAnalysis {
     )
   }
   return {
+    origin: 'demo',
+    runId: null,
     input: { ...parsed.data, asset: 'Divarasib' },
     resolver: resolver.data,
     evidence: bundle.data.evidence.filter(
