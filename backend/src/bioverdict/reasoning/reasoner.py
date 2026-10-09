@@ -13,7 +13,7 @@ from bioverdict.reasoning.grounding import (
     ground_draft,
 )
 from bioverdict.reasoning.modules import ALL_MODULES, ReasoningModule
-from bioverdict.reasoning.prompts import MAX_EVIDENCE_CHARS, build_prompt
+from bioverdict.reasoning.prompts import MAX_EVIDENCE_CHARS, BuiltPrompt, build_prompt
 from bioverdict.reasoning.schemas import ModuleDraft
 from bioverdict.scoring.confidence import apply_confidence
 from bioverdict.scoring.config import ConfidenceConfig
@@ -51,6 +51,18 @@ class ModuleReasoner:
         self._max_parallel = max_parallel  # None: one call per module at once; 1: one after another
         self.trace = ReasoningTrace()
 
+    def _prompt(self, module: ReasoningModule, bundle: Bundle) -> BuiltPrompt:
+        """The module's prompt, sized to what the endpoint accepts when it says (input_budget)."""
+        budget_of = getattr(self._llm, "input_budget", None)
+        budget = budget_of(module.step, ModuleDraft) if callable(budget_of) else None
+        return build_prompt(
+            module.instruction,
+            bundle,
+            self._max_evidence_chars,
+            budget=budget,
+            families=module.families,
+        )
+
     def _workers(self) -> int:
         return max(1, min(self._max_parallel or len(self._modules), len(self._modules)))
 
@@ -63,9 +75,7 @@ class ModuleReasoner:
         # run together (a run has a wall-clock limit and a call is a minute or two). Grounding and
         # numbering then follow the order of the modules, so the claim ids do not depend on which
         # call finished first.
-        prompts = [
-            build_prompt(m.instruction, bundle, self._max_evidence_chars) for m in self._modules
-        ]
+        prompts = [self._prompt(m, bundle) for m in self._modules]
         for prompt in prompts:
             self.trace.omitted_evidence += prompt.omitted
         with ThreadPoolExecutor(max_workers=self._workers()) as pool:

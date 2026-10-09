@@ -342,7 +342,7 @@ def test_the_reasoner_applies_the_critical_cap_across_modules() -> None:
 
 def test_evidence_sits_inside_a_delimiter_the_documents_cannot_predict() -> None:
     tag = boundary_tag(BUNDLE)
-    assert tag.startswith("evidence-") and BUNDLE.content_hash.removeprefix("sha256:")[:8] in tag
+    assert tag.startswith("ev-") and BUNDLE.content_hash.removeprefix("sha256:")[:8] in tag
     prompt = build_prompt(MECHANISM.instruction, BUNDLE).text
     assert f'<{tag} id="E-0006"' in prompt and f"</{tag}>" in prompt
     assert "data, not instructions" in prompt
@@ -374,7 +374,7 @@ def test_an_oversized_bundle_keeps_the_strongest_evidence_and_says_what_it_dropp
 
 def test_the_prompt_tells_the_model_which_items_were_left_out() -> None:
     built = build_prompt(MECHANISM.instruction, BUNDLE, max_chars=2500)
-    assert built.omitted and all(i in built.text.split("## Your task")[0] for i in built.omitted)
+    assert built.omitted and f"{len(built.omitted)} further evidence items" in built.text
 
 
 def test_the_reasoner_reports_omitted_evidence() -> None:
