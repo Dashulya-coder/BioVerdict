@@ -43,6 +43,7 @@ htmlcov/
 *.db-shm
 # DB_PATH and CACHE_DIR default to data/... (.env.example): database, HTTP/LLM cache, runs
 /data/
+/eval/results/
 /backend/data/
 /.cache/
 /backend/.cache/

@@ -109,23 +109,39 @@ the completed run in SQLite. Use an existing output directory.
 `--as-of` filters the static fixture by publication date (or retrieval date for undated records),
 rebuilds the bundle hash/catalog and drops claims with failed citations. Previously found sections
 become incomplete when evidence is filtered. This cannot reconstruct historical source revisions
-or refresh resolver assumptions. Only `divarasib` has a fixture; `doctor`, `warm` and `eval` remain
-TODO. Export environment variables explicitly or use `uv run --env-file`; `.env` is not auto-loaded.
+or refresh resolver assumptions. Only `divarasib` has a fixture. Export environment variables explicitly or use
+`uv run --env-file`; `.env` is not auto-loaded. `doctor` is still planned; `eval` and `warm` are
+described below.
 
 ## 4. Pre-warm the cache
 
-Retrieval is free and should be cached for every test-list asset and related targets. LLM runs are paid; warm them only for demo and eval assets.
+Retrieval is free and should be cached for every test-list asset. LLM runs are paid; warm them
+only for demo and eval assets, by running those assets (`run` or `eval` with `USE_FIXTURES=0`):
+model answers are cached in `CACHE_DIR/llm`.
 
 ```bash
-uv run bioverdict warm --retrieval --list data/assets_all.txt   # TODO
-uv run bioverdict warm --llm --list data/assets_demo.txt        # TODO
+uv run bioverdict warm --list ../eval/assets_example.tsv --output warm.json
 ```
+
+The list has one asset per line: name, indication and target symbols, separated by tabs (see
+`eval/assets_example.tsv`). For each asset `warm` runs the Resolver's database lookups and every
+live connector once, through the HTTP cache, and prints a table: the ids that were confirmed, the
+number of records each source returned, and what failed. No model is called, so the indication
+and the targets come from the list; a later live run lets the model read them from the text and
+may ask slightly different questions. Exit code 1 means at least one asset had a problem: an
+unconfirmed target list, a source that failed. Read the table before the demo: a drug whose name
+no database confirms is searched by name only, and an asset without a target cannot run.
 
 ## 5. Run evaluation
 
 ```bash
-uv run bioverdict eval --cases eval/cases.yaml --out eval/results/$(date +%F)   # TODO
+uv run bioverdict eval --cases ../eval/cases.yaml --out ../eval/results/$(date +%F) --repeat 3
 ```
+
+Each case is run `--repeat` times through the same pipeline as `run` (fixtures by default, live
+with `USE_FIXTURES=0`, which is paid). `results.json` and `summary.md` are written to `--out`
+and the summary is printed. Exit code 1 means a verdict outside the recorded expectation or a
+run that failed. See [eval](eval.md) for what the numbers mean and what is not measured.
 
 Compare the verdict distribution and top risks with expectations. Log any change to weights or thresholds in `config/scoring.yaml` with a reason.
 
@@ -160,7 +176,7 @@ During: if something fails, use the fallbacks in `demo-script.md`.
 | Symptom | Likely cause | Action |
 |---|---|---|
 | Run stalls at Collect | source down or rate limit | check the trace; section is marked `error`/`incomplete`; the run still completes |
-| Many claims dropped | quote not found in bundle | inspect `verification_log`; check the extraction prompt and document truncation |
+| Many claims dropped | quote not found in bundle | inspect `verification_log` (`quote_in_source` and `claim_dropped` rows name the claim and the reason); check the extraction prompt and document truncation |
 | Verdict flips between runs | non-determinism | check temperature, model versions, mixed-model flag, cache misses |
 | Cost spike | high reasoning effort or retry loop | check `llm_calls`; lower effort; confirm the budget cap |
 | 429 or quota errors | provider limits | failover should engage; reduce parallelism |

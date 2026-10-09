@@ -87,7 +87,31 @@ At the finals the organizers will enter queries whose expert analysis they alrea
 - Measure time and failure modes.
 - Verify short-and-correct beats long-and-wrong: the executive verdict must name the right main risk first.
 
-## 7. Results
+## 7. The runner (A8): what is implemented
+
+`uv run bioverdict eval --cases ../eval/cases.yaml --out ../eval/results/<date> [--repeat N]`
+(code in `bioverdict/eval/`). Every number is counted by code from the stored records of the
+runs; no model judges a report.
+
+| Metric of section 3 | State | How it is counted |
+|---|---|---|
+| Quote presence | done | links whose quote is verbatim in the excerpt of the evidence they name |
+| Source validity | partly | cited evidence whose address is in the bundle catalog; whether the address still resolves is not checked |
+| Coverage | done | required sections (those the reasoning modules write) that have at least one claim, unknowns included; the collected status of every section is in `results.json` |
+| Unknown honesty | partly | `unknown` claims that carry a diligence type; whether the status is *correct* needs a person |
+| Verdict stability | done | same verdict across `--repeat` runs; mean Jaccard overlap of the top-risk lists |
+| Verdict distribution, time, cost | done | from `runs` and `llm_calls`; fixture runs cost nothing and take no time |
+| Post-cutoff leakage | done | citations the model proposed and code could not ground, and the claims dropped for it. Every one is a row in `verification_log` |
+| Expected verdict | done | the verdict is one of `expected_verdict`; an empty list means no expectation |
+| Expected top risks | hint only | each expected risk beside the reported risk that shares most words with it. A person has to read both |
+| Citation support rate, judge agreement | not done | needs the entailment judge (B8) |
+| Sensitivity (strong, weak, noise) | not done here | `pipeline/recompute.py` and `GET /runs/{id}/diff` are the interface for B10 |
+| Closed-book leakage probe, bare-LLM baseline | not done | needs paid calls to a model without retrieval and a way to score its answers |
+
+`uv run bioverdict warm --list <file>` fills the retrieval cache for a list of assets and prints
+which ids were confirmed and how much each source returned (see the [runbook](runbook.md)).
+
+## 8. Results
 
 | Case | Verdict | Expected | Top risks match | Citation support | Time | Cost |
 |---|---|---|---|---|---|---|

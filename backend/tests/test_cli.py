@@ -216,3 +216,79 @@ def test_real_entrypoints_use_env_paths_from_another_directory(tmp_path, command
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout)["run"]["status"] == "done"
     assert (tmp_path / "env.sqlite").exists()
+
+
+def test_eval_writes_its_report_and_succeeds_when_verdicts_are_as_expected(tmp_path, capsys):
+    cases, out = tmp_path / "cases.yaml", tmp_path / "results"
+    cases.write_text(
+        "- {id: d, input: {asset: Divarasib}, as_of: 2026-10-07, expected_verdict: [Conditional]}"
+    )
+
+    code = main(["eval", "--cases", str(cases), "--out", str(out), "--db", str(tmp_path / "e.db")])
+
+    streams = capsys.readouterr()
+    assert code == 0 and "| d | Conditional | Conditional | yes |" in streams.out
+    assert "offline" in streams.err
+    assert (out / "results.json").exists() and (out / "summary.md").read_text() == streams.out
+
+
+def test_eval_fails_on_an_unexpected_verdict_or_a_case_that_cannot_run(tmp_path, capsys):
+    cases = tmp_path / "cases.yaml"
+    cases.write_text(
+        "- {id: wrong, input: {asset: divarasib}, expected_verdict: [Invest]}\n"
+        "- {id: absent, input: {asset: HRO761}}\n"
+    )
+
+    code = main(
+        [
+            "eval",
+            "--cases",
+            str(cases),
+            "--out",
+            str(tmp_path / "o"),
+            "--db",
+            str(tmp_path / "e.db"),
+        ]
+    )
+
+    assert code == 1
+    assert "unexpected verdict: wrong; failed runs: absent" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("extra", [["--repeat", "0"], ["--cases", "missing.yaml"]])
+def test_eval_refuses_bad_arguments_before_writing(tmp_path, extra):
+    cases, db = tmp_path / "cases.yaml", tmp_path / "absent.sqlite"
+    cases.write_text("- {id: d, input: {asset: divarasib}}")
+    arguments = ["eval", "--cases", str(cases), "--out", str(tmp_path / "o"), "--db", str(db)]
+    with pytest.raises(SystemExit) as exc:
+        main([*arguments, *extra])
+    assert exc.value.code == 2 and not db.exists()
+
+
+def test_warm_reads_the_sources_for_a_list_without_a_model(tmp_path, capsys, monkeypatch):
+    from contextlib import asynccontextmanager
+
+    from resolver.recorded import make_lookup
+
+    from bioverdict.connectors.fake import FakeConnector
+    from bioverdict.pipeline.live_sources import Sources
+
+    monkeypatch.undo()  # the recorded lookup replays through a mock transport, not a socket
+
+    @asynccontextmanager
+    async def sources(conn):
+        yield Sources(lookup=make_lookup(tmp_path), tools={"bundle": FakeConnector([], "bundle")})
+
+    listing, output = tmp_path / "assets.tsv", tmp_path / "warm.json"
+    listing.write_text("divarasib\tNSCLC\tKRAS\nHRO761\n")
+
+    code = main(
+        ["warm", "--list", str(listing), "--db", str(tmp_path / "w.db"), "--output", str(output)],
+        sources=sources,
+    )
+
+    streams = capsys.readouterr()
+    assert code == 1  # the second asset names no target
+    assert "| divarasib | CHEMBL5095236 | KRAS (ENSG00000133703) |" in streams.out
+    assert "no target" in streams.out and "no model calls" in streams.err
+    assert [r["asset"] for r in json.loads(output.read_text())] == ["divarasib", "HRO761"]

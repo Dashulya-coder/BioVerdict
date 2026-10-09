@@ -1,0 +1,13 @@
+# Regression cases (docs/eval.md, section 4). The cases and their expectations are B10 (Dasha).
+# This file holds one case so that the runner has something to run:
+#   cd backend && uv run bioverdict eval --cases ../eval/cases.yaml --out ../eval/results/<date>
+# In fixture mode only assets with a fixture can finish; other cases are reported as failed.
+- id: divarasib-2026-10
+  input: { asset: divarasib }
+  as_of: 2026-10-07
+  # From the schema example in docs/eval.md; not an expert's answer. Replace when B10 records one.
+  expected_verdict: [Conditional, Invest]
+  expected_top_risks: []
+  signals: []
+  recorded_by: Arsenii (runner smoke case)
+  recorded_at: 2026-10-08
