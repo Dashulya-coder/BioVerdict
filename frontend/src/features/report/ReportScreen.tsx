@@ -4,6 +4,7 @@ import { navigate } from '../../app/useScreen'
 import { ClaimList } from './ClaimList'
 import { ExecutiveSummary } from './ExecutiveSummary'
 import { TranslationChain } from './TranslationChain'
+import { UnknownFacts } from './UnknownFacts'
 import { useReport } from './useReport'
 import type { PreparedAnalysis } from '../../app/models'
 
@@ -55,6 +56,7 @@ function LoadedReport({ runId }: { runId: string }) {
     <>
       <ExecutiveSummary report={state.report} />
       <TranslationChain report={state.report} />
+      <UnknownFacts report={state.report} />
       <ClaimList report={state.report} />
     </>
   )
