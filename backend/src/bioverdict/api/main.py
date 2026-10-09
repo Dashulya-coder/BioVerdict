@@ -293,6 +293,7 @@ def _execute_recompute(db_path: Path | None, run_id: str, llm: LLMFactory | None
             run_id,
             lambda: load_bundle(conn, run_id),
             lambda: llm(run_id) if llm is not None else live_llm(run_id, db_path),
+            settings.recompute_mode(),
         )
 
 

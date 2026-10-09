@@ -21,7 +21,7 @@ QUOTE_CHECK = "quote_in_source"  # a citation that code could not ground in the 
 DROPPED_CHECK = "claim_dropped"  # the claim was removed from the report for that reason
 
 
-def _checks(drops: list[Drop], rejected: set[str]) -> list[VerificationCheck]:
+def drop_checks(drops: list[Drop], rejected: set[str]) -> list[VerificationCheck]:
     """What code removed or changed, for the verification log: nothing is dropped silently.
 
     A failed citation is a failed `quote_in_source` check. Other corrections (a gate or a claim
@@ -65,7 +65,7 @@ def reason_and_score(
     links = [link for link in links if link.claim_id not in rejected]
     claims += fill_missing_chain_links(claims, bundle, run_id, next_number)
     save_claims(conn, run_id, claims, links, bundle.version)
-    save_checks(conn, run_id, _checks(reasoner.trace.drops, rejected))
+    save_checks(conn, run_id, drop_checks(reasoner.trace.drops, rejected))
     corrections = sum(not d.is_citation_failure for d in reasoner.trace.drops)
     add_event(
         conn,

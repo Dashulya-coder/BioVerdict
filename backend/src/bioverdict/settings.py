@@ -58,3 +58,11 @@ def open_database(path: Path | None = None) -> sqlite3.Connection:
     conn = connect(target)
     migrate(conn)
     return conn
+
+
+def recompute_mode() -> str:
+    """`classify` (the model places the new evidence, code recomputes) or `full` (every reasoning
+    module runs again on the bigger bundle). The first is the default: it changes only what the
+    evidence touches."""
+    mode = os.environ.get("RECOMPUTE_MODE", "classify").strip().lower()
+    return mode if mode in {"classify", "full"} else "classify"
