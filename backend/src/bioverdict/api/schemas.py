@@ -213,12 +213,23 @@ class MarketResponse(_View):
 # --- adding evidence and comparing runs (A7) ---------------------------------------------------
 
 
+MAX_ADDED_TEXT = 6000  # characters of one added excerpt
+
+
 class AddedEvidence(_View):
     """One document an analyst adds to a finished run. Its labels are the submitter's own."""
 
-    text: str = Field(min_length=20, description="Verbatim excerpt of the document")
-    url: str = Field(pattern=r"^https?://\S+$", description="Where the excerpt was copied from")
-    source: str = Field(min_length=1, description="Name of the source, e.g. the journal")
+    # The text goes into every reasoning prompt (four of them): a cap keeps ten pasted papers from
+    # becoming a very large, very expensive run. About 1,500 tokens an item.
+    text: str = Field(
+        min_length=20, max_length=MAX_ADDED_TEXT, description="Verbatim excerpt of the document"
+    )
+    url: str = Field(
+        pattern=r"^https?://\S+$", max_length=500, description="Where the excerpt was copied from"
+    )
+    source: str = Field(
+        min_length=1, max_length=200, description="Name of the source, e.g. the journal"
+    )
     source_kind: SourceKind
     level: EvidenceLevel
     published_at: date | None = None

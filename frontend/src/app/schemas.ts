@@ -57,9 +57,13 @@ export const runSummarySchema = z.object({
 })
 export const runListSchema = z.array(runSummarySchema)
 export const addedEvidenceSchema = z.object({
-  text: z.string().trim().min(20, 'Paste the verbatim excerpt (at least 20 characters).'),
+  text: z
+    .string()
+    .trim()
+    .min(20, 'Paste the verbatim excerpt (at least 20 characters).')
+    .max(6000, 'Paste a shorter excerpt (at most 6,000 characters).'),
   url: z.httpUrl('Give the address the excerpt was copied from.'),
-  source: z.string().trim().min(1, 'Name the source.'),
+  source: z.string().trim().min(1, 'Name the source.').max(200, 'Use a shorter source name.'),
   source_kind: z.enum(sourceKinds),
   level: z.enum(evidenceLevels),
   published_at: z.iso.date().nullable(),
