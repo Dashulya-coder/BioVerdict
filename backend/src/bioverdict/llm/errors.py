@@ -48,6 +48,11 @@ class InvalidOutputError(LLMError):
     """The answer is not valid JSON for the schema. Retried on the same model with feedback."""
 
 
+class OutputTruncatedError(InvalidOutputError):
+    """The answer hit the output-token limit (reasoning tokens count). Retried with a request to
+    write less: the same limit with the same prompt would be cut off again."""
+
+
 class BudgetExceededError(LLMError):
     """The per-run spending cap is reached; no further call is made."""
 

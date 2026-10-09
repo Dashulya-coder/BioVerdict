@@ -31,6 +31,7 @@ from bioverdict.llm.errors import (
     InputTooLargeError,
     InvalidOutputError,
     LLMError,
+    OutputTruncatedError,
     RefusalError,
     RunTimeoutError,
     TransientProviderError,
@@ -248,10 +249,13 @@ class LLMClient:
                 return response, attempt
             except (ValidationError, InvalidOutputError) as exc:
                 last = InvalidOutputError(str(exc))
-                text = (
-                    f"{prompt}\n\nYour previous answer was rejected: {_short(exc)}\n"
-                    "Answer again with only a JSON object that matches the schema."
-                )
+                if isinstance(exc, OutputTruncatedError):
+                    text = f"{prompt}\n\n{_SHORTER}"
+                else:
+                    text = (
+                        f"{prompt}\n\nYour previous answer was rejected: {_short(exc)}\n"
+                        "Answer again with only a JSON object that matches the schema."
+                    )
         assert last is not None
         last.attempts = cfg.max_validation_retries + 1  # type: ignore[attr-defined]
         raise last
@@ -401,6 +405,13 @@ class BoundLLM:
 
     def input_budget(self, step: str, schema: type[BaseModel]) -> int | None:
         return self._client.input_budget(step, schema)
+
+
+_SHORTER = (
+    "Your previous answer was cut off because it was too long. Answer again, shorter: at most "
+    "5 claims, each claim under 200 characters, each quote under 150 characters, and only a "
+    "JSON object that matches the schema."
+)
 
 
 def _short(exc: Exception, limit: int = 400) -> str:

@@ -27,6 +27,9 @@ MINI = "openai:gpt-5-mini"
 # The gateway rejects a request above about 16,180 characters (the text of every message plus the
 # response schema in compact JSON plus about 100 of its own), measured 2026-10-09; the margin keeps
 # an estimate that is a little low from costing a refused request.
+GATEWAY_MAX_OUTPUT = (
+    4096  # the gateway refuses max_completion_tokens above ~4,096 (4,000 ok, 5,000 not)
+)
 GATEWAY_INPUT_CHARS = 16_000
 
 
@@ -130,10 +133,10 @@ class LLMConfig(BaseModel):
             # reserves money for the whole of it: keep the limits as tight as the answers allow.
             extraction = StepConfig(models=[LUNA], effort="low", max_tokens=3000, timeout_s=90.0)
             reasoning = StepConfig(
-                models=[SOL, MINI], effort="medium", max_tokens=8000, timeout_s=180.0
+                models=[SOL, MINI], effort="low", max_tokens=GATEWAY_MAX_OUTPUT, timeout_s=180.0
             )
             synthesis = StepConfig(
-                models=[SOL, MINI], effort="high", max_tokens=8000, timeout_s=240.0
+                models=[SOL, MINI], effort="high", max_tokens=GATEWAY_MAX_OUTPUT, timeout_s=240.0
             )
             config = cls._build(extraction, reasoning, synthesis, dict(GATEWAY_PRICES))
             config.max_input_chars = _input_limit(GATEWAY_INPUT_CHARS)
