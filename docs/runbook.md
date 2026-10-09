@@ -41,6 +41,50 @@ run id. The workspace follows a run until its evidence is frozen and then shows 
 input and the whole bundle; reasoning and scoring continue in the backend under that run id.
 The API must allow the page's origin: `CORS_ORIGINS` defaults to `http://localhost:5173`.
 
+### Docker
+
+Both Dockerfiles use the **repository root** as their build context. They use Python 3.14
+(`backend/.python-version`) and Node 24 (the frontend engine and CI runtime), with frozen
+lockfiles. The frontend builder uses the same pnpm 12.9.1 as CI; its runtime serves static
+assets through Nginx. Both runtime images run as non-root users and have HTTP health checks.
+
+From the repository root:
+
+```bash
+docker build -f backend/Dockerfile -t bioverdict-backend .
+docker build -f frontend/Dockerfile -t bioverdict-frontend \
+  --build-arg VITE_API_URL=http://localhost:8000 .
+docker volume create bioverdict-data
+```
+
+Start these in separate terminals, then open `http://localhost:8080`:
+
+```bash
+docker run --rm --name bioverdict-backend -p 8000:8000 \
+  --mount source=bioverdict-data,target=/app/data \
+  -e CORS_ORIGINS=http://localhost:8080 bioverdict-backend
+docker run --rm --name bioverdict-frontend -p 8080:8080 bioverdict-frontend
+```
+
+The backend defaults to offline fixture runs, so Divarasib works without keys or model calls.
+The named volume preserves the database and HTTP/LLM caches across container replacements;
+without a volume they disappear when the container is removed. Runtime paths default to
+`DB_PATH=/app/data/bioverdict.sqlite`, `CACHE_DIR=/app/data/cache`, and
+`FIXTURES_DIR=/app/fixtures`. A bind-mounted data directory must be writable by UID/GID 10001.
+The API uses one Uvicorn worker because background runs execute inside that process.
+
+`VITE_API_URL` is embedded at **build time** and must be reachable from the user's browser.
+Its Docker default is `http://localhost:8000`; for another host, rebuild with that host's API
+URL and set `CORS_ORIGINS` to the page's origin. Pass `--build-arg VITE_API_URL=` for a
+standalone snapshot that needs no API. Setting this variable on `docker run` does not change
+the already built frontend. No keys belong in frontend build arguments.
+
+For live backend runs, add `--env-file .env -e USE_FIXTURES=0` to its `docker run` command;
+the explicit `CORS_ORIGINS` option still applies. `.env` files, local databases, caches and
+dependencies are excluded from the shared Docker build context. Only the prepared bundle,
+resolver and reasoning fixtures are included in the backend image. The installed CLI is also
+available, for example `docker exec bioverdict-backend bioverdict doctor --offline`.
+
 ## 3. Run an underwriting
 
 For the independent A4 collection-only demo (no underwriting or paid calls), run from the
