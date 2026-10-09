@@ -312,3 +312,41 @@ async def test_a_prevalence_without_the_population_is_not_turned_into_patients(
     ]
 
     assert estimate_market(bundle(evidence)).patients is None
+
+
+# --- a ceiling is not a market ----------------------------------------------------------------
+
+
+async def test_a_prevalence_based_count_is_flagged_as_a_ceiling(tmp_path: Path) -> None:
+    estimate = estimate_market(bundle(await collect(tmp_path, query(OBESITY))))
+
+    assert estimate.patients_basis and estimate.patients_basis.startswith("people in the United")
+    assert any("ceiling, not a market" in w for w in estimate.warnings)
+
+
+async def test_new_cancer_cases_are_not_flagged_as_a_ceiling(tmp_path: Path) -> None:
+    estimate = estimate_market(bundle(await collect(tmp_path, query(NSCLC))))
+
+    assert estimate.warnings == []  # 225,094 new cases a year x $66.9-98.3k is $15-22 billion
+
+
+def test_an_upper_bound_above_the_largest_drug_class_is_flagged() -> None:
+    from bioverdict.market.tam import IMPLAUSIBLE_USD, MarketEstimate, _warnings
+    from bioverdict.store.models import TamEstimate
+
+    huge = Range(p10=1.4e11, p50=4.0e11, p90=8.7e11)  # the obesity arithmetic of #53
+    out = MarketEstimate(
+        patients_basis="people in the United States with the condition",
+        tam=TamEstimate(
+            addressable_patients=Range(p10=1, p50=2, p90=3),
+            annual_price_usd=Range(p10=1, p50=2, p90=3),
+            tam_usd=huge,
+        ),
+    )
+    texts = _warnings(out)
+    assert len(texts) == 2 and any("above $100 billion" in w for w in texts)
+    assert IMPLAUSIBLE_USD == 100e9
+    modest = out.model_copy(
+        update={"tam": out.tam.model_copy(update={"tam_usd": Range(p10=1e9, p50=2e9, p90=3e9)})}
+    )
+    assert len(_warnings(modest)) == 1  # only the ceiling caution remains

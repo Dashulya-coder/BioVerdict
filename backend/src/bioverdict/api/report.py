@@ -284,6 +284,7 @@ def build_market(conn: sqlite3.Connection, run_id: str) -> MarketResponse:
         annual_price_usd=estimate.annual_price_usd,
         tam_usd=estimate.tam.tam_usd if estimate.tam else None,
         assumptions=estimate.assumptions,
+        warnings=estimate.warnings,
         missing=estimate.missing,
         sources=[evidence_view(by_id[evidence_id], links) for evidence_id in estimate.evidence_ids],
     )

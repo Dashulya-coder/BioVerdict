@@ -206,6 +206,9 @@ class MarketResponse(_View):
     annual_price_usd: Range | None
     tam_usd: Range | None
     assumptions: list[str]
+    warnings: list[str] = Field(
+        default_factory=list, description="Why a number should not be read as a market"
+    )
     missing: list[str] = Field(description="What could not be computed, and why")
     sources: list[EvidenceView] = Field(description="The records every number was read from")
 
