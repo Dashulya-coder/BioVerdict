@@ -98,10 +98,15 @@ interface Api {
   traces?: Event[][]
   start?: { status: number; body: unknown }
   posted?: unknown[]
+  /** The status of run RUN on each successive poll; the last entry repeats. Default: done. */
+  statuses?: string[]
+  /** Paths the API accepts and never answers. */
+  silent?: string[]
 }
 
 async function serve(page: Page, api: Api = {}) {
   const traces = [...(api.traces ?? [frozen])]
+  const statuses = [...(api.statuses ?? ['done'])]
   const json = (route: Route, body: unknown, status = 200) =>
     route.fulfill({
       status,
@@ -115,7 +120,13 @@ async function serve(page: Page, api: Api = {}) {
     if (url.hostname !== '127.0.0.1') throw new Error(`Unexpected external request: ${url.href}`)
     if (url.origin !== API) return route.continue()
     if (request.method() === 'OPTIONS') return json(route, {})
+    if (api.silent?.includes(url.pathname)) return // accepted, never answered
     if (url.pathname === '/health') return json(route, { status: 'ok', mode: api.mode ?? 'live' })
+    if (url.pathname === `/runs/${RUN}`) {
+      const status = statuses.length > 1 ? statuses.shift() : statuses[0]
+      const verdict = status === 'done' ? 'Conditional' : null
+      return json(route, { ...summary(RUN, '2026-10-07'), status, verdict })
+    }
     if (url.pathname === '/runs' && request.method() === 'POST') {
       api.posted?.push(request.postDataJSON())
       return api.start
@@ -296,4 +307,61 @@ test('a fixture API that cannot reason over new evidence says so', async ({ page
   await expect(page.getByRole('alert')).toContainText(
     'fixture runs cannot reason over new evidence',
   )
+})
+
+test('the header says whether the run is still reasoning, and Compare waits for it', async ({
+  page,
+}) => {
+  await serve(page, { statuses: ['running', 'running', 'running', 'done'] })
+  await run(page, 'divarasib')
+  await expect(page.getByText('Reasoning…', { exact: true })).toBeVisible()
+  await page.getByRole('link', { name: 'Compare', exact: true }).click()
+  await expect(page.getByText('This run is still reasoning over its evidence.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Add and recompute' })).toBeDisabled()
+
+  await expect(page.getByText('Verdict: Conditional', { exact: true })).toBeVisible()
+  await expect(page.getByText('This run is still reasoning over its evidence.')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Add and recompute' })).toBeEnabled()
+})
+
+test('a failed run is named in the header and cannot be compared', async ({ page }) => {
+  await serve(page, { statuses: ['failed'] })
+  await run(page, 'divarasib')
+  await expect(page.getByText('Run failed', { exact: true })).toBeVisible()
+  await page.getByRole('link', { name: 'Compare', exact: true }).click()
+  await expect(page.getByText('This run failed, so it has no report to compare.')).toBeVisible()
+})
+
+test('a reload reopens the run on the same screen without starting another', async ({ page }) => {
+  const posted: unknown[] = []
+  await serve(page, { posted })
+  await run(page, 'divarasib')
+  await page.getByRole('button', { name: 'Explore evidence' }).click()
+  await expect(page).toHaveURL(new RegExp(`\\?run=${RUN}#evidence$`))
+
+  await page.reload()
+
+  await expect(page.getByRole('status').first()).toContainText('15 of 15 evidence items')
+  await expect(page.getByText(RUN, { exact: true })).toBeVisible()
+  await expect(page.getByText('Verdict: Conditional', { exact: true })).toBeVisible()
+  expect(posted).toHaveLength(1) // the run was read again, not started again
+})
+
+test('a link to a run that does not exist says so and offers a new analysis', async ({ page }) => {
+  await serve(page)
+  await page.goto('/?run=R-unknown#evidence')
+  await expect(page.getByRole('alert')).toContainText('no such route')
+  await page.getByRole('button', { name: 'New analysis' }).click()
+  await expect(page.getByLabel('Asset / drug')).toBeVisible()
+})
+
+test('a request that is accepted and never answered ends with a message', async ({ page }) => {
+  await page.clock.install()
+  await serve(page, { silent: ['/health'] })
+  await run(page, 'divarasib')
+  await expect(page.getByRole('status')).toContainText('Contacting the API')
+
+  await page.clock.fastForward(21_000)
+
+  await expect(page.getByRole('alert')).toContainText('did not answer within 20 seconds')
 })

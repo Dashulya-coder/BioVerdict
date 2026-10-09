@@ -19,10 +19,19 @@ export const apiUrl = (import.meta.env.VITE_API_URL ?? '').trim().replace(/\/+$/
 
 const POLL_MS = 500
 const RUN_LIMIT_MS = 10 * 60 * 1000
+/** One request may take this long. A run's own limit is only checked between requests. */
+const REQUEST_LIMIT_MS = 20_000
 const progressLabels: Record<string, string> = {
   resolve: 'Resolving the input.',
   collect: 'Collecting evidence from the sources.',
   freeze: 'Freezing the evidence bundle.',
+}
+
+function silent(): WorkspaceError {
+  return new WorkspaceError(
+    `The BioVerdict API at ${apiUrl} accepted a request and did not answer within ${String(REQUEST_LIMIT_MS / 1000)} seconds. Check the backend, then try again.`,
+    'edit',
+  )
 }
 
 function unreachable(): WorkspaceError {
@@ -38,24 +47,37 @@ async function request<T>(
   signal: AbortSignal,
   body?: unknown,
 ): Promise<T> {
+  // A request that hangs would otherwise hang the workspace: the caller's signal only says
+  // that the user left, and nothing else interrupts a fetch.
+  const limit = new AbortController()
+  const timer = setTimeout(() => {
+    limit.abort()
+  }, REQUEST_LIMIT_MS)
+  const either = AbortSignal.any([signal, limit.signal])
   let response: Response
+  let payload: unknown
   try {
     response = await fetch(
       apiUrl + path,
       body === undefined
-        ? { signal }
+        ? { signal: either }
         : {
-            signal,
+            signal: either,
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(body),
           },
     )
+    payload = await response.json().catch((error: unknown) => {
+      if (either.aborted) throw error
+      return null
+    })
   } catch (error: unknown) {
     if (signal.aborted) throw error
-    throw unreachable()
+    throw limit.signal.aborted ? silent() : unreachable()
+  } finally {
+    clearTimeout(timer)
   }
-  const payload: unknown = await response.json().catch(() => null)
   if (!response.ok) {
     // The API explains refusals in plain words: an unknown fixture asset, a missing model key.
     const refusal = apiErrorSchema.safeParse(payload)
@@ -107,7 +129,37 @@ export async function runAnalysis(
   onProgress('Contacting the API.')
   const { mode } = await request('/health', healthSchema, signal)
   const { run_id: runId } = await request('/runs', runCreatedSchema, signal, parsed.data)
+  return openFrozen(runId, mode, parsed.data, onProgress, signal)
+}
 
+/**
+ * Opens a run that already exists, by its id: after a reload, or from a link. The input shown
+ * is what the run recorded; a run started without a drug name is shown under its id.
+ */
+export async function openRun(
+  runId: string,
+  onProgress: (text: string) => void,
+  signal: AbortSignal,
+): Promise<PreparedAnalysis> {
+  onProgress('Opening the run.')
+  const { mode } = await request('/health', healthSchema, signal)
+  const run = await getRun(runId, signal)
+  const asset = typeof run.input.asset === 'string' && run.input.asset ? run.input.asset : runId
+  return openFrozen(runId, mode, { asset, as_of: run.as_of }, onProgress, signal)
+}
+
+/** The run's status and verdict as the API has them now. */
+export function getRun(runId: string, signal: AbortSignal): Promise<RunSummary> {
+  return request(`/runs/${encodeURIComponent(runId)}`, runSummarySchema, signal)
+}
+
+async function openFrozen(
+  runId: string,
+  mode: PreparedAnalysis['origin'],
+  input: AnalysisInput,
+  onProgress: (text: string) => void,
+  signal: AbortSignal,
+): Promise<PreparedAnalysis> {
   const deadline = Date.now() + RUN_LIMIT_MS
   for (;;) {
     const { events } = await request(`/runs/${runId}/trace`, traceSchema, signal)
@@ -126,7 +178,7 @@ export async function runAnalysis(
     request(`/runs/${runId}/resolver`, resolverSchema, signal),
     request(`/runs/${runId}/evidence`, apiEvidenceListSchema, signal),
   ])
-  return { origin: mode, runId, input: parsed.data, resolver, evidence }
+  return { origin: mode, runId, input, resolver, evidence }
 }
 
 /** Finished runs, newest first: what a run can be compared with. */

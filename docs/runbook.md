@@ -39,6 +39,11 @@ the API on for a plain `pnpm dev` or `pnpm build`). The header shows where an an
 `Demo mode` (snapshot), `Fixture run` or `Live run` (what the API's `/health` reports), with the
 run id. The workspace follows a run until its evidence is frozen and then shows the resolved
 input and the whole bundle; reasoning and scoring continue in the backend under that run id.
+The header then follows the run to its end: `Reasoning…`, then `Verdict: …` or `Run failed`;
+comparing and adding a document open only for a finished run. The address carries the run
+(`?run=<id>`), so a reload or a shared link reopens the same run on the same screen without
+starting another. A request the API accepts and does not answer within 20 seconds ends with a
+message instead of a waiting screen.
 The API must allow the page's origin: `CORS_ORIGINS` defaults to `http://localhost:5173`.
 
 ## 3. Run an underwriting

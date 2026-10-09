@@ -4,7 +4,7 @@ import { Badge } from '../ui/Badge'
 import { Sidebar } from './Sidebar'
 import { apiMode, originLabels } from './copy'
 import { formatDate } from './format'
-import type { PreparedAnalysis, Screen } from './models'
+import type { PreparedAnalysis, RunSummary, Screen } from './models'
 
 const titles: Record<Screen, string> = {
   new: 'New analysis',
@@ -18,11 +18,14 @@ export function WorkspaceShell({
   screen,
   cutoff,
   analysis,
+  run,
   children,
 }: {
   screen: Screen
   cutoff: string
   analysis: PreparedAnalysis | null
+  /** The run's status as the API reports it; `null` for the snapshot and before it answers. */
+  run: RunSummary | null
   children: ReactNode
 }) {
   const main = useRef<HTMLElement>(null)
@@ -52,6 +55,18 @@ export function WorkspaceShell({
           <Badge tone="fact">
             {analysis ? originLabels[analysis.origin] : apiMode ? 'API' : originLabels.demo}
           </Badge>
+          {run ? (
+            <span>
+              <span className="sr-only">Run status: </span>
+              {run.status === 'done' ? (
+                <Badge tone="fact">Verdict: {run.verdict ?? 'none'}</Badge>
+              ) : run.status === 'failed' ? (
+                <Badge tone="error">Run failed</Badge>
+              ) : (
+                <Badge tone="assumption">Reasoning…</Badge>
+              )}
+            </span>
+          ) : null}
           {analysis?.runId ? (
             <span className="font-mono text-xs text-muted" title="Run id">
               {analysis.runId}

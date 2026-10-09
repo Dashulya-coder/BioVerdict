@@ -6,9 +6,10 @@ import { ResolvedInput } from '../features/input/ResolvedInput'
 import { EvidenceExplorer } from '../features/evidence/EvidenceExplorer'
 import { CompareRuns } from '../features/compare/CompareRuns'
 import { WorkspaceShell } from './WorkspaceShell'
-import { copy, latestCutoff } from './copy'
+import { apiMode, copy, latestCutoff } from './copy'
 import { useAnalysis } from './useAnalysis'
-import { navigate, useScreen } from './useScreen'
+import { useRunStatus } from './useRunStatus'
+import { navigate, rememberRun, rememberedRun, useScreen } from './useScreen'
 import type { AnalysisInput } from './models'
 
 export function Workspace() {
@@ -16,13 +17,26 @@ export function Workspace() {
     asset: 'Divarasib',
     as_of: latestCutoff(),
   }))
-  const { state, prepare, reset } = useAnalysis()
+  const { state, reopened: reopening, prepare, restore, reset } = useAnalysis()
   const screen = useScreen()
   useEffect(() => {
-    if (state.kind === 'ready') navigate('resolved')
+    // A reload, or a link with `?run=`, reopens that run on the screen the address names.
+    const runId = apiMode ? rememberedRun() : null
+    if (runId) void restore(runId)
+    // Only on the first render: `restore` is a new function on every one.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => {
+    if (state.kind !== 'ready') return
+    rememberRun(state.analysis.runId)
+    if (!reopening) navigate('resolved')
+    // `reopening` only says which kind of load just finished.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state])
   const analysis = state.kind === 'ready' ? state.analysis : null
+  const run = useRunStatus(analysis?.runId ?? null)
   function changeInput(input: AnalysisInput) {
+    rememberRun(null)
     reset()
     setDraft(input)
   }
@@ -34,6 +48,7 @@ export function Workspace() {
       screen={screen}
       cutoff={analysis?.input.as_of ?? draft.as_of}
       analysis={analysis}
+      run={run}
     >
       {screen === 'new' ? (
         <AnalysisForm
@@ -55,7 +70,7 @@ export function Workspace() {
             }}
           />
         ) : screen === 'compare' ? (
-          <CompareRuns analysis={analysis} />
+          <CompareRuns analysis={analysis} status={run} />
         ) : (
           <EvidenceExplorer
             key={screen}
@@ -66,6 +81,10 @@ export function Workspace() {
             }}
           />
         )
+      ) : reopening && state.kind === 'loading' ? (
+        <p role="status" className="text-sm text-muted">
+          {state.progress}
+        </p>
       ) : (
         <section>
           <PageHeading
@@ -73,6 +92,11 @@ export function Workspace() {
             title="Start with an analysis"
             description={copy.startHint}
           />
+          {reopening && state.kind === 'error' ? (
+            <p role="alert" className="mb-6 max-w-2xl text-sm text-danger">
+              {state.message}
+            </p>
+          ) : null}
           <Button
             onClick={() => {
               navigate('new')
