@@ -17,6 +17,13 @@ SONNET = "anthropic:claude-sonnet-5-5"
 OPUS = "anthropic:claude-opus-5-5"
 
 
+# The hackathon gateway (an OpenAI-compatible endpoint); the four models it lists.
+LUNA = "openai:gpt-6-luna"
+SOL = "openai:gpt-6.1-sol"
+ASTRA = "openai:gpt-6-astra"
+MINI = "openai:gpt-5-mini"
+
+
 class ModelPrice(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -29,6 +36,17 @@ DEFAULT_PRICES: dict[str, ModelPrice] = {
     HAIKU: ModelPrice(input_per_mtok=1.0, output_per_mtok=5.0),
     SONNET: ModelPrice(input_per_mtok=2.0, output_per_mtok=10.0),
     OPUS: ModelPrice(input_per_mtok=4.0, output_per_mtok=20.0),
+}
+
+
+# USD per 1M tokens (docs/cost.md). gpt-5-mini is a public list price that has not been checked
+# against the gateway; the gateway reserves and charges its own amounts, so compare with its
+# portal after a run.
+GATEWAY_PRICES: dict[str, ModelPrice] = {
+    LUNA: ModelPrice(input_per_mtok=0.10, output_per_mtok=0.50),
+    SOL: ModelPrice(input_per_mtok=2.0, output_per_mtok=10.0),
+    ASTRA: ModelPrice(input_per_mtok=10.0, output_per_mtok=50.0),
+    MINI: ModelPrice(input_per_mtok=0.25, output_per_mtok=2.0),
 }
 
 
@@ -76,25 +94,54 @@ class LLMConfig(BaseModel):
 
     @classmethod
     def default(cls) -> LLMConfig:
-        """Roles from docs/cost.md with the models that have an adapter today (Anthropic).
+        """Roles from docs/cost.md on Anthropic's models (see `for_provider` for the others).
 
-        TODO: the entailment judge must come from a different provider than the generator; it is
-        added with the second adapter (B8), not faked here.
+        TODO: the entailment judge must come from a different model family than the generator;
+        it is added with B8, not faked here.
         """
+        return cls._build(_EXTRACTION, _REASONING, _SYNTHESIS, dict(DEFAULT_PRICES))
+
+    @classmethod
+    def for_provider(cls, provider: str) -> LLMConfig:
+        """The roles on one provider's models: `anthropic`, or `openai` (the hackathon gateway)."""
+        if provider == "anthropic":
+            return cls.default()
+        if provider == "openai":
+            # Reasoning models spend hidden tokens inside max_completion_tokens, and the gateway
+            # reserves money for the whole of it: keep the limits as tight as the answers allow.
+            extraction = StepConfig(models=[LUNA], effort="low", max_tokens=3000, timeout_s=90.0)
+            reasoning = StepConfig(
+                models=[SOL, MINI], effort="medium", max_tokens=8000, timeout_s=180.0
+            )
+            synthesis = StepConfig(
+                models=[SOL, MINI], effort="high", max_tokens=8000, timeout_s=240.0
+            )
+            return cls._build(extraction, reasoning, synthesis, dict(GATEWAY_PRICES))
+        raise ConfigError(f"unknown provider {provider!r}: use 'anthropic' or 'openai'")
+
+    @classmethod
+    def _build(
+        cls,
+        extraction: StepConfig,
+        reasoning: StepConfig,
+        synthesis: StepConfig,
+        prices: dict[str, ModelPrice],
+    ) -> LLMConfig:
         config = cls(
             steps={
-                "resolver": _EXTRACTION,
-                "extraction": _EXTRACTION,
-                "reasoning": _REASONING,
-                "reasoning.mechanism": _REASONING,
-                "reasoning.translation": _REASONING,
-                "reasoning.clinical": _REASONING,
-                "reasoning.competition": _REASONING,
-                "reasoning.classify": _REASONING,
-                "skeptic": _SYNTHESIS,
-                "chair": _SYNTHESIS,
-                "synthesis": _SYNTHESIS,
+                "resolver": extraction,
+                "extraction": extraction,
+                "reasoning": reasoning,
+                "reasoning.mechanism": reasoning,
+                "reasoning.translation": reasoning,
+                "reasoning.clinical": reasoning,
+                "reasoning.competition": reasoning,
+                "reasoning.classify": reasoning,
+                "skeptic": synthesis,
+                "chair": synthesis,
+                "synthesis": synthesis,
             },
+            prices=prices,
             budget_usd=float(os.environ.get("RUN_BUDGET_USD", "5")),
             run_timeout_s=float(os.environ.get("RUN_TIMEOUT_S", "420")),
         )

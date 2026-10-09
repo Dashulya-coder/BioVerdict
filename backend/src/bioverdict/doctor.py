@@ -7,7 +7,6 @@ key that is set is not proven to be valid. Secrets are never printed, only wheth
 
 from __future__ import annotations
 
-import os
 import sqlite3
 import sys
 import tempfile
@@ -23,7 +22,7 @@ import httpx
 from bioverdict import settings
 from bioverdict.llm import ConfigError, LLMConfig
 from bioverdict.pipeline.fixture_run import fixture_names
-from bioverdict.pipeline.live_llm import KEY
+from bioverdict.pipeline.live_llm import has_key, key_variable, select_provider
 from bioverdict.store.bundle import compute_content_hash
 from bioverdict.store.migrations import SCHEMA_VERSION, current_version
 from bioverdict.store.models import Bundle
@@ -90,15 +89,29 @@ def check_mode_and_model() -> list[Check]:
         if live
         else "fixtures: runs are answered offline (set USE_FIXTURES=0 for live runs)",
     )
-    has_key = bool(os.environ.get(KEY))
-    if has_key:
-        key = Check("model key", "ok", f"{KEY} is set (not verified: no model is called)")
-    elif live:
-        key = Check("model key", "fail", f"{KEY} is not set: a live run cannot start")
-    else:
-        key = Check("model key", "warn", f"{KEY} is not set: fine for fixtures, not for live runs")
     try:
-        config = LLMConfig.default()
+        provider = select_provider()
+    except ConfigError as exc:
+        provider = None
+        error = str(exc)
+    else:
+        error = None
+    if error is not None:
+        key = Check("model key", "fail" if live else "warn", error)
+    elif provider is not None and has_key(provider):
+        key = Check(
+            "model key",
+            "ok",
+            f"{key_variable(provider)} is set, provider {provider} (not verified: no model is called)",
+        )
+    elif live:
+        key = Check("model key", "fail", "no model key is set: a live run cannot start")
+    else:
+        key = Check(
+            "model key", "warn", "no model key is set: fine for fixtures, not for live runs"
+        )
+    try:
+        config = LLMConfig.for_provider(provider or "anthropic")
         limits = Check(
             "run limits",
             "ok",
