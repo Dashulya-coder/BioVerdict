@@ -2,7 +2,8 @@
 
 Fixture runs (the default) are offline and free. `USE_FIXTURES=0` makes the run live: public
 sources are read and the configured model is called, which costs money. `eval` runs the
-regression cases the same way; `warm` only reads the public sources, which is free.
+regression cases the same way; `warm` only reads the public sources and `doctor` only checks
+the setup, both free.
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from uuid import uuid4
 
 from bioverdict import settings
 from bioverdict.api.report import build_report
+from bioverdict.doctor import Probe, render, run_checks
 from bioverdict.eval.cases import load_cases
 from bioverdict.eval.runner import StartRun, run_cases, summary, write_report
 from bioverdict.eval.warm import load_assets, table, warm
@@ -34,9 +36,10 @@ def main(
     argv: list[str] | None = None,
     live: LiveRunner | None = None,
     sources: SourcesFactory | None = None,
+    probes: dict[str, Probe] | None = None,
 ) -> int:
-    """`live` replaces the real live pipeline (sources and model) and `sources` what `warm`
-    reads; tests pass stand-ins."""
+    """`live` replaces the real live pipeline (sources and model), `sources` what `warm` reads
+    and `probes` what `doctor` asks; tests pass stand-ins."""
     parser = argparse.ArgumentParser(prog="bioverdict", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
 
@@ -62,11 +65,19 @@ def main(
         "--refresh", action="store_true", help="download again what is already cached"
     )
 
-    for command in (run, evaluate, warming):
+    doctor = commands.add_parser("doctor", help="check that this machine is ready for a run")
+    doctor.add_argument("--offline", action="store_true", help="do not contact the sources")
+
+    for command in (run, evaluate, warming, doctor):
         command.add_argument("--db", type=Path, help="SQLite path; defaults to DB_PATH")
-    for command in (run, evaluate):
+    for command in (run, evaluate, doctor):
         command.add_argument("--fixtures", type=Path, help="fixture directory (FIXTURES_DIR)")
     args = parser.parse_args(argv)
+
+    if args.command == "doctor":
+        checks = run_checks(args.db, args.fixtures, offline=args.offline, sources=probes)
+        sys.stdout.write(render(checks))
+        return 1 if any(check.status == "fail" for check in checks) else 0
 
     if args.command == "warm":
         patient = paced_sources(WARM_INTERVAL_S, WARM_ATTEMPTS, refresh=args.refresh)

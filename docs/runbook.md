@@ -17,8 +17,14 @@ Required variables are listed in the README. Check access:
 
 ```bash
 uv run python ../scripts/check_compat.py   # dependencies work on this Python (expects 17/17)
-uv run bioverdict doctor        # TODO: verifies keys, network, DB, cache dir
+uv run bioverdict doctor        # mode, model key, limits, database, caches, fixtures, sources
 ```
+
+`doctor` prints one line per check (`ok`, `warn` or `fail`) and exits with 1 when anything
+failed. It is free: it sends one small request to each public source (`--offline` skips that) and
+never calls a model, so a model key is reported as set, not as valid. A missing key is a warning
+in fixture mode and a failure in live mode. Run it with the environment of the run you plan, for
+example `USE_FIXTURES=0 uv run --env-file ../.env bioverdict doctor`.
 
 ## 2. Start
 
@@ -110,8 +116,7 @@ the completed run in SQLite. Use an existing output directory.
 rebuilds the bundle hash/catalog and drops claims with failed citations. Previously found sections
 become incomplete when evidence is filtered. This cannot reconstruct historical source revisions
 or refresh resolver assumptions. Only `divarasib` has a fixture. Export environment variables explicitly or use
-`uv run --env-file`; `.env` is not auto-loaded. `doctor` is still planned; `eval` and `warm` are
-described below.
+`uv run --env-file`; `.env` is not auto-loaded. `eval` and `warm` are described below.
 
 ## 4. Pre-warm the cache
 
@@ -170,6 +175,7 @@ T-24h:
 
 T-1h:
 
+- [ ] `bioverdict doctor` with the demo environment: no `fail` on either machine.
 - [ ] Both machines run the same commit.
 - [ ] Network check; hotspot as a backup.
 - [ ] Open the UI at the demo run; check trace and cost panel.
