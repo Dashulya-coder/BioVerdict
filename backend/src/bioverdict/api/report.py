@@ -283,6 +283,7 @@ def build_market(conn: sqlite3.Connection, run_id: str) -> MarketResponse:
         patients_basis=estimate.patients_basis,
         annual_price_usd=estimate.annual_price_usd,
         tam_usd=estimate.tam.tam_usd if estimate.tam else None,
+        range_basis=estimate.range_basis,
         assumptions=estimate.assumptions,
         warnings=estimate.warnings,
         missing=estimate.missing,

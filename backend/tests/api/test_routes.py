@@ -145,6 +145,7 @@ def test_the_market_of_a_run_without_market_records_says_what_is_missing(
     market = MarketResponse.model_validate(client.get(f"/runs/{run_id}/market").json())
 
     assert market.label == "modeled" and market.tam_usd is None and market.sources == []
+    assert "not percentiles" in market.range_basis
     assert [reason.split(":")[0] for reason in market.missing] == ["patients", "price"]
 
 

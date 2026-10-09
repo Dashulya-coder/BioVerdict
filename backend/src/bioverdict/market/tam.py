@@ -44,6 +44,14 @@ _PER_BENEFICIARY = re.compile(r"^Avg_Spnd(?:ng)?_Per_Bene_\d{4}$")
 _BENEFICIARIES = re.compile(r"^Tot_Benes_\d{4}$")
 
 
+RANGE_BASIS = (
+    "Low, middle and high bounds, not percentiles: p10 is the lowest value the sources give "
+    "(a confidence limit, the cheapest analog), p90 the highest, p50 the reported or median "
+    "value. The bounds of the market size are the bounds of its factors multiplied, so its "
+    "low and high are more extreme than a 10th and a 90th percentile would be."
+)
+
+
 class MarketEstimate(BaseModel):
     """What could be computed. `tam` is set only when both of its factors are."""
 
@@ -57,6 +65,9 @@ class MarketEstimate(BaseModel):
     assumptions: list[str] = []
     missing: list[str] = []
     warnings: list[str] = []  # why a number should not be read as a market, when that is likely
+    # What the three numbers of every range here are. The shared `Range` type names its fields
+    # p10/p50/p90, but nothing here is a percentile: no distribution is fitted or sampled.
+    range_basis: str = RANGE_BASIS
 
 
 def _of(evidence: Iterable[Evidence], family: str) -> list[Evidence]:
