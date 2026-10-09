@@ -326,6 +326,19 @@ test('the report opens with the verdict, the modeled figures and what is missing
   await expect(summary.getByText('Not computed: the market could not be sized.')).toBeVisible()
 })
 
+test('the translation chain names every link and draws a missing one as missing', async ({
+  page,
+}) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  const chain = page.getByRole('region', { name: 'Translation chain' })
+  await expect(chain.getByRole('listitem')).toHaveCount(5)
+  await expect(chain.getByText('Human exposure')).toBeVisible()
+  await expect(chain.getByText('Missing', { exact: true }).first()).toBeVisible()
+  await expect(chain.getByText('Supported', { exact: true }).first()).toBeVisible()
+})
+
 test('modeled ranges are labelled and shown as P10 to P90', async ({ page }) => {
   const range = (p10: number, p50: number, p90: number) => ({ p10, p50, p90 })
   const modeled = {
