@@ -17,7 +17,13 @@ from pydantic import BaseModel, ConfigDict, Field
 from bioverdict.contracts import LLM
 from bioverdict.reasoning.grounding import MIN_QUOTE_CHARS, Drop, DropKind, ground_draft
 from bioverdict.reasoning.modules import CLINICAL
-from bioverdict.reasoning.prompts import CLOSED_WORLD, boundary_tag, render_evidence
+from bioverdict.reasoning.prompts import (
+    CLOSED_WORLD,
+    DEFAULT_EXCERPT_CAP,
+    RETRY_RESERVE,
+    boundary_tag,
+    render_evidence,
+)
 from bioverdict.reasoning.schemas import DraftClaim, ModuleDraft
 from bioverdict.store.models import (
     Bundle,
@@ -73,21 +79,58 @@ class ClassifyResult:
     new_claim_links: list[ClaimEvidenceLink] = field(default_factory=list)
     unmatched: list[str] = field(default_factory=list)  # new evidence that bears on nothing
     drops: list[Drop] = field(default_factory=list)
-    llm_result: LLMResult | None = None
+    unread: list[str] = field(default_factory=list)  # new evidence no batch had room for
+    llm_results: list[LLMResult] = field(default_factory=list)
+
+
+MAX_CLAIM_CHARS = 240  # an existing claim is shown by its beginning in the prompt
+MAX_BATCHES = 6
+
+
+def _existing(claims: list[Claim]) -> str:
+    return "\n".join(
+        f"[{c.id}] ({c.section.value}, {c.basis.value}) {c.text[:MAX_CLAIM_CHARS]}"
+        for c in sorted(claims, key=lambda c: c.id)
+    )
+
+
+def _assemble(claims: list[Claim], evidence: str, bundle: Bundle) -> str:
+    return (
+        CLOSED_WORLD.format(as_of=bundle.as_of.isoformat(), tag=boundary_tag(bundle))
+        + f"\n## Your task\n{_TASK}\n## Existing claims\n{_existing(claims) or '(none)'}\n"
+        + f"\n## New evidence\n{evidence}\n"
+    )
 
 
 def build_prompt(claims: list[Claim], new_evidence: list[Evidence], bundle: Bundle) -> str:
+    evidence, _ = render_evidence(new_evidence, boundary_tag(bundle))
+    return _assemble(claims, evidence, bundle)
+
+
+def build_prompts(
+    claims: list[Claim], new_evidence: list[Evidence], bundle: Bundle, budget: int | None
+) -> tuple[list[tuple[str, list[Evidence]]], list[str]]:
+    """The prompts that carry `new_evidence` and, for each, the evidence it shows.
+
+    Every prompt lists all existing claims (so each piece of evidence can be placed) and as much
+    of the new evidence as the budget leaves room for; the rest goes to the next prompt, up to
+    MAX_BATCHES. Returns the prompts and the ids that no prompt had room for.
+    """
+    if budget is None:
+        return [(build_prompt(claims, new_evidence, bundle), new_evidence)], []
     tag = boundary_tag(bundle)
-    existing = "\n".join(
-        f"[{c.id}] ({c.section.value}, {c.basis.value}) {c.text}"
-        for c in sorted(claims, key=lambda c: c.id)
-    )
-    evidence, _ = render_evidence(new_evidence, tag)
-    return (
-        CLOSED_WORLD.format(as_of=bundle.as_of.isoformat(), tag=tag)
-        + f"\n## Your task\n{_TASK}\n## Existing claims\n{existing or '(none)'}\n"
-        + f"\n## New evidence\n{evidence}\n"
-    )
+    room = max(0, budget - len(_assemble(claims, "", bundle)) - RETRY_RESERVE)
+    prompts: list[tuple[str, list[Evidence]]] = []
+    remaining = new_evidence
+    while remaining and len(prompts) < MAX_BATCHES:
+        text, omitted = render_evidence(remaining, tag, room, DEFAULT_EXCERPT_CAP)
+        left = set(omitted)
+        shown = [e for e in remaining if e.id not in left]
+        if not shown:  # not even one piece fits beside the claims
+            break
+        prompts.append((_assemble(claims, text, bundle), shown))
+        remaining = [e for e in remaining if e.id in left]
+    return prompts, [e.id for e in remaining]
 
 
 def classify_new_evidence(
@@ -104,9 +147,16 @@ def classify_new_evidence(
     unless its ids exist and its quote is verbatim in the evidence it names.
     """
     result = ClassifyResult()
-    answer = llm.call(STEP, build_prompt(claims, new_evidence, bundle), Classification)
-    result.llm_result = answer
-    parsed = Classification.model_validate(answer.parsed)
+    budget_of = getattr(llm, "input_budget", None)
+    budget = budget_of(STEP, Classification) if callable(budget_of) else None
+    prompts, result.unread = build_prompts(claims, new_evidence, bundle, budget)
+    answers = [llm.call(STEP, text, Classification) for text, _ in prompts]
+    result.llm_results = answers
+    parsed = Classification(
+        links=[l for a in answers for l in Classification.model_validate(a.parsed).links],
+        new_claims=[c for a in answers for c in Classification.model_validate(a.parsed).new_claims],
+        unmatched=[u for a in answers for u in Classification.model_validate(a.parsed).unmatched],
+    )
 
     claim_ids = {c.id for c in claims}
     new_by_id = {e.id: e for e in new_evidence}
