@@ -48,7 +48,28 @@ Both Dockerfiles use the **repository root** as their build context. They use Py
 lockfiles. The frontend builder uses the same pnpm 12.9.1 as CI; its runtime serves static
 assets through Nginx. Both runtime images run as non-root users and have HTTP health checks.
 
-From the repository root:
+The short way, from the repository root (`compose.yaml` builds both images, creates the data
+volume and sets the page's origin for the API):
+
+```bash
+docker compose up --build              # fixture runs; open http://localhost:8080
+USE_FIXTURES=0 docker compose up       # live runs, with the keys of .env
+python3 scripts/check_containers.py    # a fixture run, the page and CORS, end to end
+docker compose down                    # stop; add -v to delete runs and caches too
+docker compose exec backend bioverdict doctor
+```
+
+`.env` is read when the containers start, if it exists; a value with spaces may be quoted there.
+`BACKEND_PORT` and `FRONTEND_PORT` move the ports (the frontend is rebuilt for a new API port).
+On another host set `VITE_API_URL` (the API as the browser reaches it) and `PAGE_ORIGIN` (the
+page as the browser reaches it) and build again. `CORS_ORIGINS` of `.env` is not used here: it
+names the development server. To pre-warm the cache the demo will use, run `warm` inside the
+container, so that it fills the same volume (the asset list is not in the image, copy it in):
+`docker compose cp eval/assets_example.tsv backend:/tmp/assets.tsv`, then
+`docker compose exec backend bioverdict warm --list /tmp/assets.tsv`.
+CI builds both images and runs `check_containers.py` on every pull request.
+
+The same by hand, from the repository root:
 
 ```bash
 docker build -f backend/Dockerfile -t bioverdict-backend .
