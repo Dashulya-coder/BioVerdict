@@ -79,6 +79,23 @@ model configuration stops it. Unexpected errors are recorded by class name only;
 the server log. A section that was cut short (more than 50 records or 24,000 characters per
 source, a rejected quote, a source error) is `incomplete`, never `found`.
 
+### Add evidence and compare (A7)
+
+```bash
+# A finished live run grows by one document; the answer carries the new run id
+curl -s -X POST localhost:8000/runs/<run_id>/evidence -H 'content-type: application/json' -d '{
+  "evidence": [{"text": "<verbatim excerpt>", "url": "https://...", "source": "<name>",
+                "source_kind": "peer_reviewed", "level": "human_interventional",
+                "published_at": "2026-09-01"}]}'
+curl -s localhost:8000/runs/<new_run_id>/diff                    # against the run it grew from
+curl -s "localhost:8000/runs/<run_b>/diff?against=<run_a>"       # any two finished runs
+```
+
+The added document is not retrieved or checked by the system: its text and labels are the
+submitter's, and it is stored with source family `analyst_added`. Reasoning runs again in full,
+so it costs about as much as the reasoning half of a run. Offline, compare two fixture runs at
+different cutoffs (for example `--as-of 2026-06-30` and today) to see evidence move a report.
+
 Checked so far: offline tests with stand-in sources and model, and runs against the three real
 sources with a stand-in model. A run with a real model has not been measured yet (cost, time,
 extraction and reasoning quality).

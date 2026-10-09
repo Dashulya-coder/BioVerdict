@@ -190,3 +190,88 @@ class TraceResponse(_View):
     events: list[EventView]
     llm_calls: list[LLMCallView]
     totals: TraceTotals
+
+
+# --- adding evidence and comparing runs (A7) ---------------------------------------------------
+
+
+class AddedEvidence(_View):
+    """One document an analyst adds to a finished run. Its labels are the submitter's own."""
+
+    text: str = Field(min_length=20, description="Verbatim excerpt of the document")
+    url: str = Field(pattern=r"^https?://\S+$", description="Where the excerpt was copied from")
+    source: str = Field(min_length=1, description="Name of the source, e.g. the journal")
+    source_kind: SourceKind
+    level: EvidenceLevel
+    published_at: date | None = None
+
+
+class AddEvidenceRequest(_View):
+    evidence: list[AddedEvidence] = Field(min_length=1, max_length=10)
+    as_of: date | None = Field(
+        default=None, description="Cutoff of the new run; not earlier than the original's"
+    )
+
+
+class RunSide(_View):
+    """One of the two runs being compared."""
+
+    run_id: str
+    as_of: date
+    bundle_version: int
+    content_hash: str
+    evidence_count: int
+    verdict: Verdict
+    confidence: float
+    translation_chain_probability: float | None
+
+
+class GateChange(_View):
+    gate_id: GateId
+    kind: Literal["hard", "soft"]
+    fired_before: bool
+    fired_after: bool
+
+
+class ChainLinkChange(_View):
+    link: ChainLink
+    status_before: ChainStatus
+    status_after: ChainStatus
+    confidence_before: float | None
+    confidence_after: float | None
+
+
+class ClaimSnapshot(_View):
+    id: str
+    basis: Basis
+    confidence: float
+    gate_signals: list[GateId]
+    critical: bool
+
+
+class ClaimChange(_View):
+    """A claim present in only one run, or stated in both with a different footing."""
+
+    change: Literal["added", "removed", "changed"]
+    section: Section
+    text: str
+    before: ClaimSnapshot | None
+    after: ClaimSnapshot | None
+    new_evidence_ids: list[str] = Field(
+        description="Evidence absent from the base run that this claim quotes in the other run"
+    )
+
+
+class DiffResponse(_View):
+    """What differs between two finished runs. Computed by code from the stored records."""
+
+    base: RunSide
+    head: RunSide
+    verdict_changed: bool
+    gates: list[GateChange] = Field(description="Only the gates whose state differs")
+    chain: list[ChainLinkChange] = Field(description="Only the links whose status differs")
+    evidence_added: list[EvidenceView]
+    evidence_removed: list[EvidenceView]
+    claims: list[ClaimChange]
+    unchanged_claims: int
+    matching: str = Field(description="How claims and evidence of the two runs were paired")

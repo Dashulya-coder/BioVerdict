@@ -1,11 +1,16 @@
 import { Icon } from '../ui/Icon'
+import { apiMode } from './copy'
 import type { Screen } from './models'
 
-const links = [
+const snapshotLinks = [
   { screen: 'new', label: 'New analysis', icon: 'plus' },
   { screen: 'evidence', label: 'Evidence', icon: 'document' },
   { screen: 'sources', label: 'Sources', icon: 'link' },
 ] as const
+// Comparing runs and adding evidence need the API.
+const links = apiMode
+  ? ([...snapshotLinks, { screen: 'compare', label: 'Compare', icon: 'check' }] as const)
+  : snapshotLinks
 
 export function Sidebar({ screen }: { screen: Screen }) {
   return (

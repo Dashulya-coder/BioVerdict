@@ -77,15 +77,15 @@ def run_summary(record: RunRecord) -> RunSummary:
     )
 
 
-def _require_run(conn: sqlite3.Connection, run_id: str) -> RunRecord:
+def require_run(conn: sqlite3.Connection, run_id: str) -> RunRecord:
     record = get_run(conn, run_id)
     if record is None:
         raise RunNotFoundError(run_id)
     return record
 
 
-def _require_finished(conn: sqlite3.Connection, run_id: str) -> RunRecord:
-    record = _require_run(conn, run_id)
+def require_finished(conn: sqlite3.Connection, run_id: str) -> RunRecord:
+    record = require_run(conn, run_id)
     if record.status != DONE or record.result is None or record.resolver is None:
         raise RunNotReadyError(f"run {run_id} is {record.status}, there is no report yet")
     return record
@@ -132,7 +132,7 @@ def _claim_view(
     )
 
 
-def _evidence_view(evidence: Evidence, links: list[ClaimEvidenceLink]) -> EvidenceView:
+def evidence_view(evidence: Evidence, links: list[ClaimEvidenceLink]) -> EvidenceView:
     cited_by = sorted({link.claim_id for link in links if link.evidence_id == evidence.id})
     return EvidenceView(
         id=evidence.id,
@@ -158,7 +158,7 @@ def chain_status(confidence: float | None) -> ChainStatus:
     return "supported" if confidence >= VerdictConfig().key_claim_min else "weak"
 
 
-def _translation_chain(claims: list[Claim]) -> list[ChainLinkView]:
+def translation_chain(claims: list[Claim]) -> list[ChainLinkView]:
     confidences = chain_confidences(claims)
     return [
         ChainLinkView(
@@ -186,7 +186,7 @@ def _sections(claims: list[ClaimView], bundle: Bundle) -> list[SectionView]:
 
 
 def build_report(conn: sqlite3.Connection, run_id: str) -> ReportResponse:
-    record = _require_finished(conn, run_id)
+    record = require_finished(conn, run_id)
     assert record.result is not None and record.resolver is not None
     bundle = load_bundle(conn, run_id)
     claims, links = load_claims(conn, run_id)
@@ -194,7 +194,7 @@ def build_report(conn: sqlite3.Connection, run_id: str) -> ReportResponse:
 
     claim_views = [_claim_view(c, links, evidence) for c in claims]
     cited = {link.evidence_id for link in links}
-    sources = [_evidence_view(e, links) for e in bundle.evidence if e.id in cited]
+    sources = [evidence_view(e, links) for e in bundle.evidence if e.id in cited]
     result = record.result
 
     return ReportResponse(
@@ -211,7 +211,7 @@ def build_report(conn: sqlite3.Connection, run_id: str) -> ReportResponse:
         ),
         assumptions=record.resolver.assumptions,
         sections=_sections(claim_views, bundle),
-        translation_chain=_translation_chain(claims),
+        translation_chain=translation_chain(claims),
         translation_chain_probability=result.translation_chain_probability,
         gates=result.gates,
         diligence_questions=result.diligence_questions,
@@ -228,7 +228,7 @@ def build_report(conn: sqlite3.Connection, run_id: str) -> ReportResponse:
 
 
 def get_claim(conn: sqlite3.Connection, run_id: str, claim_id: str) -> ClaimView:
-    _require_run(conn, run_id)
+    require_run(conn, run_id)
     claims, links = load_claims(conn, run_id)
     claim = next((c for c in claims if c.id == claim_id), None)
     if claim is None:
@@ -237,18 +237,18 @@ def get_claim(conn: sqlite3.Connection, run_id: str, claim_id: str) -> ClaimView
 
 
 def get_evidence(conn: sqlite3.Connection, run_id: str, evidence_id: str) -> EvidenceView:
-    _require_run(conn, run_id)
+    require_run(conn, run_id)
     bundle = load_bundle(conn, run_id)
     item = bundle.evidence_by_id().get(evidence_id)
     if item is None:
         raise ItemNotFoundError(f"evidence {evidence_id} is not in run {run_id}")
     _, links = load_claims(conn, run_id)
-    return _evidence_view(item, links)
+    return evidence_view(item, links)
 
 
 def get_resolver(conn: sqlite3.Connection, run_id: str) -> ResolverOutput:
     """What the run resolved its input to; not ready until the resolve step has finished."""
-    record = _require_run(conn, run_id)
+    record = require_run(conn, run_id)
     if record.resolver is None:
         raise RunNotReadyError(f"run {run_id} has not resolved its input yet")
     return record.resolver
@@ -256,17 +256,17 @@ def get_resolver(conn: sqlite3.Connection, run_id: str) -> ResolverOutput:
 
 def list_evidence(conn: sqlite3.Connection, run_id: str) -> list[EvidenceView]:
     """The whole frozen bundle, cited or not; not ready until the bundle is frozen."""
-    _require_run(conn, run_id)
+    require_run(conn, run_id)
     try:
         bundle = load_bundle(conn, run_id)
     except LookupError as exc:
         raise RunNotReadyError(f"run {run_id} has no frozen bundle yet") from exc
     _, links = load_claims(conn, run_id)
-    return [_evidence_view(item, links) for item in bundle.evidence]
+    return [evidence_view(item, links) for item in bundle.evidence]
 
 
 def build_trace(conn: sqlite3.Connection, run_id: str) -> TraceResponse:
-    _require_run(conn, run_id)
+    require_run(conn, run_id)
     events = [
         EventView(seq=e.seq, step=e.step, status=e.status, detail=e.detail, created_at=e.created_at)
         for e in load_events(conn, run_id)

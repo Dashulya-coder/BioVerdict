@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { DEMO_DATE, sourceKinds } from './constants'
+import { DEMO_DATE, evidenceLevels, sourceKinds } from './constants'
 
 export const inputSchema = z.object({
   asset: z.string().trim().min(1, 'Enter a drug name.'),
@@ -46,3 +46,69 @@ export const apiEvidenceListSchema = z.array(
     .transform(({ badge, ...evidence }) => ({ ...evidence, type: badge })),
 )
 export const apiErrorSchema = z.object({ detail: z.string() })
+
+// Comparing runs and adding evidence (backend `DiffResponse`, `AddEvidenceRequest`).
+export const runSummarySchema = z.object({
+  run_id: z.string(),
+  status: z.string(),
+  verdict: z.string().nullable(),
+  as_of: z.iso.date(),
+  input: z.record(z.string(), z.unknown()),
+})
+export const runListSchema = z.array(runSummarySchema)
+export const addedEvidenceSchema = z.object({
+  text: z.string().trim().min(20, 'Paste the verbatim excerpt (at least 20 characters).'),
+  url: z.httpUrl('Give the address the excerpt was copied from.'),
+  source: z.string().trim().min(1, 'Name the source.'),
+  source_kind: z.enum(sourceKinds),
+  level: z.enum(evidenceLevels),
+  published_at: z.iso.date().nullable(),
+})
+const runSideSchema = z.object({
+  run_id: z.string(),
+  as_of: z.iso.date(),
+  bundle_version: z.number(),
+  evidence_count: z.number(),
+  verdict: z.string(),
+  confidence: z.number(),
+  translation_chain_probability: z.number().nullable(),
+})
+const claimSnapshotSchema = z.object({
+  id: z.string(),
+  basis: z.string(),
+  confidence: z.number(),
+  gate_signals: z.array(z.string()),
+})
+const diffEvidenceSchema = z.object({
+  id: z.string(),
+  source: z.string(),
+  url: z.string(),
+  excerpt: z.string(),
+  published_at: z.iso.date().nullable(),
+  claim_ids: z.array(z.string()),
+})
+export const diffSchema = z.object({
+  base: runSideSchema,
+  head: runSideSchema,
+  verdict_changed: z.boolean(),
+  gates: z.array(
+    z.object({ gate_id: z.string(), fired_before: z.boolean(), fired_after: z.boolean() }),
+  ),
+  chain: z.array(
+    z.object({ link: z.string(), status_before: z.string(), status_after: z.string() }),
+  ),
+  evidence_added: z.array(diffEvidenceSchema),
+  evidence_removed: z.array(diffEvidenceSchema),
+  claims: z.array(
+    z.object({
+      change: z.enum(['added', 'removed', 'changed']),
+      section: z.string(),
+      text: z.string(),
+      before: claimSnapshotSchema.nullable(),
+      after: claimSnapshotSchema.nullable(),
+      new_evidence_ids: z.array(z.string()),
+    }),
+  ),
+  unchanged_claims: z.number(),
+  matching: z.string(),
+})

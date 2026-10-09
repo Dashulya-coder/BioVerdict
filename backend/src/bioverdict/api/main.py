@@ -25,8 +25,11 @@ from starlette.concurrency import run_in_threadpool
 
 from bioverdict import settings
 from bioverdict.api import report
+from bioverdict.api.diff import build_diff
 from bioverdict.api.schemas import (
+    AddEvidenceRequest,
     ClaimView,
+    DiffResponse,
     EvidenceView,
     ReportResponse,
     RunCreated,
@@ -37,7 +40,15 @@ from bioverdict.api.schemas import (
 from bioverdict.llm.errors import ConfigError
 from bioverdict.pipeline.fixture_run import fixture_names, run_fixture
 from bioverdict.pipeline.live_llm import live_llm, require_configured
-from bioverdict.pipeline.live_run import LiveRunner, describe_request, run_live
+from bioverdict.pipeline.live_run import LiveRunner, LLMFactory, describe_request, run_live
+from bioverdict.pipeline.recompute import (
+    PARENT,
+    RecomputeError,
+    analyst_evidence,
+    finish_recompute,
+    prepare_recompute,
+)
+from bioverdict.store.load_bundle import load_bundle
 from bioverdict.store.models import ResolverOutput
 from bioverdict.store.runs_repo import DONE, FAILED, create_run, get_run, list_runs, load_events
 
@@ -54,9 +65,13 @@ def _not_found(exc: Exception) -> HTTPException:
 
 
 def create_app(
-    db_path: Path | None = None, fixtures: Path | None = None, live: LiveRunner | None = None
+    db_path: Path | None = None,
+    fixtures: Path | None = None,
+    live: LiveRunner | None = None,
+    llm: LLMFactory | None = None,
 ) -> FastAPI:
-    """`live` replaces the real live pipeline (sources and model); tests pass a stand-in."""
+    """`live` replaces the real live pipeline (sources and model) and `llm` the model that
+    reasons over added evidence; tests pass stand-ins."""
     app = FastAPI(title="BioVerdict API", version="0.1.0")
     app.state.db_path = db_path
     app.state.fixtures = fixtures
@@ -177,6 +192,58 @@ def create_app(
             except report.RunNotFoundError as exc:
                 raise _not_found(exc) from exc
 
+    @app.post("/runs/{run_id}/evidence", status_code=202)
+    def add_evidence(
+        run_id: str, body: AddEvidenceRequest, tasks: BackgroundTasks, request: Request
+    ) -> RunCreated:
+        """Recompute a finished run on added evidence, as a new run with the next bundle version.
+
+        Compare the two with `GET /runs/{new id}/diff`.
+        """
+        if llm is None:
+            if settings.use_fixtures():
+                raise HTTPException(
+                    422,
+                    "fixture runs answer from prepared model drafts and cannot reason over new "
+                    "evidence; use a live API, or compare two runs with /runs/{id}/diff?against=",
+                )
+            try:
+                require_configured()
+            except ConfigError as exc:
+                raise HTTPException(503, str(exc)) from exc
+        added = [
+            analyst_evidence(
+                number, e.text, e.url, e.source, e.source_kind, e.level, e.published_at
+            )
+            for number, e in enumerate(body.evidence, start=1)
+        ]
+        new_id, db = new_run_id(), request.app.state.db_path
+        with database(request) as conn:
+            try:
+                prepare_recompute(conn, run_id, new_id, added, body.as_of)
+            except RecomputeError as exc:
+                raise HTTPException(422, str(exc)) from exc
+            except LookupError as exc:
+                raise _not_found(exc) from exc
+        tasks.add_task(_execute_recompute, db, new_id, llm)
+        return RunCreated(run_id=new_id, status="running")
+
+    @app.get("/runs/{run_id}/diff")
+    def run_diff(run_id: str, request: Request, against: str | None = None) -> DiffResponse:
+        """What changed in this run compared with `against` (default: the run it grew from)."""
+        with database(request) as conn:
+            try:
+                base = against or report.run_summary(report.require_run(conn, run_id)).input.get(
+                    PARENT
+                )
+                if not base:
+                    raise HTTPException(422, "say which run to compare with: ?against=<run id>")
+                return build_diff(conn, base, run_id)
+            except report.RunNotFoundError as exc:
+                raise _not_found(exc) from exc
+            except report.RunNotReadyError as exc:
+                raise HTTPException(409, str(exc)) from exc
+
     @app.get("/runs/{run_id}/events")
     async def events(run_id: str, request: Request) -> StreamingResponse:
         """Server-sent events: every step of the run, then `end`. Reconnect with Last-Event-ID."""
@@ -205,6 +272,12 @@ def _execute_live(db_path: Path | None, run_id: str, text: str, live: LiveRunner
             live(conn, run_id, text)
         else:
             run_live(conn, run_id, text, lambda run: live_llm(run, db_path))
+
+
+def _execute_recompute(db_path: Path | None, run_id: str, llm: LLMFactory | None) -> None:
+    with closing(settings.open_database(db_path)) as conn:
+        model = llm(run_id) if llm is not None else live_llm(run_id, db_path)
+        finish_recompute(conn, run_id, load_bundle(conn, run_id), model)
 
 
 def _run_status(db_path: Path | None, run_id: str) -> str | None:
