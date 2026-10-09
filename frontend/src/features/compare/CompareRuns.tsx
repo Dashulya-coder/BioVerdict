@@ -34,7 +34,14 @@ function describe(run: RunSummary): string {
   return `${formatDate(run.as_of)} · ${subject || 'run'} · ${run.verdict ?? 'no verdict'} · ${run.run_id}`
 }
 
-export function CompareRuns({ analysis }: { analysis: PreparedAnalysis }) {
+export function CompareRuns({
+  analysis,
+  status,
+}: {
+  analysis: PreparedAnalysis
+  /** The status of the analysed run: only a finished run has a report to compare. */
+  status: RunSummary | null
+}) {
   const runId = analysis.runId
   const [runs, setRuns] = useState<readonly RunSummary[]>([])
   const [against, setAgainst] = useState('')
@@ -108,7 +115,8 @@ export function CompareRuns({ analysis }: { analysis: PreparedAnalysis }) {
       return compareRuns(recomputed, null, signal)
     })
   }
-  const working = result.kind === 'working'
+  const finished = status?.status === 'done'
+  const working = result.kind === 'working' || !finished
 
   return (
     <>
@@ -117,6 +125,13 @@ export function CompareRuns({ analysis }: { analysis: PreparedAnalysis }) {
         title="Compare runs"
         description={`See what moved the report of ${analysis.input.asset}: against another run, or after adding a document. The run must have finished.`}
       />
+      {finished ? null : (
+        <p role="status" className="mb-8 max-w-2xl text-sm text-assumption">
+          {status?.status === 'failed'
+            ? 'This run failed, so it has no report to compare. Start a new analysis.'
+            : 'This run is still reasoning over its evidence. Comparing and adding a document open when it has finished.'}
+        </p>
+      )}
       <div className="grid gap-10 xl:grid-cols-2">
         <form
           aria-label="Compare with another run"
