@@ -5,6 +5,7 @@ import { AnalysisForm } from '../features/input/AnalysisForm'
 import { ResolvedInput } from '../features/input/ResolvedInput'
 import { EvidenceExplorer } from '../features/evidence/EvidenceExplorer'
 import { CompareRuns } from '../features/compare/CompareRuns'
+import { ReportScreen } from '../features/report/ReportScreen'
 import { WorkspaceShell } from './WorkspaceShell'
 import { copy, latestCutoff } from './copy'
 import { useAnalysis } from './useAnalysis'
@@ -54,6 +55,8 @@ export function Workspace() {
               navigate('evidence')
             }}
           />
+        ) : screen === 'report' ? (
+          <ReportScreen analysis={analysis} />
         ) : screen === 'compare' ? (
           <CompareRuns analysis={analysis} />
         ) : (

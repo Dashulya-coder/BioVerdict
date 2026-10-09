@@ -12,6 +12,7 @@ const titles: Record<Screen, string> = {
   evidence: 'Evidence explorer',
   sources: 'Sources',
   compare: 'Compare runs',
+  report: 'Report',
 }
 
 export function WorkspaceShell({
