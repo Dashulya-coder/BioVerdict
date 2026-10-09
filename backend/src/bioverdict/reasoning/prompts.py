@@ -58,28 +58,41 @@ class BuiltPrompt:
     omitted: list[str] = field(default_factory=list)  # evidence ids left out for length
 
 
+# What a prompt keeps in reserve for the retry that adds the validation error to it.
+RETRY_RESERVE = 700
+# A long excerpt is shown by its beginning when characters are scarce; a quote is still checked
+# against the whole excerpt, so nothing the model cites can be invented.
+DEFAULT_EXCERPT_CAP = 600
+
+
 def boundary_tag(bundle: Bundle) -> str:
     """Delimiter name derived from the bundle hash: a document cannot know it in advance."""
     digest = bundle.content_hash.removeprefix("sha256:")
-    return f"evidence-{digest[:8]}"
+    return f"ev-{digest[:8]}"
 
 
-def _block(e: Evidence, tag: str) -> str:
+def _block(e: Evidence, tag: str, cap: int | None = None) -> str:
     published = e.published_at.isoformat() if e.published_at else "undated"
+    text = e.excerpt
+    if cap is not None and len(text) > cap:
+        text = f"{text[:cap]}... [{len(text) - cap} more characters not shown]"
     return (
-        f'<{tag} id="{e.id}" source="{e.source}" kind="{e.source_kind.value}" '
-        f'level="{e.level.value}" published="{published}" group="{e.independence_group}">\n'
-        f"{e.excerpt}\n</{tag}>"
+        f'<{tag} id="{e.id}" src="{e.source}" level="{e.level.value}" date="{published}" '
+        f'group="{e.independence_group}">\n{text}\n</{tag}>'
     )
 
 
 def render_evidence(
-    evidence: list[Evidence], tag: str, max_chars: int = MAX_EVIDENCE_CHARS
+    evidence: list[Evidence],
+    tag: str,
+    max_chars: int = MAX_EVIDENCE_CHARS,
+    excerpt_cap: int | None = None,
 ) -> tuple[str, list[str]]:
     """Evidence blocks in id order; if too long, the strongest items that fit, plus the omitted ids."""
-    blocks = {e.id: _block(e, tag) for e in evidence}
+    blocks = {e.id: _block(e, tag, excerpt_cap) for e in evidence}
+    separator = 2  # the blank line between two blocks
     omitted: list[str] = []
-    if sum(len(b) for b in blocks.values()) > max_chars:
+    if sum(len(b) + separator for b in blocks.values()) > max_chars:
         priority = sorted(
             evidence,
             key=lambda e: (
@@ -91,8 +104,8 @@ def render_evidence(
         )
         used, keep = 0, set()
         for e in priority:
-            if used + len(blocks[e.id]) <= max_chars:
-                used += len(blocks[e.id])
+            if used + len(blocks[e.id]) + separator <= max_chars:
+                used += len(blocks[e.id]) + separator
                 keep.add(e.id)
         omitted = sorted(e.id for e in evidence if e.id not in keep)
         blocks = {i: b for i, b in blocks.items() if i in keep}
@@ -101,21 +114,45 @@ def render_evidence(
 
 
 def build_prompt(
-    instruction: str, bundle: Bundle, max_chars: int = MAX_EVIDENCE_CHARS
+    instruction: str,
+    bundle: Bundle,
+    max_chars: int = MAX_EVIDENCE_CHARS,
+    *,
+    budget: int | None = None,
+    families: frozenset[str] | None = None,
+    excerpt_cap: int = DEFAULT_EXCERPT_CAP,
 ) -> BuiltPrompt:
+    """The prompt of one reasoning module.
+
+    `families` restricts the evidence to the source families the module needs. With a `budget`
+    (characters the endpoint leaves for the whole prompt, see `LLMClient.input_budget`) the
+    evidence is chosen to fit it, strongest first, long excerpts shown by their beginning, and
+    the retry reserve is kept free; without one, `max_chars` of evidence is allowed as before.
+    """
     tag = boundary_tag(bundle)
+    pool = [e for e in bundle.evidence if families is None or e.source_family in families]
     statuses = ", ".join(f"{s.value}={v.value}" for s, v in sorted(bundle.section_statuses.items()))
-    evidence, omitted = render_evidence(bundle.evidence, tag, max_chars)
-    note = (
-        f"\nNote: {len(omitted)} further evidence items were left out because the bundle is "
-        f"long ({', '.join(omitted)}). You cannot cite them; treat what they might show as unknown.\n"
-        if omitted
-        else ""
-    )
-    text = (
-        CLOSED_WORLD.format(as_of=bundle.as_of.isoformat(), tag=tag)
-        + f"\nSections searched so far: {statuses or 'none'}.\n"
-        + note
-        + f"\n## Your task\n{instruction}\n\n## Evidence\n{evidence}\n"
-    )
-    return BuiltPrompt(text, omitted)
+
+    def assemble(evidence: str, note: str = "") -> str:
+        return (
+            CLOSED_WORLD.format(as_of=bundle.as_of.isoformat(), tag=tag)
+            + f"\nSections searched so far: {statuses or 'none'}.\n"
+            + note
+            + f"\n## Your task\n{instruction}\n\n## Evidence\n{evidence}\n"
+        )
+
+    if budget is None:
+        evidence, omitted = render_evidence(pool, tag, max_chars)
+    else:
+        room = max(0, budget - len(assemble("", _NOTE.format(count=999))) - RETRY_RESERVE)
+        evidence, omitted = render_evidence(pool, tag, room, excerpt_cap)
+    note = _NOTE.format(count=len(omitted)) if omitted else ""
+    return BuiltPrompt(assemble(evidence, note), omitted)
+
+
+# The ids are in `BuiltPrompt.omitted` for the trace; the model cannot cite them, so it is told
+# how many there are and not which (a long list would cost the room it is about).
+_NOTE = (
+    "\nNote: {count} further evidence items were left out because the bundle is long. You cannot "
+    "cite them; treat what they might show as unknown.\n"
+)
