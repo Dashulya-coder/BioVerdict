@@ -12,9 +12,10 @@ from bioverdict.contracts import LLM
 from bioverdict.reasoning import ModuleReasoner
 from bioverdict.reasoning.grounding import Drop, fill_missing_chain_links
 from bioverdict.reasoning.modules import ALL_MODULES
+from bioverdict.scoring.financials import financial_model, with_financials
 from bioverdict.scoring.verdict import score_verdict
 from bioverdict.store.models import Basis, Bundle, VerdictResult, VerificationCheck
-from bioverdict.store.runs_repo import DONE, add_event, finish_run, save_claims
+from bioverdict.store.runs_repo import DONE, add_event, finish_run, get_run, save_claims
 from bioverdict.store.verification_repo import save_checks
 
 QUOTE_CHECK = "quote_in_source"  # a citation that code could not ground in the bundle
@@ -48,6 +49,13 @@ def drop_checks(drops: list[Drop], rejected: set[str]) -> list[VerificationCheck
     return checks
 
 
+def indication_of(conn: sqlite3.Connection, run_id: str) -> str:
+    """The indication the run was resolved to ("" before the resolver has run)."""
+    record = get_run(conn, run_id)
+    resolver = record.resolver if record is not None else None
+    return resolver.indication.name if resolver is not None else ""
+
+
 def reason_and_score(
     conn: sqlite3.Connection, run_id: str, bundle: Bundle, llm: LLM
 ) -> VerdictResult:
@@ -77,7 +85,8 @@ def reason_and_score(
     )
 
     add_event(conn, run_id, "score", "started")
-    result = score_verdict(claims)
+    fin = financial_model(bundle, indication_of(conn, run_id))
+    result = with_financials(score_verdict(claims, fin.rnpv.rnpv if fin.rnpv else None), fin)
     add_event(conn, run_id, "score", "done", f"{result.verdict.value} ({result.confidence:.2f})")
 
     finish_run(conn, run_id, DONE, result)
