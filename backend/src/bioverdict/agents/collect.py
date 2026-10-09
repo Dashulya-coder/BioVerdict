@@ -27,6 +27,7 @@ from bioverdict.llm.errors import (
     LLMError,
     RunTimeoutError,
 )
+from bioverdict.reasoning.prompts import RETRY_RESERVE
 from bioverdict.store.bundle import select_bundle_evidence
 from bioverdict.store.models import (
     Evidence,
@@ -88,6 +89,24 @@ def _split(records: list[Evidence]) -> tuple[list[Evidence], list[Evidence]]:
     return whole, [record for record in records if record.id not in kept]
 
 
+def _fit(
+    records: list[Evidence], query: ResolverOutput, plan: CollectPlan, limit: int | None
+) -> tuple[str, dict[str, Evidence]]:
+    """One prompt of up to `plan.max_chars` of text that also fits what the endpoint accepts.
+
+    The limit counts the whole request, so the text allowance is lowered by however much the
+    prompt (instructions, JSON framing, escaping) is over the room left for a retry.
+    """
+    room = plan.max_chars
+    for _ in range(4):
+        prompt, supplied, _ = prepare_prompt(records, query, plan.section, room, whole_records=True)
+        over = 0 if limit is None else len(prompt) + RETRY_RESERVE - limit
+        if over <= 0 or room <= 128:
+            return prompt, supplied
+        room = max(128, room - over - 64)
+    return prompt, supplied
+
+
 async def _extract(
     llm: LLM,
     records: list[Evidence],
@@ -102,12 +121,12 @@ async def _extract(
     """
     if len({record.id for record in records}) != len(records):
         raise ValueError("connector returned ambiguous source ids")
+    budget_of = getattr(llm, "input_budget", None)
+    limit = budget_of("extraction", ExtractionDraft) if callable(budget_of) else None
     batches: list[tuple[str, dict[str, Evidence]]] = []
     remaining, cut = records, False
     while remaining and len(batches) < plan.max_batches:
-        prompt, supplied, _ = prepare_prompt(
-            remaining, query, plan.section, plan.max_chars, whole_records=True
-        )
+        prompt, supplied = _fit(remaining, query, plan, limit)
         if not supplied:
             break
         full = {record.id: len(record.excerpt) for record in remaining}
