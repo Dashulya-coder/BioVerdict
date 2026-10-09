@@ -70,42 +70,52 @@ class AnthropicProvider:
         return self._client
 
     def complete(self, request: ProviderRequest) -> ProviderResponse:
+        """One structured answer. The reply is read here, not by the SDK's `parse`, so that the
+        tokens of an answer that turns out unusable (cut off, refused, not JSON) are still known
+        and charged: a failed call is billed like a good one."""
+        output_config: dict[str, Any] = {
+            "format": {"type": "json_schema", "schema": anthropic.transform_schema(request.schema)}
+        }
+        if request.effort and supports_effort(request.model):
+            output_config["effort"] = request.effort
         kwargs: dict[str, Any] = {
             "model": request.model,
             "max_tokens": request.max_tokens,
             "messages": [{"role": "user", "content": request.prompt}],
-            "output_format": request.schema,
+            "output_config": output_config,
             "timeout": request.timeout_s,
         }
         if request.system:
             kwargs["system"] = request.system
-        if request.effort and supports_effort(request.model):
-            kwargs["output_config"] = {"effort": request.effort}
         if request.temperature is not None and accepts_sampling(request.model):
             kwargs["temperature"] = request.temperature
 
         try:
-            response = self._sdk().messages.parse(**kwargs)
-        except ValidationError as exc:
-            raise InvalidOutputError(str(exc)) from exc
+            response = self._sdk().messages.create(**kwargs)
         except anthropic.APIError as exc:
-            classified = classify_error(exc)
-            raise classified from exc
+            raise classify_error(exc) from exc
 
+        tokens = (response.usage.input_tokens, response.usage.output_tokens)
         if response.stop_reason == "refusal":
             details = getattr(response, "stop_details", None)
             category = getattr(details, "category", None) or "unspecified"
-            raise RefusalError(f"{request.model} declined the request (category: {category})")
+            raise RefusalError(
+                f"{request.model} declined the request (category: {category})"
+            ).with_usage(*tokens)
         if response.stop_reason == "max_tokens":
             raise FatalProviderError(
                 f"answer cut off at max_tokens={request.max_tokens}; raise it for this step"
-            )
-        parsed = response.parsed_output
-        if parsed is None:
-            raise InvalidOutputError("the response held no parsable JSON")
+            ).with_usage(*tokens)
+        text = next((b.text for b in response.content if getattr(b, "type", "") == "text"), None)
+        if not text:
+            raise InvalidOutputError("the response held no text").with_usage(*tokens)
+        try:
+            parsed = request.schema.model_validate_json(text)
+        except ValidationError as exc:
+            raise InvalidOutputError(str(exc)).with_usage(*tokens) from exc
         return ProviderResponse(
             text=parsed.model_dump_json(),
-            input_tokens=response.usage.input_tokens,
-            output_tokens=response.usage.output_tokens,
+            input_tokens=tokens[0],
+            output_tokens=tokens[1],
             model=getattr(response, "model", request.model),
         )

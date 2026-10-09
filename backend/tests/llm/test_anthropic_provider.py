@@ -30,28 +30,26 @@ def status_error(cls, status: int):
 
 
 class StubSDK:
-    """Records the kwargs of messages.parse and returns / raises what it was told."""
+    """Records the kwargs of messages.create and returns / raises what it was told."""
 
     def __init__(self, result=None, error=None):
         self.kwargs = None
         self._result, self._error = result, error
-        self.messages = SimpleNamespace(parse=self._parse)
+        self.messages = SimpleNamespace(create=self._create)
 
-    def _parse(self, **kwargs):
+    def _create(self, **kwargs):
         self.kwargs = kwargs
         if self._error:
             raise self._error
         return self._result
 
 
-OK = Answer(verdict="ok")
-
-
-def reply(stop="end_turn", parsed=OK):
+def reply(stop="end_turn", text='{"verdict": "ok"}', tokens=(11, 7)):
+    content = [SimpleNamespace(type="text", text=text)] if text is not None else []
     return SimpleNamespace(
         stop_reason=stop,
-        parsed_output=parsed,
-        usage=SimpleNamespace(input_tokens=11, output_tokens=7),
+        content=content,
+        usage=SimpleNamespace(input_tokens=tokens[0], output_tokens=tokens[1]),
         model="claude-x",
     )
 
@@ -65,16 +63,26 @@ def request(model: str, **kw) -> ProviderRequest:
 def test_sonnet_gets_effort_but_no_temperature() -> None:
     sdk = StubSDK(reply())
     AnthropicProvider(sdk).complete(request("claude-sonnet-5-5"))
-    assert sdk.kwargs["output_config"] == {"effort": "high"}
+    assert sdk.kwargs["output_config"]["effort"] == "high"
     assert "temperature" not in sdk.kwargs
-    assert sdk.kwargs["output_format"] is Answer
+    assert "output_format" not in sdk.kwargs  # the schema travels inside output_config
+
+
+def test_the_schema_is_sent_as_a_structured_output_format() -> None:
+    sdk = StubSDK(reply())
+    AnthropicProvider(sdk).complete(request("claude-sonnet-5-5"))
+    fmt = sdk.kwargs["output_config"]["format"]
+    assert fmt["type"] == "json_schema"
+    assert fmt["schema"]["properties"]["verdict"]["type"] == "string"
+    assert fmt["schema"]["additionalProperties"] is False
 
 
 def test_haiku_gets_temperature_but_no_effort() -> None:
     sdk = StubSDK(reply())
     AnthropicProvider(sdk).complete(request("claude-haiku-4-5"))
     assert sdk.kwargs["temperature"] == 0.0
-    assert "output_config" not in sdk.kwargs
+    assert "effort" not in sdk.kwargs["output_config"]
+    assert "format" in sdk.kwargs["output_config"]
 
 
 def test_capability_rules() -> None:
@@ -87,13 +95,22 @@ def test_response_is_mapped_to_json_text_and_tokens() -> None:
     assert (out.text, out.input_tokens, out.output_tokens) == ('{"verdict":"ok"}', 11, 7)
 
 
-def test_refusal_and_truncation_and_empty_parse() -> None:
-    with pytest.raises(RefusalError):
-        AnthropicProvider(StubSDK(reply("refusal", None))).complete(request("claude-haiku-4-5"))
-    with pytest.raises(FatalProviderError, match="max_tokens"):
-        AnthropicProvider(StubSDK(reply("max_tokens", None))).complete(request("claude-haiku-4-5"))
-    with pytest.raises(InvalidOutputError):
-        AnthropicProvider(StubSDK(reply("end_turn", None))).complete(request("claude-haiku-4-5"))
+@pytest.mark.parametrize(
+    ("stop", "text", "error"),
+    [
+        ("refusal", None, RefusalError),
+        ("max_tokens", '{"verdict": "ok', FatalProviderError),  # cut off mid-JSON
+        ("end_turn", None, InvalidOutputError),  # no text at all
+        ("end_turn", "not json", InvalidOutputError),
+        ("end_turn", '{"verdict": 3}', InvalidOutputError),  # wrong type
+    ],
+)
+def test_an_unusable_answer_is_classified_and_still_carries_its_tokens(stop, text, error) -> None:
+    """The provider billed 1000 + 4000 tokens whatever came back: the error must say so."""
+    sdk = StubSDK(reply(stop, text, tokens=(1000, 4000)))
+    with pytest.raises(error) as info:
+        AnthropicProvider(sdk).complete(request("claude-haiku-4-5"))
+    assert (info.value.input_tokens, info.value.output_tokens) == (1000, 4000)
 
 
 @pytest.mark.parametrize(
