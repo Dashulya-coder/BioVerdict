@@ -31,6 +31,7 @@ import httpx
 from bioverdict.connectors.http import CachedHttpClient
 from bioverdict.connectors.opentargets import OpenTargetsApi
 from bioverdict.connectors.pricing import analog_name, analogs_payload, parse_analogs, same_drug
+from bioverdict.connectors.text import chunks
 from bioverdict.resolver.names import normalize
 from bioverdict.store.as_of import filter_as_of
 from bioverdict.store.models import Evidence, EvidenceLevel, Locator, ResolverOutput, SourceKind
@@ -44,7 +45,6 @@ APPLICATION_URL = (
 LABEL_URL = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid="
 ANALOG_FAMILY = "regulatory_analog"
 MAX_APPLICATIONS = 5  # per analog; an innovator drug has one or two
-CHUNK_CHARS = 6000  # of label text per record, cut between sentences
 
 APPROVED = "AP"
 GENERIC = "ANDA"
@@ -56,7 +56,6 @@ WHOLE_SECTIONS = {
     "boxed_warning": EvidenceLevel.HUMAN_OBSERVATIONAL,
 }
 TEXT_SECTION = "clinical_studies"
-_SENTENCE_END = re.compile(r"(?<=[.;])\s+")
 
 
 class OpenFdaError(ValueError):
@@ -147,28 +146,6 @@ def parse_approvals(answer: dict, analog: str, retrieved_at: datetime) -> list[E
                 )
             )
     return evidence
-
-
-def chunks(text: str, size: int = CHUNK_CHARS) -> list[str]:
-    """The text in pieces of at most `size` characters, cut between sentences; nothing is lost
-    or rewritten, so every piece is verbatim. A sentence longer than `size` is cut by length."""
-    pieces: list[str] = []
-    current = ""
-    for sentence in _SENTENCE_END.split(text.strip()):
-        while len(sentence) > size:
-            if current:
-                pieces.append(current)
-                current = ""
-            pieces.append(sentence[:size])
-            sentence = sentence[size:]
-        if current and len(current) + 1 + len(sentence) > size:
-            pieces.append(current)
-            current = sentence
-        else:
-            current = f"{current} {sentence}" if current else sentence
-    if current:
-        pieces.append(current)
-    return pieces
 
 
 def pick_label(answer: dict, analog: str, applications: set[str]) -> dict | None:

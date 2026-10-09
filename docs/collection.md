@@ -107,7 +107,7 @@ left unread makes the section `incomplete`, as before.
 
 `pipeline/live_sources.py` is the allowlist of a live run: Open Targets and Europe PMC
 preprints (`europepmc`) for mechanism,
-ClinicalTrials.gov by asset and PubMed for clinical, ClinicalTrials.gov by target within the
+ClinicalTrials.gov by asset, PubMed and open-access full texts (`pmc_fulltext`) for clinical, ClinicalTrials.gov by target within the
 indication (`clinicaltrials_class`) and openFDA (`openfda`) for competition. `pipeline/live_run.py` runs the Resolver and
 this graph, writes each section's status, fact count, rejections and issues into the `collect`
 progress event, and hands the frozen bundle to the shared reason → score step. See the
@@ -122,6 +122,11 @@ copies are left out). Approvals, indications and boxed warnings are status facts
 studies section of each label is text for the model, in verbatim pieces of up to 6,000 characters
 cut between sentences. A class with many approved drugs (GLP-1 agonists) has more label text than
 the three prompts hold, so its competition section is `incomplete`.
+
+Full texts are read for at most four papers, three pieces of 6,000 characters each, the Results
+before the tables; a longer paper is read in part and makes the section `incomplete`. A journal
+that does not mark a Results section (Nature's main text) gives only its tables. A piece carries
+the level, date and independence group of its paper, so a paper read twice counts once.
 
 Checkpointing and independent verification (B8) remain subsequent work. Tests verify the offline
 boundary and mocked call logging; runs against the real sources used a stand-in model. Neither

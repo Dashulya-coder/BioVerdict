@@ -11,15 +11,14 @@ from tenacity import wait_none
 from bioverdict.connectors.http import CachedHttpClient
 from bioverdict.connectors.openfda import (
     ANALOG_FAMILY,
-    CHUNK_CHARS,
     OpenFdaConnector,
     OpenFdaError,
-    chunks,
     parse_approvals,
     parse_label,
     pick_label,
     require_results,
 )
+from bioverdict.connectors.text import CHUNK_CHARS, chunks
 from bioverdict.contracts import Connector
 from bioverdict.store.db import connect
 from bioverdict.store.http_cache import HttpCache
@@ -166,6 +165,7 @@ def test_chunks_lose_nothing_and_cut_between_sentences() -> None:
     assert all(len(piece) <= 500 and piece.endswith(".") for piece in pieces)
     assert chunks("x" * 1200, 500) == ["x" * 500, "x" * 500, "x" * 200]
     assert chunks("  ") == []
+    assert chunks("One.\n\nTwo.   Three.", 8) == ["One.", "Two.", "Three."]
 
 
 @pytest.mark.parametrize("body", [b"<html>busy</html>", b"[]", b'{"error": {"code": "X"}}'])

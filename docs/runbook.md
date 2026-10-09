@@ -111,7 +111,7 @@ The same steps, events, SQLite records and report as a fixture run, from real so
 
 1. **Resolve.** One model call reads the text; every id comes from Open Targets. What was not
    confirmed is listed in the report's assumptions. No identifiable target fails the run.
-2. **Collect.** Mechanism: Open Targets and preprints from Europe PMC. Clinical: ClinicalTrials.gov (by asset) and PubMed.
+2. **Collect.** Mechanism: Open Targets and preprints from Europe PMC. Clinical: ClinicalTrials.gov (by asset), PubMed, and the full text of open-access papers.
    Competition: ClinicalTrials.gov by target within the indication, and openFDA for the
    approvals and labels of drugs already approved against the target. One extraction call per
    source that returned records. Other sections stay `not_searched`.

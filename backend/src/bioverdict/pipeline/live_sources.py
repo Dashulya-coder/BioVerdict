@@ -29,6 +29,7 @@ from bioverdict.connectors.europepmc import EuropePmcConnector
 from bioverdict.connectors.http import DEFAULT_MIN_INTERVAL_S, CachedHttpClient
 from bioverdict.connectors.openfda import OpenFdaConnector
 from bioverdict.connectors.opentargets import OpenTargetsApi, OpenTargetsConnector
+from bioverdict.connectors.pmc import PmcFullTextConnector
 from bioverdict.connectors.pricing import AnalogPricingConnector
 from bioverdict.connectors.pubmed import PubMedConnector
 from bioverdict.connectors.retry import MAX_ATTEMPTS
@@ -44,7 +45,9 @@ NO_INDICATION = "not specified"  # what the Resolver writes when the input names
 LIVE_PLANS = (
     # Preprints are mostly laboratory work on the mechanism; published papers are in PubMed.
     CollectPlan(section=Section.MECHANISM, tools=("opentargets", "europepmc")),
-    CollectPlan(section=Section.CLINICAL, tools=("clinicaltrials", "pubmed")),
+    # Full texts last: they repeat PubMed's searches from the cache, and if the section's time
+    # runs out it is the abstracts and the registry that have been read.
+    CollectPlan(section=Section.CLINICAL, tools=("clinicaltrials", "pubmed", "pmc_fulltext")),
     # The class in the registry, then what the FDA approved in it and what those labels say.
     CollectPlan(section=Section.COMPETITION, tools=("clinicaltrials_class", "openfda")),
     # Market records are status facts: stored whole, read by code (`market/tam.py`), no model.
@@ -153,11 +156,13 @@ def paced_sources(
 
 
 def _sources(http: CachedHttpClient) -> Sources:
+    pubmed = PubMedConnector(http, api_key=os.environ.get("NCBI_API_KEY") or None)
     tools: list[Connector] = [
         OpenTargetsConnector(http),
         ClinicalTrialsConnector(http),
         TargetClassTrials(ClinicalTrialsConnector(http)),
-        PubMedConnector(http, api_key=os.environ.get("NCBI_API_KEY") or None),
+        pubmed,
+        PmcFullTextConnector(http, pubmed),
         EuropePmcConnector(http),
         OpenFdaConnector(http, api_key=os.environ.get("OPENFDA_API_KEY") or None),
         AnalogPricingConnector(http),

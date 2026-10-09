@@ -292,6 +292,7 @@ def test_preprints_and_fda_records_are_planned_beside_the_first_sources() -> Non
 
     assert plans[Section.COMPETITION] == ("clinicaltrials_class", "openfda")
     assert plans[Section.MECHANISM] == ("opentargets", "europepmc")
+    assert plans[Section.CLINICAL] == ("clinicaltrials", "pubmed", "pmc_fulltext")
 
 
 def study(nct: str, status: str, phase: str, updated: date) -> list[Evidence]:
