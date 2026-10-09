@@ -79,6 +79,9 @@ class VerdictConfig(BaseModel):
     # about 0.77 and a stop reason can be "business decision", so a second independent
     # confirmation is needed. Calibrated on the eval set like every threshold.
     t_hard_gate: float = 0.85
+    # ...and rests on more than one independence group: two records of one study (one sponsor)
+    # reach 0.86 by themselves, which is not a second source.
+    hard_gate_min_groups: int = 2
     t_near: float = 0.4  # below the firing threshold but above this: "almost fired"
     chain_min: float = 0.5  # Invest needs chain probability >= this
     key_claim_min: float = 0.7  # Invest needs every critical claim >= this

@@ -224,6 +224,11 @@ class ConfidenceParts(_Model):
     support: float = Field(ge=0, le=1)
     contra: float = Field(ge=0, le=1)
     freshness: float = Field(ge=0, le=1)
+    independent_groups: int = Field(
+        default=0,
+        ge=0,
+        description="Distinct independence groups among the supporting evidence (hard gates need 2)",
+    )
 
 
 class Claim(_Model):

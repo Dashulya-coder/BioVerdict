@@ -70,7 +70,7 @@ Valuation and probabilities are always `modeled`, with the assumptions visible.
   "basis": "extracted",
   "status": "found",
   "confidence": 0.74,
-  "confidence_parts": { "support": 0.82, "contra": 0.10, "freshness": 0.95 },
+  "confidence_parts": { "support": 0.82, "contra": 0.10, "freshness": 0.95, "independent_groups": 2 },
   "depends_on": ["C-0102"],
   "diligence_type": null
 }

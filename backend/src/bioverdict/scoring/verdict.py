@@ -52,6 +52,16 @@ def basis_can_assert(gate: GateId, basis: Basis) -> bool:
     return basis in (_HARD_BASES if gate in HARD else _SOFT_BASES)
 
 
+def _enough_sources(gate: GateId, claim: Claim, vcfg: VerdictConfig) -> bool:
+    """A hard gate needs evidence from at least `hard_gate_min_groups` independence groups.
+
+    A claim without a computed breakdown (built by hand, as in tests) is not held to this.
+    """
+    if gate not in HARD or claim.confidence_parts is None:
+        return True
+    return claim.confidence_parts.independent_groups >= vcfg.hard_gate_min_groups
+
+
 def _kind(gate: GateId) -> Literal["hard", "soft"]:
     return "hard" if gate in HARD else "soft"
 
@@ -73,14 +83,24 @@ def evaluate_gates(
     for gate in _SIGNAL_ONLY:  # gates asserted by a claim with enough confidence
         signals = [c for c in claims if gate in c.gate_signals and basis_can_assert(gate, c.basis)]
         threshold = vcfg.t_hard_gate if gate in HARD else vcfg.t_gate
-        firing = [c for c in signals if c.confidence >= threshold]
+        confident = [c for c in signals if c.confidence >= threshold]
+        firing = [c for c in confident if _enough_sources(gate, c, vcfg)]
         near = [c for c in signals if vcfg.t_near <= c.confidence < threshold]
-        near_miss = (
-            f"{gate.value} would fire if claim {near[0].id} (confidence "
-            f"{near[0].confidence:.2f}) reached {threshold:.2f}"
-            if not firing and near
-            else None
-        )
+        if firing:
+            near_miss = None
+        elif confident:  # confident, but resting on one source only
+            near_miss = (
+                f"{gate.value} would fire if claim {confident[0].id} were confirmed by a second "
+                f"independent source (all its evidence is from one: "
+                f"{confident[0].confidence:.2f} is not enough on its own)"
+            )
+        elif near:
+            near_miss = (
+                f"{gate.value} would fire if claim {near[0].id} (confidence "
+                f"{near[0].confidence:.2f}) reached {threshold:.2f}"
+            )
+        else:
+            near_miss = None
         results.append(
             GateResult(
                 gate_id=gate,
