@@ -11,11 +11,13 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field
 
 from bioverdict.agents.extraction import (
+    MAX_FACTS,
     ExtractedFact,
     ExtractionDraft,
     RejectedFact,
     ground_facts,
     prepare_prompt,
+    prioritise,
 )
 from bioverdict.contracts import LLM, Connector
 from bioverdict.llm.errors import (
@@ -26,7 +28,14 @@ from bioverdict.llm.errors import (
     RunTimeoutError,
 )
 from bioverdict.store.bundle import select_bundle_evidence
-from bioverdict.store.models import Evidence, LLMResult, ResolverOutput, Section, SectionStatus
+from bioverdict.store.models import (
+    Evidence,
+    EvidenceType,
+    LLMResult,
+    ResolverOutput,
+    Section,
+    SectionStatus,
+)
 
 
 class CollectPlan(BaseModel):
@@ -36,7 +45,8 @@ class CollectPlan(BaseModel):
     max_steps: int = Field(default=8, ge=1, le=8)
     timeout_s: float = Field(default=90, gt=0, le=90, allow_inf_nan=False)
     max_records: int = Field(default=50, ge=1, le=50)
-    max_chars: int = Field(default=24_000, ge=128, le=24_000)
+    max_chars: int = Field(default=24_000, ge=128, le=24_000)  # of text per extraction prompt
+    max_batches: int = Field(default=3, ge=1, le=4)  # extraction prompts per source
 
 
 @dataclass
@@ -66,6 +76,62 @@ class Collection:
         return statuses
 
 
+def _split(records: list[Evidence]) -> tuple[list[Evidence], list[Evidence]]:
+    """Status facts, which are kept whole, and the records a model picks quotes from.
+
+    A status record (a trial's status or design, a database snapshot) is one fact: extraction
+    never cuts it, so asking a model about it could only lose it. It goes to the bundle as
+    retrieved, which costs nothing and leaves the model's fact limit for the texts.
+    """
+    whole = [r for r in records if r.status_key and r.type is EvidenceType.SOURCE_FACT]
+    kept = {record.id for record in whole}
+    return whole, [record for record in records if record.id not in kept]
+
+
+async def _extract(
+    llm: LLM,
+    records: list[Evidence],
+    query: ResolverOutput,
+    plan: CollectPlan,
+    out: SectionCollection,
+) -> bool:
+    """Ask the model for quotes from `records`, in up to `max_batches` prompts sent together.
+
+    Each prompt holds up to `max_chars` of text and may return up to 32 facts. Returns whether
+    anything was left unread or cut, so that the section is not called complete.
+    """
+    if len({record.id for record in records}) != len(records):
+        raise ValueError("connector returned ambiguous source ids")
+    batches: list[tuple[str, dict[str, Evidence]]] = []
+    remaining, cut = records, False
+    while remaining and len(batches) < plan.max_batches:
+        prompt, supplied, _ = prepare_prompt(
+            remaining, query, plan.section, plan.max_chars, whole_records=True
+        )
+        if not supplied:
+            break
+        full = {record.id: len(record.excerpt) for record in remaining}
+        cut |= any(len(item.excerpt) < full[key] for key, item in supplied.items())
+        batches.append((prompt, supplied))
+        remaining = [record for record in remaining if record.id not in supplied]
+
+    results = await asyncio.gather(
+        *(
+            asyncio.to_thread(llm.call, "extraction", prompt, ExtractionDraft)
+            for prompt, _ in batches
+        )
+    )
+    incomplete = cut or bool(remaining)
+    for result, (_, supplied) in zip(results, batches, strict=True):
+        out.calls.append(result)
+        draft = ExtractionDraft.model_validate(result.parsed)
+        facts, rejected = ground_facts(draft, supplied)
+        out.facts.extend(facts)
+        out.rejected.extend(rejected)
+        incomplete |= bool(rejected) or len(draft.facts) == MAX_FACTS
+    return incomplete
+
+
 async def _collect_section(
     plan: CollectPlan,
     tools: Mapping[str, Connector],
@@ -81,27 +147,18 @@ async def _collect_section(
             for name in plan.tools[: plan.max_steps]:
                 out.tools_called.append(name)
                 try:
-                    records = select_bundle_evidence(await tools[name].fetch(query, as_of), as_of)
+                    records = prioritise(
+                        select_bundle_evidence(await tools[name].fetch(query, as_of), as_of)
+                    )
                     if not records:
                         completed += 1
                         continue
-                    incomplete |= len(records) > plan.max_records
-                    prompt, supplied, truncated = prepare_prompt(
-                        records[: plan.max_records], query, plan.section, plan.max_chars
-                    )
-                    incomplete |= truncated
-                    if not supplied:
-                        completed += 1
-                        continue
-                    result = await asyncio.to_thread(
-                        llm.call, "extraction", prompt, ExtractionDraft
-                    )
-                    out.calls.append(result)
-                    draft = ExtractionDraft.model_validate(result.parsed)
-                    facts, rejected = ground_facts(draft, supplied)
-                    out.facts.extend(facts)
-                    out.rejected.extend(rejected)
-                    incomplete |= bool(rejected) or len(draft.facts) == 32
+                    # The record limit holds for each kind: status facts cost no model call.
+                    whole, text = _split(records)
+                    incomplete |= max(len(whole), len(text)) > plan.max_records
+                    whole, text = whole[: plan.max_records], text[: plan.max_records]
+                    out.facts.extend(ExtractedFact(record, None) for record in whole)
+                    incomplete |= await _extract(llm, text, query, plan, out)
                     completed += 1
                 except ConfigError, FatalProviderError:
                     raise

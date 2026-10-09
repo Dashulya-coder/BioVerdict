@@ -9,7 +9,12 @@ import pytest
 from pydantic import ValidationError
 
 from bioverdict.agents.collect import CollectPlan, collect
-from bioverdict.agents.extraction import ExtractionDraft, ground_facts, prepare_prompt
+from bioverdict.agents.extraction import (
+    ExtractionDraft,
+    ground_facts,
+    prepare_prompt,
+    prioritise,
+)
 from bioverdict.connectors.fake import FakeConnector
 from bioverdict.graph.collect_nodes import CollectNodes
 from bioverdict.graph.pipeline import collection_graph
@@ -353,3 +358,92 @@ async def test_dag_freezes_canonical_ids_hash_catalog_versions_and_logs_bound_ca
         row = conn.execute("SELECT run_id, step FROM llm_calls LIMIT 1").fetchone()
         assert tuple(row) == ("R-A4", "extraction")
         assert conn.execute("SELECT count(*) FROM evidence").fetchone()[0] == 1
+
+
+def test_findings_are_read_before_registry_records_and_the_newest_first():
+    record = EvidenceLevel.REGISTRY_RECORD
+    old = evidence(id="a-old", level=record, published_at=date(2020, 1, 1))
+    new = evidence(id="b-new", level=record, published_at=date(2026, 1, 1))
+    undated = evidence(id="c-undated", level=record, published_at=None)  # retrieved 2026-10-06
+    finding = evidence(id="z-finding", published_at=date(2019, 1, 1))
+
+    order = [item.id for item in prioritise([old, new, undated, finding])]
+
+    assert order == ["z-finding", "c-undated", "b-new", "a-old"]
+
+
+async def test_a_record_limit_cuts_the_weakest_and_oldest_not_the_highest_id():
+    quote = "Response observed in 53.4% of patients."
+    registry = evidence(
+        id="a-registry", level=EvidenceLevel.REGISTRY_RECORD, url="https://example.org/registry"
+    )
+    finding = evidence(id="z-finding", excerpt=quote)
+    model = llm({"source_id": "z-finding", "quote": quote})
+
+    collected = await run([registry, finding], model, max_records=1)
+
+    (section,) = collected.sections
+    assert [fact.evidence.id for fact in section.facts] == ["z-finding"]
+    assert section.status is SectionStatus.INCOMPLETE  # something was left unread, and it says so
+    assert "a-registry" not in model.calls[0][1]
+
+
+def test_the_character_budget_is_spent_in_the_order_given():
+    first = evidence(id="z-first", excerpt="A" * 100)
+    second = evidence(id="a-second", excerpt="B" * 100)
+
+    _, supplied, truncated = prepare_prompt([first, second], QUERY, Section.CLINICAL, 128)
+
+    assert truncated and len(supplied["z-first"].excerpt) == 100
+    assert len(supplied["a-second"].excerpt) == 28
+
+
+async def test_status_facts_reach_the_bundle_whole_without_asking_the_model():
+    status = evidence(id="raw-status", status_key="nct:NCT1:overall_status", excerpt='{"a": 1}')
+    model = llm()
+
+    collected = await run([status], model)
+
+    (section,) = collected.sections
+    assert collected.evidence == [status] and model.calls == []
+    assert section.status is SectionStatus.FOUND and section.rejected == []
+
+
+async def test_the_model_is_asked_about_texts_only_and_cannot_cite_a_status_fact():
+    status = evidence(id="raw-status", status_key="nct:NCT1:overall_status", excerpt='{"a": 1}')
+    model = llm(FACT, {"source_id": "raw-status", "quote": '{"a": 1}'})
+
+    collected = await run([evidence(), status], model)
+
+    (section,) = collected.sections
+    assert "raw-status" not in model.calls[0][1] and "raw-1" in model.calls[0][1]
+    assert {e.id for e in collected.evidence} == {"raw-1", "raw-status"}
+    assert [r.source_id for r in section.rejected] == ["raw-status"]
+
+
+async def test_text_that_exceeds_one_prompt_is_read_in_several():
+    texts = [
+        evidence(id=f"raw-{n}", url=f"https://example.org/{n}", excerpt=f"{n}" * 100)
+        for n in range(1, 4)
+    ]
+    model = llm()
+
+    collected = await run(texts, model, max_chars=128)
+
+    (section,) = collected.sections
+    prompts = sorted(prompt for _, prompt in model.calls)
+    assert len(prompts) == 3 and all(f'"raw-{n}"' in prompts[n - 1] for n in range(1, 4))
+    assert section.status is SectionStatus.NOT_REPORTED  # all of it was read, nothing was found
+
+
+async def test_text_beyond_the_prompts_allowed_is_left_unread_and_says_so():
+    texts = [
+        evidence(id=f"raw-{n}", url=f"https://example.org/{n}", excerpt=f"{n}" * 100)
+        for n in range(1, 4)
+    ]
+    model = llm()
+
+    collected = await run(texts, model, max_chars=128, max_batches=2)
+
+    assert len(model.calls) == 2
+    assert collected.sections[0].status is SectionStatus.INCOMPLETE

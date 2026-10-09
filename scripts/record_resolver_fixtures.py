@@ -30,7 +30,7 @@ DRUGS = [
     "divarasib", "divarasib adipate", "SAR444656", "HRO761", "STAR-0215", "ION582",
     "sonelokimab", "retatrutide", "RMC-9805", "elisrasib", "MariTide",
 ]  # fmt: skip
-TARGETS = ["KRAS", "KRAS2", "WRN", "GLP1R", "KLKB1", "IRAK4", "NOTAGENE"]
+TARGETS = ["KRAS", "KRAS2", "WRN", "GLP1R", "KLKB1", "IRAK4", "CRLF2", "NOTAGENE"]
 DISEASES = [
     "NSCLC", "obesity", "Alzheimer's disease", "hypertension", "multiple sclerosis",
     "MSI-high solid tumors", "hidradenitis suppurativa",

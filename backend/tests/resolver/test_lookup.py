@@ -47,6 +47,8 @@ async def test_a_drug_the_database_does_not_know_is_not_guessed(tmp_path: Path, 
     [
         ("KRAS", "ENSG00000133703", "P01116"),
         ("KRAS2", "ENSG00000133703", "P01116"),  # an old alias of KRAS, and of nothing else
+        # Listed twice, on X and on Y, with one protein: the X record is the gene's.
+        ("CRLF2", "ENSG00000205755", "Q9HC73"),
         ("WRN", "ENSG00000165392", "Q14191"),
         ("GLP1R", "ENSG00000112164", "P43220"),
     ],

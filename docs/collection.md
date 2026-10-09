@@ -44,9 +44,9 @@ compete for the same status_key; oversized status records are omitted as incompl
 
 ## Bounds and failure statuses
 
-Per section: at most 8 logical connector fetches, 90 seconds, and one logical extraction
-call per nonempty fetch. Per fetch: at most 50 records and 24,000 source characters.
-Extraction proposes at most 32 facts; hitting that capacity is conservatively incomplete.
+Per section: at most 8 logical connector fetches and 90 seconds. Per fetch: at most 50 status
+facts and 50 texts, and up to three extraction prompts of 24,000 source characters each (see
+below). A prompt returns at most 32 facts; hitting that capacity is conservatively incomplete.
 Provider attempts/retries are additionally bounded by the existing LLM client configuration.
 Plans execute serially, stop after a global budget/deadline failure, and cannot name tools
 outside the injected allowlist. This is a fixed tool loop, not autonomous web research.
@@ -66,6 +66,31 @@ The staged trace is returned; durable collection-event/API trace wiring is later
 Real LLM calls use the existing logger. Cancelling a sync worker cannot terminate its provider
 call; live callers must configure provider timeouts and run deadlines. No late result is
 accepted into the timed-out section.
+
+## What is read first
+
+A source often returns more than the limits allow (a drug with many studies gives over 80
+registry records; the limit is 50 records and 24,000 characters per source). Records are read in
+a fixed order: findings before records that a study exists (evidence level, strongest first),
+then the newest, then by id. The limits cut from the end of that order, and the section is still
+marked `incomplete`. Posted trial results are therefore read before protocol descriptions.
+
+The target-class search (`clinicaltrials_class`) keeps only the status and the design record of
+each study, for up to 12 stopped studies and 12 others, latest phase and newest first. That is
+what the competition section needs (phase, status, why a study stopped), and it fits the limit.
+Sponsor names are not part of those excerpts; they are in the evidence's independence group.
+
+## Status facts and texts
+
+Within one source, records are of two kinds. A **status fact** (a record with a `status_key`: a
+trial's status or design, a database snapshot) is one fact that extraction never cuts, so it goes
+to the bundle as retrieved, without a model call. **Texts** (summaries, outcome descriptions,
+posted results, abstracts) go to the model, which picks verbatim quotes.
+
+Texts are sent in up to three prompts per source (`max_batches`), at the same time, each with up
+to 24,000 characters and up to 32 returned facts. A record that does not fit a prompt is moved
+whole to the next one. The 50-record limit holds for each kind separately. Whatever is still
+left unread makes the section `incomplete`, as before.
 
 ## Live registration
 
