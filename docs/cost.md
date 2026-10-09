@@ -47,6 +47,28 @@ These are starting hypotheses. The final assignment comes from the bake-off belo
 
 Why Sonnet 5.5 rather than Opus 5.5 for the strongest steps (hypothesis to confirm): third-party tracking reports a closed-book "hallucination rate" of about 47% for Sonnet 5.5 against about 59% for Opus 5.5 on AA-Omniscience, with Opus ahead on factual accuracy. In a closed-world pipeline we want the model that guesses less and follows instructions, not the one that knows more. These are general benchmarks, not our task.
 
+## The hackathon gateway (OpenAI-compatible)
+
+The organizers give each team a key for an Azure-hosted, OpenAI-compatible gateway (set
+`TEAM_API_KEY` and `LLM_BASE_URL`; `LLM_PROVIDER=openai` forces it). Models: `gpt-6-luna`,
+`gpt-6.1-sol`, `gpt-6-astra`, `gpt-5-mini` (from `/v1/models`). Probed on 2026-10-09:
+
+- Chat completions only. Structured output by `response_format` json_schema in strict mode works,
+  and so do a system message, `max_completion_tokens` and `reasoning_effort`.
+- `temperature` and the old `max_tokens` are answered with a **502, and the gateway charges a
+  reserved amount for that failed request**. The adapter never sends them.
+- Reasoning models spend hidden reasoning tokens inside `max_completion_tokens` (they are billed
+  as output), so the gateway preset keeps the limits tight (3,000 for extraction, 8,000 for
+  reasoning).
+- Roles used by the preset (`LLMConfig.for_provider("openai")`): resolver and extraction on
+  `gpt-6-luna`; reasoning, classification of new evidence and synthesis on `gpt-6.1-sol`, with
+  `gpt-5-mini` as the second model. `gpt-6-astra` costs five times `gpt-6.1-sol` and is not used.
+- The gateway has one vendor's models only, so a judge "from a different provider" (B8) cannot be
+  had here; use a different model family if one is added, and say so in the results.
+- Prices in `GATEWAY_PRICES` are the list prices above; `gpt-5-mini` is a public list price not
+  checked against the gateway. The gateway bills its own reserved amounts: compare a run's
+  `llm_calls` cost with the portal after the first runs.
+
 ## Bake-off (one evening)
 
 1. Collect 20 real documents (ClinicalTrials.gov records, PubMed abstracts, an SEC exhibit).

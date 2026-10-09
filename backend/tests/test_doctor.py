@@ -119,3 +119,12 @@ def test_the_command_prints_every_check_and_exits_by_the_worst(tmp_path: Path, c
 
     assert "ok    Registry" in ready and ready.rstrip().endswith("0 fail")
     assert "fail  Registry" in broken and broken.rstrip().endswith("1 fail")
+
+
+def test_doctor_names_the_provider_of_the_gateway_key(monkeypatch) -> None:
+    from bioverdict.doctor import check_mode_and_model
+
+    monkeypatch.setenv("TEAM_API_KEY", "gateway-secret")
+    checks = {c.name: c for c in check_mode_and_model()}
+    assert checks["model key"].status == "ok" and "openai" in checks["model key"].detail
+    assert "gateway-secret" not in " ".join(c.detail for c in checks.values())  # never printed
