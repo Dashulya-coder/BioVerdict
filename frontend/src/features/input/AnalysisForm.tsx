@@ -41,13 +41,41 @@ export function AnalysisForm({
               placeholder="Drug name or development code"
               value={draft.asset}
               autoComplete="off"
-              required
+              required={!apiMode}
               disabled={loading}
               onChange={(event) => {
                 onChange({ ...draft, asset: event.currentTarget.value })
               }}
               hint={copy.assetHint}
             />
+            {apiMode ? (
+              <>
+                <Field
+                  id="indication"
+                  label="Indication (optional)"
+                  placeholder="For example non-small cell lung cancer"
+                  value={draft.indication}
+                  autoComplete="off"
+                  disabled={loading}
+                  onChange={(event) => {
+                    onChange({ ...draft, indication: event.currentTarget.value })
+                  }}
+                  hint="Left empty, a known drug is analysed in its most advanced indication."
+                />
+                <Field
+                  id="mechanism"
+                  label="Mechanism / target (optional)"
+                  placeholder="For example KRAS G12C inhibitor"
+                  value={draft.mechanism}
+                  autoComplete="off"
+                  disabled={loading}
+                  onChange={(event) => {
+                    onChange({ ...draft, mechanism: event.currentTarget.value })
+                  }}
+                  hint="Give an indication with a mechanism to analyse a target without a named drug."
+                />
+              </>
+            ) : null}
             <Field
               id="cutoff"
               label="Evidence cutoff"

@@ -216,6 +216,38 @@ test('a run on the API shows its progress, its resolved input and its whole bund
   await expect(detail.getByText('Source fact', { exact: true })).toBeVisible()
 })
 
+test('an indication with a mechanism is enough to start a run, and empty fields are not sent', async ({
+  page,
+}) => {
+  const posted: unknown[] = []
+  await serve(page, { posted })
+  await page.goto('/')
+  await page.getByLabel('Asset / drug').fill('')
+  await page.getByLabel('Indication (optional)').fill('non-small cell lung cancer')
+  await page.getByLabel('Mechanism / target (optional)').fill('KRAS G12C inhibitor')
+  await page.getByLabel('Evidence cutoff').fill('2026-10-01')
+  await page.getByRole('button', { name: 'Run analysis' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Review the resolved input', exact: true }),
+  ).toBeVisible()
+  expect(posted).toEqual([
+    {
+      indication: 'non-small cell lung cancer',
+      mechanism: 'KRAS G12C inhibitor',
+      as_of: '2026-10-01',
+    },
+  ])
+})
+
+test('a form with neither a drug nor an indication and mechanism is refused', async ({ page }) => {
+  await serve(page)
+  await page.goto('/')
+  await page.getByLabel('Asset / drug').fill('')
+  await page.getByLabel('Indication (optional)').fill('lung cancer')
+  await page.getByRole('button', { name: 'Run analysis' }).click()
+  await expect(page.getByRole('alert')).toContainText('indication together with a mechanism')
+})
+
 test('a fixture API is labelled as such, never as a live run', async ({ page }) => {
   await serve(page, { mode: 'fixtures' })
   await run(page, 'divarasib')
