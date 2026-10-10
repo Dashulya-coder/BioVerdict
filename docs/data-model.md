@@ -130,6 +130,83 @@ Several targets are allowed (a triple agonist has three; a degrader and a knockd
 
 `known_assets` are the names to search registries with (what the user typed and the database name). `assets` are the drugs a database identified, each with its ChEMBL id; `chembl_id` is `null` when no database confirmed the name, and a model never writes it. Ids of targets and diseases follow the same rule: they come from Open Targets lookups, not from a model.
 
+## Verdict result: claim ids on top risks (PROPOSED, not yet approved)
+
+> **Status: proposal.** No code changes until Arsenii and Dasha both approve this section
+> (`CONTRIBUTING.md`, "Schema changes"). Until then `top_risks` is as it is today.
+
+`VerdictResult` (`store/models.py`, stored in `runs.result_json`, served as `ExecutiveVerdict`)
+has `top_risks: list[str]`, at most 3. A string cannot say which claim a risk comes from, so the
+Report cannot link a risk to its claim and the claim's quote. Today the strings are gate texts and
+weak key claims only (`scoring/verdict.py`), so a run's "top risks" are the same texts as its
+gates ("A link of the human translation chain is missing"), and claims that an investor would
+name as risks (`implication = unfavourable`) never reach them.
+
+### 1. The field
+
+Add one field to `VerdictResult` and `ExecutiveVerdict`:
+
+```json
+{ "top_risks": ["..."], "top_risk_claims": [["C-0107"], ["C-0011", "C-0052"], ["C-0070"]] }
+```
+
+`top_risk_claims[i]` lists the claim ids that risk `i` rests on (at least one for every risk).
+It is empty or exactly as long as `top_risks`; a validator enforces that.
+
+- **Why a parallel list, not a list of `{text, claim_ids}` objects.** `top_risks: list[str]` is
+  read by the eval runner (Jaccard stability and `match_risks`), the Report schema and every
+  stored run. An additive field leaves all of them working; changing the element type breaks them.
+- **Compatibility.** `default_factory=list`, so a stored `result_json` without the field loads and
+  shows risks without links. The models use `extra="forbid"`, so code before this change cannot
+  read a result written after it: this is forward-only, as every earlier additive field was.
+  `result_json` is a JSON blob: **no SQLite migration, no `schema_version` bump**.
+
+### 2. Selection rule
+
+A candidate risk is one of: a fired hard gate, a fired soft gate or unconfirmed kill criterion
+(claim ids: the gate's `claim_ids`); a key claim below the key-claim bar (as today, claim id:
+itself); an `unfavourable` claim (claim id: itself). Weight of the last kind is the pull the
+claim already has on its module: `contribution(claim)` in `scoring/module_answers.py`, which is
+`-(2 * confidence - 1)` for an `unfavourable` claim and `0` for `unknown`, `hypothesis` or a
+claim without weighted evidence. Confidence already carries the level weights
+(`confidence_parts`), so no second weight is added. Only claims with weight above 0 are
+candidates: a refuted unfavourable claim is not a risk.
+
+Two orderings are possible. **Option A (strict priority, the smallest change):** gates first,
+then weak key claims (both as today), then unfavourable claims by weight. **Option B
+(recommended):** fired hard gates first (a kill criterion is always the top risk); then
+unfavourable claims by weight; soft gates and weak key claims fill what is left.
+
+Why B: with A, a run like the BTK x multiple sclerosis run of 2026-10-10 (soft gates S1 and S2
+plus one weak key claim) fills all three slots from gates and shows no claim-derived risk, so
+nothing changes on the demo screen. The soft gates are still shown in the gates list and in
+"What would change our mind", where they say what holds the verdict at Conditional.
+
+For both: at most 3 risks; ties on weight broken by higher confidence, then claim id; at most one
+claim-derived risk per section, so one finding restated in several claims of a section is not
+listed three times (the same result restated across modules is open question 2); the text of a
+claim-derived risk is the claim's own text. No candidate at all: `top_risks` is empty and the
+Report says "No risk was ranked", as today.
+
+### 3. What the API and the Report do
+
+`ExecutiveVerdict` gains `top_risk_claims` with the same meaning. The Report shows each risk with
+its claim ids as links to the claim in "Claims and their evidence" (opened), whose drill-down
+already goes on to the verbatim quote and the source link. A risk without claim ids (an old
+stored run) is shown as text, as now. `docs/scoring.md` ("Verdict mapping" and "What would change
+our mind") and the Report documentation are updated in the same PR as the code.
+
+### 4. Open questions for Arsenii
+
+1. Option A or B? B is recommended; it changes which risks appear on every run, so the eval
+   cases' `expected_top_risks` should be re-read against it.
+2. One result is often restated by several modules (mechanism, translation, clinical). Is
+   "one claim-derived risk per section" enough, or should the rule use independence groups of the
+   evidence behind the claims?
+3. `contribution` lives in `module_answers.py`, which imports `scoring/verdict.py`. The rule needs
+   it inside `verdict.py`: move it to a small shared module (my suggestion), or select the
+   claim-derived risks outside `score()`?
+
 ## SQLite schema (sketch)
 
 ```sql
