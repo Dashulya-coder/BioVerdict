@@ -32,6 +32,7 @@ def claim(cid: str, basis: Basis = Basis.EXTRACTED, **kw) -> Claim:
         "claim_type": ClaimType.OTHER,
         "basis": basis,
         "confidence": 0.8,
+        "implication": "favourable",  # a claim something computed rests on: it is judged
     }
     return Claim(**(base | kw))
 
@@ -197,3 +198,60 @@ def test_the_judge_is_shown_the_passage_and_the_record_a_quote_comes_from() -> N
     assert _passage("short excerpt", "short") == "short excerpt"
     assert "the quoted words" in shown and shown.startswith("...") and shown.endswith("...")
     assert len(shown) == MAX_PASSAGE_SHOWN + 6
+
+
+def test_a_context_claim_is_grounded_by_code_and_not_sent_to_the_judge() -> None:
+    claims = [claim("C-1", implication="neutral"), claim("C-2")]
+    links = [link("C-1", "E-0007", ORR), link("C-2", "E-0008", AE)]
+
+    out = verify_links(judge(("C-2", "E-0008", "supports")), BUNDLE, claims, links)
+
+    assert (out.judged, out.context_links, out.removed) == (1, 1, 0)
+    assert len(out.links) == 2
+
+
+def test_a_new_link_on_a_context_claim_is_judged_when_it_is_the_change() -> None:
+    claims, links = [claim("C-1", implication="neutral")], [link("C-1", "E-0007", ORR)]
+    asked = judge(("C-1", "E-0007", "unrelated"))
+
+    out = verify_links(asked, BUNDLE, claims, links, only={("C-1", "E-0007")})
+
+    assert (out.judged, out.removed, out.context_links) == (1, 1, 0)
+
+
+def test_a_failed_request_leaves_its_links_and_keeps_the_others_judged() -> None:
+    from bioverdict.llm.errors import LLMError
+
+    claims = [claim(f"C-{n}") for n in range(40)]
+    links = [link(c.id, "E-0007", ORR) for c in claims]
+
+    class FlakyJudge:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def call(self, step, prompt, schema):
+            self.calls += 1
+            if self.calls == 1:
+                raise LLMError("too many active requests")
+            ids = [c.id for c in claims if f"claim {c.id} " in prompt]
+            return judge(*[(i, "E-0007", "unrelated") for i in ids]).call(step, prompt, schema)
+
+    flaky = FlakyJudge()
+    out = verify_links(flaky, BUNDLE, claims, links)
+
+    assert flaky.calls > 1 and out.failed_batches == 1
+    assert 0 < out.removed < len(links)  # the failed request's links are still there
+    assert len(out.links) == len(links) - out.removed
+
+
+def test_the_check_fails_only_when_no_request_was_answered() -> None:
+    import pytest
+
+    from bioverdict.llm.errors import LLMError
+
+    class DeadJudge:
+        def call(self, step, prompt, schema):
+            raise LLMError("down")
+
+    with pytest.raises(LLMError):
+        verify_links(DeadJudge(), BUNDLE, [claim("C-1")], [link("C-1", "E-0007", ORR)])

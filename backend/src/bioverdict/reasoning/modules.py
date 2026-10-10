@@ -140,7 +140,9 @@ MECHANISM = ReasoningModule(
     allowed_gates=frozenset({GateId.K3}),
     claim_type=ClaimType.TARGET_CAUSAL,
     gate_guard=evidence_guard,
-    families=frozenset({"target_database", "literature"}),
+    # Preprints are where the laboratory work on a mechanism is (the mechanism section collects
+    # them); their level and source weigh them down in the confidence formula.
+    families=frozenset({"target_database", "literature", "preprint"}),
 )
 TRANSLATION = ReasoningModule(
     name="translation",
@@ -149,7 +151,7 @@ TRANSLATION = ReasoningModule(
     instruction=_TRANSLATION,
     chain=True,
     claim_type=ClaimType.DRUG_ACTS_IN_HUMANS,
-    families=frozenset({"literature", "registry"}),
+    families=frozenset({"literature", "registry", "preprint"}),
 )
 
 CLINICAL = ReasoningModule(

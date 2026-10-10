@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 from typing import Any
 
 import openai
@@ -82,6 +83,24 @@ def classify_error(exc: Exception) -> Exception:
     return exc
 
 
+DEFAULT_CONCURRENCY = 4  # the gateway refused a fifth active request (measured 2026-10-10)
+_SLOTS: dict[int, threading.BoundedSemaphore] = {}
+_SLOTS_LOCK = threading.Lock()
+
+
+def max_concurrency() -> int:
+    """Requests sent at once to the endpoint: `LLM_MAX_CONCURRENCY`, at least 1."""
+    value = os.environ.get("LLM_MAX_CONCURRENCY", "").strip()
+    return max(1, int(value)) if value.isdigit() else DEFAULT_CONCURRENCY
+
+
+def _slots() -> threading.BoundedSemaphore:
+    """One semaphore per limit, shared by every provider object of the process."""
+    limit = max_concurrency()
+    with _SLOTS_LOCK:
+        return _SLOTS.setdefault(limit, threading.BoundedSemaphore(limit))
+
+
 class OpenAIProvider:
     name = "openai"
 
@@ -91,7 +110,7 @@ class OpenAIProvider:
         *,
         base_url: str | None = None,
         api_key: str | None = None,
-        max_retries: int = 1,
+        max_retries: int = 3,  # the SDK waits and retries a 429 or a 5xx before it gives up
     ) -> None:
         self._client = client
         self._base_url = base_url
@@ -136,8 +155,12 @@ class OpenAIProvider:
             kwargs["reasoning_effort"] = request.effort
         # `temperature` is deliberately never sent: see the module docstring.
 
+        # The gateway answers 429 `concurrency_limit` ("Too many active requests") when a run's
+        # parallel steps exceed what it serves at once; a failover model then answers slowly or
+        # not at all. Requests beyond the limit wait here instead.
         try:
-            response = self._sdk().chat.completions.create(**kwargs)
+            with _slots():
+                response = self._sdk().chat.completions.create(**kwargs)
         except openai.APIError as exc:
             raise classify_error(exc) from exc
 

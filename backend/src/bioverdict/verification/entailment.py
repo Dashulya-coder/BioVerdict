@@ -23,6 +23,7 @@ from typing import Literal
 from pydantic import Field
 
 from bioverdict.contracts import LLM
+from bioverdict.llm.errors import LLMError
 from bioverdict.reasoning.prompts import boundary_tag
 from bioverdict.reasoning.schemas import _Draft
 from bioverdict.store.models import (
@@ -31,6 +32,8 @@ from bioverdict.store.models import (
     Claim,
     ClaimEvidenceLink,
     Direction,
+    Implication,
+    LLMResult,
     VerificationCheck,
 )
 
@@ -39,7 +42,7 @@ CHECK_NAME = "entailment"
 UNJUDGED = "entailment_unjudged"
 BATCH_CHARS = 9_000  # of items per request: the gateway takes about 16,000 with the schema
 MAX_QUOTE_SHOWN = 400
-MAX_PASSAGE_SHOWN = 600  # of the excerpt around the quote
+MAX_PASSAGE_SHOWN = 450  # of the excerpt around the quote
 MAX_WORKERS = 4
 
 # Only these claims lean on their quotes. A hypothesis or an unknown gains nothing from a link.
@@ -87,6 +90,23 @@ class Verified:
     removed: int = 0
     downgraded: list[str] = field(default_factory=list)
     models: list[str] = field(default_factory=list)  # who judged, for the run's log
+    context_links: int = 0  # links of context claims, left unjudged (see `decides`)
+    failed_batches: int = 0  # requests that failed: their links are left as they were
+
+
+def decides(claim: Claim) -> bool:
+    """Whether anything computed rests on the claim: a module's answer (a claim that speaks for
+    or against), the verdict (a key claim, a gate) or the translation chain.
+
+    A context claim ("the analog is taken orally") moves no number, and a run has a time limit:
+    its quotes are grounded by code like every quote, but the judge is not asked about them.
+    """
+    return bool(
+        claim.implication is not Implication.NEUTRAL
+        or claim.critical
+        or claim.gate_signals
+        or claim.chain_link is not None
+    )
 
 
 def _preamble(bundle: Bundle) -> str:
@@ -159,7 +179,7 @@ def verify_links(
     """
     by_id = {c.id: c for c in claims}
     evidence = bundle.evidence_by_id()
-    judged_links = [
+    citable = [
         link
         for link in links
         if link.direction is not Direction.NEUTRAL
@@ -168,14 +188,29 @@ def verify_links(
         and link.evidence_id in evidence
         and (only is None or (link.claim_id, link.evidence_id) in only)
     ]
+    # Links named in `only` (new evidence, an objection) are always judged: they are the change.
+    judged_links = [l for l in citable if only is not None or decides(by_id[l.claim_id])]
     out = Verified(links=list(links), claims=list(claims))
+    out.context_links = len(citable) - len(judged_links)
     if not judged_links:
         return out
 
     items = [_item(n, by_id[l.claim_id], l, bundle) for n, l in enumerate(judged_links, 1)]
     prompts = [judge_prompt(bundle, batch) for batch in _batches(items, BATCH_CHARS)]
+
+    def ask(prompt: str) -> LLMResult | None:
+        """One request. A failure costs its own links their judgement, not the whole check."""
+        try:
+            return llm.call(JUDGE_STEP, prompt, JudgeDraft)
+        except LLMError:
+            return None
+
     with ThreadPoolExecutor(max_workers=min(MAX_WORKERS, len(prompts))) as pool:
-        results = list(pool.map(lambda p: llm.call(JUDGE_STEP, p, JudgeDraft), prompts))
+        answers = list(pool.map(ask, prompts))
+    results = [answer for answer in answers if answer is not None]
+    out.failed_batches = len(answers) - len(results)
+    if not results:
+        raise LLMError(f"all {len(prompts)} request(s) to the judge failed")
     out.models = sorted({f"{r.provider}/{r.model}" for r in results})
 
     answered: dict[tuple[str, str], DraftJudgment] = {}

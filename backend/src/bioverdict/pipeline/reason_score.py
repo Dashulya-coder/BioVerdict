@@ -158,7 +158,9 @@ def verify_pass(
             "done",
             f"{found.judged} link(s) judged by {', '.join(found.models) or 'nobody'}, "
             f"{found.removed} not confirmed and removed, "
-            f"{len(found.downgraded)} claim(s) downgraded to hypothesis",
+            f"{len(found.downgraded)} claim(s) downgraded to hypothesis; "
+            f"{found.context_links} link(s) of context claims not judged, "
+            f"{found.failed_batches} request(s) failed",
         )
     if rules:
         save_checks(conn, run_id, rule_checks(claims))

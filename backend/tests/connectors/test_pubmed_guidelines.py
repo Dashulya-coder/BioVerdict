@@ -53,6 +53,25 @@ def test_the_search_is_for_guidelines_of_the_indication() -> None:
     assert build_term('bad"name[x]') == "bad name x AND (Practice Guideline[pt] OR Guideline[pt])"
 
 
+def test_the_first_search_is_for_treatment_guidelines_about_the_disease() -> None:
+    term = build_term("multiple sclerosis", focused=True)
+
+    assert term.startswith("multiple sclerosis[majr] AND (Practice Guideline[pt]")
+    assert "drug therapy[sh]" in term and "treatment[ti]" in term
+
+
+async def test_a_name_pubmed_cannot_map_falls_back_to_any_guideline(tmp_path: Path) -> None:
+    terms: list[str] = []
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        terms.append(request.url.params.get("term", ""))
+        return httpx.Response(200, json={"esearchresult": {"idlist": []}})
+
+    await connector(tmp_path, answer).fetch(query(), NOW.date())
+
+    assert len(terms) == 2 and "[majr]" in terms[0] and "[majr]" not in terms[1]
+
+
 class FakeNCBI:
     def __init__(self) -> None:
         self.requests: list[httpx.Request] = []
