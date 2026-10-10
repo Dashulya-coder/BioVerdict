@@ -231,5 +231,44 @@
         ]
       }
     ]
+  },
+  "skeptic": {
+    "objections": [
+      {
+        "claim_id": "C-0017",
+        "evidence_id": "E-0003",
+        "quote": "\"overallStatus\": \"ACTIVE_NOT_RECRUITING\"",
+        "objection": "The registry still lists the trial as active with no posted results, so the benefit over the approved inhibitors rests on a company press release alone."
+      }
+    ]
+  },
+  "chair": {
+    "questions": [
+      {
+        "text": "Is the exposure divarasib reaches in tumour tissue the exposure that worked in the laboratory? Ask the sponsor for tumour pharmacokinetics.",
+        "claim_id": "C-0014",
+        "answered_by": "proprietary_data"
+      },
+      {
+        "text": "Is KRAS G12C engaged in patients' tumours at the doses given? Ask for paired biopsies or circulating tumour DNA data.",
+        "claim_id": "C-0015",
+        "answered_by": "patient_level_data"
+      },
+      {
+        "text": "What are the hazard ratios and the overall survival in the Phase 3 trial? The press release gives no numbers.",
+        "claim_id": "C-0010",
+        "answered_by": "patient_level_data"
+      },
+      {
+        "text": "Has any other drug against KRAS failed in lung cancer for lack of efficacy? Ask a clinician who ran such trials.",
+        "claim_id": "C-0011",
+        "answered_by": "kol_interview"
+      },
+      {
+        "text": "Does human genetics say anything about losing KRAS function?",
+        "claim_id": "C-0003",
+        "answered_by": "experiment"
+      }
+    ]
   }
 }
