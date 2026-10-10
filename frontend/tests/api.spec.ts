@@ -113,6 +113,8 @@ interface Api {
   statuses?: string[]
   /** Paths the API accepts and never answers. */
   silent?: string[]
+  /** The model calls the trace of RUN lists. */
+  calls?: unknown[]
   /** The report the API serves for RUN; default: the fixture run's. */
   report?: unknown
 }
@@ -148,7 +150,18 @@ async function serve(page: Page, api: Api = {}) {
     }
     if (url.pathname === `/runs/${RUN}/trace`) {
       const events = traces.length > 1 ? traces.shift() : traces[0]
-      return json(route, { run_id: RUN, events, llm_calls: [], totals: {} })
+      const llm_calls = api.calls ?? []
+      const cost_usd = llm_calls.reduce<number>(
+        (sum, call) => sum + (call as { cost_usd: number }).cost_usd,
+        0,
+      )
+      const totals = { input_tokens: 0, output_tokens: 0, cost_usd, calls: llm_calls.length }
+      return json(route, {
+        run_id: RUN,
+        events: events?.map((event, seq) => ({ seq, ...event })),
+        llm_calls,
+        totals,
+      })
     }
     if (url.pathname === '/runs' && request.method() === 'GET')
       return json(route, [summary(RUN, '2026-10-07'), summary(OTHER, '2026-06-30')])
@@ -506,4 +519,42 @@ test('a report that is not ready or failed says so', async ({ page }) => {
   await openRun(page, 'divarasib')
   await page.getByRole('link', { name: 'Report' }).click()
   await expect(page.getByRole('alert')).toContainText('shape this workspace does not understand')
+})
+
+const call = {
+  step: 'reason.mechanism',
+  provider: 'openai',
+  model: 'gpt-x',
+  input_tokens: 1200,
+  output_tokens: 300,
+  cost_usd: 0.05,
+  latency_ms: 83000,
+  attempts: 2,
+  cache_hit: false,
+  failover_from: null,
+  error: null,
+}
+
+test('the trace screen shows the cost, the cost by step and every call', async ({ page }) => {
+  await serve(page, {
+    calls: [call, { ...call, step: 'reason.clinical', cost_usd: 0.1, failover_from: 'claude-y' }],
+  })
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Trace' }).click()
+  const cost = page.getByRole('region', { name: 'Cost of the run' })
+  await expect(cost.getByText('$0.15')).toBeVisible()
+  await expect(cost.getByText('Mixed models: 1 calls failed over')).toBeVisible()
+  const steps = page.getByRole('region', { name: 'Cost by step' })
+  await expect(steps.getByRole('row')).toHaveCount(3)
+  const calls = page.getByRole('region', { name: 'Every model call' })
+  await expect(calls.getByText('2 attempts')).toHaveCount(2)
+  await expect(calls.getByText('from claude-y')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Steps in order' })).toBeVisible()
+})
+
+test('the trace screen of a run with no model call says so', async ({ page }) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Trace' }).click()
+  await expect(page.getByText('This run has made no model call yet.')).toBeVisible()
 })

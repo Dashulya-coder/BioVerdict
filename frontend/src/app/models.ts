@@ -25,7 +25,7 @@ export interface PreparedAnalysis {
 export type RunSummary = Readonly<z.infer<typeof runSummarySchema>>
 export type AddedEvidence = z.infer<typeof addedEvidenceSchema>
 export type RunDiff = Readonly<z.infer<typeof diffSchema>>
-export type Screen = 'new' | 'resolved' | 'evidence' | 'sources' | 'compare' | 'report'
+export type Screen = 'new' | 'resolved' | 'evidence' | 'sources' | 'compare' | 'report' | 'trace'
 export type AnalysisState =
   | { kind: 'idle' }
   | { kind: 'loading'; progress: string }
