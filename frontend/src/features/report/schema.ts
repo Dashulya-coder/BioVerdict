@@ -113,6 +113,18 @@ export const reportSchema = z.object({
     z.object({ text: z.string(), answered_by: z.string(), value_of_information: z.number() }),
   ),
   theses: z.array(thesis).default([]),
+  sources: z
+    .array(
+      z.object({
+        id: z.string(),
+        source: z.string(),
+        url: z.string(),
+        published_at: z.string().nullable(),
+        level: z.string(),
+        claim_ids: z.array(z.string()),
+      }),
+    )
+    .default([]),
   bundle: z.object({
     evidence_count: z.number(),
     as_of: z.iso.date(),

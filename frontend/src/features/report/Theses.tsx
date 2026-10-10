@@ -1,16 +1,7 @@
 import { Badge } from '../../ui/Badge'
-import type { Report, Thesis } from './schema'
+import type { Report } from './schema'
 import { showClaim } from './showClaim'
-
-/** The parts of the underwriting report the brief names, in its order. */
-const titles: Record<Thesis['kind'], string> = {
-  scientific: 'Scientific thesis',
-  translation: 'Human translation thesis',
-  development_plan: 'Clinical development plan',
-  competitive: 'Competitive landscape',
-  commercial: 'Commercial opportunity',
-  investment: 'Investment underwriting',
-}
+import { thesisTitles } from './thesisTitles'
 
 /** The written theses: a model's synthesis over the claims, each sentence leading to its claims. */
 export function Theses({ report }: { report: Report }) {
@@ -32,10 +23,11 @@ export function Theses({ report }: { report: Report }) {
           {report.theses.map((thesis) => (
             <article
               key={thesis.kind}
-              aria-label={titles[thesis.kind]}
+              id={`thesis-${thesis.kind}`}
+              aria-label={thesisTitles[thesis.kind]}
               className="border border-rule bg-surface p-5"
             >
-              <h3 className="font-editorial text-lg">{titles[thesis.kind]}</h3>
+              <h3 className="font-editorial text-lg">{thesisTitles[thesis.kind]}</h3>
               <ul className="mt-3 space-y-3">
                 {thesis.sentences.map((sentence) => (
                   <li key={sentence.text} className="text-sm leading-6">

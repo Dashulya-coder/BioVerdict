@@ -2,11 +2,13 @@ import { Button } from '../../ui/Button'
 import { PageHeading } from '../../ui/PageHeading'
 import { navigate } from '../../app/useScreen'
 import { ClaimList } from './ClaimList'
+import { Contents } from './Contents'
 import { DiligenceQuestions } from './DiligenceQuestions'
 import { ExecutiveSummary } from './ExecutiveSummary'
 import { GateList } from './GateList'
 import { ModuleScorecard } from './ModuleScorecard'
 import { Tornado } from './Tornado'
+import { Sources } from './Sources'
 import { Theses } from './Theses'
 import { TranslationChain } from './TranslationChain'
 import { UnknownFacts } from './UnknownFacts'
@@ -59,6 +61,7 @@ function LoadedReport({ runId }: { runId: string }) {
     )
   return (
     <>
+      <Contents />
       <ExecutiveSummary report={state.report} />
       <Theses report={state.report} />
       <ModuleScorecard report={state.report} />
@@ -67,6 +70,7 @@ function LoadedReport({ runId }: { runId: string }) {
       <Tornado runId={runId} />
       <DiligenceQuestions report={state.report} />
       <UnknownFacts report={state.report} />
+      <Sources report={state.report} />
       <ClaimList report={state.report} />
     </>
   )

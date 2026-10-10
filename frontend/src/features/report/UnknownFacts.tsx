@@ -25,7 +25,7 @@ export function UnknownFacts({ report }: { report: Report }) {
   return (
     <section aria-labelledby="unknowns" className="mt-10">
       <h2 id="unknowns" className="font-editorial text-2xl">
-        What we do not know
+        Critical unknowns
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
         Public sources cannot answer these. Each names the diligence that could.

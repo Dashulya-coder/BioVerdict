@@ -192,7 +192,7 @@ and the Report says "No risk was ranked", as before.
 ### 3. What the API and the Report do
 
 `ExecutiveVerdict` gains `top_risk_claims` with the same meaning. The Report shows each risk with
-its claim ids as links to the claim in "Claims and their evidence" (opened), whose drill-down
+its claim ids as links to the claim in "All claims and their evidence" (opened), whose drill-down
 already goes on to the verbatim quote and the source link. A risk without claim ids (an old
 stored run) is shown as text, as now. `docs/scoring.md` ("Verdict mapping" and "What would change
 our mind") and the Report documentation are updated in the same PR as the code.
