@@ -42,9 +42,10 @@ from bioverdict.store.models import (
 JUDGE_STEP = "judge"
 CHECK_NAME = "entailment"
 UNJUDGED = "entailment_unjudged"
-# Of items per request. The answer is a line per item, so the batch holds about as many items as
-# the 9,000 of a 450-character passage did; an endpoint limit, if set, makes it smaller.
-BATCH_CHARS = 24_000
+# Of items per request; an endpoint limit, if set, makes it smaller. The answer is a line per item
+# plus hidden reasoning: at 24,000 a batch drew 3,367 of the 4,096 output tokens on
+# R-cf6f3be64e7b409f803f162134a0f174, too close to being cut off.
+BATCH_CHARS = 14_000
 MAX_QUOTE_SHOWN = 400
 # Of the excerpt around the quote. At 450 the judge removed quotes whose numbers lay just outside
 # the window (docs/eval.md, section 9); the gateway no longer limits the request to 16,000.

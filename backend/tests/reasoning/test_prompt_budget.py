@@ -136,16 +136,21 @@ class GatewayLike(FakeProvider):
 
 
 def test_every_module_call_fits_the_batch_size_for_a_large_bundle() -> None:
-    from bioverdict.llm.config import GATEWAY_BATCH_CHARS
+    from bioverdict.llm.config import GATEWAY_BATCH_CHARS, GATEWAY_CLINICAL_CHARS
 
     provider = GatewayLike('{"claims": []}', name="openai")
     config = LLMConfig.for_provider("openai")
     client = LLMClient(config, {"openai": provider})
     ModuleReasoner(client.bind("R-1"), "R-1").reason(big_bundle(150, 800))
-    assert len(ALL_MODULES) <= len(provider.requests) <= 3 * len(ALL_MODULES)
+    assert len(ALL_MODULES) <= len(provider.requests) <= 4 * len(ALL_MODULES)
     for request in provider.requests:
         # No endpoint limit: the step's own size, kept so that the answer fits the output limit.
-        assert provider.input_chars(request) + RETRY_RESERVE <= GATEWAY_BATCH_CHARS
+        size = (
+            GATEWAY_CLINICAL_CHARS
+            if "Clinical development" in request.prompt
+            else GATEWAY_BATCH_CHARS
+        )
+        assert provider.input_chars(request) + RETRY_RESERVE <= size
     assert ModuleDraft  # the schema the budget was computed for
 
 

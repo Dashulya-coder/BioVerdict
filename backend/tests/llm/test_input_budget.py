@@ -158,12 +158,20 @@ def test_the_gateway_preset_has_no_request_limit_and_the_environment_can_set_one
 
 
 def test_on_the_gateway_the_answer_bounds_the_prompt_of_a_module_not_of_the_chair() -> None:
-    from bioverdict.llm.config import GATEWAY_BATCH_CHARS, GATEWAY_SYNTHESIS_CHARS
+    from bioverdict.llm.config import (
+        GATEWAY_BATCH_CHARS,
+        GATEWAY_CLINICAL_CHARS,
+        GATEWAY_SKEPTIC_CHARS,
+        GATEWAY_SYNTHESIS_CHARS,
+    )
 
     config = LLMConfig.for_provider("openai")
-    for step in ("extraction", "reasoning.clinical", "reasoning.classify"):
+    for step in ("extraction", "reasoning.mechanism", "reasoning.classify"):
         assert config.step(step).prompt_chars == GATEWAY_BATCH_CHARS
+    assert config.step("reasoning.clinical").prompt_chars == GATEWAY_CLINICAL_CHARS
     assert config.step("chair").prompt_chars == GATEWAY_SYNTHESIS_CHARS
+    assert config.step("skeptic").prompt_chars == GATEWAY_SKEPTIC_CHARS
+    assert config.step("reasoning.clinical").models == config.step("reasoning.mechanism").models
     assert config.step("judge").prompt_chars is None  # it sizes its own batches
     assert all(s.prompt_chars is None for s in LLMConfig.for_provider("anthropic").steps.values())
 

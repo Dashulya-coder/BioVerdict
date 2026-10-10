@@ -35,7 +35,12 @@ GATEWAY_INPUT_CHARS: int | None = None
 # the 4,096 output tokens on the live run R-20261010-125211-cf5016, so a larger batch would be cut
 # off and retried short. Steps whose answer does not grow with the prompt get more room.
 GATEWAY_BATCH_CHARS = 16_000  # module, extraction and classification prompts
-GATEWAY_SYNTHESIS_CHARS = 60_000  # Skeptic and Chair: room for every claim of a run
+# The clinical module writes the most per item: on R-cf6f3be64e7b409f803f162134a0f174 one of its
+# 16,000-character batches was cut off at 4,096 tokens and retried short.
+GATEWAY_CLINICAL_CHARS = 12_000
+GATEWAY_SYNTHESIS_CHARS = 60_000  # the Chair: room for every claim of a run
+# The Skeptic answers from the evidence it reads: at 60,000 it wrote 3,881 of the 4,096 tokens.
+GATEWAY_SKEPTIC_CHARS = 30_000
 
 
 def _input_limit(default: int | None) -> int | None:
@@ -182,6 +187,12 @@ class LLMConfig(BaseModel):
                 models=[ASTRA, MINI], effort="high", max_tokens=GATEWAY_MAX_OUTPUT, timeout_s=240.0
             )
             config = cls._build(extraction, reasoning, synthesis, judge, dict(GATEWAY_PRICES))
+            config.steps["reasoning.clinical"] = reasoning.model_copy(
+                update={"prompt_chars": GATEWAY_CLINICAL_CHARS}
+            )
+            config.steps["skeptic"] = synthesis.model_copy(
+                update={"prompt_chars": GATEWAY_SKEPTIC_CHARS}
+            )
             config.max_input_chars = _input_limit(GATEWAY_INPUT_CHARS)
             return config
         raise ConfigError(f"unknown provider {provider!r}: use 'anthropic' or 'openai'")
