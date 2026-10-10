@@ -31,8 +31,9 @@ the API, and both Docker images build and serve a fixture run.
 **Whole runs with a real model have been made** (2026-10-10, #105): three for BTK inhibitor x
 multiple sclerosis on the organizers' gateway. The last took 5 min 7 s and $0.99: verdict
 Conditional, 72 citations judged and 13 removed, 8 ranked diligence questions. That is one
-question on one day: no other asset, no repeat for stability, and no recompute has been run
-with a real model. What the first run broke and #105 fixed is listed in that pull request.
+question on one day: no other asset and no repeat for stability. A recompute has been run
+with a real model only five times, in `classify` mode, in the sensitivity benchmark; `full`
+mode has not been run. What the first run broke and #105 fixed is listed in that pull request.
 **Nothing merged after the third run has been run with a real model**: the end of #105 and all
 of #107.
 
@@ -49,21 +50,96 @@ by code (`docs/scoring.md`, "Module answers"), the diff gives each module before
 the evidence that moved it, and `bioverdict sensitivity` checks strong, weak and noise documents
 against `eval/sensitivity.yaml`.
 
-**Open before the demo, in order:**
+**Done on 2026-10-10 (Dasha):** a live run of the pair on merged `main`, a base run with
+`--as-of 2024-06-30` and the sensitivity benchmark on it (3 of 5 passed; `docs/eval.md`,
+section 9). The five recomputes of that benchmark, in `classify` mode, are the only recomputes
+run with a real model: `full` mode has not been run. `RUN_TIMEOUT_S` is 900 in `.env` on
+Dasha's machine; check the `.env` of the demo machine (a copy of the old `.env.example` says
+420) and pre-warm the model cache.
 
-1. A live run for the pair on merged `main`, and one with `--as-of 2024-06-30` as the base for
-   time travel. The unmet-need prompt and the last judge changes of #105, and all of #107, were
-   made after the last live run and have been seen only in tests. Registry results are now
-   dated by their last update, so the earlier-cutoff run sees fewer of them: if too few, take a
-   later cutoff and move the `as_of` of the sensitivity cases with it.
-2. `bioverdict sensitivity` on that base: it has never been run with a real model. Its table
-   goes to `docs/eval.md`, section 9.
-3. Run time: the last two runs took 7 min 21 s and 5 min 7 s against `RUN_TIMEOUT_S=420`; the default is now 900. Check the `.env` of the demo machine (a copy of
-   the old `.env.example` says 420) and pre-warm the model cache.
-4. No patient count for multiple sclerosis in the connectors, so no market size and no rNPV for
-   the demo pair (A9).
-5. The same trial result is restated by the mechanism, translation and clinical modules and
-   counts in each; the two thresholds of a module's answer are uncalibrated.
+**Still open from before:** no patient count for multiple sclerosis in the connectors, so no
+market size and no rNPV for the demo pair (A9); the same trial result is restated by the
+mechanism, translation and clinical modules and counts in each; the two thresholds of a
+module's answer (0.2 and 0.25) are uncalibrated.
+
+### Final plan (set 2026-10-10)
+
+Made after a second live run of the pair (`R-20261010-125211-cf5016`, Conditional, $0.87) and a
+check of its report against the finals rubric (`demo-script.md`). Each item is tied to a
+module and a criterion (**A** conflicting evidence, **B** evidence flow, **C** quality for the
+pair), and its result has to be visible on screen. What that run showed: no evidence and no
+claim on liver injury, the EU authorisation of tolebrutinib (Cenrifki, 2026-06-19), FENtrepid
+or the fenebrutinib filing; no approved MS drug in any claim (the competition section
+restates trial results, and the commercial section holds FDA labels of analogs by target:
+lymphoma, CLL, alopecia, thrombocytopenia);
+only 39 of 156 evidence records cited, and 6 of the 11 registry trials cited by no claim,
+PERSEUS among them; the "top risks" are gate texts. The table of the reference set is in
+`docs/eval.md`, section 9.
+
+**Stage 0: now, no paid calls (Dasha).** Three pull requests: (a) documents, (b) her track,
+(c) the areas of A7 and A8, which Arsenii reviews.
+
+| # | What | Criterion / module | Done when | PR |
+|---|---|---|---|---|
+| 0.1 | Merge #112 (why the judge removed a quote) | B, all | in `main` | |
+| 0.2 | Fix "no approval yet" in `eval.md` and `cases.yaml`: EU authorisation 2026-06-19 (EMA); FDA complete response letter 2025-12-24 (Sanofi) | C | no fact without a primary source | a |
+| 0.3 | Top risks from unfavourable and key claims, with claim ids, not gate texts. `VerdictResult.top_risks` is `list[str]` in the shared `store/models.py`: an additive field first goes through a PR in `data-model.md` that both approve (`CONTRIBUTING.md`) | B, C / investment | each risk opens its claim and then its quote | b |
+| 0.4 | Mark links of context claims "not judged" (48 in the run) instead of "Source fact"; additive API field, Arsenii reviews | B, all | the screen does not show the unchecked as checked | b |
+| 0.5 | A `classify` recompute can attach a new claim to a chain link and replace an `unknown` (decision 7 of `handoff.md`) | A / translation | test: a document on exposure moves Human exposure from Missing to Weak. It will not by itself move the verdict: S2 and key claims below 0.7 also hold it at Conditional | c |
+| 0.6 | Sensitivity runner: one control recompute at the shared cutoff without a document; each case is compared with it, not with the base | A, all | the noise case passes under the strict rule, with no exception for drift | c |
+| 0.7 | Reference-set coverage table: source x in the bundle x cited by a claim, labelled "development set, written by us" | C | table in `eval.md`, section 9 | a |
+
+**Stage 1: in parallel from today, Arsenii (the longest path).** The note to him is in
+`handoff.md`: competitors by indication (approved MS drugs, not analogs by target) and fewer
+oncology analogs; regulatory status and class safety (liver injury, EU authorisation), which
+needs his decision on adding EMA to the source catalog; and the uncited evidence, which Dasha
+checks on the reasoning side. If collection is not ready, the reference documents enter
+through add-evidence on stage, which is also a demonstration of A.
+
+**Stage 2: before the mentor.** Stage 0 plus one slide: what the system knows about the pair,
+what it lacks (liver, EU authorisation, FENtrepid, PERSEUS without claims) and the plan, with
+the "before" numbers of 0.7.
+
+**Stage 3: after collection, paid runs (Dasha; Arsenii for 3.2).** Before any budget, measure the time and cost of one recompute: the
+base run and the five recomputes of 2026-10-10 are not in `backend/data/bioverdict.sqlite`
+and `eval/results/` does not exist on the machine checked.
+
+| # | What | For |
+|---|---|---|
+| 3.1 | A live run of the pair on the new collection | C, all modules; coverage "after" |
+| 3.2 | Joint decision on balance calibration (thresholds 0.2 and 0.25; count by trial or by claim), from 3.1 | stability of answers, A and C |
+| 3.3 | A base for sensitivity with a cutoff before the reference documents, and one control recompute | A |
+| 3.4 | One case per module (matrix below) | A, all six |
+| 3.5 | Stability: two fresh reasoning runs on one bundle (same bundle hash) | C; "same input, same verdict" |
+| 3.6 | One backtest with a clean date (`evobrutinib-2023-11`), noting that quote selection may draw on the model's memory | C, benchmark |
+
+| Module | A: the case | Note |
+|---|---|---|
+| Unmet need | PERSEUS (failure in PPMS) | |
+| Mechanism | the weak preprint, expecting almost no move | exists |
+| Translation | a document on human exposure: Missing to Weak | after 0.5 |
+| Clinical | tolebrutinib and evobrutinib cases | exist, pass |
+| Competitive | FENtrepid, or FDA acceptance of the fenebrutinib filing | after stage 1 |
+| Investment | a strong negative (stopped program, clinical hold) that reaches a hard gate; liver safety or the EU authorisation moves gates and PoS but not the label | K2 and K4 fire on keywords: negative controls first |
+| Controls | noise (KRAS), another population | |
+
+**Stage 4: the benchmark, human time only.** (4.1) Label 30 judge decisions (Dasha exports the
+table of removals). (4.2) One table: the sensitivity cases per module (strong, weak, noise and
+a control), reference-set coverage before and after, judge agreement, stability and one
+backtest; the method in two sentences; every dataset item named (PMID, NCT, URL).
+
+**Stage 5: the demo (UI 10 and delivery).** Record runs and keep their bundle hashes as the
+fallback (a run of six minutes does not fit on stage); 40 seconds per module: B (click to the
+source), A (before and after, with the cause), C (one sentence); check Report and Compare on
+the recorded run.
+
+**If time is short, the minimum is:** 0.1 to 0.4, 0.7, the note to Arsenii, the live run after
+collection (3.1), and A-cases for four of the six modules (clinical and mechanism already
+exist; take two of the other four).
+
+**Open, to decide with Arsenii:** balance calibration (3.2); whether to add EMA to the source
+catalog; approval of `Claim.implication`, which entered the shared contract without the
+two-step approval.
 
 The second audit is in [`finals-audit.md`](finals-audit.md): 17 findings with their status, a
 reference set of seven named BTK x MS sources, and a benchmark method. Its open findings
@@ -71,10 +147,10 @@ reference set of seven named BTK x MS sources, and a benchmark method. Its open 
 times, MS competitors missing from the analogs) are not in the list above; they are in
 [`handoff.md`](handoff.md) with the nine decisions the two of us have not made together.
 
-**Next for Dasha:** [`handoff.md`](handoff.md): items 1 and 2 (the paid runs), then what they
-show in her modules.
-**Next for Arsenii:** item 4 if an open source for prevalence is found; item 3; keeping the
-recorded runs, their bundle hashes and costs for the demo (A11).
+**Next for Dasha:** stage 0 of the final plan above, then what the runs show in her modules
+(`handoff.md`, section 2).
+**Next for Arsenii:** stage 1 (the note to him in `handoff.md`); item 4 if an open source for
+prevalence is found; keeping the recorded runs, their bundle hashes and costs for the demo (A11).
 
 ## What this plan satisfies
 
@@ -110,8 +186,8 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 | A4 | Extraction collect agents: quote + value into `Evidence`, section statuses, bounded tool loops | P0 | 4 | yes | [~] | Bounded, injected-tool collection with grounded quote/value extraction, cutoff/latest-wins, honest statuses, budget/deadline handling and collect → freeze DAG (#36). Live connectors and the Resolver registered and wired into the API/CLI run lifecycle (`pipeline/live_run.py`). Extraction prompts are sized by the endpoint's limit and a long section is read in batches (#73, #89). The unmet-need section reads the newest PubMed practice guidelines for the indication (`pubmed_guidelines`). | Measure live extraction quality, cost and time with a real model; the per-source caps and the batch limit make large sections `incomplete`. |
 | A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [~] | Fixture API/report/drill-down/trace/SSE (#31), CLI (#33) and shared Tailwind UI (#34) and the input/resolver/evidence screens on prepared data (#35) merged. `POST /runs` and the CLI start live runs with `USE_FIXTURES=0`. Resolver and whole-bundle endpoints; the input, resolver and evidence screens run on the API (`pnpm dev:api`), with the snapshot kept as an offline fallback. The header follows the run to its end (reasoning, verdict or failed), a reload or a `?run=` link reopens the run without starting another, and a request that is never answered ends with a message (#76). A run without a drug is labelled a class landscape and the resolved-input screen lists the drugs of experimental arms, each with its studies; choosing one pre-fills a new analysis. A reopened run keeps its indication and mechanism (#107). | Look at the screens on a live run with a real model. Choosing an asset starts a second whole run. |
 | A6 | Connectors: PubMed / Europe PMC and openFDA / Drugs@FDA | P1 | 4 |  | [~] | PubMed connector merged (#32); its answers are validated before they are cached. openFDA connector: approvals and current labels of approved analogs, in the competition section of a live run. Europe PMC connector: preprints, in the mechanism section. PubMed Central connector: Results and tables of open-access papers (CC BY, CC0), in the clinical section. | Check the openFDA, preprint and full-text records with a real model, and that the clinical section still fits its 90 seconds with a third source. |
-| A7 | Incremental recompute engine, add-evidence endpoint, diff API and diff screen | P1 | 5 | yes | [~] | Add-evidence endpoint that recomputes as a new run on the next bundle version: by default the model only places the new evidence on existing claims and code recomputes (`RECOMPUTE_MODE=classify`); `full` runs every reasoning module again. A code-computed diff API between two finished runs, which also lists a chain link whose confidence moved within one status (#72). Compare screen in the UI (API mode); it waits for the run to finish. The diff lists each of the six modules before and after, with the new evidence, quote and claim that moved it, and Compare shows it (#105). In classify mode a new claim with a failed citation, or with none, is rejected whole and logged; in full mode an analyst's document is shown to every module (before, no module read it) (#107). | Check a recompute with a real model, in both modes: none has been run. Classify mode cannot close a gap or fill a chain link. Strong / weak / noise cases are in `eval/sensitivity.yaml`, not yet run. |
-| A8 | Eval runner, grounding and citation metrics, leakage probe, cache pre-warm | P1 | 4 |  | [~] | `bioverdict eval` (cases file, repeats, grounding/coverage/stability/cost metrics, post-cutoff citation count, JSON and Markdown report) and `bioverdict warm` (retrieval cache and readiness table for an asset list). Grounding drops are written to `verification_log`. A repeat counts for stability only when all its reasoning calls were answered afresh, not served from the cache (#77). `bioverdict sensitivity`: adds documents to a finished run and checks from the code-computed diff which modules moved (#105). | Run `eval` on the real case set and the test-list assets, and `sensitivity` on a real base run: neither has been run with a real model. Closed-book leakage probe and bare-LLM baseline. |
+| A7 | Incremental recompute engine, add-evidence endpoint, diff API and diff screen | P1 | 5 | yes | [~] | Add-evidence endpoint that recomputes as a new run on the next bundle version: by default the model only places the new evidence on existing claims and code recomputes (`RECOMPUTE_MODE=classify`); `full` runs every reasoning module again. A code-computed diff API between two finished runs, which also lists a chain link whose confidence moved within one status (#72). Compare screen in the UI (API mode); it waits for the run to finish. The diff lists each of the six modules before and after, with the new evidence, quote and claim that moved it, and Compare shows it (#105). In classify mode a new claim with a failed citation, or with none, is rejected whole and logged; in full mode an analyst's document is shown to every module (before, no module read it) (#107). | Check a recompute in `full` mode with a real model (the five of the sensitivity benchmark were `classify`). Classify mode cannot close a gap or fill a chain link (final plan, 0.5). Strong / weak / noise cases in `eval/sensitivity.yaml`: 3 of 5 passed on 2026-10-10 (`eval.md`, section 9). |
+| A8 | Eval runner, grounding and citation metrics, leakage probe, cache pre-warm | P1 | 4 |  | [~] | `bioverdict eval` (cases file, repeats, grounding/coverage/stability/cost metrics, post-cutoff citation count, JSON and Markdown report) and `bioverdict warm` (retrieval cache and readiness table for an asset list). Grounding drops are written to `verification_log`. A repeat counts for stability only when all its reasoning calls were answered afresh, not served from the cache (#77). `bioverdict sensitivity`: adds documents to a finished run and checks from the code-computed diff which modules moved (#105). | Run `eval` on the real case set and the test-list assets, and `eval` has not been run with a real model; `sensitivity` was (3 of 5 passed, 2026-10-10). Closed-book leakage probe and bare-LLM baseline. |
 | A9 | Epidemiology and pricing connectors (SEER, GCO, CMS) and TAM numbers derived by code | P1 | 4 |  | [~] | Connectors for analog prices (Open Targets approved drugs + CMS Medicare Part D/B spending), cancer incidence (NCI State Cancer Profiles), prevalence (CDC, Orphanet) and US population (World Bank); `market/tam.py` computes patients, price and market size by code; `GET /runs/{id}/market`. Biomarker fraction for a point mutation named in the asset's registry records, counted in the MSK-IMPACT cohort (cBioPortal): lung, pancreas, colorectal. The response says that its ranges are low/middle/high bounds, not percentiles (#78). The market estimate feeds rNPV (B7). | Diseases without an open source (Alzheimer's, MS, MASH, ulcerative colitis, cardiovascular risk): the demo pair is one of them, so it has no market size and no rNPV; biomarkers that are not point mutations; stage and treated fractions; feed B6. |
 | A10 | Connectors: SEC EDGAR and Tavily | P2 | 3 |  | [~] | SEC EDGAR connector: the sponsor's newest 8-K/6-K filings and press-release exhibits, the paragraphs that name the asset, in the flags section of a live run. | Tavily was tried and not built: its results for a drug name were market-research promotions and unrelated news, the relevant releases came back without text, and without dates (2026-10-09). Sponsors whose registry name is not their SEC name; 10-K/20-F pipeline sections are not read. |
 | A11 | Ops: runbook upkeep, cost measurement from the trace table, model bake-off run, demo recordings | P2 | 3 |  | [~] | Runbook covers fixture and live runs, eval, warm and `bioverdict doctor` (setup, caches, fixtures and source reachability, no model call). Backend and frontend Docker images use the project runtimes, frozen lockfiles, non-root users and health checks; the runbook documents container startup and persistent data. `compose.yaml` starts both with one command, and CI builds the images and runs a fixture run through them. First measured live runs: $0.90 to $1.20 and 3 min 45 s to 7 min 21 s for BTK inhibitor x multiple sclerosis on the gateway, the judge about 60% of the cost (#105). | Measure other assets, cache hits and failover; run bake-off; record demos; `docs/cost.md` does not hold these numbers yet. |
@@ -206,7 +282,7 @@ calls of a run, are built.
 | M0 | Contracts, fixtures and fakes merged; both start parallel work | both | [~] Contracts, fakes, the Divarasib fixture, collection, API and CLI are merged. Open: HRO761 fixture, reason-side graph nodes, the second machine. |
 | M1 | `llm.call` works for one provider; extraction switches from `FakeLLM` to real | Dasha delivers, Arsenii switches | [~] The LLM layer has two adapters and extraction is wired to it in the live run; single requests to the gateway were probed, and every prompt is sized to the gateway's request and output limits. Whole runs were made on the gateway on 2026-10-10. Open: the Anthropic adapter has not carried a whole run. |
 | M2 | **Bundle handoff:** a real bundle for divarasib from real connectors passes the bundle contract test; reasoning runs on it | Arsenii delivers, Dasha consumes; short pairing session | [~] Live collection → frozen bundle → reasoning is integrated and merged. Real bundles exist for BTK inhibitor x multiple sclerosis (156 to 161 evidence items) and reasoning ran on them. Open: the divarasib bundle named here; the pairing session. |
-| M3 | **Walking skeleton:** one asset end to end (low quality is fine); both UIs show real data; recompute works at least as "re-run reason and score on bundle v2" | both | [~] One asset runs end to end on fixtures and, with a stand-in model, on real sources; the evidence UI runs on the API; the report screen shows the verdict, the chain and the claims with their quotes; recompute re-runs reasoning on bundle v2 and the diff screen shows it. A real-model run reaches a verdict with all steps completed. Open: a recompute with a real model; the screens looked at on a live run. |
+| M3 | **Walking skeleton:** one asset end to end (low quality is fine); both UIs show real data; recompute works at least as "re-run reason and score on bundle v2" | both | [~] One asset runs end to end on fixtures and, with a stand-in model, on real sources; the evidence UI runs on the API; the report screen shows the verdict, the chain and the claims with their quotes; recompute re-runs reasoning on bundle v2 and the diff screen shows it. A real-model run reaches a verdict with all steps completed. Open: a `full` recompute with a real model; the screens looked at on a live run (Report, Compare and Trace were, on 2026-10-10). |
 | M4 | Eval run, leakage probe, calibration of thresholds; fix the worst failures | both, joint | [~] The eval and sensitivity runners are merged; the worst failures of the first live run are fixed. Open: both runners on a real model, real cases (B10), closed-book leakage probe, baseline, calibration. |
 | M5 | Demo freeze, rehearsal, recorded runs | both | [ ] Freeze date, rehearsal and recorded runs outstanding. |
 
