@@ -27,7 +27,10 @@ Rules for every claim:
   character for character from that evidence's text (at least a full phrase). A quote that is
   not in the text is discarded together with your link. In a registry result record (it begins
   "Outcome measure (") quote the line that holds the value with its group, for example
-  "Drug A 10 mg: 0.53 (range 0.44 to 0.64)", not only the title of the measure.
+  "Drug A 10 mg: 0.53 (range 0.44 to 0.64)", not only the title of the measure. A claim that
+  compares groups needs the value of each: quote the groups' lines together (they stand one
+  under the other) or the line that begins "Analysis of"; one group's value alone is no
+  comparison.
 - direction is "supports" or "contradicts" that claim; use "neutral" only if the evidence is
   merely related. Look for contradicting evidence actively and report it.
 - basis "extracted": the claim is stated by a quote. "inferred": you conclude it from the
@@ -36,6 +39,8 @@ Rules for every claim:
   a gap with a guess; an honest unknown is a result.
 - Do not give numbers of your own (probabilities, market sizes, scores). Quote numbers that the
   evidence states.
+- Write at most 15 claims in this answer, the ones that matter most for the decision: a longer
+  answer is cut off and lost.
 - critical is true only for claims the investment decision hinges on (at most four).
 - implication: what the claim means for an investor if it is true. "favourable", "unfavourable"
   (a failed analog is unfavourable even if this program may differ) or "neutral" (context, and
@@ -103,8 +108,14 @@ def render_evidence(
     tag: str,
     max_chars: int = MAX_EVIDENCE_CHARS,
     excerpt_cap: int | None = None,
+    first: frozenset[str] = frozenset(),
 ) -> tuple[str, list[str]]:
-    """Evidence blocks in id order; if too long, the strongest items that fit, plus the omitted ids."""
+    """Evidence blocks in id order; if too long, the strongest items that fit, plus the omitted ids.
+
+    Items of the source families in `first` are kept before any other, whatever their level: a
+    module names what it cannot do without (the competition module the drugs approved for the
+    indication, which are registry records by level and would otherwise go last).
+    """
     blocks = {e.id: _block(e, tag, excerpt_cap) for e in evidence}
     separator = 2  # the blank line between two blocks
     omitted: list[str] = []
@@ -112,6 +123,7 @@ def render_evidence(
         priority = sorted(
             evidence,
             key=lambda e: (
+                e.source_family not in first,
                 _LEVEL_RANK[e.level],
                 _SOURCE_RANK[e.source_kind],
                 -(e.published_at.toordinal() if e.published_at else 0),
@@ -180,6 +192,7 @@ def build_prompt(
     pool: list[Evidence] | None = None,
     batch: int | None = None,
     question: str = "",
+    first: frozenset[str] = frozenset(),
 ) -> BuiltPrompt:
     """The prompt of one reasoning module.
 
@@ -196,12 +209,12 @@ def build_prompt(
     batch_note = _BATCH.format(number=batch) if batch is not None else ""
 
     if budget is None:
-        evidence, omitted = render_evidence(pool, tag, max_chars)
+        evidence, omitted = render_evidence(pool, tag, max_chars, first=first)
     else:
         sample = batch_note + _NOTE.format(count=999)
         fixed = wire_len(_assemble(instruction, bundle, "", sample, question))
         room = max(0, budget - fixed - RETRY_RESERVE)
-        evidence, omitted = render_evidence(pool, tag, room, excerpt_cap)
+        evidence, omitted = render_evidence(pool, tag, room, excerpt_cap, first)
     # What was left out of an earlier batch is read in a later one: only the last says "left out".
     note = batch_note + (_NOTE.format(count=len(omitted)) if omitted and batch is None else "")
     return BuiltPrompt(_assemble(instruction, bundle, evidence, note, question), omitted)
@@ -216,6 +229,7 @@ def build_prompts(
     excerpt_cap: int = DEFAULT_EXCERPT_CAP,
     max_batches: int = 1,
     question: str = "",
+    first: frozenset[str] = frozenset(),
 ) -> list[BuiltPrompt]:
     """One prompt, or up to `max_batches` that together carry the evidence one prompt cannot.
 
@@ -233,6 +247,7 @@ def build_prompts(
                 pool=pool,
                 excerpt_cap=excerpt_cap,
                 question=question,
+                first=first,
             )
         ]
     prompts: list[BuiltPrompt] = []
@@ -247,6 +262,7 @@ def build_prompts(
             excerpt_cap=excerpt_cap,
             batch=None if (last and not prompts) else number,
             question=question,
+            first=first,
         )
         prompts.append(built)
         if not built.omitted:
@@ -262,6 +278,7 @@ def build_prompts(
                 pool=pool,
                 excerpt_cap=excerpt_cap,
                 question=question,
+                first=first,
             )
         ]
     return prompts

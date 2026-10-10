@@ -75,17 +75,28 @@ The organizers give each team a key for an Azure-hosted, OpenAI-compatible gatew
   longer one was refused with `400 Input exceeds the conservative input limit`. It was gone on
   2026-10-10 (above). `LLM_MAX_INPUT_CHARS=16000` puts it back: the client then refuses a larger
   request before it is sent (`InputTooLargeError`, no cost).
-- **What sizes a prompt now is the answer.** A module batch of 16,000 characters drew up to
-  3,185 of the 4,096 output tokens on run `R-20261010-125211-cf5016`, so module, extraction and
-  classification prompts stay at 16,000 (`StepConfig.prompt_chars`, `GATEWAY_BATCH_CHARS`) and
-  more evidence means more batches, not larger ones. The Chair gets 60,000, room for every claim
-  of a run. The judge sizes its own batches (14,000 characters of items, a passage of up to 2,000
+- **What sizes a prompt now is the answer.** The answer grows with what the prompt holds, and
+  must stay under 4,096 tokens (`StepConfig.prompt_chars`): more evidence means more batches, not
+  larger ones. The Chair gets 60,000, room for every claim of a run. The judge sizes its own batches (14,000 characters of items, a passage of up to 2,000
   characters around each quote instead of 450). `LLMClient.input_budget` gives each step the
   smaller of its own size and the endpoint's limit.
 - **Sizes after the first run without the limit** (`R-cf6f3be64e7b409f803f162134a0f174`): a
   clinical batch of 16,000 was cut off at 4,096 tokens and retried short, so the clinical module
   gets 12,000 (and a module up to four batches instead of three); the Skeptic wrote 3,881 tokens
   from 60,000 and gets 30,000; the judge wrote 3,367 from 24,000 of items and gets 14,000.
+- **Sizes after the second run** (`R-e0a3a432b1a6486da63da74805af1a04`): a translation batch of
+  16,000 was cut off too, so every module and the classification of new evidence get 12,000
+  (`GATEWAY_MODULE_CHARS`, up to four batches); extraction keeps 16,000 (its answers stayed under
+  900 of 3,000 tokens). The Skeptic wrote 1,532 tokens from 30,000 and grounded 1 objection
+  (5 from 60,000), and gets 45,000. The judge's largest answer was 2,220 tokens.
+- **Sizes after the third run** (`R-15cc9a4bd8c142be915a0fa54c0497bc`): every batch repeats about
+  6,900 characters (rules, the module's task, the schema, a retry reserve), so a batch of 12,000
+  carried about 5,000 of evidence, and with four batches the modules left out 353 items (the
+  clinical module 79 of 109, 23 of them trial results; competition 81 of 108, 24 of them drugs
+  approved for the indication). Module batches are 16,000 again, a module reads up to eight, and
+  the rules cap an answer at 15 claims so that it is not cut off. When not everything fits, a
+  module's `first` families go first (`approved_for_indication` for competition, unmet need and
+  commercial). More batches mean a longer run: `RUN_TIMEOUT_S` defaults to 1500.
 - The adapter sends a schema without `title` and `description` (the `ModuleDraft` schema is 1.6
   thousand characters instead of 2.8).
 - Reasoning models spend hidden reasoning tokens inside `max_completion_tokens` (they are billed

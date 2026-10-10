@@ -371,7 +371,7 @@ def test_the_default_config_gives_reasoning_a_second_model_and_more_time() -> No
     cfg = LLMConfig.default()
     assert cfg.step("reasoning").models == [SONNET, OPUS]
     assert cfg.step("synthesis").timeout_s > cfg.step("extraction").timeout_s == 90.0
-    assert cfg.run_timeout_s == 900.0
+    assert cfg.run_timeout_s == 1500.0
 
 
 # --- an unusable answer is still paid for ------------------------------------------------
