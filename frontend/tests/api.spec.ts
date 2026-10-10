@@ -558,3 +558,13 @@ test('the trace screen of a run with no model call says so', async ({ page }) =>
   await page.getByRole('link', { name: 'Trace' }).click()
   await expect(page.getByText('This run has made no model call yet.')).toBeVisible()
 })
+
+test('the gates list shows which gate fired and the claims behind it', async ({ page }) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  const gates = page.getByRole('region', { name: 'Gates' })
+  await expect(gates.getByRole('listitem')).toHaveCount(11)
+  await expect(gates.getByText('Fired', { exact: true })).toHaveCount(1)
+  await expect(gates.getByText('Claims: C-0014, C-0015')).toBeVisible()
+})
