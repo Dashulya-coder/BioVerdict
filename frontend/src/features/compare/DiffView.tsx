@@ -1,5 +1,6 @@
 import { Badge } from '../../ui/Badge'
 import { formatDate } from '../../app/format'
+import { verdictLook } from '../../app/verdict'
 import type { RunDiff } from '../../app/models'
 import { ModuleChanges } from './ModuleChanges'
 
@@ -15,8 +16,8 @@ function EvidenceList({ title, items }: { title: string; items: readonly DiffEvi
   if (items.length === 0) return null
   return (
     <section aria-label={title}>
-      <h3 className="mb-3 text-sm font-medium">
-        {title} <span className="text-muted">({items.length})</span>
+      <h3 className="mb-3 text-xl font-semibold tracking-tight">
+        {title} <span className="text-base font-normal text-muted">({items.length})</span>
       </h3>
       <ul className="divide-y divide-rule border-y border-rule">
         {items.map((item) => (
@@ -43,6 +44,24 @@ function EvidenceList({ title, items }: { title: string; items: readonly DiffEvi
   )
 }
 
+function VerdictSide({ label, side }: { label: string; side: Side }) {
+  return (
+    <div className="relative min-w-0 flex-1 p-6 pl-7">
+      <span
+        aria-hidden="true"
+        className={`absolute inset-y-6 left-0 w-1 rounded-full ${verdictLook(side.verdict).fill}`}
+      />
+      <p className="text-sm text-muted">{label}</p>
+      <p className="font-editorial text-4xl leading-tight font-medium tracking-tight">
+        {side.verdict}
+      </p>
+      <p className="mt-2 text-xs leading-5 text-muted">
+        {String(side.evidence_count)} evidence items · cutoff {formatDate(side.as_of)}
+      </p>
+    </div>
+  )
+}
+
 export function DiffView({ diff }: { diff: RunDiff }) {
   const rows: [string, (side: Side) => string][] = [
     ['Verdict', (side) => side.verdict],
@@ -54,22 +73,31 @@ export function DiffView({ diff }: { diff: RunDiff }) {
     ['Run', (side) => side.run_id],
   ]
   return (
-    <div className="space-y-10">
+    <div className="space-y-12">
       <section aria-label="Before and after">
-        <p role="status" className="mb-4 text-sm">
-          {diff.verdict_changed
-            ? `The verdict changed: ${diff.base.verdict} → ${diff.head.verdict}.`
-            : `The verdict stayed ${diff.head.verdict}.`}
-        </p>
-        <div className="overflow-x-auto">
+        <div className="panel">
+          <div className="flex flex-wrap items-center">
+            <VerdictSide label="Before" side={diff.base} />
+            <span aria-hidden="true" className="px-2 text-2xl text-muted">
+              →
+            </span>
+            <VerdictSide label="After" side={diff.head} />
+          </div>
+          <p role="status" className="border-t border-rule px-6 py-3 text-sm">
+            {diff.verdict_changed
+              ? `The verdict changed: ${diff.base.verdict} → ${diff.head.verdict}.`
+              : `The verdict stayed ${diff.head.verdict}.`}
+          </p>
+        </div>
+        <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[480px] text-left text-sm">
             <thead className="text-xs text-muted">
-              <tr className="border-y border-rule">
-                <th scope="col" className="py-3 pr-4 font-normal" />
-                <th scope="col" className="py-3 pr-4 font-normal">
+              <tr className="border-b border-rule">
+                <th scope="col" className="py-2 pr-4 font-normal" />
+                <th scope="col" className="py-2 pr-4 font-normal">
                   Before
                 </th>
-                <th scope="col" className="py-3 font-normal">
+                <th scope="col" className="py-2 font-normal">
                   After
                 </th>
               </tr>
@@ -80,12 +108,12 @@ export function DiffView({ diff }: { diff: RunDiff }) {
                 const after = value(diff.head)
                 return (
                   <tr key={label}>
-                    <th scope="row" className="py-3 pr-4 text-xs font-normal text-muted">
+                    <th scope="row" className="py-2 pr-4 text-xs font-normal text-muted">
                       {label}
                     </th>
-                    <td className="py-3 pr-4 font-mono text-xs">{before}</td>
+                    <td className="py-2 pr-4 font-mono text-xs text-muted">{before}</td>
                     <td
-                      className={`py-3 font-mono text-xs ${before === after ? 'text-muted' : 'text-ink'}`}
+                      className={`py-2 font-mono text-xs ${before === after ? 'text-muted' : 'font-semibold text-ink'}`}
                     >
                       {after}
                     </td>
@@ -101,17 +129,17 @@ export function DiffView({ diff }: { diff: RunDiff }) {
 
       {diff.gates.length + diff.chain.length > 0 ? (
         <section aria-label="Gates and chain">
-          <h3 className="mb-3 text-sm font-medium">Gates and translation chain</h3>
-          <ul className="space-y-2 text-sm">
+          <h3 className="mb-3 text-xl font-semibold tracking-tight">Gates and translation chain</h3>
+          <ul className="divide-y divide-rule panel text-sm">
             {diff.gates.map((gate) => (
-              <li key={gate.gate_id}>
+              <li key={gate.gate_id} className="px-5 py-3">
                 Gate <span className="font-mono">{gate.gate_id}</span>:{' '}
                 {gate.fired_before ? 'fired' : 'not fired'} →{' '}
                 {gate.fired_after ? 'fired' : 'not fired'}
               </li>
             ))}
             {diff.chain.map((link) => (
-              <li key={link.link}>
+              <li key={link.link} className="px-5 py-3">
                 Chain link {words(link.link)}:{' '}
                 {link.status_before === link.status_after
                   ? link.status_after
@@ -127,8 +155,9 @@ export function DiffView({ diff }: { diff: RunDiff }) {
       <EvidenceList title="Evidence only in the earlier run" items={diff.evidence_removed} />
 
       <section aria-label="Claims">
-        <h3 className="mb-3 text-sm font-medium">
-          Claims <span className="text-muted">({diff.claims.length} differ)</span>
+        <h3 className="mb-3 text-xl font-semibold tracking-tight">
+          Claims{' '}
+          <span className="text-base font-normal text-muted">({diff.claims.length} differ)</span>
         </h3>
         <p className="mb-4 text-xs text-muted">
           {diff.unchanged_claims} claims are the same in both runs.

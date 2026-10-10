@@ -3,6 +3,8 @@ const fills = {
   positive: 'bg-positive',
   assumption: 'bg-assumption',
   danger: 'bg-danger',
+  ink: 'bg-ink',
+  muted: 'bg-control',
 } as const
 
 /** A share of a whole as a bar. Decorative: the number it shows is always written beside it. */
