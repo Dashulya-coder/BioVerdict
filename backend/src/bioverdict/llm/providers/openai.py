@@ -83,7 +83,10 @@ def classify_error(exc: Exception) -> Exception:
     return exc
 
 
-DEFAULT_CONCURRENCY = 4  # the gateway refused a fifth active request (measured 2026-10-10)
+# The gateway served 3 requests at once and refused the rest with 429 in four probes on 2026-10-10
+# (3 of 8, 3 of 4, 3 of 4, 3 of 3); an earlier run had seen a fifth refused. The key is the team's,
+# so a request of another process takes a slot too.
+DEFAULT_CONCURRENCY = 3
 _SLOTS: dict[int, threading.BoundedSemaphore] = {}
 _SLOTS_LOCK = threading.Lock()
 

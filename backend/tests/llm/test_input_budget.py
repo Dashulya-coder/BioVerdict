@@ -146,15 +146,51 @@ def test_the_bound_client_gives_the_same_budget() -> None:
 # --- configuration -------------------------------------------------------------------------------
 
 
-def test_the_gateway_preset_carries_the_measured_limit_and_the_environment_can_change_it(
+def test_the_gateway_preset_has_no_request_limit_and_the_environment_can_set_one(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    assert LLMConfig.for_provider("openai").max_input_chars == 16_000
+    assert LLMConfig.for_provider("openai").max_input_chars is None  # none since 2026-10-10
     assert LLMConfig.for_provider("anthropic").max_input_chars is None
-    monkeypatch.setenv("LLM_MAX_INPUT_CHARS", "50000")  # if the organizers raise it
-    assert LLMConfig.for_provider("openai").max_input_chars == 50_000
+    monkeypatch.setenv("LLM_MAX_INPUT_CHARS", "16000")  # if the organizers put it back
+    assert LLMConfig.for_provider("openai").max_input_chars == 16_000
     monkeypatch.setenv("LLM_MAX_INPUT_CHARS", "0")
     assert LLMConfig.for_provider("openai").max_input_chars is None
+
+
+def test_on_the_gateway_the_answer_bounds_the_prompt_of_a_module_not_of_the_chair() -> None:
+    from bioverdict.llm.config import GATEWAY_BATCH_CHARS, GATEWAY_SYNTHESIS_CHARS
+
+    config = LLMConfig.for_provider("openai")
+    for step in ("extraction", "reasoning.clinical", "reasoning.classify"):
+        assert config.step(step).prompt_chars == GATEWAY_BATCH_CHARS
+    assert config.step("chair").prompt_chars == GATEWAY_SYNTHESIS_CHARS
+    assert config.step("judge").prompt_chars is None  # it sizes its own batches
+    assert all(s.prompt_chars is None for s in LLMConfig.for_provider("anthropic").steps.values())
+
+
+def test_the_budget_is_the_smaller_of_the_step_size_and_the_endpoint_limit() -> None:
+    def budget(step_chars: int | None, limit: int | None) -> int | None:
+        config = LLMConfig(
+            steps={"s": StepConfig(models=[HAIKU], prompt_chars=step_chars)},
+            prices=dict(DEFAULT_PRICES),
+            max_input_chars=limit,
+        )
+        llm = LLMClient(config, {"anthropic": SizedFake(GOOD, name="anthropic")})
+        return llm.input_budget("s", Answer)
+
+    assert budget(None, None) is None
+    assert budget(2000, None) == 1960
+    assert budget(None, 1000) == 960
+    assert budget(2000, 1000) == 960 and budget(1000, 2000) == 960
+
+
+def test_a_step_size_alone_does_not_refuse_a_request() -> None:
+    """Only the endpoint's limit refuses; the step size is what prompts are built to."""
+    config = LLMConfig(
+        steps={"s": StepConfig(models=[HAIKU], prompt_chars=100)}, prices=dict(DEFAULT_PRICES)
+    )
+    llm = LLMClient(config, {"anthropic": SizedFake(GOOD, name="anthropic")})
+    assert llm.call("s", "x" * 500, Answer, run_id="R").parsed["score"] == 3
 
 
 def test_a_limit_that_is_not_a_number_is_a_configuration_error(

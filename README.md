@@ -116,8 +116,8 @@ Full operating procedures, including cache pre-warm and demo-day fallbacks: [`do
 | `LLM_PROVIDER` | `anthropic` or `openai` (the organizers' gateway). Unset: the one whose key is set |
 | `ANTHROPIC_API_KEY` | Key of Anthropic's own API (never commit) |
 | `TEAM_API_KEY`, `LLM_BASE_URL` | Key and base URL of the OpenAI-compatible gateway; `OPENAI_API_KEY` is used when `TEAM_API_KEY` is empty |
-| `LLM_MAX_INPUT_CHARS` | Largest request the gateway accepts, in characters; see [`docs/cost.md`](docs/cost.md) |
-| `LLM_MAX_CONCURRENCY` | Requests sent to the gateway at once (default 4); more wait their turn |
+| `LLM_MAX_INPUT_CHARS` | Largest request the gateway accepts, in characters (unset: no limit); see [`docs/cost.md`](docs/cost.md) |
+| `LLM_MAX_CONCURRENCY` | Requests sent to the gateway at once (default 3); more wait their turn |
 | `NCBI_API_KEY`, `OPENFDA_API_KEY` | Optional: higher request limits of PubMed and openFDA |
 | `SEC_USER_AGENT` | "Name email", the contact the SEC asks for; without it company filings are not read |
 | `RUN_BUDGET_USD`, `RUN_TIMEOUT_S` | Hard limits per run |

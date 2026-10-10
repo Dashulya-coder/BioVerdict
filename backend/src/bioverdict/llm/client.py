@@ -178,12 +178,14 @@ class LLMClient:
         self, step: str, schema: type[BaseModel], system: str | None = None
     ) -> int | None:
         """Characters left for the prompt of `step` after the response schema and the system
-        message, or None if the endpoint has no known limit. Callers size their prompts by it:
-        a request over the limit is refused before it is sent."""
-        limit = self._config.max_input_chars
-        if limit is None:
-            return None
+        message, or None if neither the step nor the endpoint sets a size. Callers size their
+        prompts by it: the smaller of the step's `prompt_chars` (so that the answer fits) and the
+        endpoint's limit (a request over it is refused before it is sent)."""
         cfg = self._config.step(step)
+        sizes = [s for s in (cfg.prompt_chars, self._config.max_input_chars) if s is not None]
+        if not sizes:
+            return None
+        limit = min(sizes)
         provider = self._providers[split_model_ref(cfg.models[0])[0]]
         if not isinstance(provider, SizedProvider):
             return limit

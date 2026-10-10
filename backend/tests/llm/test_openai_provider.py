@@ -160,3 +160,15 @@ def test_the_key_comes_from_the_team_variable_first(monkeypatch: pytest.MonkeyPa
     assert configured_key() == "second"
     monkeypatch.setenv("TEAM_API_KEY", "first")
     assert configured_key() == "first"
+
+
+def test_three_requests_go_to_the_gateway_at_once_unless_the_environment_says_otherwise(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The gateway refused a fourth active request with 429 in four probes (2026-10-10)."""
+    from bioverdict.llm.providers.openai import max_concurrency
+
+    monkeypatch.delenv("LLM_MAX_CONCURRENCY", raising=False)
+    assert max_concurrency() == 3
+    monkeypatch.setenv("LLM_MAX_CONCURRENCY", "2")
+    assert max_concurrency() == 2
