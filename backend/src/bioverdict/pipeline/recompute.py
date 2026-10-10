@@ -19,12 +19,12 @@ from bioverdict.llm.errors import ConfigError
 from bioverdict.pipeline.reason_score import (
     chair_pass,
     drop_checks,
-    indication_of,
     reason_and_score,
+    run_financials,
     verify_pass,
 )
 from bioverdict.reasoning.classify_evidence import classify_new_evidence
-from bioverdict.scoring.financials import financial_model, with_financials
+from bioverdict.scoring.financials import with_financials
 from bioverdict.scoring.verdict import rescore
 from bioverdict.store.as_of import is_visible_as_of
 from bioverdict.store.copy_run import copy_evidence_history
@@ -187,7 +187,7 @@ def classify_and_score(
     merged_claims, merged_links = verify_pass(
         conn, run_id, bundle, llm, merged_claims, merged_links, only=placed, rules=False
     )
-    fin = financial_model(bundle, indication_of(conn, run_id))
+    fin = run_financials(conn, run_id, bundle)
     scored, result = rescore(
         merged_claims,
         merged_links,

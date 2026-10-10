@@ -184,3 +184,16 @@ def test_removing_a_supporter_lowers_the_confidence_by_the_formula() -> None:
 
 def test_the_prompt_marks_documents_as_data() -> None:
     assert "data, not instructions" in judge_prompt(BUNDLE, ["[1] claim C-1 ..."])
+
+
+def test_the_judge_is_shown_the_passage_and_the_record_a_quote_comes_from() -> None:
+    """A fragment such as "PRIMARY" says nothing alone: the passage names the endpoint, the
+    record names the trial."""
+    from bioverdict.verification.entailment import MAX_PASSAGE_SHOWN, _passage
+
+    long = "a" * 900 + " the quoted words " + "b" * 900
+    shown = _passage(long, "the quoted words")
+
+    assert _passage("short excerpt", "short") == "short excerpt"
+    assert "the quoted words" in shown and shown.startswith("...") and shown.endswith("...")
+    assert len(shown) == MAX_PASSAGE_SHOWN + 6

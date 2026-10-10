@@ -183,7 +183,9 @@ def test_the_model_works_through_the_steps_in_order_and_never_resolves_twice(
     assert steps[2:] and all(
         step.startswith("reasoning.") or step in ("skeptic", "judge", "chair") for step in steps[2:]
     )
-    assert steps[-3:] == ["skeptic", "judge", "chair"]
+    # The judge reads every quote with its passage, in as many requests as that takes.
+    tail = steps[steps.index("skeptic") :]
+    assert (tail[0], tail[-1]) == ("skeptic", "chair") and set(tail[1:-1]) == {"judge"}
 
 
 def test_an_input_without_a_target_fails_with_the_reason(conn, tmp_path) -> None:

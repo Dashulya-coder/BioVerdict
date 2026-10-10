@@ -85,10 +85,17 @@ async def test_an_exact_name_ranks_as_a_name_match(tmp_path: Path) -> None:
     assert resolution.chosen is not None and resolution.chosen.kind is MatchKind.NAME
 
 
-@pytest.mark.parametrize("name", ["multiple sclerosis", "MSI-high solid tumors"])
 async def test_a_trait_that_merely_lists_the_name_is_not_taken_for_the_disease(
-    tmp_path: Path, name: str
+    tmp_path: Path,
 ) -> None:
-    """'multiple sclerosis symptom measurement' lists 'multiple sclerosis' as a synonym."""
-    resolution = await make_lookup(tmp_path).find_disease(name)
+    resolution = await make_lookup(tmp_path).find_disease("MSI-high solid tumors")
     assert resolution.chosen is None and resolution.candidates == ()
+
+
+async def test_a_term_that_holds_the_subtypes_of_the_disease_is_the_disease(tmp_path: Path) -> None:
+    """Open Targets files multiple sclerosis under 'multiple sclerosis symptom measurement':
+    the name is its synonym, and the relapsing and progressive forms are its children."""
+    resolution = await make_lookup(tmp_path).find_disease("multiple sclerosis")
+
+    assert resolution.chosen is not None
+    assert (resolution.chosen.id, resolution.chosen.kind) == ("EFO_0803536", MatchKind.SYNONYM)

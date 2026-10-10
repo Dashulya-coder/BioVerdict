@@ -3,8 +3,10 @@
 Grounding (`reasoning/grounding.py`) proves that a quote is in the evidence. It cannot tell
 whether the quote says what the claim says: a registry status next to an efficacy claim, a result
 from another drug, a population the claim does not mean. A second model reads each claim with each
-of its quotes and says what the quote does to it. The judge sees nothing but the claim, the quote
-and the name of its source: not the other quotes, not the reasoning that produced the claim.
+of its quotes and says what the quote does to it. The judge sees the claim, the quote, and the
+passage and record the quote was copied from (a quote alone, "PRIMARY" or "69% relative
+reduction", does not say which drug, trial or endpoint it is about): not the other quotes, not
+the reasoning that produced the claim.
 
 The judge only reports; code acts. A link whose direction the judge does not confirm is removed
 (and logged), so the confidence formula never counts it. A claim left with no supporting link is
@@ -37,6 +39,7 @@ CHECK_NAME = "entailment"
 UNJUDGED = "entailment_unjudged"
 BATCH_CHARS = 9_000  # of items per request: the gateway takes about 16,000 with the schema
 MAX_QUOTE_SHOWN = 400
+MAX_PASSAGE_SHOWN = 600  # of the excerpt around the quote
 MAX_WORKERS = 4
 
 # Only these claims lean on their quotes. A hypothesis or an unknown gains nothing from a link.
@@ -47,9 +50,9 @@ class DraftJudgment(_Draft):
     claim_id: str
     evidence_id: str
     relation: Literal["supports", "contradicts", "unrelated"] = Field(
-        description="What the quote, read on its own, does to the claim"
+        description="What the quote, read in its passage, does to the claim"
     )
-    reason: str = Field(description="At most 15 words")
+    reason: str = Field(description="At most 12 words")
 
 
 class JudgeDraft(_Draft):
@@ -57,16 +60,21 @@ class JudgeDraft(_Draft):
 
 
 _TASK = """\
-You are an independent verifier. A claim and the quotes cited for it are listed below. For each
-item, read the quote on its own and decide what it does to the claim.
-- "supports": the quote states the claim or directly implies it, about the same drug, population,
-  endpoint and setting that the claim names.
-- "contradicts": the quote states or directly implies the opposite.
+You are an independent verifier. A claim and the quotes cited for it are listed below. Each quote
+comes with the passage it was copied from and the record it belongs to (a trial id, an article).
+Use the passage and the record only to know what the quote is about: which drug, trial,
+population and endpoint. Then decide what the quote does to the claim.
+- "supports": the quote, read in its passage, states or directly implies the claim, or one of the
+  facts the claim asserts. A claim may rest on several quotes, each for a part of it; a quote
+  need not carry the whole claim. Ignore a cautious remark the claim adds ("this does not prove
+  ..."): judge its factual statement.
+- "contradicts": the quote states or directly implies the opposite of the claim.
 - "unrelated": anything else. That includes a quote about another drug or another population, a
-  trial's design, status or planned endpoint offered as a result, a general statement that merely
-  mentions the same topic, and a quote that supports a weaker or narrower statement than the claim.
-Be strict: a quote must say what the claim says. Do not use what you know from elsewhere, and do
-not guess how the claim was reached. Answer once for every item, naming its claim and evidence ids.
+  trial's design, status or planned endpoint offered as a result, and a general statement that
+  merely mentions the same topic.
+Be strict about the facts: same drug, same population, same endpoint, same direction. Do not use
+what you know from elsewhere, and do not guess how the claim was reached. Answer once for every
+item, naming its claim and evidence ids.
 """
 
 
@@ -89,17 +97,34 @@ def _preamble(bundle: Bundle) -> str:
     )
 
 
+def _passage(excerpt: str, quote: str) -> str:
+    """The excerpt, or the part of a long one that holds the quote."""
+    if len(excerpt) <= MAX_PASSAGE_SHOWN:
+        return excerpt
+    at = max(excerpt.find(quote), 0)
+    start = max(
+        0, min(at - (MAX_PASSAGE_SHOWN - len(quote)) // 2, len(excerpt) - MAX_PASSAGE_SHOWN)
+    )
+    start = max(start, 0)
+    cut = excerpt[start : start + MAX_PASSAGE_SHOWN]
+    return (
+        ("..." if start else "") + cut + ("..." if start + MAX_PASSAGE_SHOWN < len(excerpt) else "")
+    )
+
+
 def _item(number: int, claim: Claim, link: ClaimEvidenceLink, bundle: Bundle) -> str:
     evidence = bundle.evidence_by_id()[link.evidence_id]
     tag = boundary_tag(bundle)
     quote = (
         link.quote if len(link.quote) <= MAX_QUOTE_SHOWN else link.quote[:MAX_QUOTE_SHOWN] + "..."
     )
+    record = f", record {evidence.locator.value}" if evidence.locator else ""
     return (
         f"[{number}] claim {claim.id} ({claim.claim_type.value}): {claim.text}\n"
-        f"    evidence {link.evidence_id} ({evidence.source}, {evidence.level.value}), "
+        f"    evidence {link.evidence_id} ({evidence.source}{record}, {evidence.level.value}), "
         f"cited as: {link.direction.value}\n"
-        f"    <{tag}>{quote}</{tag}>"
+        f"    quote: <{tag}>{quote}</{tag}>\n"
+        f"    passage: <{tag}>{_passage(evidence.excerpt, link.quote)}</{tag}>"
     )
 
 

@@ -12,7 +12,7 @@ import re
 
 from bioverdict.contracts import LLM
 from bioverdict.resolver.lookup import DrugResolution, OpenTargetsLookup
-from bioverdict.resolver.names import normalize
+from bioverdict.resolver.names import MatchKind, normalize
 from bioverdict.resolver.parse import ParsedInput, parse_input
 from bioverdict.store.models import Asset, Indication, ResolverOutput, Target
 
@@ -129,8 +129,16 @@ class Resolver:
 
         chosen = resolution.chosen
         is_mondo = chosen.id.startswith("MONDO_")
+        name = chosen.name
+        if not is_mondo and chosen.kind is not MatchKind.NAME:
+            # The term is filed under another label; the typed name is what sources are searched by.
+            name = parsed.indication
+            assumptions.append(
+                f"indication {parsed.indication!r} is filed in Open Targets as {chosen.name!r} "
+                f"({chosen.id}), the parent term of the disease's subtypes; its evidence is used"
+            )
         return Indication(
-            name=chosen.name,
+            name=name,
             mondo_id=chosen.id if is_mondo else None,
             efo_id=None if is_mondo else chosen.id,
         )

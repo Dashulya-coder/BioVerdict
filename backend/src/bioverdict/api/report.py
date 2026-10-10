@@ -27,9 +27,8 @@ from bioverdict.api.schemas import (
     TraceTotals,
 )
 from bioverdict.market.tam import estimate_market
-from bioverdict.pipeline.reason_score import indication_of
+from bioverdict.pipeline.reason_score import run_financials
 from bioverdict.scoring.config import ConfidenceConfig, VerdictConfig
-from bioverdict.scoring.financials import financial_model
 from bioverdict.scoring.module_answers import ModuleResult, module_answers
 from bioverdict.scoring.verdict import chain_confidences
 from bioverdict.store.load_bundle import load_bundle
@@ -334,7 +333,7 @@ def build_financials(conn: sqlite3.Connection, run_id: str) -> FinancialsRespons
         bundle = load_bundle(conn, run_id)
     except LookupError as exc:
         raise RunNotReadyError(f"run {run_id} has no frozen bundle yet") from exc
-    fin = financial_model(bundle, indication_of(conn, run_id))
+    fin = run_financials(conn, run_id, bundle)
     _, links = load_claims(conn, run_id)
     by_id = bundle.evidence_by_id()
     rnpv = fin.rnpv
