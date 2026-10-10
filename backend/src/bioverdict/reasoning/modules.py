@@ -81,6 +81,36 @@ that shows both. Say what differentiation a new entrant would need.
   class matters even when the biology is sound.
 """
 
+_UNMET_NEED = """\
+Disease and unmet need. From the evidence only, establish: how serious the disease is for the
+patients (prognosis, survival, the course of the disease), what treats it today, and where those
+treatments fall short (response rates, durability, safety, who they do not reach).
+- The standard of care is what approved drugs and published trials in the evidence show. Describe
+  an approved drug only from its label or a trial in the evidence, and say when its results were
+  measured in a different population or against a different comparator.
+- "Unmet" means the evidence shows a shortfall of the current options, not only that the disease
+  is serious. A serious disease with an effective treatment is not an unmet need: say which.
+- Do not estimate how many patients there are or what the market is worth: code does that from
+  its own sources, and a number of yours would be discarded.
+- Guidelines and payers' views are rarely in the evidence. If the evidence does not say what the
+  guidelines recommend, or which patients are left without an option, write an `unknown` claim
+  for it with its diligence_type (usually kol_interview).
+"""
+
+_COMMERCIAL = """\
+Commercial opportunity. From the evidence only, describe what separates this asset from the
+approved analogs in ways a payer or a prescriber would notice (route, dosing, safety and boxed
+warnings, a biomarker-defined population, the line of therapy the labels cover), and how the sponsor
+describes its commercial plans, partners and the opportunity.
+- Prices, spending, patient numbers and market size are computed by code from its own sources and
+  are not shown to you. Do not write a claim about them and do not give a figure of your own.
+- A label describes an approved analog, not this asset: say so when you use one.
+- A sponsor's statements about its opportunity are the company speaking, not a measurement.
+- Pricing power, coverage and reimbursement, the launch plan and any partner are mostly not
+  public. If the evidence does not show one, write an `unknown` claim for it with its
+  diligence_type (kol_interview or proprietary_data) instead of reasoning from general knowledge.
+"""
+
 
 @dataclass(frozen=True)
 class ReasoningModule:
@@ -143,5 +173,26 @@ COMPETITION = ReasoningModule(
     families=frozenset({"registry", "target_database"}),
 )
 
-# Order of the plan: translation reads what mechanism and clinical established.
-ALL_MODULES = (MECHANISM, CLINICAL, COMPETITION, TRANSLATION)
+UNMET_NEED = ReasoningModule(
+    name="unmet_need",
+    section=Section.UNMET_NEED,
+    step="reasoning.unmet_need",
+    instruction=_UNMET_NEED,
+    claim_type=ClaimType.OTHER,
+    families=frozenset({"target_database", "literature", "regulatory_analog", "company"}),
+)
+# The market records that code reads for patients and prices (incidence, prevalence, population,
+# biomarker frequency, analog prices and spending) stay out of every prompt: the numbers are
+# code's. The model sees the labels of the analogs and what the sponsor says.
+COMMERCIAL = ReasoningModule(
+    name="commercial",
+    section=Section.COMMERCIAL,
+    step="reasoning.commercial",
+    instruction=_COMMERCIAL,
+    claim_type=ClaimType.OTHER,
+    families=frozenset({"regulatory_analog", "sec_filing", "company"}),
+)
+
+# Order of the plan: translation reads what mechanism and clinical established. The two modules
+# added last keep the ids of the claims before them.
+ALL_MODULES = (MECHANISM, CLINICAL, COMPETITION, TRANSLATION, UNMET_NEED, COMMERCIAL)

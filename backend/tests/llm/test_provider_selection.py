@@ -14,6 +14,8 @@ STEPS = {
     "reasoning.translation",
     "reasoning.clinical",
     "reasoning.competition",
+    "reasoning.unmet_need",
+    "reasoning.commercial",
     "reasoning.classify",
     "skeptic",
     "chair",

@@ -232,6 +232,64 @@
       }
     ]
   },
+  "reasoning.unmet_need": {
+    "claims": [
+      {
+        "text": "KRAS G12C non-small cell lung cancer is a serious disease: the mutation is common and associated with poor prognosis",
+        "claim_type": "other",
+        "basis": "extracted",
+        "links": [
+          {
+            "evidence_id": "E-0006",
+            "direction": "supports",
+            "quote": "associated with poor prognosis for patients"
+          }
+        ]
+      },
+      {
+        "text": "Approved KRAS G12C inhibitors extend progression-free survival over docetaxel by about two months in previously treated patients, which leaves room for a better option",
+        "claim_type": "other",
+        "basis": "inferred",
+        "links": [
+          {
+            "evidence_id": "E-0011",
+            "direction": "supports",
+            "quote": "median progression-free survival 5·6 months [95% CI 4·3-7·8] vs 4·5 months [3·0-5·7]"
+          },
+          {
+            "evidence_id": "E-0012",
+            "direction": "supports",
+            "quote": "median progression-free survival was 5·5 months (95% CI 4·5-6·7) with adagrasib and 3·8 months (95% CI 2·7-4·7) with docetaxel"
+          }
+        ]
+      },
+      {
+        "text": "What treatment guidelines recommend for first-line KRAS G12C lung cancer, and which patients are left without an option, is not in the evidence",
+        "claim_type": "other",
+        "basis": "unknown",
+        "diligence_type": "kol_interview",
+        "links": []
+      }
+    ]
+  },
+  "reasoning.commercial": {
+    "claims": [
+      {
+        "text": "How the sponsor plans to commercialise divarasib, and with which partner, is not in the evidence",
+        "claim_type": "other",
+        "basis": "unknown",
+        "diligence_type": "proprietary_data",
+        "links": []
+      },
+      {
+        "text": "Coverage and reimbursement for a KRAS G12C inhibitor, and whether divarasib would be priced above the approved ones, are not in the evidence",
+        "claim_type": "other",
+        "basis": "unknown",
+        "diligence_type": "kol_interview",
+        "links": []
+      }
+    ]
+  },
   "skeptic": {
     "objections": [
       {
