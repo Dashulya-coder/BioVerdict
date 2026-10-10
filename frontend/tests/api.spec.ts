@@ -580,6 +580,33 @@ test('a claim whose quotation the judge removed says so and why', async ({ page 
   await expect(page.getByText('read from the other sections')).toBeVisible()
 })
 
+test('a quotation the judge did not read is not shown as checked', async ({ page }) => {
+  const mixed = structuredClone(report) as unknown as {
+    sections: { section: string; claims: { text: string; links: { judged?: string }[] }[] }[]
+  }
+  const claims = mixed.sections.flatMap((s) => s.claims).filter((c) => c.links.length > 0)
+  const [read, context, silent] = claims
+  if (!read || !context || !silent) throw new Error('the fixture report needs three cited claims')
+  for (const link of read.links) link.judged = 'judged'
+  for (const link of context.links) link.judged = 'not_judged'
+  for (const link of silent.links) link.judged = 'no_answer'
+  await serve(page, { report: mixed })
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+
+  const row = (text: string) => page.locator('details', { hasText: text })
+  await expect(row(read.text).getByText('Quotes not judged')).toBeHidden()
+  await expect(row(context.text).getByText('Quotes not judged')).toBeVisible()
+  await expect(row(silent.text).getByText('Quotes not judged')).toBeVisible()
+
+  await page.getByText(context.text).click()
+  await expect(row(context.text).getByText('Not read by the judge').first()).toBeVisible()
+  await page.getByText(silent.text).click()
+  await expect(row(silent.text).getByText('The judge gave no answer').first()).toBeVisible()
+  await page.getByText(read.text).click()
+  await expect(row(read.text).getByText('Not read by the judge')).toBeHidden()
+})
+
 test('what is unknown is listed by the diligence that could answer it', async ({ page }) => {
   await serve(page)
   await openRun(page, 'divarasib')
