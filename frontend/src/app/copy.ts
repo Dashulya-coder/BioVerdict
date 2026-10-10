@@ -29,8 +29,10 @@ const demo = {
 const api: typeof demo = {
   preparing: 'Contacting the API.',
   loadFailed: 'The workspace could not complete the run. Reload this page to try again.',
-  intro: 'Start with a drug. The API runs it; review the resolved input, then the evidence.',
-  assetHint: 'A drug name or development code, for example Divarasib or GDC-6036.',
+  intro:
+    'Start with an indication and a mechanism. The API runs it; review the resolved input, then the evidence.',
+  assetHint:
+    'Optional: name a drug (for example Divarasib or GDC-6036) to analyse it instead of the class.',
   runBadge: 'API run',
   runNote: 'A live API reads public sources and calls a model; a fixture API does neither.',
   submit: 'Run analysis',
