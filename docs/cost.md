@@ -78,11 +78,16 @@ The organizers give each team a key for an Azure-hosted, OpenAI-compatible gatew
 - **What sizes a prompt now is the answer.** A module batch of 16,000 characters drew up to
   3,185 of the 4,096 output tokens on run `R-20261010-125211-cf5016`, so module, extraction and
   classification prompts stay at 16,000 (`StepConfig.prompt_chars`, `GATEWAY_BATCH_CHARS`) and
-  more evidence means more batches, not larger ones. The Skeptic and the Chair get 60,000, room
-  for every claim of a run. The judge sizes its own batches (24,000 characters of items, a
-  passage of up to 2,000 characters around each quote instead of 450).
-  `LLMClient.input_budget` gives each step the smaller of its own size and the endpoint's limit. The adapter sends a schema without `title` and
-  `description` (the `ModuleDraft` schema is 1.6 thousand characters instead of 2.8).
+  more evidence means more batches, not larger ones. The Chair gets 60,000, room for every claim
+  of a run. The judge sizes its own batches (14,000 characters of items, a passage of up to 2,000
+  characters around each quote instead of 450). `LLMClient.input_budget` gives each step the
+  smaller of its own size and the endpoint's limit.
+- **Sizes after the first run without the limit** (`R-cf6f3be64e7b409f803f162134a0f174`): a
+  clinical batch of 16,000 was cut off at 4,096 tokens and retried short, so the clinical module
+  gets 12,000 (and a module up to four batches instead of three); the Skeptic wrote 3,881 tokens
+  from 60,000 and gets 30,000; the judge wrote 3,367 from 24,000 of items and gets 14,000.
+- The adapter sends a schema without `title` and `description` (the `ModuleDraft` schema is 1.6
+  thousand characters instead of 2.8).
 - Reasoning models spend hidden reasoning tokens inside `max_completion_tokens` (they are billed
   as output), so the gateway preset keeps the limits tight (3,000 for extraction, 4,096 for
   reasoning and synthesis). **The gateway refuses `max_completion_tokens` above 4,096**
