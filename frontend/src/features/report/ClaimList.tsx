@@ -37,6 +37,15 @@ const checkNames: Record<string, string> = {
   claim_downgraded: 'The claim lost its support',
 }
 const directionLabels = { supports: 'Supports', contradicts: 'Contradicts', neutral: 'Neutral' }
+const unjudgedLabels = {
+  not_judged: 'Not read by the judge',
+  no_answer: 'The judge gave no answer',
+}
+
+/** A claim whose every quotation the judge left unread: grounded by code, not checked for meaning. */
+function unjudged(claim: ReportClaim): boolean {
+  return claim.links.length > 0 && claim.links.every((link) => link.judged !== 'judged')
+}
 
 function ClaimDetail({ claim }: { claim: ReportClaim }) {
   const parts = claim.confidence_parts
@@ -60,6 +69,9 @@ function ClaimDetail({ claim }: { claim: ReportClaim }) {
                 {formatDate(link.published_at)}
               </p>
               <blockquote className="mt-2 text-sm leading-6">“{link.quote}”</blockquote>
+              {link.judged === 'judged' ? null : (
+                <p className="mt-2 text-xs text-assumption">{unjudgedLabels[link.judged]}</p>
+              )}
               <a
                 href={link.url}
                 target="_blank"
@@ -117,6 +129,7 @@ export function ClaimRow({ claim }: { claim: ReportClaim }) {
             <span className="font-mono">{claim.id}</span>
             <span>{basisNames[claim.basis] ?? claim.basis}</span>
             {claim.critical ? <span className="text-ink">Key claim</span> : null}
+            {unjudged(claim) ? <span className="text-assumption">Quotes not judged</span> : null}
             {claim.flags.map((flag) => (
               <span key={flag}>{flag}</span>
             ))}

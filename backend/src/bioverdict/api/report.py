@@ -16,6 +16,7 @@ from bioverdict.api.schemas import (
     EvidenceView,
     ExecutiveVerdict,
     FinancialsResponse,
+    JudgedState,
     LinkView,
     LLMCallView,
     MarketResponse,
@@ -49,6 +50,7 @@ from bioverdict.store.models import (
 )
 from bioverdict.store.runs_repo import DONE, RunRecord, get_run, load_claims, load_events
 from bioverdict.store.verification_repo import load_checks
+from bioverdict.verification.entailment import CHECK_NAME, UNJUDGED
 
 
 class RunNotFoundError(LookupError):
@@ -103,7 +105,25 @@ def require_finished(conn: sqlite3.Connection, run_id: str) -> RunRecord:
     return record
 
 
-def _link_view(link: ClaimEvidenceLink, evidence: Evidence) -> LinkView:
+def _judged_states(checks: list[VerificationCheck]) -> dict[tuple[str, str], JudgedState]:
+    """What the judge did with each (claim, evidence) pair, read from the log it wrote.
+
+    The log is the record of who was asked: a link of a context claim (`decides`), a neutral
+    link or a link added outside a recompute's `only` has no entailment row at all.
+    """
+    states: dict[tuple[str, str], JudgedState] = {}
+    for check in checks:
+        if check.check_name not in (CHECK_NAME, UNJUDGED) or not check.detail:
+            continue
+        key = (check.claim_id, check.detail.split()[0].rstrip(":"))
+        if check.check_name == UNJUDGED:
+            states[key] = "no_answer"
+        else:
+            states.setdefault(key, "judged")
+    return states
+
+
+def _link_view(link: ClaimEvidenceLink, evidence: Evidence, judged: JudgedState) -> LinkView:
     return LinkView(
         evidence_id=evidence.id,
         direction=link.direction,
@@ -114,6 +134,7 @@ def _link_view(link: ClaimEvidenceLink, evidence: Evidence) -> LinkView:
         level=evidence.level,
         published_at=evidence.published_at,
         badge=_evidence_badge(evidence),
+        judged=judged,
     )
 
 
@@ -137,6 +158,7 @@ def _claim_view(
     links: list[ClaimEvidenceLink],
     evidence: dict[str, Evidence],
     checks: list[CheckView],
+    judged: dict[tuple[str, str], JudgedState],
 ) -> ClaimView:
     return ClaimView(
         id=claim.id,
@@ -156,7 +178,11 @@ def _claim_view(
         diligence_type=claim.diligence_type.value if claim.diligence_type else None,
         depends_on=claim.depends_on,
         links=[
-            _link_view(link, evidence[link.evidence_id])
+            _link_view(
+                link,
+                evidence[link.evidence_id],
+                judged.get((claim.id, link.evidence_id), "not_judged"),
+            )
             for link in links
             if link.claim_id == claim.id and link.evidence_id in evidence
         ],
@@ -250,8 +276,9 @@ def build_report(conn: sqlite3.Connection, run_id: str) -> ReportResponse:
     claims, links = load_claims(conn, run_id)
     evidence = bundle.evidence_by_id()
 
-    failed = _failed_checks(load_checks(conn, run_id))
-    claim_views = [_claim_view(c, links, evidence, failed.get(c.id, [])) for c in claims]
+    log = load_checks(conn, run_id)
+    failed, judged = _failed_checks(log), _judged_states(log)
+    claim_views = [_claim_view(c, links, evidence, failed.get(c.id, []), judged) for c in claims]
     cited = {link.evidence_id for link in links}
     sources = [evidence_view(e, links) for e in bundle.evidence if e.id in cited]
     result = record.result
@@ -293,9 +320,14 @@ def get_claim(conn: sqlite3.Connection, run_id: str, claim_id: str) -> ClaimView
     claim = next((c for c in claims if c.id == claim_id), None)
     if claim is None:
         raise ItemNotFoundError(f"claim {claim_id} is not in run {run_id}")
-    failed = _failed_checks(load_checks(conn, run_id))
+    log = load_checks(conn, run_id)
+    failed = _failed_checks(log)
     return _claim_view(
-        claim, links, load_bundle(conn, run_id).evidence_by_id(), failed.get(claim.id, [])
+        claim,
+        links,
+        load_bundle(conn, run_id).evidence_by_id(),
+        failed.get(claim.id, []),
+        _judged_states(log),
     )
 
 

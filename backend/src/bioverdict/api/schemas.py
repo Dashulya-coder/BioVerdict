@@ -81,6 +81,9 @@ class EvidenceView(_View):
     claim_ids: list[str] = Field(description="The claims that quote this evidence")
 
 
+JudgedState = Literal["judged", "not_judged", "no_answer"]
+
+
 class LinkView(_View):
     evidence_id: str
     direction: Direction
@@ -91,6 +94,11 @@ class LinkView(_View):
     level: EvidenceLevel
     published_at: date | None
     badge: Badge
+    judged: JudgedState = Field(
+        default="judged",
+        description="judged: the judge read this quote; not_judged: it was not asked (a context "
+        "claim, a neutral link); no_answer: it was asked and gave none",
+    )
 
 
 class CheckView(_View):
