@@ -197,7 +197,9 @@ def classify_and_score(
     )
     result = with_financials(result, fin)
     save_claims(conn, run_id, scored, merged_links, bundle.version)
-    save_checks(conn, run_id, [*drop_checks(found.drops, set()), *rule_checks(scored)])
+    save_checks(
+        conn, run_id, [*drop_checks(found.drops, found.rejected_claims), *rule_checks(scored)]
+    )
     add_event(
         conn,
         run_id,

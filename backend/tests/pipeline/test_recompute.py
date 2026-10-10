@@ -341,6 +341,26 @@ def test_a_new_fact_becomes_a_claim_numbered_after_the_existing_ones(conn) -> No
     )
 
 
+def test_recompute_logs_and_removes_a_new_claim_with_a_failed_citation(conn) -> None:
+    before, _ = load_claims(conn, "R-1")
+    fact = {
+        "text": "The model invented a finding",
+        "claim_type": "other",
+        "basis": "extracted",
+        "links": [link_to("unused", "supports", "words that are not there")],
+    }
+    # Draft links have no claim id: code assigns the new claim's id.
+    del fact["links"][0]["claim_id"]
+    assert classified(conn, {"new_claims": [fact]}) is not None
+    after, links = load_claims(conn, "R-2")
+    assert [c.text for c in after] == [c.text for c in before]
+    dropped = conn.execute(
+        "SELECT claim_id FROM verification_log WHERE run_id = 'R-2' AND check_name = 'claim_dropped'"
+    ).fetchall()
+    assert len(dropped) == 1
+    assert all(l.claim_id != dropped[0]["claim_id"] for l in links)
+
+
 def test_an_invented_quote_places_nothing_and_the_run_still_finishes(conn) -> None:
     before, _ = key_claim(conn)
 

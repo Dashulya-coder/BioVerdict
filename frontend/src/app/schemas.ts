@@ -20,6 +20,7 @@ export const demoInputSchema = inputSchema.refine(
 const evidenceFields = {
   id: z.string().regex(/^E-\d+$/),
   source: z.string().min(1),
+  source_family: z.string().default(''),
   source_kind: z.enum(sourceKinds),
   url: z.httpUrl(),
   excerpt: z.string().min(1),

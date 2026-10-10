@@ -59,26 +59,28 @@ FIELDS = (
     "StudyType|Phase|EnrollmentCount|EnrollmentType|"
     "DesignAllocation|DesignInterventionModel|DesignMasking|"
     "PrimaryOutcomeMeasure|PrimaryOutcomeDescription|PrimaryOutcomeTimeFrame|"
-    "LeadSponsorName|HasResults"
+    "LeadSponsorName|HasResults|"
+    "ArmGroupLabel|ArmGroupType|InterventionName|InterventionType|InterventionArmGroupLabel"
 )
 
 # Only what parse_results reads. The results of a study can run to 70 KB; this is under 5.
 RESULT_FIELDS = (
-    "NCTId|ResultsFirstPostDate|"
+    "NCTId|ResultsFirstPostDate|LastUpdatePostDate|"
     "OutcomeMeasureType|OutcomeMeasureTitle|OutcomeMeasureParamType|OutcomeMeasureDispersionType|"
     "OutcomeMeasureUnitOfMeasure|OutcomeMeasureTimeFrame|"
-    "OutcomeGroupTitle|OutcomeClassTitle|OutcomeCategoryTitle|"
-    "OutcomeMeasurementValue|OutcomeMeasurementLowerLimit|OutcomeMeasurementUpperLimit|"
+    "OutcomeGroupId|OutcomeGroupTitle|OutcomeClassTitle|OutcomeCategoryTitle|"
+    "OutcomeMeasurementGroupId|OutcomeMeasurementValue|OutcomeMeasurementLowerLimit|OutcomeMeasurementUpperLimit|"
     "OutcomeMeasurementSpread|"
     "OutcomeAnalysisStatisticalMethod|OutcomeAnalysisParamType|OutcomeAnalysisParamValue|"
     "OutcomeAnalysisCIPctValue|OutcomeAnalysisCILowerLimit|OutcomeAnalysisCIUpperLimit|"
-    "OutcomeAnalysisPValue"
+    "OutcomeAnalysisPValue|OutcomeAnalysisGroupId"
 )
 
 _STATUS_FIELDS = ("overallStatus", "whyStopped", "primaryCompletionDateStruct")
 _DESIGN_FIELDS = ("studyType", "phases", "designInfo", "enrollmentInfo")
-_MEASUREMENT_FIELDS = ("value", "lowerLimit", "upperLimit", "spread")
+_MEASUREMENT_FIELDS = ("groupId", "value", "lowerLimit", "upperLimit", "spread")
 _ANALYSIS_FIELDS = (
+    "groupIds",
     "statisticalMethod",
     "paramType",
     "paramValue",
@@ -152,6 +154,16 @@ def parse_study(study: dict, retrieved_at: datetime | None = None) -> list[Evide
     nct = protocol["identificationModule"]["nctId"]
     status = protocol.get("statusModule", {})
     design = protocol.get("designModule", {})
+    # Keep the intervention-to-arm mapping with the design. This identifies experimental
+    # drugs without inferring a name from a title or accidentally selecting a comparator.
+    design = {name: design[name] for name in _DESIGN_FIELDS if name in design}
+    arms = protocol.get("armsInterventionsModule", {})
+    for name, fields in (
+        ("armGroups", ("label", "type")),
+        ("interventions", ("name", "type", "armGroupLabels")),
+    ):
+        if arms.get(name):
+            design[name] = [{k: row[k] for k in fields if k in row} for row in arms[name]]
 
     first_posted = parse_ct_date(status.get("studyFirstPostDateStruct", {}).get("date"))
     last_updated = parse_ct_date(status.get("lastUpdatePostDateStruct", {}).get("date"))
@@ -202,7 +214,7 @@ def parse_study(study: dict, retrieved_at: datetime | None = None) -> list[Evide
         _evidence(
             nct,
             "design",
-            _fragment(design, _DESIGN_FIELDS),
+            json.dumps(design, ensure_ascii=False) if design else None,
             last_updated,
             record,
             sponsor,
@@ -240,7 +252,10 @@ def _outcome_fragment(measure: dict) -> dict:
         "dispersionType": measure.get("dispersionType"),
         "unitOfMeasure": measure.get("unitOfMeasure"),
         "timeFrame": measure.get("timeFrame"),
-        "groups": [group["title"] for group in measure.get("groups", []) if "title" in group],
+        "groups": [
+            {key: group[key] for key in ("id", "title") if key in group}
+            for group in measure.get("groups", [])
+        ],
         "classes": classes,
         "analyses": [
             {name: analysis[name] for name in _ANALYSIS_FIELDS if name in analysis}
@@ -262,6 +277,14 @@ def parse_results(
     nct = study["protocolSection"]["identificationModule"]["nctId"]
     status = results.get("protocolSection", {}).get("statusModule", {})
     posted = parse_ct_date(status.get("resultsFirstPostDateStruct", {}).get("date"))
+    search_status = study.get("protocolSection", {}).get("statusModule", {})
+    updated = parse_ct_date(status.get("lastUpdatePostDateStruct", {}).get("date"))
+    updated = updated or parse_ct_date(
+        search_status.get("lastUpdatePostDateStruct", {}).get("date")
+    )
+    # The API returns today's result text, including amendments. Its first posting date
+    # cannot establish that today's values were already public then.
+    posted = max(d for d in (posted, updated or retrieved_at.date()) if d is not None)
     measures = (
         results.get("resultsSection", {})
         .get("outcomeMeasuresModule", {})
@@ -340,6 +363,8 @@ class ClinicalTrialsConnector:
             token = body.get("nextPageToken")
             if not token:
                 return
+        if token:
+            self.problems.append(f"search truncated after {self._max_pages} page(s)")
 
     async def fetch(self, query: ResolverOutput, as_of: date) -> list[Evidence]:
         self.problems = []
@@ -355,6 +380,10 @@ class ClinicalTrialsConnector:
             evidence.extend(parse_study(study, retrieved_at=fetched_at))
 
         with_results = [nct for nct in sorted(found) if found[nct][0].get("hasResults")]
+        if len(with_results) > MAX_RESULT_STUDIES:
+            self.problems.append(
+                f"results of {len(with_results) - MAX_RESULT_STUDIES} study/studies omitted by limit"
+            )
         for nct in with_results[:MAX_RESULT_STUDIES]:
             try:
                 response = await self._http.get(
@@ -365,7 +394,13 @@ class ClinicalTrialsConnector:
                 self.problems.append(f"results of {nct} could not be read ({type(exc).__name__})")
                 continue
             study = found[nct][0]
-            evidence.extend(
-                parse_results(json.loads(response.body), study, retrieved_at=response.fetched_at)
+            result = json.loads(response.body)
+            measures = (
+                result.get("resultsSection", {})
+                .get("outcomeMeasuresModule", {})
+                .get("outcomeMeasures", [])
             )
+            if len(measures) > MAX_MEASURES:
+                self.problems.append(f"outcomes of {nct} truncated to {MAX_MEASURES} measures")
+            evidence.extend(parse_results(result, study, retrieved_at=response.fetched_at))
         return filter_as_of(evidence, as_of)

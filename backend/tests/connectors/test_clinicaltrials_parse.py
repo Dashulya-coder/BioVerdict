@@ -154,3 +154,23 @@ def test_placeholder_ids_are_unique_within_a_study() -> None:
 def test_sponsors_of_one_company_share_a_group() -> None:
     roche = {item.independence_group for study in DIVARASIB for item in parse_study(study, NOW)}
     assert roche == {"sponsor:Roche"}
+
+
+def test_design_keeps_experimental_drug_and_comparator_roles_verbatim() -> None:
+    study = json.loads(json.dumps(DIVARASIB[0]))
+    arms = {
+        "armGroups": [
+            {"label": "A", "type": "EXPERIMENTAL"},
+            {"label": "B", "type": "ACTIVE_COMPARATOR"},
+        ],
+        "interventions": [
+            {"name": "Synthetic candidate", "type": "DRUG", "armGroupLabels": ["A"]},
+            {"name": "Synthetic comparator", "type": "DRUG", "armGroupLabels": ["B"]},
+        ],
+    }
+    study["protocolSection"]["armsInterventionsModule"] = arms
+    [design] = by_part(parse_study(study, NOW), "design")
+    parsed = json.loads(design.excerpt)
+    assert parsed["armGroups"] == arms["armGroups"]
+    assert parsed["interventions"] == arms["interventions"]
+    assert design.level is EvidenceLevel.REGISTRY_RECORD

@@ -54,6 +54,11 @@ against `eval/sensitivity.yaml`.
 5. The same trial result is restated by the mechanism, translation and clinical modules and
    counts in each; the two thresholds of a module's answer are uncalibrated.
 
+A second audit of the same day is in [`finals-audit.md`](finals-audit.md): 17 findings with
+their status, a reference set of seven named BTK x MS sources, and a benchmark method. Its
+open findings (verification that keeps unanswered links, kill-criteria guards, counting one
+trial several times, MS competitors missing from the analogs) are not in the list above.
+
 **Next for Dasha:** items 1 and 2 (the paid runs), then what they show in her modules.
 **Next for Arsenii:** item 4 if an open source for prevalence is found; item 3; keeping the
 recorded runs, their bundle hashes and costs for the demo (A11).

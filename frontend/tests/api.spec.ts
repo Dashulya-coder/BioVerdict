@@ -145,6 +145,9 @@ const summary = (run_id: string, as_of: string) => ({
 })
 
 interface Api {
+  input?: Record<string, unknown>
+  resolver?: unknown
+  evidence?: unknown
   /** How the API answers a request to add evidence; default: it starts run GROWN. */
   grow?: { status: number; body: unknown }
   asked?: string[]
@@ -186,7 +189,12 @@ async function serve(page: Page, api: Api = {}) {
     if (url.pathname === `/runs/${RUN}`) {
       const status = statuses.length > 1 ? statuses.shift() : statuses[0]
       const verdict = status === 'done' ? 'Conditional' : null
-      return json(route, { ...summary(RUN, '2026-10-07'), status, verdict })
+      return json(route, {
+        ...summary(RUN, '2026-10-07'),
+        status,
+        verdict,
+        input: api.input ?? { asset: 'divarasib' },
+      })
     }
     if (url.pathname === '/runs' && request.method() === 'POST') {
       api.posted?.push(request.postDataJSON())
@@ -229,8 +237,8 @@ async function serve(page: Page, api: Api = {}) {
       })
     if (url.pathname === `/runs/${RUN}/report`) return json(route, api.report ?? report)
     if (url.pathname === `/runs/${GROWN}`) return json(route, summary(GROWN, '2026-10-08'))
-    if (url.pathname === `/runs/${RUN}/resolver`) return json(route, resolver)
-    if (url.pathname === `/runs/${RUN}/evidence`) return json(route, evidence)
+    if (url.pathname === `/runs/${RUN}/resolver`) return json(route, api.resolver ?? resolver)
+    if (url.pathname === `/runs/${RUN}/evidence`) return json(route, api.evidence ?? evidence)
     return json(route, { detail: `no such route: ${url.pathname}` }, 404)
   })
 }
@@ -756,4 +764,59 @@ test('each module gives its answer and opens onto its claims, quotes and sources
   await expect(
     scorecard.getByRole('link', { name: /Open the original source/ }).first(),
   ).toBeVisible()
+})
+
+test('a class landscape lists the drugs of experimental arms, and choosing one prepares its analysis', async ({
+  page,
+}) => {
+  const design = {
+    phases: ['PHASE3'],
+    armGroups: [
+      { label: 'Candidate arm', type: 'EXPERIMENTAL' },
+      { label: 'Control arm', type: 'ACTIVE_COMPARATOR' },
+    ],
+    interventions: [
+      { name: 'Synthetic candidate', type: 'DRUG', armGroupLabels: ['Candidate arm'] },
+      { name: 'Synthetic comparator', type: 'DRUG', armGroupLabels: ['Control arm'] },
+      { name: 'Placebo', type: 'DRUG', armGroupLabels: ['Candidate arm'] },
+    ],
+  }
+  const record = {
+    ...evidence[0],
+    id: 'E-0001',
+    source_family: 'registry',
+    url: 'https://clinicaltrials.gov/study/NCT00000001',
+    locator: { type: 'nct', value: 'NCT00000001' },
+    excerpt: JSON.stringify(design),
+  }
+  await serve(page, { evidence: [record] })
+  await page.goto('/')
+  await page.getByLabel('Asset / drug').fill('')
+  await page.getByLabel('Indication (optional)').fill('non-small cell lung cancer')
+  await page.getByLabel('Mechanism / target (optional)').fill('KRAS G12C inhibitor')
+  await page.getByRole('button', { name: 'Run analysis' }).click()
+
+  const choice = page.getByRole('region', { name: 'Choose an existing asset' })
+  await expect(choice.getByRole('link', { name: 'NCT00000001' })).toHaveAttribute(
+    'href',
+    'https://clinicaltrials.gov/study/NCT00000001',
+  )
+  // A comparator and a placebo are not candidates.
+  await expect(choice.getByText('Synthetic comparator')).toHaveCount(0)
+  await expect(choice.getByRole('button', { name: /^Select / })).toHaveCount(1)
+  await expect(page.getByText('Class landscape for')).toBeVisible()
+
+  await choice.getByRole('button', { name: 'Select Synthetic candidate' }).click()
+
+  await expect(page.getByLabel('Asset / drug')).toHaveValue('Synthetic candidate')
+  await expect(page.getByLabel('Indication (optional)')).toHaveValue('non-small cell lung cancer')
+  await expect(page.getByLabel('Mechanism / target (optional)')).toHaveValue('KRAS G12C inhibitor')
+})
+
+test('a reopened class run is a landscape, not a drug named after its run id', async ({ page }) => {
+  await serve(page, { input: { indication: 'multiple sclerosis', mechanism: 'BTK inhibitor' } })
+  await page.goto(`/?run=${RUN}#resolved`)
+
+  await expect(page.getByText('Class landscape — select an asset below')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Choose an existing asset' })).toBeVisible()
 })

@@ -4,6 +4,8 @@ import json
 from datetime import UTC, date, datetime
 from pathlib import Path
 
+import pytest
+
 from bioverdict.llm import FakeLLM
 from bioverdict.reasoning import ModuleReasoner
 from bioverdict.reasoning.classify_evidence import (
@@ -313,3 +315,45 @@ def test_new_claims_are_numbered_after_the_existing_ones_and_never_assert_a_gap_
     found, _ = classify(claims, links, [new], Classification(new_claims=[unknown]))
     assert [c.id for c in found.new_claims] == [f"C-{last + 1:04d}"]
     assert found.new_claims[0].basis is Basis.UNKNOWN and found.new_claims[0].gate_signals == []
+
+
+@pytest.mark.parametrize("valid_link", [False, True])
+def test_one_invented_citation_drops_the_whole_new_claim(valid_link) -> None:
+    claims, links, before = finished_run()
+    new = added(
+        "E-0101", "The study reports a safety finding.", EvidenceLevel.HUMAN_INTERVENTIONAL, "g"
+    )
+    citations = [{"evidence_id": new.id, "direction": "supports", "quote": "invented finding"}]
+    if valid_link:
+        citations.insert(0, {"evidence_id": new.id, "direction": "supports", "quote": new.excerpt})
+    draft = DraftClaim(
+        text="An unsupported safety conclusion",
+        claim_type=ClaimType.OTHER,
+        basis="extracted",
+        links=citations,
+    )
+    found, bundle = classify(claims, links, [new], Classification(new_claims=[draft]))
+    assert found.new_claims == [] and found.new_claim_links == []
+    assert len(found.rejected_claims) == 1
+    _, after = rescore(claims, links, bundle.evidence_by_id(), AS_OF)
+    assert after == before
+
+
+def test_an_inference_without_any_citation_is_not_added() -> None:
+    claims, links, _ = finished_run()
+    new = added("E-0101", "A note about the study.", EvidenceLevel.IN_VITRO, "g")
+    found, _ = classify(
+        claims,
+        links,
+        [new],
+        Classification(
+            new_claims=[
+                DraftClaim(
+                    text="A conclusion from model memory",
+                    claim_type=ClaimType.OTHER,
+                    basis="inferred",
+                )
+            ]
+        ),
+    )
+    assert found.new_claims == [] and len(found.rejected_claims) == 1

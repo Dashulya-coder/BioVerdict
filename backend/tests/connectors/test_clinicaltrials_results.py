@@ -44,7 +44,7 @@ def test_a_primary_result_keeps_the_values_the_registry_posted() -> None:
 
     fragment = json.loads(item.excerpt)
     assert (fragment["type"], fragment["title"]) == ("PRIMARY", "Progression-free Survival (PFS)")
-    assert fragment["groups"] == ["AMG 510", "Docetaxel"]
+    assert [g["title"] for g in fragment["groups"]] == ["AMG 510", "Docetaxel"]
     values = [m["value"] for m in fragment["classes"][0]["categories"][0]["measurements"]]
     assert values == ["5.62", "4.47"]
     assert fragment["analyses"][0]["paramValue"] == "0.663"
@@ -58,7 +58,7 @@ def test_a_result_is_human_evidence_dated_when_it_was_posted() -> None:
     [item] = parse_results(SOTORASIB, study("NCT04303780"), NOW)
 
     assert item.level is EvidenceLevel.HUMAN_INTERVENTIONAL
-    assert item.published_at == date(2023, 5, 10)
+    assert item.published_at == NOW.date()  # no revision date: current snapshot only
     assert item.url == "https://clinicaltrials.gov/study/NCT04303780"
     assert item.independence_group == "trial:NCT04303780"  # shared with the papers on this trial
 
@@ -66,6 +66,41 @@ def test_a_result_is_human_evidence_dated_when_it_was_posted() -> None:
 def test_a_result_can_be_replaced_by_an_amended_posting() -> None:
     [item] = parse_results(SOTORASIB, study("NCT04303780"), NOW)
     assert item.status_key == "nct:NCT04303780:result:primary:1"
+
+
+def test_amended_results_cannot_leak_through_the_first_posting_date() -> None:
+    from bioverdict.store.as_of import filter_as_of
+
+    result = json.loads(json.dumps(SOTORASIB))
+    result["protocolSection"]["statusModule"]["lastUpdatePostDateStruct"] = {"date": "2025-06-01"}
+    items = parse_results(result, study("NCT04303780"), NOW)
+    assert items[0].published_at == date(2025, 6, 1)
+    assert filter_as_of(items, date(2024, 1, 1)) == []
+    assert filter_as_of(items, date(2025, 6, 1)) == items
+
+
+def test_measurements_and_analyses_keep_their_arm_ids_when_order_differs() -> None:
+    result = json.loads(json.dumps(SOTORASIB))
+    measure = result["resultsSection"]["outcomeMeasuresModule"]["outcomeMeasures"][0]
+    measure["groups"] = [{"id": "G1", "title": "Synthetic drug"}, {"id": "G2", "title": "Control"}]
+    # The group order and the measurement order are deliberately different.
+    measure["classes"] = [
+        {
+            "categories": [
+                {"measurements": [{"groupId": "G2", "value": "4"}, {"groupId": "G1", "value": "6"}]}
+            ]
+        }
+    ]
+    measure["analyses"] = [{"groupIds": ["G2", "G1"], "pValue": "0.01"}]
+    [item] = parse_results(result, study("NCT04303780"), NOW)
+    fragment = json.loads(item.excerpt)
+    titles = {group["id"]: group["title"] for group in fragment["groups"]}
+    values = {
+        titles[m["groupId"]]: m["value"]
+        for m in fragment["classes"][0]["categories"][0]["measurements"]
+    }
+    assert values == {"Control": "4", "Synthetic drug": "6"}
+    assert fragment["analyses"][0]["groupIds"] == ["G2", "G1"]
 
 
 def test_primary_measures_come_first_and_the_number_is_capped() -> None:
@@ -173,9 +208,11 @@ async def test_no_more_results_are_read_than_the_limit(tmp_path: Path) -> None:
     many = [search_record(f"NCT{n:08d}", True) for n in range(MAX_RESULT_STUDIES + 5)]
     registry = Registry([{"studies": many}])
 
-    await make_connector(tmp_path, registry).fetch(query(), date(2026, 10, 7))
+    connector = make_connector(tmp_path, registry)
+    await connector.fetch(query(), date(2026, 10, 7))
 
     assert len(registry.results_asked()) == MAX_RESULT_STUDIES
+    assert any("5 study/studies omitted" in problem for problem in connector.problems)
 
 
 async def test_the_next_page_of_a_query_is_read(tmp_path: Path) -> None:
@@ -199,7 +236,9 @@ async def test_the_page_limit_is_respected(tmp_path: Path, pages: int) -> None:
     ]
     registry = Registry(many)
 
-    await make_connector(tmp_path, registry, max_pages=pages).fetch(query(), date(2026, 10, 7))
+    connector = make_connector(tmp_path, registry, max_pages=pages)
+    await connector.fetch(query(), date(2026, 10, 7))
+    assert any("search truncated" in problem for problem in connector.problems)
 
     plain = [r for r in registry.requests if "filter.overallStatus" not in str(r.url)]
     assert len(plain) == pages
