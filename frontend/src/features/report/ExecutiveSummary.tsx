@@ -40,7 +40,7 @@ export function ExecutiveSummary({ report }: { report: Report }) {
           </div>
         </dl>
       </div>
-      <dl className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
         <RangeStat
           label="Probability of success"
           range={executive.pos}
@@ -54,16 +54,22 @@ export function ExecutiveSummary({ report }: { report: Report }) {
           missing="Not computed: the market could not be sized. Invest needs it."
         />
         <RangeStat
+          label="Capital to next milestone"
+          range={executive.capital_to_milestone}
+          format={money}
+          missing="Not computed: the bundle names no clinical stage."
+        />
+        <RangeStat
           label="Capital to approval"
           range={executive.capital}
           format={money}
-          missing="Not computed."
+          missing="Not computed: the bundle names no clinical stage."
         />
         <RangeStat
           label="Time to next milestone"
           range={executive.months_to_milestone}
           format={months}
-          missing="Not computed."
+          missing="Not computed: the bundle names no clinical stage."
         />
       </dl>
       <div className="mt-8 grid gap-8 md:grid-cols-2">

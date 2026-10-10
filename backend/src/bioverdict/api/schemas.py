@@ -185,7 +185,12 @@ class ExecutiveVerdict(_View):
         description="Claim ids behind each top risk, same order; empty for an older stored run",
     )
     what_would_change_our_mind: list[str]
-    capital: Range | None = Field(description="USD, from the investment model once it exists")
+    capital: Range | None = Field(
+        description="USD of every remaining phase, to approval; needs a stage, not a market"
+    )
+    capital_to_milestone: Range | None = Field(
+        default=None, description="USD of the current phase, to its readout"
+    )
     months_to_milestone: Range | None
     pos: Range | None
     rnpv: Range | None
@@ -294,6 +299,9 @@ class FinancialsResponse(_View):
     pos: Range | None
     rnpv: Range | None
     capital_usd: Range | None = Field(description="Cost of all remaining phases, not risk-weighted")
+    capital_to_milestone_usd: Range | None = Field(
+        default=None, description="Cost of the current phase: to reach its readout"
+    )
     months_to_milestone: Range | None
     probability_positive: float | None
     tornado: list[TornadoBar]

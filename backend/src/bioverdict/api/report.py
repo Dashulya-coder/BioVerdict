@@ -292,6 +292,7 @@ def build_report(conn: sqlite3.Connection, run_id: str) -> ReportResponse:
             top_risk_claims=result.top_risk_claims,
             what_would_change_our_mind=result.what_would_change_our_mind,
             capital=result.capital,
+            capital_to_milestone=result.capital_to_milestone,
             months_to_milestone=result.months_to_milestone,
             pos=result.pos,
             rnpv=result.rnpv,
@@ -402,8 +403,9 @@ def build_financials(conn: sqlite3.Connection, run_id: str) -> FinancialsRespons
         area=fin.area,
         pos=fin.pos.pos if fin.pos else None,
         rnpv=rnpv.rnpv if rnpv else None,
-        capital_usd=rnpv.capital if rnpv else None,
-        months_to_milestone=rnpv.months_to_milestone if rnpv else None,
+        capital_usd=fin.plan.capital if fin.plan else None,
+        capital_to_milestone_usd=fin.plan.capital_to_milestone if fin.plan else None,
+        months_to_milestone=fin.plan.months_to_milestone if fin.plan else None,
         probability_positive=rnpv.probability_positive if rnpv else None,
         tornado=[TornadoBar(input=n, at_low=lo, at_high=hi) for n, lo, hi in rnpv.tornado]
         if rnpv

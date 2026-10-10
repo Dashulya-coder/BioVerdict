@@ -197,6 +197,13 @@ above zero. Set the flag only together with sourced inputs in `RnpvConfig`.
 
 Output: a range of capital and time to the next value inflection point (for example a Phase 2 readout). Report which assumptions dominate.
 
+Implemented as `development_plan` (`scoring/rnpv.py`): from the stage alone, so a disease whose market
+cannot be sized still has them. Three ranges (P10/P50/P90), all placeholders that say so in the
+assumptions: capital to the next milestone (the cost of the current phase, up to its readout), time to
+that milestone (the length of the current phase), and capital to approval (every remaining phase, not
+risk-weighted). The first two describe the same milestone; the third is the whole road. The power
+calculation above is not implemented: the phase costs are fixed defaults, not N x cost per patient.
+
 ## Module answers
 
 The report is read as six modules: disease and unmet need, mechanism and biological validation,
