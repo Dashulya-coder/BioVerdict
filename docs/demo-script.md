@@ -1,8 +1,59 @@
 # Final demo script
 
-Goal: show `Indication + Mechanism -> Evidence -> Underwriting -> Recommendation`, and at least one case where new or contradictory evidence changes the conclusion, as an architectural property that judges can test themselves.
+The finals score six modules, 15 points each, plus 10 for UI and usability:
 
-Total target: TODO minutes (confirm with organizers).
+| Criterion | What the judges must see | Where it is on screen |
+|---|---|---|
+| A. Conflicting evidence (5) | the module changes its answer on new or contradictory data, and names the evidence that caused it | **Compare**, "Module by module": answer and balance before and after, and under each module the quote, the claim it was placed on and what it did to that claim |
+| B. Evidence flow (5) | Recommendation -> Claims -> Evidence -> Sources | **Report**, "Six modules, six answers": open a module, open a claim, read the verbatim quote, follow the source link |
+| C. Quality (5) | what the system produces for the announced pair, and how it was benchmarked | the live report for the pair; the sensitivity benchmark table with its method and named items ([eval](eval.md), section 8) |
+
+The pair for every team: **BTK inhibitor x multiple sclerosis**. The presentation and the answers
+are in English.
+
+## The six modules and where each gets its points
+
+Every module has the same three moves; rehearse them per module, about 40 seconds each.
+
+| Module | B: open this | A: the change to show | C: what to say about quality |
+|---|---|---|---|
+| Disease and unmet need | its card: answer, then a claim from a treatment guideline with its quote | time-travel diff: the module before and after the later publications | what the guidelines in the bundle say; what is an honest `unknown` |
+| Mechanism and biological validation | its card: the Open Targets association and the trial results cited as pharmacological evidence; the genetics gap as `unknown` | sensitivity case `weak-microglia-preprint`: the balance moves a little, the answer holds | laboratory evidence weighs little by rule (level weights), not by a model's mood |
+| Preclinical to human translation | the chain: five links, each `supported`, `weak` or `missing`, with claims | a link that changes status or confidence in the diff | a missing link is a finding and caps the verdict (gate S1) |
+| Clinical development | its card: trial results with NCT ids and posted numbers | sensitivity cases `strong-tolebrutinib-not-superior` and `strong-fenebrutinib-lesions`: opposite directions, each naming its PMID | results are quoted from the registry and PubMed, never from memory |
+| Competitive and commercial | its card: class competitors by phase, approved analogs and their labels | time-travel diff, or a new competitor record added | market size is code's, from sources; for MS it is reported as missing, not guessed |
+| Investment underwriting | its card: the verdict, the gates that fired with their claims, PoS with its benchmark source | Compare: verdict and gates before and after, and the evidence on the key claims | the verdict is a rule over gates and numbers; say which condition holds it at Conditional |
+
+Then the noise case (`noise-kras-lung-release`): a document about another disease moves nothing.
+That is the third thing criterion A asks for implicitly: change for the right reason only.
+
+## Order on stage (target about 7 minutes; confirm with organizers)
+
+1. **Input (20 s).** Type `multiple sclerosis` and `BTK inhibitor`. Show the resolved target, and
+   the assumption the Resolver states about how Open Targets files the disease.
+2. **Report, top down (90 s).** Executive verdict, then "Six modules, six answers". Read the six
+   answers aloud once.
+3. **Evidence flow (90 s).** Open two modules of the judges' choice down to a quote and its
+   source. Say: the answer is computed by code from these claims.
+4. **Conflicting evidence, time travel (60 s).** Compare the run with the earlier-cutoff run.
+   Read "Module by module": which moved, which did not, and the evidence under each.
+5. **Conflicting evidence, live (90 s).** Paste one strong sentence from `eval/sensitivity.yaml`
+   (or a judge's document) into Compare. Show the module that moved, the quote and the claim.
+   Then the noise document: nothing moves.
+6. **Benchmark (40 s).** The sensitivity table: method in two sentences, the five named items,
+   pass or fail for each.
+7. **Trace and cost (20 s).** Time, cost, models, what code dropped.
+
+## What is not ready (2026-10-10): do before the demo
+
+- [ ] One live run for the pair after the last fixes, kept with its bundle hash; and one with
+      `--as-of 2024-06-30` as the base for time travel and the benchmark (Dasha, paid).
+- [ ] `bioverdict sensitivity` on that base; paste the table into [eval](eval.md), section 9.
+      It has never been run with a real model: if a case fails, show it as failed.
+- [ ] `RUN_TIMEOUT_S`: a run for this pair took 4 to 7 minutes on the gateway; the default 420
+      seconds cut the Chair off once. Raise it for the demo machine and pre-warm the model cache.
+- [ ] rNPV for multiple sclerosis is not computed (no open prevalence source in the connectors).
+      Say so; do not present a market number.
 
 ## Who presents what
 
@@ -22,7 +73,7 @@ Swap if it fits better; rehearse the hand-overs.
 - [ ] Trace panel shows tokens and cost.
 - [ ] Verify every date, number and URL below against the primary source on the day.
 
-## Flow
+## Earlier flow (oncology assets; kept for the candidate events below)
 
 1. **Input (30 s).** Enter an indication + mechanism, then a drug name, then a company code. The Resolver shows IDs and its `assumptions`.
 2. **Report (60 s).** Executive verdict first: verdict, confidence, top 3 risks, capital and time range, "What would change our mind".

@@ -112,7 +112,46 @@ runs; no model judges a report.
 `uv run bioverdict warm --list <file>` fills the retrieval cache for a list of assets and prints
 which ids were confirmed and how much each source returned (see the [runbook](runbook.md)).
 
-## 8. Results
+## 8. Sensitivity benchmark (finals criterion A, per module)
+
+**Question.** Does a module change its answer when it receives new or contradictory evidence,
+does it name that evidence, and does it stay put for evidence that is weak or unrelated?
+
+**Method.** A base run is made with an earlier cutoff, so that later publications are absent.
+Each case then adds one document through the same path as the API's add-evidence route: the
+model only places the document on existing claims (or writes a new fact), code grounds the
+quote, recomputes every confidence and every module answer, and the diff is computed by code.
+The runner (`bioverdict sensitivity`, `eval/sensitivity.py`) reads only that diff:
+
+| Kind | Passes when |
+|---|---|
+| strong | the named module's balance moves in the expected direction and the document is listed among its causes |
+| weak | the same, and the answer and the verdict do not change and the balance moves by at most 0.15 |
+| noise | the document is placed on no claim and no answer or verdict changes |
+
+No model grades a result. The expected direction of each case is what a reader of the sentence
+would expect, recorded before the run.
+
+**Dataset items** (`eval/sensitivity.yaml`; verbatim sentences of public records the connectors
+retrieved on 2026-10-10, for BTK inhibitor x multiple sclerosis):
+
+| Case | Kind | Item | Expected |
+|---|---|---|---|
+| strong-tolebrutinib-not-superior | strong | PMID 40202623, tolebrutinib vs teriflunomide in relapsing MS | clinical development down |
+| strong-evobrutinib-not-superior | strong | PMID 39307151, evobrutinib vs teriflunomide in relapsing MS | clinical development down |
+| strong-fenebrutinib-lesions | strong | PMID 40683275, fenebrutinib vs placebo, new T1 Gd+ lesions | clinical development up |
+| weak-microglia-preprint | weak | bioRxiv doi 10.64898/2026.08.25.747169, laboratory work on microglia | mechanism up, a little |
+| noise-kras-lung-release | noise | Roche release of 2026-07-02 on divarasib in lung cancer | nothing moves |
+
+**State.** The runner and its tests (with a stand-in model) are merged. **It has not been run
+with a real model**: the commands are at the top of `eval/sensitivity.yaml`, and the results
+table (`eval/results/<date>/sensitivity.md`) belongs here once it has.
+
+A time-travel comparison needs no model and no benchmark file: two runs of the same question at
+two cutoffs, compared with `GET /runs/{id}/diff`, list each module before and after with the
+evidence published in between.
+
+## 9. Results
 
 | Case | Verdict | Expected | Top risks match | Citation support | Time | Cost |
 |---|---|---|---|---|---|---|

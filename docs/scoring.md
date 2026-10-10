@@ -197,6 +197,47 @@ above zero. Set the flag only together with sourced inputs in `RnpvConfig`.
 
 Output: a range of capital and time to the next value inflection point (for example a Phase 2 readout). Report which assumptions dominate.
 
+## Module answers
+
+The report is read as six modules: disease and unmet need, mechanism and biological validation,
+preclinical to human translation, clinical development, competitive and commercial analysis,
+investment underwriting. Each gives one answer, computed by code
+(`scoring/module_answers.py`), so that a reader can follow answer -> claims -> quotes -> sources
+and so that new evidence moves an answer only through the claims it touches.
+
+Every claim carries an `implication`: what it means for an investor if it is true
+(`favourable`, `unfavourable`, `neutral`). The model proposes it; code sets `neutral` on every
+`unknown` and `unfavourable` on a claim that asserts a gate. A claim's pull on its module is
+
+```
+pull = sign(implication) x (2 x confidence - 1)
+```
+
+Confidence above 0.5 pulls the way the claim points. A favourable claim that contradicting
+evidence takes below 0.5 pulls the other way: a refuted favourable claim counts against. Gaps,
+hypotheses, neutral claims and claims whose quotes carry no weight pull nowhere.
+
+`balance = (favourable - unfavourable) / (favourable + unfavourable)`, from -1 to +1. The answer:
+
+| Condition, first that holds | Answer |
+|---|---|
+| A hard gate fired on a claim of the module | `against` |
+| Total weight below 0.2 | `insufficient` |
+| Balance <= -0.25 | `against` |
+| Balance >= +0.25 and a soft gate fired on a claim of the module | `mixed` |
+| Balance >= +0.25 | `supports` |
+| Otherwise | `mixed` |
+
+Sections map to modules as: `unmet_need`; `mechanism`; `translation`; `clinical` and `flags`;
+`competition`, `commercial` and `ip_regulatory`. Investment underwriting has no claims of its
+own: its answer is the verdict (`Invest` = supports, `Conditional` = mixed, `Do Not Invest` =
+against), its claims are the key claims and the claims behind fired gates, and its headline
+names the fired gates, PoS and rNPV.
+
+**The verdict does not read these answers.** It follows from the gates and the investment model
+below. The thresholds 0.2 and 0.25 are starting values that no eval run has calibrated; change
+them only through the calibration protocol.
+
 ## Verdict mapping
 
 Applied in order:

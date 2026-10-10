@@ -92,6 +92,9 @@ treatments fall short (response rates, durability, safety, who they do not reach
   is serious. A serious disease with an effective treatment is not an unmet need: say which.
 - Do not estimate how many patients there are or what the market is worth: code does that from
   its own sources, and a number of yours would be discarded.
+- This module is about the disease and what treats it today. Do not report how the drug or the
+  class under question performed in its trials: that belongs to the clinical module. A shortfall
+  of today's treatments is favourable for an investor; an effective standard of care is not.
 - Guidelines and payers' views are rarely in the evidence. If the evidence does not say what the
   guidelines recommend, or which patients are left without an option, write an `unknown` claim
   for it with its diligence_type (usually kol_interview).

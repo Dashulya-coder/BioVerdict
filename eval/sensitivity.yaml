@@ -1,0 +1,87 @@
+# Sensitivity benchmark for BTK inhibitor x multiple sclerosis (docs/eval.md, "Sensitivity
+# benchmark"). Every document is a verbatim sentence of a public record that the connectors
+# retrieved on 2026-10-10; `item` names it. The base run must not hold them yet, so start it with
+# an earlier cutoff, then add them one at a time:
+#
+#   cd backend
+#   USE_FIXTURES=0 uv run --env-file ../.env bioverdict run \
+#     --query "BTK inhibitor for multiple sclerosis" --as-of 2024-06-30
+#   uv run --env-file ../.env bioverdict sensitivity --run <that run id> \
+#     --cases ../eval/sensitivity.yaml --out ../eval/results/<date>
+#
+# `expect` says which module should move and which way. It is the direction a reader of the
+# sentence would expect, not a recorded result: replace it only with a reason.
+- id: strong-tolebrutinib-not-superior
+  kind: strong
+  item: PMID 40202623 (tolebrutinib vs teriflunomide in relapsing MS, 2025)
+  as_of: 2026-10-10
+  document:
+    text: >-
+      Tolebrutinib was not superior to teriflunomide in decreasing annualized relapse rates among
+      participants with relapsing multiple sclerosis.
+    url: https://pubmed.ncbi.nlm.nih.gov/40202623/
+    source: PubMed
+    source_kind: peer_reviewed
+    level: human_interventional
+    published_at: 2025-04-09
+  expect: { module: clinical_development, direction: down }
+
+- id: strong-evobrutinib-not-superior
+  kind: strong
+  item: PMID 39307151 (evobrutinib vs teriflunomide in relapsing MS, 2024)
+  as_of: 2026-10-10
+  document:
+    text: The efficacy of evobrutinib was not superior to that of teriflunomide.
+    url: https://pubmed.ncbi.nlm.nih.gov/39307151/
+    source: PubMed
+    source_kind: peer_reviewed
+    level: human_interventional
+    published_at: 2024-09-22
+  expect: { module: clinical_development, direction: down }
+
+- id: strong-fenebrutinib-lesions
+  kind: strong
+  item: PMID 40683275 (fenebrutinib vs placebo, new T1 Gd+ lesions, 2025)
+  as_of: 2026-10-10
+  document:
+    text: >-
+      The combined number of new T1 Gd+ lesions at weeks 4, 8, and 12 were 0·077 (95% CI
+      0·043-0·135) in the fenebrutinib group and 0·245 (0·144-0·418) in the placebo group (69%
+      relative reduction [95% CI 34-85]; p=0·0022).
+    url: https://pubmed.ncbi.nlm.nih.gov/40683275/
+    source: PubMed
+    source_kind: peer_reviewed
+    level: human_interventional
+    published_at: 2025-07-19
+  expect: { module: clinical_development, direction: up }
+
+- id: weak-microglia-preprint
+  kind: weak
+  item: bioRxiv preprint doi 10.64898/2026.08.25.747169 (BTK inhibition and microglia, laboratory work)
+  as_of: 2026-10-10
+  document:
+    text: >-
+      Inhibition of Bruton’s tyrosine kinase (BTK) limited microglial transcriptional changes and
+      prevented myelin loss following microglial envelopment.
+    url: https://doi.org/10.64898/2026.08.25.747169
+    source: Europe PMC preprint (bioRxiv)
+    source_kind: preprint
+    level: in_vitro
+    published_at: 2026-08-28
+  expect: { module: mechanism_validation, direction: up }
+
+- id: noise-kras-lung-release
+  kind: noise
+  item: Roche media release of 2026-07-02 on divarasib in KRAS G12C lung cancer (another disease and target)
+  as_of: 2026-10-10
+  document:
+    text: >-
+      The study met its primary and key secondary endpoint, with divarasib achieving clinically
+      meaningful and statistically significant improvements in both progression-free survival
+      (PFS) and overall survival (OS).
+    url: https://www.roche.com/media/releases/med-cor-2026-07-02
+    source: Roche press release
+    source_kind: company
+    level: human_interventional
+    published_at: 2026-07-02
+  expect: { direction: none }
