@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from bioverdict.api.diff import build_diff
+from bioverdict.api.report import build_report, get_claim
 from bioverdict.llm import ConfigError, FakeLLM
 from bioverdict.pipeline.fixture_run import run_fixture
 from bioverdict.pipeline.recompute import (
@@ -295,6 +296,48 @@ def test_placing_new_evidence_keeps_every_claim_as_it_was_and_moves_only_the_lin
     assert moved == {target.id}
     assert len(links_after) == len(links_before) + 1
     assert any(e.detail and "place 1 new item" in e.detail for e in load_events(conn, "R-2"))
+
+
+def judged_links(conn, run_id: str) -> dict[tuple[str, str], str]:
+    report = build_report(conn, run_id)
+    return {
+        (claim.id, link.evidence_id): link.judged
+        for section in report.sections
+        for claim in section.claims
+        for link in claim.links
+    }
+
+
+def test_a_quote_the_judge_read_in_the_original_run_stays_read_in_the_recompute(conn) -> None:
+    _, target = key_claim(conn)
+    before = judged_links(conn, "R-1")
+    read = {key for key, state in before.items() if state == "judged"}
+    assert read  # the fixture run's judge confirmed some quotes
+
+    classified(conn, {"links": [link_to(target.id, "contradicts")]})
+
+    # The recompute asks the judge about the added document only: what it carried over keeps the
+    # reading of the run it grew from, instead of showing as never read.
+    after = judged_links(conn, "R-2")
+    assert {key: after[key] for key in read} == dict.fromkeys(read, "judged")
+    assert {key: after[key] for key in before} == before
+    claim_id, evidence_id = next(iter(read))
+    link = next(l for l in get_claim(conn, "R-2", claim_id).links if l.evidence_id == evidence_id)
+    assert link.judged == "judged"
+
+
+def test_a_claim_reworded_in_the_recompute_does_not_inherit_the_reading(conn) -> None:
+    _, target = key_claim(conn)
+    classified(conn, {"links": [link_to(target.id, "contradicts")]})
+    claim_id, evidence_id = next(k for k, v in judged_links(conn, "R-1").items() if v == "judged")
+
+    with conn:  # as a full recompute would: the same id, another claim
+        conn.execute(
+            "UPDATE claims SET text = text || ' (reworded)' WHERE run_id = 'R-2' AND id = ?",
+            (claim_id,),
+        )
+
+    assert judged_links(conn, "R-2")[(claim_id, evidence_id)] == "not_judged"
 
 
 def test_the_diff_of_a_placed_document_names_only_the_claim_it_touches(conn) -> None:

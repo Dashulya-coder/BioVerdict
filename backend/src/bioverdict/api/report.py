@@ -30,6 +30,7 @@ from bioverdict.api.schemas import (
 )
 from bioverdict.market.tam import estimate_market
 from bioverdict.pipeline.reason_score import run_financials
+from bioverdict.pipeline.recompute import PARENT
 from bioverdict.scoring.config import ConfidenceConfig, VerdictConfig
 from bioverdict.scoring.module_answers import ModuleResult, module_answers
 from bioverdict.scoring.verdict import chain_confidences
@@ -105,21 +106,32 @@ def require_finished(conn: sqlite3.Connection, run_id: str) -> RunRecord:
     return record
 
 
-def _judged_states(checks: list[VerificationCheck]) -> dict[tuple[str, str], JudgedState]:
-    """What the judge did with each (claim, evidence) pair, read from the log it wrote.
+def _judged_key(check: VerificationCheck) -> tuple[str, str] | None:
+    """The (claim, evidence) pair a judge's row is about; None for any other check."""
+    if check.check_name not in (CHECK_NAME, UNJUDGED) or not check.detail:
+        return None
+    return check.claim_id, check.detail.split()[0].rstrip(":")
+
+
+def _judged_states(logs: list[list[VerificationCheck]]) -> dict[tuple[str, str], JudgedState]:
+    """What the judge did with each (claim, evidence) pair, read from the logs it wrote.
 
     The log is the record of who was asked: a link of a context claim (`decides`), a neutral
-    link or a link added outside a recompute's `only` has no entailment row at all.
+    link or a link added outside a recompute's `only` has no entailment row at all. `logs` are
+    oldest first (`_lineage_logs`): what a later run says of a pair replaces what an earlier did.
     """
     states: dict[tuple[str, str], JudgedState] = {}
-    for check in checks:
-        if check.check_name not in (CHECK_NAME, UNJUDGED) or not check.detail:
-            continue
-        key = (check.claim_id, check.detail.split()[0].rstrip(":"))
-        if check.check_name == UNJUDGED:
-            states[key] = "no_answer"
-        else:
-            states.setdefault(key, "judged")
+    for checks in logs:
+        own: dict[tuple[str, str], JudgedState] = {}
+        for check in checks:
+            key = _judged_key(check)
+            if key is None:
+                continue
+            if check.check_name == UNJUDGED:
+                own[key] = "no_answer"
+            else:
+                own.setdefault(key, "judged")
+        states |= own
     return states
 
 
@@ -136,6 +148,42 @@ def _link_view(link: ClaimEvidenceLink, evidence: Evidence, judged: JudgedState)
         badge=_evidence_badge(evidence),
         judged=judged,
     )
+
+
+def _lineage_logs(
+    conn: sqlite3.Connection,
+    record: RunRecord,
+    claims: list[Claim],
+    links: list[ClaimEvidenceLink],
+) -> list[list[VerificationCheck]]:
+    """The verification log of the run, preceded by the logs of the runs it grew from.
+
+    A recompute that places added evidence asks the judge about the new quotes only, so its own
+    log says nothing of the quotes it carried over: they would read as never judged. A check of
+    an earlier run is kept only for a quote this run still holds unchanged: the same claim id
+    with the same text citing the same evidence with the same quote. A full recompute writes its
+    claims anew, and a claim it words differently inherits nothing. Oldest log first.
+    """
+    logs = [load_checks(conn, record.run_id)]
+    texts = {claim.id: claim.text for claim in claims}
+    held = {(l.claim_id, l.evidence_id): (texts.get(l.claim_id), l.quote) for l in links}
+    seen = {record.run_id}
+    parent_id = record.input.get(PARENT)
+    while isinstance(parent_id, str) and parent_id not in seen and held:
+        seen.add(parent_id)
+        parent = get_run(conn, parent_id)
+        if parent is None:
+            break
+        earlier_claims, earlier_links = load_claims(conn, parent_id)
+        earlier_texts = {claim.id: claim.text for claim in earlier_claims}
+        held = {
+            (l.claim_id, l.evidence_id): held[l.claim_id, l.evidence_id]
+            for l in earlier_links
+            if held.get((l.claim_id, l.evidence_id)) == (earlier_texts.get(l.claim_id), l.quote)
+        }
+        logs.append([c for c in load_checks(conn, parent_id) if _judged_key(c) in held])
+        parent_id = parent.input.get(PARENT)
+    return logs[::-1]
 
 
 # Failed checks a reader can act on; chain-link and duplicate-link bookkeeping stays in the log.
@@ -276,8 +324,8 @@ def build_report(conn: sqlite3.Connection, run_id: str) -> ReportResponse:
     claims, links = load_claims(conn, run_id)
     evidence = bundle.evidence_by_id()
 
-    log = load_checks(conn, run_id)
-    failed, judged = _failed_checks(log), _judged_states(log)
+    logs = _lineage_logs(conn, record, claims, links)
+    failed, judged = _failed_checks(logs[-1]), _judged_states(logs)
     claim_views = [_claim_view(c, links, evidence, failed.get(c.id, []), judged) for c in claims]
     cited = {link.evidence_id for link in links}
     sources = [evidence_view(e, links) for e in bundle.evidence if e.id in cited]
@@ -318,19 +366,18 @@ def build_report(conn: sqlite3.Connection, run_id: str) -> ReportResponse:
 
 
 def get_claim(conn: sqlite3.Connection, run_id: str, claim_id: str) -> ClaimView:
-    require_run(conn, run_id)
+    record = require_run(conn, run_id)
     claims, links = load_claims(conn, run_id)
     claim = next((c for c in claims if c.id == claim_id), None)
     if claim is None:
         raise ItemNotFoundError(f"claim {claim_id} is not in run {run_id}")
-    log = load_checks(conn, run_id)
-    failed = _failed_checks(log)
+    logs = _lineage_logs(conn, record, claims, links)
     return _claim_view(
         claim,
         links,
         load_bundle(conn, run_id).evidence_by_id(),
-        failed.get(claim.id, []),
-        _judged_states(log),
+        _failed_checks(logs[-1]).get(claim.id, []),
+        _judged_states(logs),
     )
 
 
