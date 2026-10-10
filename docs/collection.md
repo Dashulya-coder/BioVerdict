@@ -108,7 +108,15 @@ left unread makes the section `incomplete`, as before.
 `pipeline/live_sources.py` is the allowlist of a live run: Open Targets and Europe PMC
 preprints (`europepmc`) for mechanism,
 ClinicalTrials.gov by asset, PubMed and open-access full texts (`pmc_fulltext`) for clinical, ClinicalTrials.gov by target within the
-indication (`clinicaltrials_class`) and openFDA (`openfda`) for competition, and the newest PubMed practice guidelines for the indication (`pubmed_guidelines`) for unmet need. `pipeline/live_run.py` runs the Resolver and
+indication (`clinicaltrials_class`) and openFDA (`openfda`) for competition, and the newest PubMed practice guidelines for the indication (`pubmed_guidelines`) for unmet need.
+Three tools were added for the finals (a live run showed no approved multiple-sclerosis drug in any
+claim, nothing about liver injury, and no EU decision): `openfda_indication` and `ema_medicines`
+in the competition plan (the drugs approved for the indication, whatever their target, with their
+labels and their EU records), and `pubmed_safety` in the clinical plan (safety of the asset and of
+its class, reviews included, all reviews one source). Their records have the family
+`approved_for_indication` (and `registry` for the asset's own EMA record); the competition, unmet
+need and commercial modules read the first. Before this the competition module read only
+`registry` and `target_database`, so the FDA labels of the analogs never reached it. `pipeline/live_run.py` runs the Resolver and
 this graph, writes each section's status, fact count, rejections and issues into the `collect`
 progress event, and hands the frozen bundle to the shared reason → score step. See the
 [runbook](runbook.md) for how to start a live run and how it fails.

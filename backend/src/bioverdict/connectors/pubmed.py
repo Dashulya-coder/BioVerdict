@@ -37,6 +37,13 @@ TOOL = "bioverdict-hackathon"
 RETMAX = 20
 FETCH_BATCH = 50
 TRIAL_FILTER = "(clinical trial[pt] OR randomized controlled trial[pt])"
+REVIEW_GROUP = "review:class-safety"  # every review of a safety search is one source
+SAFETY_FILTER = (
+    '(hepatotoxicity[tiab] OR "liver injury"[tiab] OR "liver enzyme*"[tiab] OR hepatic[tiab] '
+    'OR "liver safety"[tiab] OR cardiotoxicity[tiab] OR "adverse events"[tiab] '
+    'OR "drug safety"[tiab] OR "safety profile"[tiab])'
+)
+SAFETY_RETMAX = 10
 
 _SKIP_TYPES = {
     "Review",
@@ -93,10 +100,22 @@ def require_articles(body: bytes) -> None:
         raise PubMedError("the fetch answer is not an article set")
 
 
-def classify(types: list[str], mesh: list[str]) -> tuple[EvidenceLevel, SourceKind] | None:
-    """The level and kind of a paper from its PubMed labels, or None for a paper to skip."""
-    if _SKIP_TYPES & set(types):
+_REVIEW_TYPES = {"Review", "Systematic Review"}
+
+
+def classify(
+    types: list[str], mesh: list[str], reviews: bool = False
+) -> tuple[EvidenceLevel, SourceKind] | None:
+    """The level and kind of a paper from its PubMed labels, or None for a paper to skip.
+
+    With `reviews` a review is kept, as a human observational source: it restates what other
+    papers found, so it may say what a class has done to patients but never count as new data.
+    """
+    if _SKIP_TYPES - (_REVIEW_TYPES if reviews else set()) & set(types):
         return None
+    if reviews and _REVIEW_TYPES & set(types):
+        kind = SourceKind.PREPRINT if "Preprint" in types else SourceKind.PEER_REVIEWED
+        return EvidenceLevel.HUMAN_OBSERVATIONAL, kind
     kind = SourceKind.PREPRINT if "Preprint" in types else SourceKind.PEER_REVIEWED
     if any(t.startswith("Clinical Trial") or t.endswith("Controlled Trial") for t in types):
         return EvidenceLevel.HUMAN_INTERVENTIONAL, kind
@@ -148,8 +167,14 @@ def _trial_ids(article: ET.Element) -> list[str]:
     return ids
 
 
-def parse_articles(xml: bytes | str, retrieved_at: datetime) -> list[Evidence]:
-    """One evidence per article that has an abstract and is not a review, letter or similar."""
+def parse_articles(
+    xml: bytes | str, retrieved_at: datetime, reviews: bool = False
+) -> list[Evidence]:
+    """One evidence per article that has an abstract and is not a review, letter or similar.
+
+    With `reviews` a review is kept, and all the reviews of a search share one independence
+    group, so that however many of them say the same thing it counts once.
+    """
     root = ET.fromstring(xml)
     evidence = []
     for article in root.findall(".//PubmedArticle"):
@@ -158,11 +183,12 @@ def parse_articles(xml: bytes | str, retrieved_at: datetime) -> list[Evidence]:
         abstract = _abstract(article)
         types = [_text(t) for t in article.findall(".//PublicationTypeList/PublicationType")]
         mesh = [_text(m) for m in article.findall(".//MeshHeadingList/MeshHeading/DescriptorName")]
-        classified = classify(types, mesh)
+        classified = classify(types, mesh, reviews)
         if not pmid or not abstract or classified is None:
             continue
         level, kind = classified
         trials = _trial_ids(article)
+        review = reviews and bool(_REVIEW_TYPES & set(types))
         evidence.append(
             Evidence(
                 id=f"pmid:{pmid}",  # placeholder, replaced when the bundle is frozen
@@ -176,7 +202,9 @@ def parse_articles(xml: bytes | str, retrieved_at: datetime) -> list[Evidence]:
                 retrieved_at=retrieved_at,
                 level=level,
                 # Papers on one trial report one dataset: they share a group and count once.
-                independence_group=f"trial:{trials[0]}" if trials else f"paper:{pmid}",
+                independence_group=(
+                    REVIEW_GROUP if review else f"trial:{trials[0]}" if trials else f"paper:{pmid}"
+                ),
                 version=1,
             )
         )
@@ -186,6 +214,21 @@ def parse_articles(xml: bytes | str, retrieved_at: datetime) -> list[Evidence]:
 def _quote(name: str) -> str:
     """A name safe to place inside a PubMed phrase: no quotes or brackets that end it early."""
     return " ".join(name.replace('"', " ").replace("[", " ").replace("]", " ").split())
+
+
+def safety_terms(query: ResolverOutput) -> list[str]:
+    """What is known of the harm of the asset and of its class: the asset (or the target class
+    within the indication) together with the words of toxicity, liver and adverse events."""
+    names = [n for n in dict.fromkeys(_quote(a) for a in query.known_assets) if n]
+    symbols = [_quote(t.symbol) for t in query.targets if t.symbol]
+    indication = _quote(query.indication.name)
+    terms: list[str] = []
+    if names:
+        asset = " OR ".join(f'"{name}"[Title/Abstract]' for name in names)
+        terms.append(f"({asset}) AND {SAFETY_FILTER}")
+    if symbols and indication and indication != "not specified":
+        terms.append(f'({" OR ".join(symbols)}) AND "{indication}" AND {SAFETY_FILTER}')
+    return terms
 
 
 def build_terms(query: ResolverOutput) -> list[str]:
@@ -241,9 +284,14 @@ class PubMedConnector:
         )
         return json.loads(response.body)["esearchresult"].get("idlist", [])
 
+    reviews = False  # whether a review is kept (see `parse_articles`)
+
+    def terms(self, query: ResolverOutput) -> list[str]:
+        return build_terms(query)
+
     async def fetch(self, query: ResolverOutput, as_of: date) -> list[Evidence]:
         pmids: dict[str, None] = {}  # in order of first appearance, each paper once
-        for term in build_terms(query):
+        for term in self.terms(query):
             for pmid in await self._search(term):
                 pmids.setdefault(pmid)
 
@@ -259,5 +307,23 @@ class PubMedConnector:
             response = await self._http.get(
                 f"{BASE_URL}/efetch.fcgi", params, validate=require_articles
             )
-            evidence += parse_articles(response.body, response.fetched_at)
+            evidence += parse_articles(response.body, response.fetched_at, self.reviews)
         return filter_as_of(evidence, as_of)
+
+
+class PubMedSafetyConnector(PubMedConnector):
+    """Satisfies `Connector`. The safety of the asset and of its class, reviews included.
+
+    The ordinary search leaves reviews out; a review is often where the harm of a class (a liver
+    signal across a drug class) is written down. All of them count as one source.
+    """
+
+    name = "pubmed_safety"
+    reviews = True
+
+    def __init__(self, http: CachedHttpClient, **kwargs) -> None:
+        kwargs.setdefault("retmax", SAFETY_RETMAX)
+        super().__init__(http, **kwargs)
+
+    def terms(self, query: ResolverOutput) -> list[str]:
+        return safety_terms(query)

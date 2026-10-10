@@ -49,6 +49,7 @@ MAX_APPLICATIONS = 5  # per analog; an innovator drug has one or two
 APPROVED = "AP"
 GENERIC = "ANDA"
 ORIGINAL, EFFICACY = "ORIG", "Efficacy"
+APPROVED_STAGE = "APPROVAL"  # Open Targets' name of the stage of an approved drug
 # Label sections kept whole: short, and each is one statement of the regulator.
 WHOLE_SECTIONS = {
     "indications_and_usage": EvidenceLevel.REGISTRY_RECORD,
@@ -161,12 +162,25 @@ def pick_label(answer: dict, analog: str, applications: set[str]) -> dict | None
     return (own or labels or [None])[0]
 
 
-def parse_label(label: dict, analog: str, retrieved_at: datetime) -> list[Evidence]:
-    """The label's indications and boxed warning whole, its clinical studies in pieces."""
+def parse_label(
+    label: dict,
+    analog: str,
+    retrieved_at: datetime,
+    *,
+    source: str | None = None,
+    family: str = ANALOG_FAMILY,
+    key_prefix: str = "fda-label",
+    pieces: int | None = None,
+) -> list[Evidence]:
+    """The label's indications and boxed warning whole, its clinical studies in pieces.
+
+    `pieces` keeps only the first pieces of the clinical studies; the keys carry `key_prefix` so
+    that the same label read for another purpose is another record, not a replacement.
+    """
     set_id = label["set_id"]
     shared = {
-        "source": _source("label", label, analog),
-        "source_family": ANALOG_FAMILY,
+        "source": source or _source("label", label, analog),
+        "source_family": family,
         "source_kind": SourceKind.REGULATOR,
         "url": LABEL_URL + set_id,
         "published_at": _day(label["effective_time"]),
@@ -178,7 +192,7 @@ def parse_label(label: dict, analog: str, retrieved_at: datetime) -> list[Eviden
     for section, level in WHOLE_SECTIONS.items():
         text = " ".join(label.get(section) or []).strip()
         if text:
-            key = f"fda-label:{set_id}:{section}"
+            key = f"{key_prefix}:{set_id}:{section}"
             evidence.append(
                 Evidence(
                     id=key,
@@ -189,11 +203,11 @@ def parse_label(label: dict, analog: str, retrieved_at: datetime) -> list[Eviden
                     **shared,
                 )
             )
-    studies = chunks(" ".join(label.get(TEXT_SECTION) or []))
+    studies = chunks(" ".join(label.get(TEXT_SECTION) or []))[:pieces]
     for number, piece in enumerate(studies, start=1):
         evidence.append(
             Evidence(
-                id=f"fda-label:{set_id}:{TEXT_SECTION}:{number}",
+                id=f"{key_prefix}:{set_id}:{TEXT_SECTION}:{number}",
                 locator=Locator(type="spl_set_id", value=f"{set_id}#{TEXT_SECTION}:{number}"),
                 excerpt=piece,
                 level=EvidenceLevel.HUMAN_INTERVENTIONAL,
@@ -244,9 +258,14 @@ class OpenFdaConnector:
                     evidence += parse_label(label, analog, read[1])
         return filter_as_of(evidence, as_of)
 
-    async def _read(self, dataset: str, analog: str) -> tuple[dict, datetime] | None:
+    async def _read(
+        self, dataset: str, analog: str, search: str | None = None
+    ) -> tuple[dict, datetime] | None:
         """The decoded answer and its download time; None when nothing matched or it failed."""
-        params = {"search": f'openfda.generic_name:"{analog}"', "limit": str(MAX_APPLICATIONS)}
+        params = {
+            "search": search or f'openfda.generic_name:"{analog}"',
+            "limit": str(MAX_APPLICATIONS),
+        }
         if dataset == "label":
             params["sort"] = "effective_time:desc"
         try:
@@ -263,3 +282,114 @@ class OpenFdaConnector:
             self.problems.append(f"openFDA {dataset} of {analog} could not be read")
             return None
         return json.loads(response.body), response.fetched_at
+
+
+# --- Drugs approved for the indication -----------------------------------------------------------
+
+INDICATION_FAMILY = "approved_for_indication"
+INDICATION_KEY = "fda-indication"
+MAX_COMPETITORS = 12  # labels kept, the ones that name the indication earliest
+STUDY_PIECES = 1  # of 6,000 characters of each label: the pivotal trial, which fits 3 prompts
+_BRAND_APPLICATIONS = "(openfda.application_number:NDA* OR openfda.application_number:BLA*)"
+
+DISEASE_DRUGS_QUERY = """
+query ($id: String!) {
+  disease(efoId: $id) {
+    id name
+    drugAndClinicalCandidates { rows { maxClinicalStage drug { id name } } }
+  }
+}
+"""
+
+
+def approved_for(answer: dict) -> list[str]:
+    """The drugs Open Targets lists as approved *for this disease* (not for any disease), once each.
+
+    A salt of a name already taken ("fingolimod hydrochloride" after "fingolimod") is the same
+    drug; its label is found under the shorter name.
+    """
+    disease = (answer.get("data") or {}).get("disease") or {}
+    rows = ((disease.get("drugAndClinicalCandidates") or {}).get("rows")) or []
+    names = sorted(
+        {
+            row["drug"]["name"].casefold()
+            for row in rows
+            if row.get("drug") and row.get("maxClinicalStage") == APPROVED_STAGE
+        }
+    )
+    chosen: list[str] = []
+    for name in names:
+        if not any(name.startswith(earlier + " ") for earlier in chosen):
+            chosen.append(name)
+    return chosen
+
+
+def indication_position(label: dict, indication: str) -> int | None:
+    """Where the indications section first names the indication: early means it is the drug's
+    purpose, late means it is one item in a long list (a corticosteroid)."""
+    text = " ".join(label.get("indications_and_usage") or []).casefold()
+    at = text.find(indication.casefold())
+    return at if at >= 0 else None
+
+
+def parse_competitor(label: dict, indication: str, retrieved_at: datetime) -> list[Evidence]:
+    """Records of one label of a drug approved for the indication."""
+    brand = ", ".join(_names(label, "brand_name")) or "label"
+    generic = ", ".join(_names(label, "generic_name")).casefold()
+    return parse_label(
+        label,
+        generic,
+        retrieved_at,
+        source=f"FDA label of {brand} ({generic}), approved for {indication}",
+        family=INDICATION_FAMILY,
+        key_prefix=INDICATION_KEY,
+        pieces=STUDY_PIECES,
+    )
+
+
+class OpenFdaIndication(OpenFdaConnector):
+    """Satisfies `Connector`. The drugs approved for the indication, whatever their target.
+
+    Open Targets lists what is approved for the disease; openFDA gives the current label of each
+    drug's brand application whose indications name the disease. The competitors of a new drug
+    are these, not the oncology drugs that share its target. A drug is kept for the place where
+    its label first names the indication, so a corticosteroid that lists it among forty others
+    ranks last. A disease with no identifier in Open Targets gives nothing.
+    """
+
+    name = "openfda_indication"
+
+    async def fetch(self, query: ResolverOutput, as_of: date) -> list[Evidence]:
+        self.problems = []
+        disease = query.indication.mondo_id or query.indication.efo_id
+        indication = query.indication.name
+        if disease is None:
+            return []
+        answer, _ = await self._api.query(
+            {"query": DISEASE_DRUGS_QUERY, "variables": {"id": disease}}
+        )
+        own = {normalize(name) for name in query.known_assets}
+        own |= {normalize(asset.name) for asset in query.assets}
+        found: dict[str, tuple[int, str, dict, datetime]] = {}  # label id -> its rank and label
+        for drug in approved_for(answer):
+            if normalize(drug) in own:
+                continue
+            search = (
+                f'openfda.generic_name:"{drug}" AND indications_and_usage:"{indication}" '
+                f"AND {_BRAND_APPLICATIONS}"
+            )
+            if (read := await self._read("label", drug, search)) is None:
+                continue
+            for label in read[0].get("results") or []:
+                at = indication_position(label, indication)
+                if at is None or not label.get("set_id") or not _day(label.get("effective_time")):
+                    continue
+                if drug not in " ".join(_names(label, "generic_name")).casefold():
+                    continue
+                found.setdefault(label["set_id"], (at, drug, label, read[1]))
+                break  # the newest label of the drug
+        ranked = sorted(found.values(), key=lambda item: (item[0], item[1]))[:MAX_COMPETITORS]
+        evidence: list[Evidence] = []
+        for _, _, label, fetched_at in ranked:
+            evidence += parse_competitor(label, indication, fetched_at)
+        return filter_as_of(evidence, as_of)

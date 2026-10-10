@@ -89,12 +89,16 @@ PERSEUS among them; the "top risks" are gate texts. The table of the reference s
 | 0.6 | Sensitivity runner: one control recompute at the shared cutoff without a document; each case is compared with it, not with the base | A, all | the noise case passes under the strict rule, with no exception for drift | c |
 | 0.7 | Reference-set coverage table: source x in the bundle x cited by a claim, labelled "development set, written by us" | C | table in `eval.md`, section 9 | a |
 
-**Stage 1: in parallel from today, Arsenii (the longest path).** The note to him is in
-`handoff.md`: competitors by indication (approved MS drugs, not analogs by target) and fewer
-oncology analogs; regulatory status and class safety (liver injury, EU authorisation), which
-needs his decision on adding EMA to the source catalog; and the uncited evidence, which Dasha
-checks on the reasoning side. If collection is not ready, the reference documents enter
-through add-evidence on stage, which is also a demonstration of A.
+**Stage 1: collection for multiple sclerosis.** Done by Dasha on 2026-10-10 without waiting for
+Arsenii (his consent was waived): `openfda_indication` (approved drugs of the indication with
+their labels), `ema_medicines` (the EU register: Cenrifki and the approved competitors) and
+`pubmed_safety` (class safety, reviews as one source), see `collection.md`. Found on the way: the
+competition module read only the families `registry` and `target_database`, so no FDA label
+reached it; it reads `approved_for_indication` now. **Not done:** fewer oncology analogs (still
+8 per target); the FDA complete response letter (Sanofi, 2025-12-24) has no source; the EPAR
+text; why 6 of 11 registry trials stay uncited; a live run to see what the modules make of it.
+If collection falls short, the reference documents enter through add-evidence on stage, which is
+also a demonstration of A.
 
 **Stage 2: before the mentor.** Stage 0 plus one slide: what the system knows about the pair,
 what it lacks (liver, EU authorisation, FENtrepid, PERSEUS without claims) and the plan, with
