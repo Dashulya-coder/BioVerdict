@@ -626,5 +626,5 @@ test('with no ranked question the report says so', async ({ page }) => {
   await serve(page)
   await openRun(page, 'divarasib')
   await page.getByRole('link', { name: 'Report' }).click()
-  await expect(page.getByText('No question was ranked for this run.')).toBeVisible()
+  await expect(page.getByText('No question was ranked for this run')).toBeVisible()
 })
