@@ -21,7 +21,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict
 
-from bioverdict.eval.cases import EvalCase
+from bioverdict.eval.cases import EvalCase, Outcome
 from bioverdict.eval.metrics import RunMetrics, run_metrics
 from bioverdict.store.runs_repo import create_run
 
@@ -68,6 +68,8 @@ class CaseResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     case_id: str
+    set: str = "regression"
+    outcome: Outcome | None = None  # for a backtest: what happened next (never shown to the model)
     request: str
     as_of: date
     expected_verdict: list[str]
@@ -136,6 +138,8 @@ def run_case(
     pairs = list(combinations(fresh, 2))
     return CaseResult(
         case_id=case.id,
+        set=case.set,
+        outcome=case.outcome,
         request=request,
         as_of=as_of,
         expected_verdict=expected,
@@ -259,6 +263,22 @@ def summary(report: EvalReport) -> str:
             for case in risky
             for risk in case.risks
         ]
+    later = [case for case in report.cases if case.outcome is not None]
+    if later:
+        lines += [
+            "",
+            "## What happened next (backtests; the model never saw it)",
+            "",
+            "| Case | Cutoff | Verdict | Outcome | Source |",
+            "|---|---|---|---|---|",
+        ]
+        for case in later:
+            done = sorted({str(run.verdict) for run in case.runs if run.verdict is not None})
+            assert case.outcome is not None
+            lines.append(
+                f"| {case.case_id} | {case.as_of} | {', '.join(done) or 'failed'} "
+                f"| {case.outcome.text} | {case.outcome.url or ''} |"
+            )
     return "\n".join(lines) + "\n"
 
 

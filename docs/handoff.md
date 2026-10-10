@@ -18,11 +18,11 @@ fixes, asset selection, `docs/finals-audit.md`). The finals rubric and the stage
 
 ### 1. Do first: paid runs before the demo
 
-1. **A live run of the pair on merged `main`.** From `backend/`:
+1. **(Done 2026-10-10, Dasha: Conditional, 357 s, $0.99; `docs/eval.md` section 9.) A live run of the pair on merged `main`.** From `backend/`:
    `USE_FIXTURES=0 uv run --env-file ../.env bioverdict run --query "BTK inhibitor for multiple sclerosis"`.
    The unmet-need prompt, the last judge changes and everything in #107 were made after the
    last live run and have been seen only in tests.
-2. **A base run with an earlier cutoff, then the sensitivity benchmark.** Add `--as-of 2024-06-30`
+2. **(Done 2026-10-10, Dasha: 3 of 5 passed; `docs/eval.md` section 9.) A base run with an earlier cutoff, then the sensitivity benchmark.** Add `--as-of 2024-06-30`
    to the command above, then
    `uv run --env-file ../.env bioverdict sensitivity --run <run id> --cases ../eval/sensitivity.yaml --out ../eval/results/<date>`.
    The benchmark has never been run with a real model. Put its table in

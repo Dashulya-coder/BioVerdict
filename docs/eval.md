@@ -59,19 +59,24 @@ Candidate cases from our plan (verify each fact by search before recording an ex
 
 A deal or market reaction is a noisy proxy for an expert verdict. Record it as a *signal*, and write expectations as ranges ("Conditional or better") unless the signal is clear.
 
-`eval/cases.yaml` schema:
+`eval/cases.yaml` schema (`eval/cases.py`; `set` and `outcome` are optional, so an older file still loads):
 
 ```yaml
-- id: divarasib-2026-10
-  input: { asset: divarasib }
-  as_of: 2026-10-06
-  expected_verdict: [Conditional, Invest]
-  expected_top_risks: ["competition from approved KRAS G12C inhibitors", "..."]
+- id: tolebrutinib-2025-12
+  set: backtest                      # demo | regression | backtest | smoke   (default: regression)
+  input: { asset: tolebrutinib }     # or { indication: ..., mechanism: ... } or { query: "..." }
+  as_of: 2025-12-01
+  expected_verdict: [Conditional, Do Not Invest]
+  expected_top_risks: ["Drug-induced liver injury", "..."]
   signals:
     - { text: "...", url: "...", date: "..." }
+  outcome:                           # a backtest: what happened after as_of; never shown to the model
+    { text: "...", url: "...", date: 2025-12-15 }
   recorded_by: Dasha
-  recorded_at: TODO
+  recorded_at: 2026-10-10
 ```
+
+The cases in the repository are a reading of the public record by a person, each fact with the address it came from; none is an expert's answer. The demo pair is `btk-ms-demo`: a BTK inhibitor in multiple sclerosis, entered as an indication and a mechanism, no drug name. It is a class with mixed phase 3 results (fenebrutinib and remibrutinib beat teriflunomide in relapsing MS; evobrutinib and tolebrutinib failed; the FDA refused tolebrutinib in non-relapsing secondary progressive MS), a recognised liver risk, and no approval yet. The three backtests (`evobrutinib-2023-11`, `fenebrutinib-2025-10`, `tolebrutinib-2025-12`) are dated before the readout whose result is recorded as the `outcome`; judge the argument and the risks, not only the verdict (section 5). Sensitivity tests are a separate file, `eval/sensitivity.yaml` (section 8).
 
 ## 5. Time-travel backtesting
 
@@ -143,9 +148,7 @@ retrieved on 2026-10-10, for BTK inhibitor x multiple sclerosis):
 | weak-microglia-preprint | weak | bioRxiv doi 10.64898/2026.08.25.747169, laboratory work on microglia | mechanism up, a little |
 | noise-kras-lung-release | noise | Roche release of 2026-07-02 on divarasib in lung cancer | nothing moves |
 
-**State.** The runner and its tests (with a stand-in model) are merged. **It has not been run
-with a real model**: the commands are at the top of `eval/sensitivity.yaml`, and the results
-table (`eval/results/<date>/sensitivity.md`) belongs here once it has.
+**State.** Run once with the real model on 2026-10-10 (section 9): 3 of 5 cases passed, and two of the three failures say more about the benchmark than about the system (below).
 
 A time-travel comparison needs no model and no benchmark file: two runs of the same question at
 two cutoffs, compared with `GET /runs/{id}/diff`, list each module before and after with the
@@ -153,8 +156,28 @@ evidence published in between.
 
 ## 9. Results
 
-| Case | Verdict | Expected | Top risks match | Citation support | Time | Cost |
-|---|---|---|---|---|---|---|
-| TODO | | | | | | |
+Live runs of 2026-10-10 on the public sources and the team gateway (`gpt-6.1-sol` writes, `gpt-6-astra` judges), one run each, `RUN_TIMEOUT_S=900`. One run is not a measure of stability. Raw outputs: `eval/results/<date>/` (not committed).
 
-Raw outputs: `eval/results/<date>/`.
+**The demo pair** (`btk-ms-demo`, as of the day of the run):
+
+| Verdict | Expected | Quotes present | Sources in catalog | Sections | Claims | Judge | Time | Cost |
+|---|---|---|---|---|---|---|---|---|
+| Conditional (0.62) | Conditional | 89/89 | 48/48 | 6/6 | 106 (7 unknown) | 70 links judged, 31 removed, 26 claims downgraded, 42 links of context claims not judged | 357 s | $0.99 |
+
+Modules of that run: unmet need supports (weight 0.21 for, 0.00 against), mechanism mixed, translation mixed, clinical development mixed (1.74 for, 1.79 against), competitive and commercial against, investment mixed (gates S1 and S2, PoS 47% modeled). The report's three "top risks" are the gate and key-claim texts ("a link of the translation chain is missing", "a key claim rests on too little evidence", a key claim at 30%), not the risks a person would name (liver injury, no approval, mixed phase 3 results); those are in the claims and the Chair's eight questions. The recorded expected risks therefore match by shared words at about 0.
+
+**A base run with an earlier cutoff** (`--as-of 2024-06-30`): 46 evidence items (the run of today has 171), Conditional (0.52), 61 claims, judge 25 links judged and 4 removed. Registry results are dated by the last update of the record, so far fewer trial results are seen: the benchmark below runs on this thin base.
+
+**Sensitivity benchmark** on that base (`bioverdict sensitivity`, five documents added one at a time; recompute cutoff 2026-10-10):
+
+| Case | Result | What happened |
+|---|---|---|
+| strong-tolebrutinib-not-superior | pass | clinical development balance +1.00 to +0.68, the document named as the cause |
+| strong-evobrutinib-not-superior | pass | clinical development +1.00 to +0.69, named |
+| strong-fenebrutinib-lesions | **fail** | the document is a cause of no module: placed on no claim that a module reads. The balance was already at its ceiling (+1.00) |
+| weak-microglia-preprint | **fail** | mechanism balance +1.00 to +1.00. The document is named as a cause, but a balance at the ceiling cannot move up |
+| noise-kras-lung-release | pass (after a change of the rule) | by the first rule it failed: the unmet-need module changed its answer, with no cause. It did so in all five cases, the noise one included: the base is as of 2024 and the recompute as of 2026, and the evidence aged. A module that moves with no cause is now reported as drift, not failed; a module the document is a cause of, or the verdict, still fails the noise case |
+
+What it means for the benchmark: the two failures that are not the system's are the ceiling (a balance at +1.00 cannot show an expected rise; the base should be one where the balances are not saturated, or the weak case should expect no move) and the cutoff (a base and a recompute two years apart drift together). The benchmark has never been run with the cutoff of the base equal to that of the recompute, which would need documents dated before the base.
+
+**Not done:** the backtests (`evobrutinib-2023-11`, `fenebrutinib-2025-10`, `tolebrutinib-2025-12`) have not been run on the current code; the closed-book leakage probe and the bare-LLM baseline (paid calls to a model without retrieval, and a way to score its answers); the hand-labelled sample for judge agreement (31 of 70 links removed here, 13 of 72 in the run Arsenii measured: whether either is right needs a person); three repeated runs for stability.

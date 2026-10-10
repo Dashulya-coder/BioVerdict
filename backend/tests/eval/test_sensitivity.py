@@ -105,3 +105,77 @@ def test_a_case_that_cannot_be_added_is_reported_not_run(conn) -> None:
 def test_the_cases_file_of_the_repository_loads() -> None:
     cases = load_cases(FIXTURES.parent / "eval" / "sensitivity.yaml")
     assert {c.kind for c in cases} == {"strong", "weak", "noise"}
+
+
+def _module_diff(*, answer_after: str, with_cause: bool):
+    """A diff in which the unmet-need module changes its answer, with or without a new cause."""
+    from bioverdict.api.schemas import DiffResponse, ModuleCause, ModuleChange, RunSide
+    from bioverdict.scoring.module_answers import ModuleAnswer, ModuleId
+    from bioverdict.store.models import Direction, EvidenceLevel, Verdict
+
+    cause = ModuleCause(
+        evidence_id="E-0014",
+        source="s",
+        url="https://example.org",
+        published_at=None,
+        level=EvidenceLevel.HUMAN_INTERVENTIONAL,
+        direction=Direction.SUPPORTS,
+        quote="q",
+        claim_id="C-1",
+        claim_text="t",
+        claim_change="changed",
+        confidence_before=0.5,
+        confidence_after=0.6,
+        contribution_before=None,
+        contribution_after=0.1,
+    )
+    module = ModuleChange(
+        module=ModuleId.UNMET_NEED,
+        title="Disease and unmet need",
+        answer_before=ModuleAnswer.SUPPORTS,
+        answer_after=ModuleAnswer(answer_after),
+        balance_before=1.0,
+        balance_after=None,
+        headline_before="",
+        headline_after="",
+        changed=True,
+        causes=[cause] if with_cause else [],
+    )
+    side = RunSide(
+        run_id="R",
+        as_of=EARLY,
+        bundle_version=1,
+        content_hash="sha256:x",
+        evidence_count=1,
+        verdict=Verdict.CONDITIONAL,
+        confidence=0.5,
+        translation_chain_probability=0.1,
+    )
+    from bioverdict.api.schemas import EvidenceView
+
+    added = EvidenceView.model_construct(id="E-0014")
+    return DiffResponse(
+        base=side,
+        head=side,
+        verdict_changed=False,
+        modules=[module],
+        gates=[],
+        chain=[],
+        evidence_added=[added],
+        evidence_removed=[],
+        claims=[],
+        unchanged_claims=0,
+        matching="",
+    )
+
+
+def test_an_answer_that_changes_with_no_cause_is_drift_not_a_failure_of_noise() -> None:
+    from bioverdict.eval.sensitivity import judge_case
+
+    noise = case("noise", None, "none")
+
+    ok, why = judge_case(noise, _module_diff(answer_after="insufficient", with_cause=False))
+    assert ok and "drift" in why and "disease_unmet_need" in why
+
+    ok, why = judge_case(noise, _module_diff(answer_after="insufficient", with_cause=True))
+    assert not ok and "disease_unmet_need" in why

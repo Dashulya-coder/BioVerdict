@@ -165,6 +165,19 @@ def skeptic_prompt(bundle: Bundle, claims: list[Claim], budget: int | None) -> s
     return head + evidence + "\n"
 
 
+MAX_NOTES = 8  # of each kind: the Chair is asked about claims, these are only a pointer
+MAX_NOTE_CHARS = 220
+
+
+def _notes(title: str, items: list[str]) -> str:
+    """A short list under a heading, capped, so that it cannot crowd the claims out of the request."""
+    shown = [
+        item if len(item) <= MAX_NOTE_CHARS else item[:MAX_NOTE_CHARS] + "..."
+        for item in items[:MAX_NOTES]
+    ]
+    return f"\n## {title}\n" + "\n".join(f"- {n}" for n in shown) + "\n" if shown else ""
+
+
 def chair_prompt(
     bundle: Bundle,
     claims: list[Claim],
@@ -172,13 +185,9 @@ def chair_prompt(
     objections: list[str],
     budget: int | None = None,
 ) -> str:
-    extra = ""
-    if near_misses:
-        extra += "\n## Gates that nearly fired\n" + "\n".join(f"- {n}" for n in near_misses) + "\n"
-    if objections:
-        extra += (
-            "\n## Objections the skeptic made\n" + "\n".join(f"- {o}" for o in objections) + "\n"
-        )
+    extra = _notes("Gates that nearly fired", near_misses) + _notes(
+        "Objections the skeptic made", objections
+    )
     head = f"{_preamble(bundle)}\n## Your task\n{_CHAIR}\n## Claims\n"
     shown, hidden = claims, 0
     if budget is not None:
