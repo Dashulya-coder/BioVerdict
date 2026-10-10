@@ -42,6 +42,7 @@ const claim = z.object({
   diligence_type: z.string().nullable(),
   depends_on: z.array(z.string()),
   links: z.array(link),
+  checks: z.array(z.object({ check: z.string(), detail: z.string() })).default([]),
 })
 const moduleSchema = z.object({
   module: z.string(),

@@ -9,6 +9,7 @@ from bioverdict.api.schemas import (
     BundleInfo,
     ChainLinkView,
     ChainStatus,
+    CheckView,
     ClaimView,
     DriverView,
     EventView,
@@ -44,8 +45,10 @@ from bioverdict.store.models import (
     Section,
     SectionStatus,
     VerdictResult,
+    VerificationCheck,
 )
 from bioverdict.store.runs_repo import DONE, RunRecord, get_run, load_claims, load_events
+from bioverdict.store.verification_repo import load_checks
 
 
 class RunNotFoundError(LookupError):
@@ -114,8 +117,26 @@ def _link_view(link: ClaimEvidenceLink, evidence: Evidence) -> LinkView:
     )
 
 
+# Failed checks a reader can act on; chain-link and duplicate-link bookkeeping stays in the log.
+_SHOWN_CHECKS = ("entailment", "source_authority", "claim_downgraded")
+
+
+def _failed_checks(checks: list[VerificationCheck]) -> dict[str, list[CheckView]]:
+    shown: dict[str, list[CheckView]] = {}
+    for check in checks:
+        if check.passed or check.check_name not in _SHOWN_CHECKS:
+            continue
+        view = CheckView(check=check.check_name, detail=check.detail)
+        if view not in shown.setdefault(check.claim_id, []):
+            shown[check.claim_id].append(view)
+    return shown
+
+
 def _claim_view(
-    claim: Claim, links: list[ClaimEvidenceLink], evidence: dict[str, Evidence]
+    claim: Claim,
+    links: list[ClaimEvidenceLink],
+    evidence: dict[str, Evidence],
+    checks: list[CheckView],
 ) -> ClaimView:
     return ClaimView(
         id=claim.id,
@@ -139,6 +160,7 @@ def _claim_view(
             for link in links
             if link.claim_id == claim.id and link.evidence_id in evidence
         ],
+        checks=checks,
     )
 
 
@@ -228,7 +250,8 @@ def build_report(conn: sqlite3.Connection, run_id: str) -> ReportResponse:
     claims, links = load_claims(conn, run_id)
     evidence = bundle.evidence_by_id()
 
-    claim_views = [_claim_view(c, links, evidence) for c in claims]
+    failed = _failed_checks(load_checks(conn, run_id))
+    claim_views = [_claim_view(c, links, evidence, failed.get(c.id, [])) for c in claims]
     cited = {link.evidence_id for link in links}
     sources = [evidence_view(e, links) for e in bundle.evidence if e.id in cited]
     result = record.result
@@ -270,7 +293,10 @@ def get_claim(conn: sqlite3.Connection, run_id: str, claim_id: str) -> ClaimView
     claim = next((c for c in claims if c.id == claim_id), None)
     if claim is None:
         raise ItemNotFoundError(f"claim {claim_id} is not in run {run_id}")
-    return _claim_view(claim, links, load_bundle(conn, run_id).evidence_by_id())
+    failed = _failed_checks(load_checks(conn, run_id))
+    return _claim_view(
+        claim, links, load_bundle(conn, run_id).evidence_by_id(), failed.get(claim.id, [])
+    )
 
 
 def get_evidence(conn: sqlite3.Connection, run_id: str, evidence_id: str) -> EvidenceView:

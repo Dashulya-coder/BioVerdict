@@ -27,6 +27,14 @@ const emptyDocument = {
 const selectClass =
   'mt-2 min-h-11 w-full rounded-sm border border-control bg-sidebar px-3 py-2.5 text-sm'
 
+/** The drug, or for a run without one the mechanism and the indication. */
+function subjectOf(input: { asset: string; mechanism: string; indication: string }): string {
+  if (input.asset) return input.asset
+  return (
+    [input.mechanism, input.indication].filter((part) => part !== '').join(' in ') || 'this run'
+  )
+}
+
 function describe(run: RunSummary): string {
   const subject = [run.input.asset, run.input.query, run.input.mechanism, run.input.indication]
     .filter((part): part is string => typeof part === 'string' && part !== '')
@@ -123,7 +131,7 @@ export function CompareRuns({
       <PageHeading
         eyebrow="04 / Compare"
         title="Compare runs"
-        description={`See what moved the report of ${analysis.input.asset}: against another run, or after adding a document. The run must have finished.`}
+        description={`See what moved the report of ${subjectOf(analysis.input)}: against another run, or after adding a document. The run must have finished.`}
       />
       {finished ? null : (
         <p role="status" className="mb-8 max-w-2xl text-sm text-assumption">

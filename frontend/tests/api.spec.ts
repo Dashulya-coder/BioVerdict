@@ -453,6 +453,14 @@ test('the header says whether the run is still reasoning, and Compare waits for 
   await expect(page.getByRole('button', { name: 'Add and recompute' })).toBeEnabled()
 })
 
+test('the comparison of a class run names the mechanism and the indication', async ({ page }) => {
+  await serve(page, { input: { indication: 'multiple sclerosis', mechanism: 'BTK inhibitor' } })
+  await page.goto(`/?run=${RUN}#compare`)
+  await expect(
+    page.getByText('See what moved the report of BTK inhibitor in multiple sclerosis:'),
+  ).toBeVisible()
+})
+
 test('a failed run is named in the header and cannot be compared', async ({ page }) => {
   await serve(page, { statuses: ['failed'] })
   await run(page, 'divarasib')
@@ -540,6 +548,36 @@ test('a claim opens onto its verbatim quotation and the original source', async 
   await expect(
     page.getByText('Not searched: this proves nothing either way.').first(),
   ).toBeVisible()
+})
+
+test('a claim whose quotation the judge removed says so and why', async ({ page }) => {
+  const judged = structuredClone(report) as unknown as {
+    sections: { section: string; status: string; claims: Record<string, unknown>[] }[]
+  }
+  const mechanism = judged.sections.find((s) => s.section === 'mechanism')
+  const claim = mechanism?.claims[0]
+  if (!claim) throw new Error('the fixture report has no mechanism claim')
+  claim.links = []
+  claim.checks = [
+    {
+      check: 'entailment',
+      detail: 'E-0001 cited as supports, judged unrelated: the quote gives only the unit',
+    },
+  ]
+  const translation = judged.sections.find((s) => s.section === 'translation')
+  if (translation) translation.status = 'not_searched'
+  await serve(page, { report: judged })
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+
+  await page.getByText(String(claim.text)).click()
+  const opened = page.locator('details', { hasText: String(claim.text) })
+  await expect(opened.getByText('No quotation is left to support this claim.')).toBeVisible()
+  await expect(opened.getByText('The judge removed a quotation')).toBeVisible()
+  await expect(opened.getByText('judged unrelated: the quote gives only the unit')).toBeVisible()
+  await expect(opened.getByText('it is a stated gap')).toBeHidden()
+  // Translation reads the other sections: it is not a section that was never searched.
+  await expect(page.getByText('read from the other sections')).toBeVisible()
 })
 
 test('what is unknown is listed by the diligence that could answer it', async ({ page }) => {
