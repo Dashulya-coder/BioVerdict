@@ -4,7 +4,13 @@ the right reason? (docs/eval.md, "Sensitivity benchmark")
 Each case adds one document to a finished run through the same path as the API's add-evidence
 route (`pipeline/recompute.py`), then reads the code-computed diff (`api/diff.py`). A case passes
 when the module it names moved the way it expects and the document is among the causes; a noise
-case passes when the document was placed on no claim and no answer changed. Nothing here judges a report with a model.
+case passes when the document was placed on no claim and no answer changed. Nothing here judges a
+report with a model.
+
+A recompute at a later cutoff ages every claim, so a case compared with the base run would show
+that drift as if the document had caused it. Each case is therefore compared with a control: the
+base run recomputed at the same cutoff with no document (one control per cutoff, shared by its
+cases). The control and the case differ only in the document, so what the diff shows is its effect.
 """
 
 from __future__ import annotations
@@ -29,7 +35,7 @@ from bioverdict.pipeline.recompute import (
     prepare_recompute,
 )
 from bioverdict.scoring.module_answers import ModuleId
-from bioverdict.store.runs_repo import load_events
+from bioverdict.store.runs_repo import get_run, load_events
 
 Kind = Literal["strong", "weak", "noise"]
 Direction = Literal["down", "up", "none"]
@@ -62,6 +68,7 @@ class CaseOutcome(BaseModel):
     run_id: str | None
     passed: bool
     reason: str
+    control_run: str | None = None  # the run every "before" below is read from
     module: ModuleId | None = None
     answer_before: str | None = None
     answer_after: str | None = None
@@ -74,6 +81,7 @@ class CaseOutcome(BaseModel):
 
 class SensitivityReport(BaseModel):
     base_run: str
+    controls: dict[str, str] = {}  # cutoff -> the base run recomputed at it with no document
     cases: list[CaseOutcome]
 
     @property
@@ -100,23 +108,13 @@ def judge_case(case: SensitivityCase, diff: DiffResponse) -> tuple[bool, str]:
     """Whether the diff shows what the case expects, and the sentence that says why."""
     added = {item.id for item in diff.evidence_added}
     if case.expect.direction == "none":
-        # A later cutoff ages every claim, so a balance, even an answer, may drift with no new
-        # evidence behind it (a live run of 2026-10-10: the base run at 2024-06-30 and the
-        # recompute at 2026-10-10 differed in the unmet-need module in all five cases, noise
-        # included, with no cause). What noise must not do is be placed on a claim, or change
-        # the verdict. A module that moved with no cause is drift and is reported, not failed.
+        # The diff is against the control at the same cutoff, so nothing here is drift with a
+        # later cutoff: noise must not be placed on a claim, change an answer or the verdict.
         touched = [m for m in diff.modules if any(c.evidence_id in added for c in m.causes)]
-        if touched or diff.verdict_changed:
-            names = sorted(m.module.value for m in touched)
+        flipped = [m for m in diff.modules if m.answer_before is not m.answer_after]
+        if touched or flipped or diff.verdict_changed:
+            names = sorted({m.module.value for m in [*touched, *flipped]})
             return False, "moved: " + (", ".join(names) or "the verdict")
-        drifted = sorted(m.module.value for m in diff.modules if m.changed)
-        if drifted:
-            return (
-                True,
-                "no module moved because of the document (drift with the later cutoff: "
-                + ", ".join(drifted)
-                + ")",
-            )
         return True, "no module moved"
 
     target = next((m for m in diff.modules if m.module is case.expect.module), None)
@@ -138,17 +136,53 @@ def judge_case(case: SensitivityCase, diff: DiffResponse) -> tuple[bool, str]:
     return True, f"balance moved {shift:+.2f} and the document is named as the cause"
 
 
+def _blank(case: SensitivityCase, **changes: object) -> CaseOutcome:
+    return CaseOutcome(
+        case_id=case.id,
+        kind=case.kind,
+        item=case.item,
+        run_id=None,
+        passed=False,
+        reason="",
+        **changes,
+    )
+
+
+def run_control(
+    conn: sqlite3.Connection,
+    base_run: str,
+    cutoff: date_type | None,
+    llm: Callable[[str], LLM],
+) -> tuple[str | None, str]:
+    """The base run recomputed at `cutoff` with no document: the run to compare a case with.
+
+    Returns its run id, or None and why it could not be made. With nothing to place, the model
+    is not asked to classify anything; code only ages and rescores the claims at the cutoff.
+    """
+    run_id = f"R-{uuid4().hex}"
+    try:
+        bundle = prepare_recompute(conn, base_run, run_id, [], cutoff)
+    except (LookupError, RecomputeError) as exc:
+        return None, f"not run: {exc}"
+    if finish_recompute(conn, run_id, lambda: bundle, lambda: llm(run_id)) is None:
+        return None, f"control run failed: {load_events(conn, run_id)[-1].detail}"
+    return run_id, ""
+
+
 def run_case(
-    conn: sqlite3.Connection, base_run: str, case: SensitivityCase, llm: Callable[[str], LLM]
+    conn: sqlite3.Connection,
+    base_run: str,
+    case: SensitivityCase,
+    llm: Callable[[str], LLM],
+    control_run: str,
 ) -> CaseOutcome:
+    """Add the case's document to `base_run` and compare the result with `control_run`."""
     doc = case.document
     evidence = analyst_evidence(
         1, doc.text, doc.url, doc.source, doc.source_kind, doc.level, doc.published_at
     )
     run_id = f"R-{uuid4().hex}"
-    blank = CaseOutcome(
-        case_id=case.id, kind=case.kind, item=case.item, run_id=None, passed=False, reason=""
-    )
+    blank = _blank(case, control_run=control_run)
     try:
         bundle = prepare_recompute(conn, base_run, run_id, [evidence], case.as_of)
     except (LookupError, RecomputeError) as exc:
@@ -158,7 +192,7 @@ def run_case(
         why = load_events(conn, run_id)[-1].detail
         return blank.model_copy(update={"run_id": run_id, "reason": f"run failed: {why}"})
 
-    diff = build_diff(conn, base_run, run_id)
+    diff = build_diff(conn, control_run, run_id)
     passed, reason = judge_case(case, diff)
     target = next((m for m in diff.modules if m.module is case.expect.module), None)
     return CaseOutcome(
@@ -166,6 +200,7 @@ def run_case(
         kind=case.kind,
         item=case.item,
         run_id=run_id,
+        control_run=control_run,
         passed=passed,
         reason=reason,
         module=case.expect.module,
@@ -185,8 +220,25 @@ def run_cases(
     cases: list[SensitivityCase],
     llm: Callable[[str], LLM],
 ) -> SensitivityReport:
+    """Run every case against the control of its cutoff (one control per cutoff, made once)."""
+    base = get_run(conn, base_run)
+    controls: dict[date_type | None, tuple[str | None, str]] = {}
+    outcomes = []
+    for case in cases:
+        cutoff = case.as_of or (base.as_of if base else None)
+        if cutoff not in controls:
+            controls[cutoff] = run_control(conn, base_run, cutoff, llm)
+        control, why = controls[cutoff]
+        if control is None:
+            outcomes.append(_blank(case).model_copy(update={"reason": why}))
+        else:
+            outcomes.append(run_case(conn, base_run, case, llm, control))
     return SensitivityReport(
-        base_run=base_run, cases=[run_case(conn, base_run, case, llm) for case in cases]
+        base_run=base_run,
+        controls={
+            cutoff.isoformat(): run for cutoff, (run, _) in controls.items() if run and cutoff
+        },
+        cases=outcomes,
     )
 
 
@@ -199,6 +251,13 @@ def summary(report: SensitivityReport) -> str:
         f"# Sensitivity benchmark on run {report.base_run}",
         "",
         f"{report.passed} of {len(report.cases)} case(s) passed.",
+        "",
+        (
+            "Each case is compared with a control: the base run recomputed at the same cutoff "
+            "with no document, so a later cutoff does not show as an effect of the document. "
+            "Before = the control."
+        ),
+        *(f"- Control at {cutoff}: run {run}" for cutoff, run in report.controls.items()),
         "",
         "| Case | Kind | Dataset item | Module | Answer | Balance | Verdict | Result |",
         "|---|---|---|---|---|---|---|---|",

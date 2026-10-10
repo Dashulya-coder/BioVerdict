@@ -126,13 +126,18 @@ does it name that evidence, and does it stay put for evidence that is weak or un
 Each case then adds one document through the same path as the API's add-evidence route: the
 model only places the document on existing claims (or writes a new fact), code grounds the
 quote, recomputes every confidence and every module answer, and the diff is computed by code.
-The runner (`bioverdict sensitivity`, `eval/sensitivity.py`) reads only that diff:
+A recompute at a later cutoff also ages every claim, so a case is not compared with the base run
+but with a **control**: the base run recomputed at the same cutoff with no document (one control
+per cutoff, shared by its cases; code only ages and rescores, the model classifies nothing).
+Control and case differ only in the document, so the diff is its effect and nothing else. The
+runner (`bioverdict sensitivity`, `eval/sensitivity.py`) reads only that diff; every "before" in
+its table is the control:
 
 | Kind | Passes when |
 |---|---|
 | strong | the named module's balance moves in the expected direction and the document is listed among its causes |
 | weak | the same, and the answer and the verdict do not change and the balance moves by at most 0.15 |
-| noise | the document is placed on no claim and no answer or verdict changes |
+| noise | the document is placed on no claim and no answer or verdict changes (no exception for drift: against the control there is none) |
 
 No model grades a result. The expected direction of each case is what a reader of the sentence
 would expect, recorded before the run.
@@ -177,6 +182,8 @@ Modules of that run: unmet need supports (weight 0.21 for, 0.00 against), mechan
 | strong-fenebrutinib-lesions | **fail** | the document is a cause of no module: placed on no claim that a module reads. The balance was already at its ceiling (+1.00) |
 | weak-microglia-preprint | **fail** | mechanism balance +1.00 to +1.00. The document is named as a cause, but a balance at the ceiling cannot move up |
 | noise-kras-lung-release | pass (after a change of the rule) | by the first rule it failed: the unmet-need module changed its answer, with no cause. It did so in all five cases, the noise one included: the base is as of 2024 and the recompute as of 2026, and the evidence aged. A module that moves with no cause is now reported as drift, not failed; a module the document is a cause of, or the verdict, still fails the noise case |
+
+*Method note.* That run compared each case with the base, and the noise case passed only after a drift exception was added to its rule. Since then the runner compares each case with a control at the same cutoff and the noise rule has no exception (section 8); this table was not re-run with it and is kept as the record of the first run.
 
 What it means for the benchmark: the two failures that are not the system's are the ceiling (a balance at +1.00 cannot show an expected rise; the base should be one where the balances are not saturated, or the weak case should expect no move) and the cutoff (a base and a recompute two years apart drift together). The benchmark has never been run with the cutoff of the base equal to that of the recompute, which would need documents dated before the base.
 

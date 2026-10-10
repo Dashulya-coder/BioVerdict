@@ -16,16 +16,19 @@ from bioverdict.reasoning.classify_evidence import (
     classify_new_evidence,
 )
 from bioverdict.reasoning.grounding import DropKind
-from bioverdict.reasoning.schemas import DraftClaim
+from bioverdict.reasoning.schemas import DraftClaim, DraftLink
 from bioverdict.scoring.verdict import rescore
 from bioverdict.store.models import (
     Basis,
     Bundle,
+    ChainLink,
     ClaimType,
+    DiligenceType,
     Direction,
     Evidence,
     EvidenceLevel,
     GateId,
+    Section,
     SourceKind,
     Verdict,
 )
@@ -389,3 +392,85 @@ def test_evidence_about_another_drug_or_disease_is_to_be_left_unmatched() -> Non
     prompt = build_prompt([], [], BUNDLE)
 
     assert "another drug" in prompt and "unmatched" in prompt
+
+
+# --- a new fact on a link of the translation chain can close that link's gap -------------------------
+
+EXPOSURE = (
+    "Plasma exposure of divarasib at the recommended dose exceeded the concentration that "
+    "inhibited KRAS G12C signalling in the cell models."
+)
+
+
+def exposure_claim(**changes) -> DraftClaim:
+    draft = DraftClaim(
+        text="Divarasib reaches an exposure in patients above the effective experimental one.",
+        claim_type=ClaimType.DRUG_ACTS_IN_HUMANS,
+        basis="extracted",
+        chain_link=ChainLink.HUMAN_EXPOSURE,
+        links=[DraftLink(evidence_id="E-0101", direction=Direction.SUPPORTS, quote=EXPOSURE)],
+    )
+    return draft.model_copy(update=changes)
+
+
+def exposure_run(draft: DraftClaim):
+    claims, links, _ = finished_run()
+    gap = next(c for c in claims if c.chain_link is ChainLink.HUMAN_EXPOSURE)
+    assert gap.basis is Basis.UNKNOWN  # the fixture's report says the link is not shown
+    new = added("E-0101", EXPOSURE, EvidenceLevel.HUMAN_INTERVENTIONAL, "pk:X")
+    result, _ = classify(claims, links, [new], Classification(new_claims=[draft]))
+    return gap, result
+
+
+def test_a_fact_that_shows_a_chain_link_is_a_translation_claim_and_closes_the_gap() -> None:
+    gap, result = exposure_run(exposure_claim())
+
+    (claim,) = result.new_claims
+    assert (claim.section, claim.chain_link) == (Section.TRANSLATION, ChainLink.HUMAN_EXPOSURE)
+    assert claim.claim_type is ClaimType.DRUG_ACTS_IN_HUMANS and claim.confidence == 0.0
+    assert [(l.claim_id, l.evidence_id) for l in result.new_claim_links] == [(claim.id, "E-0101")]
+    assert result.gaps_closed == {gap.id: claim.id}
+    assert not [d for d in result.drops if d.kind is DropKind.CHAIN_LINK]
+
+
+def test_the_claim_type_of_a_chain_claim_is_set_by_code_not_by_the_model() -> None:
+    _, result = exposure_run(exposure_claim(claim_type=ClaimType.TARGET_CAUSAL))
+
+    assert result.new_claims[0].claim_type is ClaimType.DRUG_ACTS_IN_HUMANS
+
+
+def test_a_new_gap_closes_nothing() -> None:
+    gap, result = exposure_run(
+        exposure_claim(basis="unknown", links=[], diligence_type=DiligenceType.PATIENT_LEVEL_DATA)
+    )
+
+    assert result.new_claims and result.gaps_closed == {}
+    assert gap.id not in result.gaps_closed
+
+
+def test_a_chain_claim_with_an_invented_quote_is_rejected_and_closes_nothing() -> None:
+    link = DraftLink(evidence_id="E-0101", direction=Direction.SUPPORTS, quote="Never written.")
+    _, result = exposure_run(exposure_claim(links=[link]))
+
+    assert result.new_claims == [] and result.gaps_closed == {}
+    assert result.rejected_claims
+
+
+def test_a_claim_that_asserts_a_gate_stays_clinical_and_loses_the_chain_link() -> None:
+    _, result = exposure_run(exposure_claim(gate_signals=[GateId.K2]))
+
+    (claim,) = result.new_claims
+    assert claim.section is Section.CLINICAL and claim.chain_link is None
+    assert [d for d in result.drops if d.kind is DropKind.CHAIN_LINK]
+    assert result.gaps_closed == {}
+
+
+def test_the_prompt_names_the_chain_link_of_a_claim() -> None:
+    claims, _, _ = finished_run()
+    gap = next(c for c in claims if c.chain_link is ChainLink.HUMAN_EXPOSURE)
+
+    prompt = build_prompt(
+        claims, [added("E-0101", EXPOSURE, EvidenceLevel.IN_VITRO, "pk:X")], BUNDLE
+    )
+
+    assert f"[{gap.id}] (translation, unknown, human_exposure)" in prompt
