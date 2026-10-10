@@ -1,0 +1,87 @@
+# Hand-over notes
+
+Open notes from one track to the other. A coding agent that starts work in this repository
+reads this file (see `AGENTS.md`) and tells its user what is addressed to them before it
+starts on anything else. Delete a note when it is done; delete the file's last note and leave
+the heading.
+
+---
+
+## To Dasha, from Arsenii — 2026-10-10
+
+State of `main`: through #107. What changed today is in #105 (six module answers, per-module
+diff, fixes from the first live runs, sensitivity benchmark) and #107 (recompute and registry
+fixes, asset selection, `docs/finals-audit.md`). The finals rubric and the stage order are in
+[`demo-script.md`](demo-script.md).
+
+**Arsenii made three paid runs and will make no more.** The paid runs below are yours.
+
+### 1. Do first: paid runs before the demo
+
+1. **A live run of the pair on merged `main`.** From `backend/`:
+   `USE_FIXTURES=0 uv run --env-file ../.env bioverdict run --query "BTK inhibitor for multiple sclerosis"`.
+   The unmet-need prompt, the last judge changes and everything in #107 were made after the
+   last live run and have been seen only in tests.
+2. **A base run with an earlier cutoff, then the sensitivity benchmark.** Add `--as-of 2024-06-30`
+   to the command above, then
+   `uv run --env-file ../.env bioverdict sensitivity --run <run id> --cases ../eval/sensitivity.yaml --out ../eval/results/<date>`.
+   The benchmark has never been run with a real model. Put its table in
+   [`eval.md`](eval.md), section 9. A case that fails is shown as failed.
+3. **Before that base run, know this:** since #107 registry results are dated by the record's
+   last update, not by their first posting. A run as of 2024 will see fewer trial results than
+   before, possibly too few to stand on. If so, choose a later cutoff and move the `as_of` of
+   the cases with it.
+4. **Raise `RUN_TIMEOUT_S` on the demo machine** and pre-warm the model cache. The three runs
+   took 3 min 45 s, 7 min 21 s and 5 min 7 s against a limit of 420 s; the second lost its Chair
+   step to the limit.
+5. **Look at the Report and Compare screens on a live run.** "Six modules, six answers" and
+   "Module by module" have been seen only in browser tests.
+
+Measured on the last run (R-440107f1…, 2026-10-10): $0.99, Conditional, 100 claims, 72
+citations judged and 13 removed, 37 links of context claims not judged, 8 diligence questions.
+
+### 2. To finish in your track
+
+| What | Where | Why it matters |
+|---|---|---|
+| The judge keeps a link it did not answer for | `verification/entailment.py`, `pipeline/reason_score.py:verify_pass` | A failed request or a skipped item leaves the quote counted as support. Either show an explicit "not verified" state, or keep such claims from deciding a module's answer and the verdict |
+| Nobody has read the 13 removals | a hand-labelled sample of about 30 claims (`eval.md`, "Judge agreement") | The judge went from removing 75 of 93 to 13 of 72 after it was shown the passage; whether it is now too lenient is unknown |
+| Unmet-need module reported the class's own trial failures and answered "against" | `reasoning/modules.py`, `_UNMET_NEED` | Prompt changed, not seen live |
+| Modules restate one another | mechanism, translation and clinical prompts | One trial result is written by three modules and pulls on each |
+| K2 and K4 fire on keywords | `reasoning/gate_guards.py`, `stop_reason.py` | A terminated study is not a stopped program; a boxed warning is not unmitigable toxicity. Add negative controls: a business stop, a lifted hold |
+| K1 did not fire for the pair | clinical module | The registry record of evobrutinib says the primary endpoint was not met. Decide whether silence is right for a class question or the model missed it |
+| `eval/cases.yaml` has one smoke case | B10 | No regression set |
+
+### 3. Decisions to think over together
+
+Each of these was made by one person under time pressure, or not made at all.
+
+1. **`Claim.implication` entered the shared contract without the two-step approval** of
+   `CONTRIBUTING.md` (#105, migration 4). A model proposes it and the module answers depend on
+   it. Accept it, or have code set the label by rule?
+2. **A module's answer is a balance with two uncalibrated thresholds** (0.2 and 0.25,
+   `scoring/module_answers.py`). Splitting one finding into several claims moves the balance.
+   Count by trial or by independence group instead of by claim?
+3. **Class question or asset.** For an indication with a mechanism and no drug, PoS is taken
+   from the most advanced program of the class, stated as an assumption (Arsenii's decision;
+   the second audit proposed no PoS until an asset is chosen). Choosing an asset is in the UI,
+   but it is a second whole run. Is a cheaper path worth building: reuse the class bundle for
+   the asset?
+4. **The judge does not read context claims** (neutral, not key, no gate, no chain link), to
+   fit the time limit. Does that agree with "a claim that fails verification is dropped"?
+5. **The judge is a model of the same vendor** as the model that writes the claims: the
+   gateway lists no other. An independent check needs a second adapter and key.
+6. **The gateway's concurrency limit (4) comes from one observation** and is enforced inside
+   one process (`llm/providers/openai.py`). Two runs started through the API at once exceed it.
+7. **Incremental recompute cannot close a gap.** New evidence placed on an `unknown` leaves its
+   confidence at the default, and every new claim is grounded as clinical, so it cannot fill a
+   translation-chain link. Today that needs `RECOMPUTE_MODE=full`.
+8. **rNPV.** There is none for multiple sclerosis (no prevalence source). Where there is one it
+   rests on placeholders, and the rule is asymmetric: a negative rNPV does not kill, a positive
+   one helps reach `Invest`. Remove the asymmetry, or say it on stage.
+9. **Analogs are chosen by target.** For multiple sclerosis the commercial module reads
+   oncology BTK labels and prices, and the real competitors in the indication are absent.
+
+The findings behind these, numbered, are in [`finals-audit.md`](finals-audit.md) (read its
+status note first); the ordered list of what is open before the demo is in
+[`work-plan.md`](work-plan.md).

@@ -1,6 +1,8 @@
 # BioVerdict: context for coding agents
 
 Read this file, `CONTRIBUTING.md`, and the relevant documents in `docs/` before editing.
+Read `docs/handoff.md` first: it holds open notes from one person to the other. If a note there
+is addressed to your user, tell them what it says before you start on anything else.
 Documentation describes the intended product; inspect the code and the open pull requests before
 claiming that a feature is implemented or missing.
 
