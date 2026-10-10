@@ -93,6 +93,13 @@ class LinkView(_View):
     badge: Badge
 
 
+class CheckView(_View):
+    """A verification check the claim did not pass, in the words the check logged."""
+
+    check: str = Field(description="entailment | source_authority | claim_downgraded")
+    detail: str
+
+
 class ClaimView(_View):
     id: str
     section: Section
@@ -111,6 +118,10 @@ class ClaimView(_View):
     diligence_type: str | None
     depends_on: list[str]
     links: list[LinkView]
+    checks: list[CheckView] = Field(
+        default_factory=list,
+        description="Checks the claim failed: why a quote was removed or the claim lost its weight",
+    )
 
 
 class SectionView(_View):

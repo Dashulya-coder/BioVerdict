@@ -31,6 +31,11 @@ const statusNotes: Record<string, string> = {
   error: 'A fetch failed: this proves nothing, run again.',
   incomplete: 'The search was cut short.',
 }
+const checkNames: Record<string, string> = {
+  entailment: 'The judge removed a quotation',
+  source_authority: 'Weak source',
+  claim_downgraded: 'The claim lost its support',
+}
 const directionLabels = { supports: 'Supports', contradicts: 'Contradicts', neutral: 'Neutral' }
 
 function ClaimDetail({ claim }: { claim: ReportClaim }) {
@@ -67,8 +72,22 @@ function ClaimDetail({ claim }: { claim: ReportClaim }) {
           ))}
         </ul>
       ) : (
-        <p className="text-muted">No quotation supports this claim: it is a stated gap.</p>
+        <p className="text-muted">
+          {claim.checks.length
+            ? 'No quotation is left to support this claim.'
+            : 'No quotation supports this claim: it is a stated gap.'}
+        </p>
       )}
+      {claim.checks.length ? (
+        <ul className="space-y-2 border-l-2 border-assumption/60 bg-raised p-3 text-xs">
+          {claim.checks.map((check) => (
+            <li key={`${check.check}-${check.detail}`}>
+              <span className="font-medium text-ink">{checkNames[check.check] ?? check.check}</span>
+              <span className="text-muted"> · {check.detail}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {claim.depends_on.length ? (
         <p className="font-mono text-xs text-muted">Depends on {claim.depends_on.join(', ')}</p>
       ) : null}
@@ -113,6 +132,18 @@ export function ClaimRow({ claim }: { claim: ReportClaim }) {
   )
 }
 
+/** Translation has no search of its own: its claims are read from the other sections. */
+function readFromOthers(section: Report['sections'][number]): boolean {
+  return (
+    section.section === 'translation' &&
+    section.status === 'not_searched' &&
+    section.claims.length > 0
+  )
+}
+function sectionState(section: Report['sections'][number]): string {
+  return readFromOthers(section) ? 'read from the other sections' : section.status.replace('_', ' ')
+}
+
 /** Recommendation → claims → quotations → sources: every claim opens onto what it rests on. */
 export function ClaimList({ report }: { report: Report }) {
   return (
@@ -126,10 +157,10 @@ export function ClaimList({ report }: { report: Report }) {
             <h3 className="flex flex-wrap items-baseline gap-3 text-sm font-medium">
               {sectionNames[section.section] ?? section.section}
               <span className="text-xs font-normal text-muted">
-                {section.status.replace('_', ' ')} · {section.claims.length.toString()} claim(s)
+                {sectionState(section)} · {section.claims.length.toString()} claim(s)
               </span>
             </h3>
-            {statusNotes[section.status] ? (
+            {statusNotes[section.status] && !readFromOthers(section) ? (
               <p className="mt-1 text-xs text-assumption">{statusNotes[section.status]}</p>
             ) : null}
             {section.claims.length ? (
