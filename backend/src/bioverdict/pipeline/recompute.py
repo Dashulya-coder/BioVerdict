@@ -21,6 +21,7 @@ from bioverdict.pipeline.reason_score import (
     drop_checks,
     reason_and_score,
     run_financials,
+    run_question,
     synthesis_pass,
     verify_pass,
 )
@@ -187,7 +188,8 @@ def classify_and_score(
     added = [e for e in bundle.evidence if e.version == bundle.version]
 
     add_event(conn, run_id, "reason", "started", f"place {len(added)} new item(s) among claims")
-    found = classify_new_evidence(llm, run_id, claims, links, added, bundle)
+    question = run_question(conn, run_id)
+    found = classify_new_evidence(llm, run_id, claims, links, added, bundle, question)
     # A chain link that a new claim now shows no longer has its `unknown` claim: the report would
     # say "not shown" beside the claim that shows it. The new claim's own confidence, from the
     # formula, decides whether the link is still weak or missing.

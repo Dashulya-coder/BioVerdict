@@ -81,7 +81,7 @@ def run_financials(conn: sqlite3.Connection, run_id: str, bundle: Bundle) -> Fin
     return financial_model(bundle, resolver.indication.name, class_question=about_class)
 
 
-def _question(conn: sqlite3.Connection, run_id: str) -> str:
+def run_question(conn: sqlite3.Connection, run_id: str) -> str:
     """The resolved question for the prompts ("" when the run has no resolved input)."""
     record = get_run(conn, run_id)
     resolver = record.resolver if record is not None else None
@@ -236,7 +236,7 @@ def reason_and_score(
 ) -> VerdictResult:
     """Record the claims, the verdict and the progress events of the run, and finish it."""
     add_event(conn, run_id, "reason", "started", ", ".join(m.name for m in ALL_MODULES))
-    reasoner = ModuleReasoner(llm, run_id, question=_question(conn, run_id))
+    reasoner = ModuleReasoner(llm, run_id, question=run_question(conn, run_id))
     claims, links = reasoner.reason(bundle)
     # A failed citation removes the whole claim, including a claim with other surviving
     # citations, rather than softening it to an inference.

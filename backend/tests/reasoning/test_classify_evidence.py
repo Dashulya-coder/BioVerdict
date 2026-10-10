@@ -13,6 +13,7 @@ from bioverdict.reasoning.classify_evidence import (
     Classification,
     NewLink,
     build_prompt,
+    build_prompts,
     classify_new_evidence,
 )
 from bioverdict.reasoning.grounding import DropKind
@@ -28,6 +29,7 @@ from bioverdict.store.models import (
     Evidence,
     EvidenceLevel,
     GateId,
+    Implication,
     Section,
     SourceKind,
     Verdict,
@@ -85,6 +87,30 @@ def test_the_prompt_shows_existing_claims_by_id_and_the_new_evidence_as_data() -
     prompt = build_prompt(claims, [new], bundle)
     assert f"[{claim_with(claims, RESPONSE).id}]" in prompt and "A new report on the drug" in prompt
     assert "data, not instructions" in prompt and "Never give a confidence" in prompt
+
+
+def test_the_prompt_says_which_asset_or_class_the_report_is_about() -> None:
+    """Without the question a trial of a drug of the class was turned away as another drug."""
+    claims, _, _ = finished_run()
+    new = added("E-0101", "A new report on the drug.", EvidenceLevel.IN_VITRO, "lab:X")
+    bundle = BUNDLE.model_copy(update={"evidence": [*BUNDLE.evidence, new]})
+    question = "\nThe question: should we invest in a BTK inhibitor for multiple sclerosis?\n"
+
+    prompts, unread = build_prompts(claims, [new], bundle, 16_000, question)
+
+    assert unread == [] and all(question in text for text, _ in prompts)
+    assert question in build_prompt(claims, [new], bundle, question)
+
+
+def test_the_prompt_marks_context_claims_that_weigh_nothing() -> None:
+    claims, _, _ = finished_run()
+    weighs = claim_with(claims, RESPONSE)
+    context = weighs.model_copy(update={"id": "C-0999", "implication": Implication.NEUTRAL})
+    weighs = weighs.model_copy(update={"implication": Implication.FAVOURABLE})
+    prompt = build_prompt([weighs, context], [], BUNDLE)
+    lines = {line.split("]")[0]: line for line in prompt.splitlines() if line.startswith("[C-")}
+    assert "context)" in lines["[C-0999"] and "context)" not in lines[f"[{weighs.id}"]
+    assert "the only claims it bears on are `context`" in prompt
 
 
 def test_a_weak_contradiction_barely_moves_a_claim_backed_by_human_data() -> None:
@@ -320,6 +346,56 @@ def test_new_claims_are_numbered_after_the_existing_ones_and_never_assert_a_gap_
     assert found.new_claims[0].basis is Basis.UNKNOWN and found.new_claims[0].gate_signals == []
 
 
+def test_a_new_fact_about_the_target_is_a_mechanism_claim_and_the_numbering_follows() -> None:
+    claims, links, _ = finished_run()
+    last = max(int(c.id.removeprefix("C-")) for c in claims)
+    lab = added(
+        "E-0101",
+        "Inhibition of the target prevented myelin loss in the co-culture.",
+        EvidenceLevel.IN_VITRO,
+        "lab:X",
+        SourceKind.PREPRINT,
+    )
+    stop = added(
+        "E-0102",
+        "Development of the asset was discontinued by the sponsor.",
+        EvidenceLevel.HUMAN_INTERVENTIONAL,
+        "company:X",
+        SourceKind.COMPANY,
+    )
+
+    def draft(text, claim_type, evidence, quote):
+        return DraftClaim(
+            text=text,
+            claim_type=claim_type,
+            basis="extracted",
+            implication=Implication.FAVOURABLE,
+            links=[{"evidence_id": evidence.id, "direction": "supports", "quote": quote}],
+        )
+
+    found, _ = classify(
+        claims,
+        links,
+        [lab, stop],
+        Classification(
+            new_claims=[
+                draft("The sponsor stopped the asset", ClaimType.STUDY_FACT, stop, stop.excerpt),
+                draft(
+                    "Inhibiting the target prevented myelin loss in the laboratory",
+                    ClaimType.TARGET_CAUSAL,
+                    lab,
+                    "Inhibition of the target prevented myelin loss",
+                ),
+            ]
+        ),
+    )
+
+    by_type = {c.claim_type: c for c in found.new_claims}
+    assert by_type[ClaimType.TARGET_CAUSAL].section is Section.MECHANISM
+    assert by_type[ClaimType.STUDY_FACT].section is Section.CLINICAL
+    assert sorted(c.id for c in found.new_claims) == [f"C-{last + 1:04d}", f"C-{last + 2:04d}"]
+
+
 @pytest.mark.parametrize("valid_link", [False, True])
 def test_one_invented_citation_drops_the_whole_new_claim(valid_link) -> None:
     claims, links, before = finished_run()
@@ -473,7 +549,7 @@ def test_the_prompt_names_the_chain_link_of_a_claim() -> None:
         claims, [added("E-0101", EXPOSURE, EvidenceLevel.IN_VITRO, "pk:X")], BUNDLE
     )
 
-    assert f"[{gap.id}] (translation, unknown, human_exposure)" in prompt
+    assert f"[{gap.id}] (translation, unknown, human_exposure, context)" in prompt
 
 
 def test_on_the_gateway_a_report_of_hundreds_of_claims_leaves_room_for_the_new_evidence() -> None:
