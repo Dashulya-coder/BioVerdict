@@ -9,7 +9,7 @@ Two people, one goal: **near-equal workload, and both of us busy from the first 
 
 ## Progress snapshot — 2026-10-10
 
-Checked against merged `main` (through #105) and the repository files. Unpublished work is not
+Checked against merged `main` (through #108) and the repository files. Unpublished work is not
 included. Update this snapshot when a task changes state, not on every PR: the per-task detail
 lives in the tables below.
 
@@ -33,6 +33,15 @@ multiple sclerosis on the organizers' gateway. The last took 5 min 7 s and $0.99
 Conditional, 72 citations judged and 13 removed, 8 ranked diligence questions. That is one
 question on one day: no other asset, no repeat for stability, and no recompute has been run
 with a real model. What the first run broke and #105 fixed is listed in that pull request.
+**Nothing merged after the third run has been run with a real model**: the end of #105 and all
+of #107.
+
+**After those runs (#107)**, from a second audit of the same day: a recompute rejects a new
+claim whose citation fails and shows an analyst's document to every module in full mode;
+registry results keep the arm of every number, are dated by the record's last update, and say
+when a limit cut them; a run without a drug is labelled a class landscape and offers the drugs
+of experimental arms to choose from. `docs/handoff.md` (#108) holds the note that hands the
+paid runs and the open questions to Dasha; `AGENTS.md` tells a coding agent to read it first.
 
 **The finals rubric** (`docs/demo-script.md`) scores six modules on conflicting evidence,
 evidence flow and quality for that pair. For it the report gives an answer per module, computed
@@ -43,8 +52,10 @@ against `eval/sensitivity.yaml`.
 **Open before the demo, in order:**
 
 1. A live run for the pair on merged `main`, and one with `--as-of 2024-06-30` as the base for
-   time travel. The unmet-need prompt and the last judge changes of #105 were made after the
-   last live run and have been seen only in tests.
+   time travel. The unmet-need prompt and the last judge changes of #105, and all of #107, were
+   made after the last live run and have been seen only in tests. Registry results are now
+   dated by their last update, so the earlier-cutoff run sees fewer of them: if too few, take a
+   later cutoff and move the `as_of` of the sensitivity cases with it.
 2. `bioverdict sensitivity` on that base: it has never been run with a real model. Its table
    goes to `docs/eval.md`, section 9.
 3. Run time: the last two runs took 7 min 21 s and 5 min 7 s against `RUN_TIMEOUT_S=420`. Raise the limit on the demo machine
@@ -54,12 +65,14 @@ against `eval/sensitivity.yaml`.
 5. The same trial result is restated by the mechanism, translation and clinical modules and
    counts in each; the two thresholds of a module's answer are uncalibrated.
 
-A second audit of the same day is in [`finals-audit.md`](finals-audit.md): 17 findings with
-their status, a reference set of seven named BTK x MS sources, and a benchmark method. Its
-open findings (verification that keeps unanswered links, kill-criteria guards, counting one
-trial several times, MS competitors missing from the analogs) are not in the list above.
+The second audit is in [`finals-audit.md`](finals-audit.md): 17 findings with their status, a
+reference set of seven named BTK x MS sources, and a benchmark method. Its open findings
+(verification that keeps unanswered links, kill-criteria guards, counting one trial several
+times, MS competitors missing from the analogs) are not in the list above; they are in
+[`handoff.md`](handoff.md) with the nine decisions the two of us have not made together.
 
-**Next for Dasha:** items 1 and 2 (the paid runs), then what they show in her modules.
+**Next for Dasha:** [`handoff.md`](handoff.md): items 1 and 2 (the paid runs), then what they
+show in her modules.
 **Next for Arsenii:** item 4 if an open source for prevalence is found; item 3; keeping the
 recorded runs, their bundle hashes and costs for the demo (A11).
 
@@ -92,12 +105,12 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 | ID | Task | Priority | Points | Demo-critical | Status | Implemented / evidence | Remaining |
 |---|---|---|---|---|---|---|---|
 | A1 | Resolver: input formats (indication+mechanism, drug name, company code) to MONDO/EFO, UniProt/Ensembl, ChEMBL/Open Targets IDs; alias disambiguation | P0 | 3 | yes | [~] | Drug, target and disease id lookup with strict name matching (#30), one-call text parsing and `Resolver.resolve()` with `assumptions`; runs first in a live run. A term that holds a disease's subtypes is taken for the disease: Open Targets files multiple sclerosis under "multiple sclerosis symptom measurement" (#105). Parsing "BTK inhibitor for multiple sclerosis" was seen with a real model. | Validate parsing on the test-list assets and the other input formats with a real model. |
-| A2 | Connectors: ClinicalTrials.gov v2 and Open Targets, returning `Evidence` objects | P0 | 4 | yes | [x] | ClinicalTrials.gov (#19), its posted results, stopped studies and pagination (#32) and Open Targets (#28) merged. | Wire the connectors into live collection and verify a real bundle handoff (M2). |
+| A2 | Connectors: ClinicalTrials.gov v2 and Open Targets, returning `Evidence` objects | P0 | 4 | yes | [x] | ClinicalTrials.gov (#19), its posted results, stopped studies and pagination (#32) and Open Targets (#28) merged. They feed live collection (real bundles of 156 to 161 items on 2026-10-10). Registry results keep the arm id of each measurement and analysis, are dated by the record's last update, and report a search or result list cut by a limit; the design record keeps arms and interventions (#107). | The #107 changes have not been seen on a live run; a time-travel run now sees fewer registry results. |
 | A3 | HTTP cache, `as_of` filter, source catalog (allowlist), bundle freeze, hash and versions | P0 | 3 | yes | [~] | SQLite, cache/retries/pacing, cutoff, canonical ids, latest-wins, catalog, hash (fixture hash #14), freeze/load and versions merged. Every connector checks a fresh answer before it is cached. | Validate the live collect → freeze flow with a real model. |
 | A4 | Extraction collect agents: quote + value into `Evidence`, section statuses, bounded tool loops | P0 | 4 | yes | [~] | Bounded, injected-tool collection with grounded quote/value extraction, cutoff/latest-wins, honest statuses, budget/deadline handling and collect → freeze DAG (#36). Live connectors and the Resolver registered and wired into the API/CLI run lifecycle (`pipeline/live_run.py`). Extraction prompts are sized by the endpoint's limit and a long section is read in batches (#73, #89). The unmet-need section reads the newest PubMed practice guidelines for the indication (`pubmed_guidelines`). | Measure live extraction quality, cost and time with a real model; the per-source caps and the batch limit make large sections `incomplete`. |
-| A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [~] | Fixture API/report/drill-down/trace/SSE (#31), CLI (#33) and shared Tailwind UI (#34) and the input/resolver/evidence screens on prepared data (#35) merged. `POST /runs` and the CLI start live runs with `USE_FIXTURES=0`. Resolver and whole-bundle endpoints; the input, resolver and evidence screens run on the API (`pnpm dev:api`), with the snapshot kept as an offline fallback. The header follows the run to its end (reasoning, verdict or failed), a reload or a `?run=` link reopens the run without starting another, and a request that is never answered ends with a message (#76). | Check the screens on a live run with a real model; link to the trace screen (B12) when it lands. |
+| A5 | API routes: report, claims, evidence, trace, SSE (stable contract); UI shell, input and resolver screen, evidence/source explorer | P0 | 7 | yes | [~] | Fixture API/report/drill-down/trace/SSE (#31), CLI (#33) and shared Tailwind UI (#34) and the input/resolver/evidence screens on prepared data (#35) merged. `POST /runs` and the CLI start live runs with `USE_FIXTURES=0`. Resolver and whole-bundle endpoints; the input, resolver and evidence screens run on the API (`pnpm dev:api`), with the snapshot kept as an offline fallback. The header follows the run to its end (reasoning, verdict or failed), a reload or a `?run=` link reopens the run without starting another, and a request that is never answered ends with a message (#76). A run without a drug is labelled a class landscape and the resolved-input screen lists the drugs of experimental arms, each with its studies; choosing one pre-fills a new analysis. A reopened run keeps its indication and mechanism (#107). | Look at the screens on a live run with a real model. Choosing an asset starts a second whole run. |
 | A6 | Connectors: PubMed / Europe PMC and openFDA / Drugs@FDA | P1 | 4 |  | [~] | PubMed connector merged (#32); its answers are validated before they are cached. openFDA connector: approvals and current labels of approved analogs, in the competition section of a live run. Europe PMC connector: preprints, in the mechanism section. PubMed Central connector: Results and tables of open-access papers (CC BY, CC0), in the clinical section. | Check the openFDA, preprint and full-text records with a real model, and that the clinical section still fits its 90 seconds with a third source. |
-| A7 | Incremental recompute engine, add-evidence endpoint, diff API and diff screen | P1 | 5 | yes | [~] | Add-evidence endpoint that recomputes as a new run on the next bundle version: by default the model only places the new evidence on existing claims and code recomputes (`RECOMPUTE_MODE=classify`); `full` runs every reasoning module again. A code-computed diff API between two finished runs, which also lists a chain link whose confidence moved within one status (#72). Compare screen in the UI (API mode); it waits for the run to finish. The diff lists each of the six modules before and after, with the new evidence, quote and claim that moved it, and Compare shows it (#105). | Check a recompute with a real model, in both modes: none has been run. Strong / weak / noise cases are in `eval/sensitivity.yaml`, not yet run. |
+| A7 | Incremental recompute engine, add-evidence endpoint, diff API and diff screen | P1 | 5 | yes | [~] | Add-evidence endpoint that recomputes as a new run on the next bundle version: by default the model only places the new evidence on existing claims and code recomputes (`RECOMPUTE_MODE=classify`); `full` runs every reasoning module again. A code-computed diff API between two finished runs, which also lists a chain link whose confidence moved within one status (#72). Compare screen in the UI (API mode); it waits for the run to finish. The diff lists each of the six modules before and after, with the new evidence, quote and claim that moved it, and Compare shows it (#105). In classify mode a new claim with a failed citation, or with none, is rejected whole and logged; in full mode an analyst's document is shown to every module (before, no module read it) (#107). | Check a recompute with a real model, in both modes: none has been run. Classify mode cannot close a gap or fill a chain link. Strong / weak / noise cases are in `eval/sensitivity.yaml`, not yet run. |
 | A8 | Eval runner, grounding and citation metrics, leakage probe, cache pre-warm | P1 | 4 |  | [~] | `bioverdict eval` (cases file, repeats, grounding/coverage/stability/cost metrics, post-cutoff citation count, JSON and Markdown report) and `bioverdict warm` (retrieval cache and readiness table for an asset list). Grounding drops are written to `verification_log`. A repeat counts for stability only when all its reasoning calls were answered afresh, not served from the cache (#77). `bioverdict sensitivity`: adds documents to a finished run and checks from the code-computed diff which modules moved (#105). | Run `eval` on the real case set and the test-list assets, and `sensitivity` on a real base run: neither has been run with a real model. Closed-book leakage probe and bare-LLM baseline. |
 | A9 | Epidemiology and pricing connectors (SEER, GCO, CMS) and TAM numbers derived by code | P1 | 4 |  | [~] | Connectors for analog prices (Open Targets approved drugs + CMS Medicare Part D/B spending), cancer incidence (NCI State Cancer Profiles), prevalence (CDC, Orphanet) and US population (World Bank); `market/tam.py` computes patients, price and market size by code; `GET /runs/{id}/market`. Biomarker fraction for a point mutation named in the asset's registry records, counted in the MSK-IMPACT cohort (cBioPortal): lung, pancreas, colorectal. The response says that its ranges are low/middle/high bounds, not percentiles (#78). The market estimate feeds rNPV (B7). | Diseases without an open source (Alzheimer's, MS, MASH, ulcerative colitis, cardiovascular risk): the demo pair is one of them, so it has no market size and no rNPV; biomarkers that are not point mutations; stage and treated fractions; feed B6. |
 | A10 | Connectors: SEC EDGAR and Tavily | P2 | 3 |  | [~] | SEC EDGAR connector: the sponsor's newest 8-K/6-K filings and press-release exhibits, the paragraphs that name the asset, in the flags section of a live run. | Tavily was tried and not built: its results for a drug name were market-research promotions and unrelated news, the relevant releases came back without text, and without dates (2026-10-09). Sponsors whose registry name is not their SEC name; 10-K/20-F pipeline sections are not read. |
