@@ -255,3 +255,71 @@ def test_the_check_fails_only_when_no_request_was_answered() -> None:
 
     with pytest.raises(LLMError):
         verify_links(DeadJudge(), BUNDLE, [claim("C-1")], [link("C-1", "E-0007", ORR)])
+
+
+SDMT_RECORD = (
+    '{"type": "SECONDARY", "title": "Change From Baseline in Cognitive Function as Assessed by '
+    'the Symbol Digit Modalities Test (SDMT) at EOS", "paramType": "LEAST_SQUARES_MEAN", '
+    '"dispersionType": "Standard Error", "unitOfMeasure": "score on a scale", '
+    '"timeFrame": "Baseline (Day 1) to EOS (up to approximately 48 months)", '
+    '"groups": [{"id": "OG000", "title": "Teriflunomide 14 mg"}, '
+    '{"id": "OG001", "title": "Tolebrutinib 60 mg"}], '
+    '"classes": [{"categories": [{"measurements": ['
+    '{"groupId": "OG000", "value": "0.329", "spread": "0.0318"}, '
+    '{"groupId": "OG001", "value": "0.364", "spread": "0.0318"}]}]}], '
+    '"analyses": [{"groupIds": ["OG000", "OG001"], "paramType": "Mean Difference (Final Values)", '
+    '"paramValue": "0.035", "pValue": "0.31"}]}'
+)
+
+
+def test_a_registry_result_is_shown_with_every_value_next_to_its_group() -> None:
+    """The numbers of a result record start after about 450 characters of headings. Cut there,
+    the judge saw the groups and no values, and removed claims that quoted the numbers."""
+    from bioverdict.verification.entailment import MAX_PASSAGE_SHOWN, _passage
+
+    assert SDMT_RECORD.find('"value"') > MAX_PASSAGE_SHOWN - 50
+    shown = _passage(SDMT_RECORD, '"title": "Teriflunomide 14 mg"')
+
+    assert "Teriflunomide 14 mg: 0.329" in shown
+    assert "Tolebrutinib 60 mg: 0.364" in shown
+    assert "Symbol Digit Modalities Test" in shown and "LEAST_SQUARES_MEAN" in shown
+    assert "pValue 0.31" in shown
+    assert "OG000" not in shown
+
+
+def test_a_result_with_intervals_and_subgroups_keeps_them_with_the_value() -> None:
+    from bioverdict.verification.entailment import _result_text
+
+    record = (
+        '{"title": "ARR", "groups": [{"id": "OG000", "title": "Placebo"}], '
+        '"classes": [{"title": "Week 12", "categories": [{"title": "Overall", "measurements": '
+        '[{"groupId": "OG000", "value": "0.122", "lowerLimit": "0.100", "upperLimit": "0.150"}]}]}]}'
+    )
+
+    assert "Week 12 / Overall: Placebo: 0.122 (range 0.100 to 0.150)" in (
+        _result_text(record) or ""
+    )
+
+
+def test_a_text_that_is_not_a_result_record_is_shown_as_before() -> None:
+    from bioverdict.verification.entailment import _passage, _result_text
+
+    assert _result_text("Tolebrutinib was not superior to teriflunomide.") is None
+    assert _result_text('{"title": "a status record", "status": "TERMINATED"}') is None
+    assert _result_text('{"classes": [broken') is None
+    assert _passage("short excerpt", "short") == "short excerpt"
+
+
+def test_the_prompt_for_a_result_record_carries_the_numbers_a_claim_quotes() -> None:
+    claim_ = claim("C-1")
+    original = BUNDLE.evidence_by_id()["E-0007"]
+    evidence = original.model_copy(update={"excerpt": SDMT_RECORD})
+    bundle = BUNDLE.model_copy(
+        update={"evidence": [evidence if e.id == "E-0007" else e for e in BUNDLE.evidence]}
+    )
+
+    from bioverdict.verification.entailment import _item
+
+    text = _item(1, claim_, link("C-1", "E-0007", '"title": "Tolebrutinib 60 mg"'), bundle)
+
+    assert "Tolebrutinib 60 mg: 0.364" in text

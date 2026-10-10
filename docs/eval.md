@@ -27,7 +27,7 @@ Also test **post-cutoff leakage** in time-travel runs: count claims that are not
 | Metric | Definition | Target |
 |---|---|---|
 | Citation support rate | share of quoted claims where the entailment judge confirms the quote supports the claim | TODO |
-| Judge agreement | agreement between the judge and ~30 manually labelled claims | TODO |
+| Judge agreement | agreement between the judge and ~30 manually labelled claims | 30 rows read (section 9); the judge was blind to registry numbers, fixed in A9 |
 | Source validity | share of cited URLs and IDs that are in the bundle catalog and resolve | about 100% |
 | Quote presence | share of claims whose quote appears verbatim in the evidence | 100% after gates |
 | Coverage | share of required report sections with `found` or an honest status (not silent gaps) | TODO |
@@ -110,7 +110,7 @@ runs; no model judges a report.
 | Expected verdict | done | the verdict is one of `expected_verdict`; an empty list means no expectation |
 | Expected top risks | hint only | each expected risk beside the reported risk that shares most words with it. A person has to read both |
 | Citation support rate | partly | the judge exists (B8) and the runner reports how many judged links it confirmed; its agreement with a person is not measured |
-| Judge agreement | not done | needs a hand-labelled sample of about 30 claims |
+| Judge agreement | partly | 30 rows labelled by a model and the disputed ones confirmed by a person (section 9); 16 rows where model and judge agree were not read by a person |
 | Sensitivity (strong, weak, noise) | not done here | `pipeline/recompute.py` and `GET /runs/{id}/diff` are the interface for B10 |
 | Closed-book leakage probe, bare-LLM baseline | not done | needs paid calls to a model without retrieval and a way to score its answers |
 
@@ -201,4 +201,34 @@ What it means for the benchmark: the two failures that are not the system's are 
 
 Also checked: no evidence record and no claim mentions liver injury or hepatic safety (the system's biggest known risk for the class). 39 of the 156 evidence records are cited by any claim: registry 13 of 78, regulatory analogs 13 of 45, literature 10 of 13, preprints 3 of 4, approved analogs 0 of 8, CMS spending 0 of 4, population 0 of 3, target database 0 of 1. Six of the 11 registry trials in the bundle have no citing claim (NCT04458051, NCT04742400, NCT05064436, NCT07067463, NCT07299019, NCT07776743). Reading it: 3 of 7 items are reached by claims, 4 of 7 are absent or unused, and the three absent items are EMA and sponsor press releases, which no connector fetched in this run; the cause of the unused records (modules not given them, or a limit) is not yet checked.
 
-**Not done:** the backtests (`evobrutinib-2023-11`, `fenebrutinib-2025-10`, `tolebrutinib-2025-12`) have not been run on the current code; the closed-book leakage probe and the bare-LLM baseline (paid calls to a model without retrieval, and a way to score its answers); the hand-labelled sample for judge agreement (31 of 70 links removed here, 13 of 72 in the run Arsenii measured: whether either is right needs a person); three repeated runs for stability.
+**Not done:** the backtests (`evobrutinib-2023-11`, `fenebrutinib-2025-10`, `tolebrutinib-2025-12`) have not been run on the current code; the closed-book leakage probe and the bare-LLM baseline (paid calls to a model without retrieval, and a way to score its answers); the rest of the judge sample (rows 31 to 56 of `judge-sample.csv`; the 30 read are below) and a re-run of the judge on the same 30 after the fix; three repeated runs for stability.
+
+### Judge agreement: first 30 rows of the sample (2026-10-10)
+
+The sample is 56 (claim, quote) pairs of run `R-20261010-125211-cf5016`; rows 1 to 30 hold 13
+links the judge removed and 17 it kept. **How they were labelled:** a model (not the judge's
+model family; it saw the claim and the passage only, not the judge's answer) labelled all 30;
+Dasha, who is not a biologist, read every row where the label differs from the judge's and
+agreed or not. The 16 rows where model and judge agree were not read by a person. This is not a
+gold set; it shows where the judge goes wrong, not its error rate.
+
+| | Same as the judge | Different |
+|---|---|---|
+| Judge kept 17 | 13 | 4: rows 14 and 27 kept on a fact that is not the claim's point (confirmed by Dasha); rows 2 and 11 first marked `unsure`, then `supports` by Dasha (the judge was right) |
+| Judge removed 13 | 2 (rows 8 and 17: a conclusion about investment from one sentence) | 11: rows 3, 4, 6, 15, 16, 18, 21, 24, 25, 29 confirmed by Dasha (the passage holds the numbers the claim quotes); row 1 is `unsure` (its conclusion is an inference, but the judge's stated reason, "no numerical result", is wrong) |
+
+**Finding.** All 11 registry result records among the removals were judged blind. A record is
+JSON in which the group names come first and the first number starts at character 440 to 495;
+the judge was shown 450 characters around the quote, so it saw the groups and no values and
+wrote "the quote identifies treatment groups but does not report ...". The claims were right
+and were removed: 10 of the 13 removals, in the run whose "13 of 72" was read as a sign of
+leniency. The numbers are checkable by eye in the file.
+
+**Fix (A9).** A registry result record is shown to the judge as lines of text, each value beside
+the name of its group, with the unit, time frame and the analyses (p-value, interval). All 36
+result records of the local store render this way; the status, design and label records are not
+touched. Not yet measured: the judge on the same 30 rows after the fix, and the judge on the
+other 26 rows. Open on the rule, not on the reading: the judge keeps a link that supports "one
+of the facts the claim asserts" (rows 14 and 27: "is a BTK inhibitor" under a claim about
+lesions); whether a background fact may keep a claim's main point alive is a decision for
+`verification/entailment.py`'s prompt.
