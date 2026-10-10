@@ -2,6 +2,7 @@ import { Badge } from '../../ui/Badge'
 import { money, months, percent } from './numbers'
 import { RangeStat } from './RangeStat'
 import type { Report } from './schema'
+import { showClaim } from './showClaim'
 
 const verdictNote: Record<Report['executive']['verdict'], string> = {
   Invest: 'All conditions of the rule hold. Diligence still applies.',
@@ -70,8 +71,22 @@ export function ExecutiveSummary({ report }: { report: Report }) {
           <h3 className="text-sm font-medium">Top risks</h3>
           {executive.top_risks.length ? (
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6">
-              {executive.top_risks.map((risk) => (
-                <li key={risk}>{risk}</li>
+              {executive.top_risks.map((risk, index) => (
+                <li key={risk}>
+                  {risk}
+                  {(executive.top_risk_claims[index] ?? []).map((claimId) => (
+                    <button
+                      key={claimId}
+                      type="button"
+                      onClick={() => {
+                        showClaim(claimId)
+                      }}
+                      className="ml-2 font-mono text-xs text-accent underline"
+                    >
+                      {claimId}
+                    </button>
+                  ))}
+                </li>
               ))}
             </ol>
           ) : (

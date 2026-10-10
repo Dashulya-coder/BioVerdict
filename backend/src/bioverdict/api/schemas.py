@@ -180,6 +180,10 @@ class ExecutiveVerdict(_View):
     verdict: Verdict
     confidence: float
     top_risks: list[str]
+    top_risk_claims: list[list[str]] = Field(
+        default_factory=list,
+        description="Claim ids behind each top risk, same order; empty for an older stored run",
+    )
     what_would_change_our_mind: list[str]
     capital: Range | None = Field(description="USD, from the investment model once it exists")
     months_to_milestone: Range | None

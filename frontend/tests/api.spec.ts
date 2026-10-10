@@ -607,6 +607,25 @@ test('a quotation the judge did not read is not shown as checked', async ({ page
   await expect(row(read.text).getByText('Not read by the judge')).toBeHidden()
 })
 
+test('a top risk leads to its claim and then to the quotation', async ({ page }) => {
+  const risky = structuredClone(report) as unknown as {
+    executive: Record<string, unknown>
+    sections: { section: string; claims: { id: string; text: string }[] }[]
+  }
+  const claim = risky.sections.find((s) => s.section === 'mechanism')?.claims[0]
+  if (!claim) throw new Error('the fixture report has no mechanism claim')
+  risky.executive.top_risks = [claim.text]
+  risky.executive.top_risk_claims = [[claim.id]]
+  await serve(page, { report: risky })
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+
+  await page.getByRole('button', { name: claim.id }).click()
+  const opened = page.locator('details', { hasText: claim.text }).last()
+  await expect(opened).toHaveAttribute('open', '')
+  await expect(opened.getByText('Open the original source').first()).toBeVisible()
+})
+
 test('what is unknown is listed by the diligence that could answer it', async ({ page }) => {
   await serve(page)
   await openRun(page, 'divarasib')

@@ -11,6 +11,7 @@ from typing import Literal
 
 from bioverdict.scoring.confidence import apply_confidence, chain_probability
 from bioverdict.scoring.config import ConfidenceConfig, VerdictConfig
+from bioverdict.scoring.pull import contribution
 from bioverdict.store.models import (
     Basis,
     ChainLink,
@@ -20,6 +21,7 @@ from bioverdict.store.models import (
     GateId,
     GateResult,
     Range,
+    Section,
     ServiceFlag,
     Verdict,
     VerdictResult,
@@ -146,11 +148,73 @@ def evaluate_gates(
     return results, chain_p, missing
 
 
+def claim_groups(
+    links: list[ClaimEvidenceLink], evidence: dict[str, Evidence]
+) -> dict[str, frozenset[str]]:
+    """The independence groups (a trial, a publication family) each claim's quotes come from."""
+    found: dict[str, set[str]] = {}
+    for link in links:
+        item = evidence.get(link.evidence_id)
+        if item is not None:
+            found.setdefault(link.claim_id, set()).add(item.independence_group)
+    return {claim_id: frozenset(groups) for claim_id, groups in found.items()}
+
+
+def _top_risks(
+    claims: list[Claim],
+    hard: list[GateResult],
+    soft: list[GateResult],
+    unconfirmed: list[GateResult],
+    critical: list[Claim],
+    vcfg: VerdictConfig,
+    groups: dict[str, frozenset[str]],
+) -> list[tuple[str, list[str]]]:
+    """At most three risks, each with the claim ids it rests on.
+
+    Order: fired kill criteria; then the claims that pull hardest against investing, one per
+    independence group, so one trial's result restated by several modules is listed once (by
+    section when the groups are not known); then the soft gates, the
+    unconfirmed kill criteria and the key claims below the bar, which fill what is left (they
+    stay in the gates list and in "what would change our mind").
+    """
+    risks: list[tuple[str, list[str]]] = [(GATE_TEXT[g.gate_id], list(g.claim_ids)) for g in hard]
+    used = {i for _, ids in risks for i in ids}
+    pulling = sorted(
+        (c for c in claims if contribution(c) < 0 and c.id not in used),
+        key=lambda c: (contribution(c), -c.confidence, c.id),
+    )
+    seen_groups: set[str] = set()
+    seen_sections: set[Section] = set()
+    for claim in pulling:
+        known = groups.get(claim.id)
+        if known:
+            if known & seen_groups:
+                continue
+            seen_groups |= known
+        else:
+            if claim.section in seen_sections:
+                continue
+            seen_sections.add(claim.section)
+        risks.append((claim.text, [claim.id]))
+    risks += [(GATE_TEXT[g.gate_id], list(g.claim_ids)) for g in soft]
+    risks += [
+        (f"{GATE_TEXT[g.gate_id]} (not yet confirmed)", list(g.claim_ids)) for g in unconfirmed
+    ]
+    # A key claim is a positive statement; what makes it a risk is how little backs it.
+    risks += [
+        (f"Key claim with limited support ({c.confidence:.0%}): {c.text}", [c.id])
+        for c in sorted(critical, key=lambda c: c.confidence)
+        if c.confidence < vcfg.key_claim_min
+    ]
+    return risks[:3]
+
+
 def score_verdict(
     claims: list[Claim],
     rnpv: Range | None = None,
     vcfg: VerdictConfig | None = None,
     ccfg: ConfidenceConfig | None = None,
+    groups: dict[str, frozenset[str]] | None = None,
 ) -> VerdictResult:
     """Apply the plan's verdict rule. Claims must already carry their computed confidence.
 
@@ -212,14 +276,7 @@ def score_verdict(
             else vcfg.no_critical_confidence
         )
 
-    risks = [GATE_TEXT[g.gate_id] for g in hard + soft]
-    risks += [f"{GATE_TEXT[g.gate_id]} (not yet confirmed)" for g in unconfirmed]
-    # A key claim is a positive statement; what makes it a risk is how little backs it.
-    risks += [
-        f"Key claim with limited support ({c.confidence:.0%}): {c.text}"
-        for c in sorted(critical, key=lambda c: c.confidence)
-        if c.confidence < vcfg.key_claim_min
-    ]
+    risks = _top_risks(claims, hard, soft, unconfirmed, critical, vcfg, groups or {})
     changes = [f"Resolving this would lift the cap: {GATE_TEXT[g.gate_id]}" for g in soft]
     changes += [
         f"Confirm or refute {g.gate_id.value} with a second independent source: "
@@ -235,7 +292,8 @@ def score_verdict(
         gates=gates,
         translation_chain_probability=chain_p,
         rnpv=rnpv,
-        top_risks=risks[:3],
+        top_risks=[text for text, _ in risks],
+        top_risk_claims=[ids for _, ids in risks],
         what_would_change_our_mind=changes,
     )
 
@@ -272,4 +330,4 @@ def rescore(
 ) -> tuple[list[Claim], VerdictResult]:
     """Recompute every confidence from the evidence, then the verdict (incremental recompute)."""
     updated = apply_confidence(claims, links, evidence, as_of, ccfg)
-    return updated, score_verdict(updated, rnpv, vcfg, ccfg)
+    return updated, score_verdict(updated, rnpv, vcfg, ccfg, claim_groups(links, evidence))

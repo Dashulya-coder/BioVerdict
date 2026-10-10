@@ -249,6 +249,10 @@ Applied in order:
 
 All thresholds are config parameters set after running the eval set. LLMs lean optimistic and real biotech investors are sceptical, so most outputs should be Conditional or Do Not Invest; a verdict distribution that is mostly Invest is a calibration bug. Check by running all 20 drugs from the list.
 
+## Top risks
+
+At most three, each with the claim ids it rests on (`top_risk_claims`, see `data-model.md`): fired kill criteria first, then the claims that pull hardest *against* investing (the pull a claim has on its module answer, `scoring/pull.py`), one per independence group so one trial's result is not listed three times; the soft gates, unconfirmed kill criteria and key claims below the bar fill what is left. The Report links each risk to its claim and on to the quotation. A risk is never a model's sentence: it is a gate text or a claim of the report.
+
 ## What would change our mind
 
 For each verdict, the report lists concrete conditions that flip it (for example "if Phase 2 response rate falls below X or discontinuation due to adverse events exceeds Y, the verdict becomes Do Not Invest"). These are generated from the gates and the tornado, not free text.

@@ -107,9 +107,9 @@ function ClaimDetail({ claim }: { claim: ReportClaim }) {
   )
 }
 
-export function ClaimRow({ claim }: { claim: ReportClaim }) {
+export function ClaimRow({ claim, anchored = false }: { claim: ReportClaim; anchored?: boolean }) {
   return (
-    <li>
+    <li id={anchored ? `claim-${claim.id}` : undefined}>
       <details className="group border border-rule bg-surface p-4 open:bg-selected">
         <summary className="cursor-pointer list-none">
           <span className="flex flex-wrap items-start justify-between gap-3">
@@ -179,7 +179,7 @@ export function ClaimList({ report }: { report: Report }) {
             {section.claims.length ? (
               <ul className="mt-3 space-y-2">
                 {section.claims.map((claim) => (
-                  <ClaimRow key={claim.id} claim={claim} />
+                  <ClaimRow key={claim.id} claim={claim} anchored />
                 ))}
               </ul>
             ) : null}
