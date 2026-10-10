@@ -108,7 +108,7 @@ left unread makes the section `incomplete`, as before.
 `pipeline/live_sources.py` is the allowlist of a live run: Open Targets and Europe PMC
 preprints (`europepmc`) for mechanism,
 ClinicalTrials.gov by asset, PubMed and open-access full texts (`pmc_fulltext`) for clinical, ClinicalTrials.gov by target within the
-indication (`clinicaltrials_class`) and openFDA (`openfda`) for competition. `pipeline/live_run.py` runs the Resolver and
+indication (`clinicaltrials_class`) and openFDA (`openfda`) for competition, and the newest PubMed practice guidelines for the indication (`pubmed_guidelines`) for unmet need. `pipeline/live_run.py` runs the Resolver and
 this graph, writes each section's status, fact count, rejections and issues into the `collect`
 progress event, and hands the frozen bundle to the shared reason → score step. See the
 [runbook](runbook.md) for how to start a live run and how it fails.

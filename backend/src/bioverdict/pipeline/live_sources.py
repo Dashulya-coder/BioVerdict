@@ -34,6 +34,7 @@ from bioverdict.connectors.opentargets import OpenTargetsApi, OpenTargetsConnect
 from bioverdict.connectors.pmc import PmcFullTextConnector
 from bioverdict.connectors.pricing import AnalogPricingConnector
 from bioverdict.connectors.pubmed import PubMedConnector
+from bioverdict.connectors.pubmed_guidelines import PubMedGuidelinesConnector
 from bioverdict.connectors.retry import MAX_ATTEMPTS
 from bioverdict.contracts import Connector
 from bioverdict.resolver.lookup import OpenTargetsLookup
@@ -50,6 +51,9 @@ LIVE_PLANS = (
     # Full texts last: they repeat PubMed's searches from the cache, and if the section's time
     # runs out it is the abstracts and the registry that have been read.
     CollectPlan(section=Section.CLINICAL, tools=("clinicaltrials", "pubmed", "pmc_fulltext")),
+    # What the specialty societies say treats the disease today: the standard of care that a new
+    # drug has to beat. The indication is searched, never the asset.
+    CollectPlan(section=Section.UNMET_NEED, tools=("pubmed_guidelines",)),
     # The class in the registry, then what the FDA approved in it and what those labels say.
     CollectPlan(section=Section.COMPETITION, tools=("clinicaltrials_class", "openfda")),
     # What the sponsor told its investors: designations, holds, programs it stopped.
@@ -176,6 +180,7 @@ def _sources(http: CachedHttpClient) -> Sources:
         EdgarConnector(http, registry, os.environ.get("SEC_USER_AGENT")),
         BiomarkerFrequencyConnector(http, registry),
         pubmed,
+        PubMedGuidelinesConnector(http, api_key=os.environ.get("NCBI_API_KEY") or None),
         PmcFullTextConnector(http, pubmed),
         EuropePmcConnector(http),
         OpenFdaConnector(http, api_key=os.environ.get("OPENFDA_API_KEY") or None),

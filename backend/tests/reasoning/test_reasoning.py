@@ -38,7 +38,15 @@ CT_SUMMARY = "assess the safety and efficacy of divarasib"  # in E-0001
 def fake_llm(answers: dict) -> FakeLLM:
     """Canned answers for the steps a test cares about; the others return nothing."""
     empty = ModuleDraft(claims=[])
-    return FakeLLM({"reasoning.clinical": empty, "reasoning.competition": empty, **answers})
+    return FakeLLM(
+        {
+            "reasoning.clinical": empty,
+            "reasoning.competition": empty,
+            "reasoning.unmet_need": empty,
+            "reasoning.commercial": empty,
+            **answers,
+        }
+    )
 
 
 def link(evidence_id: str, quote: str, direction: str = "supports") -> dict:

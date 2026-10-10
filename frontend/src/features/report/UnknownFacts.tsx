@@ -3,6 +3,7 @@ import { diligence } from './diligence'
 import type { Report, ReportClaim } from './schema'
 
 const sectionNames: Record<string, string> = {
+  unmet_need: 'Unmet need',
   mechanism: 'Mechanism',
   translation: 'Translation',
   clinical: 'Clinical',

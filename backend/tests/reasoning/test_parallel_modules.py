@@ -63,7 +63,7 @@ def test_claim_ids_and_order_do_not_depend_on_which_call_finishes_first() -> Non
     assert parallel == serial
     texts = [c.text for c in parallel[0] if c.text.startswith("claim of")]
     assert texts == [f"claim of {m.step}" for m in ALL_MODULES]  # module order, ids C-0001...
-    assert [c.id for c in parallel[0]][: len(ALL_MODULES)] == [f"C-000{i}" for i in range(1, 5)]
+    assert [c.id for c in parallel[0]][: len(ALL_MODULES)] == [f"C-000{i}" for i in range(1, 7)]
 
 
 def test_a_failing_module_fails_the_reasoning_with_its_own_error() -> None:

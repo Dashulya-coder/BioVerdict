@@ -17,6 +17,7 @@ from bioverdict.store.runs_repo import (
     load_claims,
     load_events,
 )
+from bioverdict.store.verification_repo import load_checks
 
 FIXTURES = Path(__file__).parents[3] / "fixtures"
 AS_OF = date(2026, 10, 7)
@@ -139,3 +140,26 @@ def test_the_fixture_verdict_carries_pos_but_no_rnpv_without_market_records(
 
     assert result is not None and result.pos is not None
     assert result.rnpv is None  # the fixture has no epidemiology or price records
+
+
+def test_a_fixture_run_reports_unmet_need_and_commercial_gaps_as_unknowns(
+    conn: sqlite3.Connection,
+) -> None:
+    start(conn)
+    run_fixture(conn, "R-1", "divarasib", FIXTURES)
+
+    claims, _ = load_claims(conn, "R-1")
+
+    commercial = [c for c in claims if c.section.value == "commercial"]
+    assert commercial and all(c.basis.value == "unknown" and c.diligence_type for c in commercial)
+    need = [c for c in claims if c.section.value == "unmet_need"]
+    assert any(c.basis.value != "unknown" for c in need) and any(
+        c.basis.value == "unknown" for c in need
+    )
+
+
+def test_the_judge_has_an_answer_for_every_link_of_the_fixture(conn: sqlite3.Connection) -> None:
+    start(conn)
+    run_fixture(conn, "R-1", "divarasib", FIXTURES)
+
+    assert not [c for c in load_checks(conn, "R-1") if c.check_name == "entailment_unjudged"]
