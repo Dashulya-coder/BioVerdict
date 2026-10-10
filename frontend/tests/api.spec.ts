@@ -59,6 +59,50 @@ const diff = {
     confidence: 0.72,
   },
   verdict_changed: false,
+  modules: [
+    {
+      module: 'clinical_development',
+      title: 'Clinical development',
+      answer_before: 'supports',
+      answer_after: 'mixed',
+      balance_before: 0.61,
+      balance_after: 0.12,
+      headline_before: 'The evidence supports the case',
+      headline_after:
+        'The evidence points both ways: favourable weight 0.90 against unfavourable 0.71',
+      changed: true,
+      causes: [
+        {
+          evidence_id: 'E-0016',
+          source: 'Example congress abstract',
+          url: 'https://www.example.org/abstract/1',
+          published_at: '2026-09-01',
+          level: 'human_interventional',
+          direction: 'contradicts',
+          quote: 'no confirmed responses were observed in the expansion cohort',
+          claim_id: 'C-0007',
+          claim_text: 'Divarasib gave a confirmed response in 53.4% of patients',
+          claim_change: 'changed',
+          confidence_before: 0.77,
+          confidence_after: 0.5,
+          contribution_before: 0.54,
+          contribution_after: 0,
+        },
+      ],
+    },
+    {
+      module: 'mechanism_validation',
+      title: 'Mechanism and biological validation',
+      answer_before: 'supports',
+      answer_after: 'supports',
+      balance_before: 1,
+      balance_after: 1,
+      headline_before: 'The evidence supports the case',
+      headline_after: 'The evidence supports the case',
+      changed: false,
+      causes: [],
+    },
+  ],
   gates: [{ gate_id: 'S1', kind: 'soft', fired_before: false, fired_after: true }],
   chain: [
     {
@@ -627,4 +671,89 @@ test('with no ranked question the report says so', async ({ page }) => {
   await openRun(page, 'divarasib')
   await page.getByRole('link', { name: 'Report' }).click()
   await expect(page.getByText('No question was ranked for this run')).toBeVisible()
+})
+
+test('the comparison says which module moved and quotes the evidence that moved it', async ({
+  page,
+}) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Compare', exact: true }).click()
+  await page.getByRole('combobox', { name: 'Earlier run' }).selectOption(OTHER)
+  await page.getByRole('button', { name: 'Compare', exact: true }).click()
+
+  const modules = page.getByRole('region', { name: 'Modules' })
+  await expect(modules.getByText('(1 of 2 moved)')).toBeVisible()
+  const clinical = modules.getByRole('listitem').filter({ hasText: 'Clinical development' })
+  await expect(clinical.getByText('Supports the case', { exact: true })).toBeVisible()
+  await expect(clinical.getByText('Mixed', { exact: true })).toBeVisible()
+  await expect(clinical.getByText('balance +0.61 → +0.12')).toBeVisible()
+  await expect(
+    clinical.getByText('“no confirmed responses were observed in the expansion cohort”'),
+  ).toBeVisible()
+  await expect(clinical.getByText('confidence 0.77 → 0.50')).toBeVisible()
+  await expect(
+    clinical.getByRole('link', { name: 'Open the source: Example congress abstract' }),
+  ).toHaveAttribute('href', 'https://www.example.org/abstract/1')
+  await expect(modules.getByText('No new evidence reached this module.')).toBeVisible()
+})
+
+test('each module gives its answer and opens onto its claims, quotes and sources', async ({
+  page,
+}) => {
+  // The mechanism claims of tests/report.json.
+  const claimIds = ['C-0001', 'C-0002', 'C-0003']
+  const modules = [
+    {
+      module: 'mechanism_validation',
+      title: 'Mechanism and biological validation',
+      question: 'Is the target causal for the disease?',
+      answer: 'supports',
+      headline: 'The evidence supports the case: favourable weight 0.80 against unfavourable 0.00',
+      balance: 1,
+      favourable: 0.8,
+      unfavourable: 0,
+      claim_ids: claimIds,
+      drivers: [{ claim_id: 'C-0001', contribution: 0.8 }],
+      unknown_count: 1,
+      evidence_count: 2,
+      gates: [],
+    },
+    {
+      module: 'investment_underwriting',
+      title: 'Investment underwriting',
+      question: 'Should we invest?',
+      answer: 'mixed',
+      headline: 'Conditional: gates fired: S1',
+      balance: null,
+      favourable: 0,
+      unfavourable: 0,
+      claim_ids: [],
+      drivers: [],
+      unknown_count: 0,
+      evidence_count: 0,
+      gates: ['S1'],
+    },
+  ]
+  await serve(page, { report: { ...report, modules } })
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+
+  const scorecard = page.getByRole('region', { name: 'Six modules, six answers' })
+  await expect(scorecard.getByText('Supports the case', { exact: true })).toBeVisible()
+  await expect(scorecard.getByText('Conditional: gates fired: S1')).toBeVisible()
+  await expect(scorecard.getByText('Gate S1 fired')).toBeVisible()
+  await scorecard.getByText('Is the target causal for the disease?').click()
+  await expect(scorecard.getByText('+0.80 for')).toBeVisible()
+  await scorecard
+    .getByText('KRAS G12C is a frequent, poor-prognosis driver mutation in NSCLC')
+    .click()
+  await expect(
+    scorecard.getByText(
+      '“found in approximately 14% of NSCLC cases and associated with poor prognosis”',
+    ),
+  ).toBeVisible()
+  await expect(
+    scorecard.getByRole('link', { name: /Open the original source/ }).first(),
+  ).toBeVisible()
 })

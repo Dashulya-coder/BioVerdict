@@ -76,7 +76,7 @@ function ClaimDetail({ claim }: { claim: ReportClaim }) {
   )
 }
 
-function ClaimRow({ claim }: { claim: ReportClaim }) {
+export function ClaimRow({ claim }: { claim: ReportClaim }) {
   return (
     <li>
       <details className="group border border-rule bg-surface p-4 open:bg-selected">
