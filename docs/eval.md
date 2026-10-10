@@ -219,6 +219,18 @@ It took three runs to get there, each failure a defect fixed in the same PR: (1)
 
 What it means for the benchmark: the two failures that are not the system's are the ceiling (a balance at +1.00 cannot show an expected rise; the base should be one where the balances are not saturated, or the weak case should expect no move) and the cutoff (a base and a recompute two years apart drift together). The benchmark has never been run with the cutoff of the base equal to that of the recompute, which would need documents dated before the base.
 
+**Re-run on the current code** (after #128, 2026-10-10, with the control). Base `R-7965504f84cb411ab268aab0ab737d91` (as of 2024-06-30: Conditional 0.52, 50 evidence items, 165 s, $0.36); control `R-6cbbe927160f40a7b57e8218645ad382` (the base recomputed at 2026-10-10 with no document); the noise rule strict, without the drift exception. Results: `eval/results/2026-10-10-ms-current/`.
+
+| Case | Result | What happened |
+|---|---|---|
+| strong-tolebrutinib-not-superior | pass | clinical development +1.00 to +0.45, the document named as the cause |
+| strong-evobrutinib-not-superior | pass | clinical development +1.00 to +0.46, named |
+| strong-fenebrutinib-lesions | **fail** (expectation) | placed as a translation claim on the biological-response link: the link went from weak to supported and translation +0.74 to +0.78; clinical development, which the case names, did not move. MRI lesions are the biological response of the brief's chain, so the system's placement is defensible; the case's expectation was written before a new fact could close a chain link (#116). Changing it needs a reason and is left to the team |
+| weak-microglia-preprint | **fail** | linked to a mechanism claim that is context (`neutral`), which carries no weight in the balance: +0.51 to +0.51. Laboratory evidence weighing nothing is by design; the case expects "up, a little" |
+| noise-kras-lung-release | pass | no module moved, under the strict rule |
+
+3 of 5, as before, but each result now stands on a control at the same cutoff; the two failures are where a document was placed, not drift.
+
 **Coverage of the medical reference set** (`docs/finals-audit.md`, "Medical reference set for the finals"; run `R-20261010-125211-cf5016`, as of 2026-10-10, one live run). This is a **development set, written by us, not held out**: it shows what the bundle and the claims contain, not how the system performs on items it has not seen. Method: each item is looked up in the run's evidence (`/runs/<id>/evidence`) by trial id, PMID or source address; an item counts as *cited* only if a claim has a link to one of its evidence records (`/runs/<id>/report`), not if the claim text happens to mention it.
 
 | Reference item | In the bundle | Cited by a claim |
