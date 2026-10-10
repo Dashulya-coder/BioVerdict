@@ -63,6 +63,7 @@ export const reportSchema = z.object({
     verdict: verdictSchema,
     confidence: z.number(),
     top_risks: z.array(z.string()),
+    top_risk_claims: z.array(z.array(z.string())).default([]),
     what_would_change_our_mind: z.array(z.string()),
     capital: range.nullable(),
     months_to_milestone: range.nullable(),

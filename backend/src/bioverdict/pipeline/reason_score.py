@@ -18,7 +18,7 @@ from bioverdict.reasoning.modules import ALL_MODULES
 from bioverdict.reasoning.prompts import question_text
 from bioverdict.scoring.confidence import apply_confidence
 from bioverdict.scoring.financials import Financials, financial_model, with_financials
-from bioverdict.scoring.verdict import score_verdict
+from bioverdict.scoring.verdict import claim_groups, score_verdict
 from bioverdict.store.models import (
     Basis,
     Bundle,
@@ -228,7 +228,9 @@ def reason_and_score(
 
     add_event(conn, run_id, "score", "started")
     fin = run_financials(conn, run_id, bundle)
-    result = with_financials(score_verdict(claims, fin.rnpv.rnpv if fin.rnpv else None), fin)
+    groups = claim_groups(links, bundle.evidence_by_id())
+    verdict = score_verdict(claims, fin.rnpv.rnpv if fin.rnpv else None, groups=groups)
+    result = with_financials(verdict, fin)
     add_event(conn, run_id, "score", "done", f"{result.verdict.value} ({result.confidence:.2f})")
 
     questions = chair_pass(conn, run_id, bundle, llm, claims, result, objections)

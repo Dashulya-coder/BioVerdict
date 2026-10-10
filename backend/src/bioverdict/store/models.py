@@ -340,8 +340,18 @@ class VerdictResult(_Model):
     capital: Range | None = None  # USD
     months_to_milestone: Range | None = None
     top_risks: list[str] = Field(default_factory=list, max_length=3)
+    top_risk_claims: list[list[str]] = Field(
+        default_factory=list,
+        description="Claim ids behind each of top_risks, same order; empty for a stored older run",
+    )
     what_would_change_our_mind: list[str] = Field(default_factory=list)
     diligence_questions: list[DiligenceQuestion] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _risks_and_their_claims_line_up(self) -> VerdictResult:
+        if self.top_risk_claims and len(self.top_risk_claims) != len(self.top_risks):
+            raise ValueError("top_risk_claims must be empty or as long as top_risks")
+        return self
 
 
 class VerificationCheck(_Model):

@@ -239,6 +239,7 @@ def build_report(conn: sqlite3.Connection, run_id: str) -> ReportResponse:
             verdict=result.verdict,
             confidence=result.confidence,
             top_risks=result.top_risks,
+            top_risk_claims=result.top_risk_claims,
             what_would_change_our_mind=result.what_would_change_our_mind,
             capital=result.capital,
             months_to_milestone=result.months_to_milestone,

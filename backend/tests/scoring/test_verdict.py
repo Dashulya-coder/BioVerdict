@@ -8,11 +8,14 @@ from bioverdict.store.models import (
     ChainLink,
     Claim,
     ClaimType,
+    DiligenceType,
     GateId,
+    Implication,
     Range,
     Section,
     ServiceFlag,
     Verdict,
+    VerdictResult,
 )
 
 POSITIVE = Range(p10=10, p50=200, p90=900)
@@ -227,3 +230,87 @@ def test_a_weak_key_claim_is_a_risk_phrased_as_limited_support() -> None:
     claims = [*strong_chain(), claim("KEY", 0.55, critical=True, text="The drug works")]
     r = score_verdict(claims, POSITIVE)
     assert r.top_risks == ["Key claim with limited support (55%): The drug works"]
+
+
+def against(cid: str, confidence: float = 0.8, **kw) -> Claim:
+    return claim(cid, confidence, implication=Implication.UNFAVOURABLE, **kw)
+
+
+def test_risks_name_the_claims_that_pull_hardest_against_investing() -> None:
+    claims = [
+        *strong_chain(),
+        against("A", 0.9, section=Section.CLINICAL, text="Trial A failed"),
+        against("B", 0.7, section=Section.COMPETITION, text="Trial B failed"),
+    ]
+    r = score_verdict(claims, POSITIVE)
+    assert r.top_risks == ["Trial A failed", "Trial B failed"]
+    assert r.top_risk_claims == [["A"], ["B"]]
+
+
+def test_a_fired_kill_criterion_is_the_first_risk_then_claims_then_soft_gates() -> None:
+    claims = [
+        claim("STOP", 0.95, gate_signals=[GateId.K1], section=Section.CLINICAL, text="stopped"),
+        claim("STOP2", 0.9, gate_signals=[GateId.K1], section=Section.CLINICAL),
+        against("A", 0.9, section=Section.COMPETITION, text="Trial A failed"),
+    ]
+    r = score_verdict(claims, POSITIVE)
+    assert r.verdict is Verdict.DO_NOT_INVEST
+    assert r.top_risks[0].startswith("The same target failed")
+    assert r.top_risk_claims[0] == ["STOP", "STOP2"]
+    assert r.top_risks[1] == "Trial A failed"
+    assert r.top_risks[2] == "A link of the human translation chain is missing"
+
+
+def test_a_refuted_unfavourable_claim_or_a_gap_is_not_a_risk() -> None:
+    claims = [
+        *strong_chain(),
+        against("REFUTED", 0.3, text="Refuted"),
+        against(
+            "GAP",
+            0.9,
+            basis=Basis.UNKNOWN,
+            diligence_type=DiligenceType.PROPRIETARY_DATA,
+            text="Unknown",
+        ),
+        against("GUESS", 0.9, basis=Basis.HYPOTHESIS, text="A guess"),
+    ]
+    assert score_verdict(claims, POSITIVE).top_risks == []
+
+
+def test_a_result_restated_by_several_claims_is_listed_once_by_independence_group() -> None:
+    claims = [
+        *strong_chain(),
+        against("A1", 0.9, section=Section.CLINICAL, text="NCT1 not superior"),
+        against("A2", 0.85, section=Section.COMPETITION, text="NCT1 not better"),
+        against("B", 0.7, section=Section.CLINICAL, text="NCT2 not superior"),
+    ]
+    groups = {
+        "A1": frozenset({"trial:NCT1"}),
+        "A2": frozenset({"trial:NCT1"}),
+        "B": frozenset({"trial:NCT2"}),
+    }
+    r = score_verdict(claims, POSITIVE, groups=groups)
+    assert r.top_risk_claims == [["A1"], ["B"]]
+
+
+def test_without_groups_one_risk_per_section_stands_in() -> None:
+    claims = [
+        *strong_chain(),
+        against("A1", 0.9, section=Section.CLINICAL, text="first"),
+        against("A2", 0.85, section=Section.CLINICAL, text="second"),
+    ]
+    assert score_verdict(claims, POSITIVE).top_risk_claims == [["A1"]]
+
+
+def test_risks_and_their_claims_must_line_up() -> None:
+    with pytest.raises(ValueError, match="top_risk_claims"):
+        VerdictResult(
+            verdict=Verdict.CONDITIONAL,
+            confidence=0.5,
+            top_risks=["a", "b"],
+            top_risk_claims=[["C-1"]],
+        )
+    assert (
+        VerdictResult(verdict=Verdict.CONDITIONAL, confidence=0.5, top_risks=["a"]).top_risk_claims
+        == []
+    )
