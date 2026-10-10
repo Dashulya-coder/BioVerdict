@@ -104,7 +104,8 @@ runs; no model judges a report.
 | Post-cutoff leakage | partly | counted: citations the model proposed and code could not ground, and the claims dropped for it (every one is a row in `verification_log`). That is an upper bound, not a measurement: a rejected citation is usually a misquote. Matching an unsupported claim to a real event after `as_of` is not done |
 | Expected verdict | done | the verdict is one of `expected_verdict`; an empty list means no expectation |
 | Expected top risks | hint only | each expected risk beside the reported risk that shares most words with it. A person has to read both |
-| Citation support rate, judge agreement | not done | needs the entailment judge (B8) |
+| Citation support rate | partly | the judge exists (B8) and the runner reports how many judged links it confirmed; its agreement with a person is not measured |
+| Judge agreement | not done | needs a hand-labelled sample of about 30 claims |
 | Sensitivity (strong, weak, noise) | not done here | `pipeline/recompute.py` and `GET /runs/{id}/diff` are the interface for B10 |
 | Closed-book leakage probe, bare-LLM baseline | not done | needs paid calls to a model without retrieval and a way to score its answers |
 

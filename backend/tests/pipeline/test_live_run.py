@@ -134,6 +134,8 @@ def test_a_live_run_records_the_same_steps_as_a_fixture_run(conn, tmp_path) -> N
         ("reason", "done"),
         ("skeptic", "started"),
         ("skeptic", "done"),
+        ("verify", "started"),
+        ("verify", "done"),
         ("score", "started"),
         ("score", "done"),
         ("chair", "started"),
@@ -179,9 +181,9 @@ def test_the_model_works_through_the_steps_in_order_and_never_resolves_twice(
     steps = [step for step, _ in model.calls]
     assert steps[:2] == ["resolver", "extraction"]
     assert steps[2:] and all(
-        step.startswith("reasoning.") or step in ("skeptic", "chair") for step in steps[2:]
+        step.startswith("reasoning.") or step in ("skeptic", "judge", "chair") for step in steps[2:]
     )
-    assert steps[-2:] == ["skeptic", "chair"]
+    assert steps[-3:] == ["skeptic", "judge", "chair"]
 
 
 def test_an_input_without_a_target_fails_with_the_reason(conn, tmp_path) -> None:

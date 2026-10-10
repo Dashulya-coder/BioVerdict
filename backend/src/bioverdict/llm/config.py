@@ -86,6 +86,9 @@ _EXTRACTION = StepConfig(models=[HAIKU], effort=None, max_tokens=4000, timeout_s
 # A second model absorbs refusals: the bio safety classifier can refuse mechanism-of-action text.
 _REASONING = StepConfig(models=[SONNET, OPUS], effort="medium", max_tokens=16000, timeout_s=180.0)
 _SYNTHESIS = StepConfig(models=[SONNET, OPUS], effort="high", max_tokens=16000, timeout_s=240.0)
+# The judge should not be the model that wrote the claims. Opus is the strongest model of the
+# generator's vendor; `LLMConfig.with_judge_from` moves it to another vendor when a key exists.
+_JUDGE = StepConfig(models=[OPUS], effort="high", max_tokens=8000, timeout_s=240.0)
 
 
 class LLMConfig(BaseModel):
@@ -114,6 +117,18 @@ class LLMConfig(BaseModel):
                 if ref not in self.prices:
                     raise ConfigError(f"step {name!r}: model {ref!r} has no price")
 
+    def with_judge_from(self, other: LLMConfig) -> LLMConfig:
+        """This configuration, with the judge (and the prices it needs) from another vendor's.
+
+        The claims are written by one vendor's models and checked by another's, so a systematic
+        blind spot of the first is not shared by the checker.
+        """
+        steps = {**self.steps, "judge": other.step("judge")}
+        prices = {**self.prices, **{m: other.prices[m] for m in other.step("judge").models}}
+        config = self.model_copy(update={"steps": steps, "prices": prices})
+        config.validate_prices()
+        return config
+
     @classmethod
     def default(cls) -> LLMConfig:
         """Roles from docs/cost.md on Anthropic's models (see `for_provider` for the others).
@@ -121,7 +136,7 @@ class LLMConfig(BaseModel):
         TODO: the entailment judge must come from a different model family than the generator;
         it is added with B8, not faked here.
         """
-        return cls._build(_EXTRACTION, _REASONING, _SYNTHESIS, dict(DEFAULT_PRICES))
+        return cls._build(_EXTRACTION, _REASONING, _SYNTHESIS, _JUDGE, dict(DEFAULT_PRICES))
 
     @classmethod
     def for_provider(cls, provider: str) -> LLMConfig:
@@ -138,7 +153,12 @@ class LLMConfig(BaseModel):
             synthesis = StepConfig(
                 models=[SOL, MINI], effort="high", max_tokens=GATEWAY_MAX_OUTPUT, timeout_s=240.0
             )
-            config = cls._build(extraction, reasoning, synthesis, dict(GATEWAY_PRICES))
+            # Not the model that writes the claims (gpt-6.1-sol): the strongest one the gateway
+            # lists. A claim is a few hundred characters, so the 5x price is a few cents a run.
+            judge = StepConfig(
+                models=[ASTRA, MINI], effort="high", max_tokens=GATEWAY_MAX_OUTPUT, timeout_s=240.0
+            )
+            config = cls._build(extraction, reasoning, synthesis, judge, dict(GATEWAY_PRICES))
             config.max_input_chars = _input_limit(GATEWAY_INPUT_CHARS)
             return config
         raise ConfigError(f"unknown provider {provider!r}: use 'anthropic' or 'openai'")
@@ -149,6 +169,7 @@ class LLMConfig(BaseModel):
         extraction: StepConfig,
         reasoning: StepConfig,
         synthesis: StepConfig,
+        judge: StepConfig,
         prices: dict[str, ModelPrice],
     ) -> LLMConfig:
         config = cls(
@@ -166,6 +187,7 @@ class LLMConfig(BaseModel):
                 "skeptic": synthesis,
                 "chair": synthesis,
                 "synthesis": synthesis,
+                "judge": judge,
             },
             prices=prices,
             budget_usd=float(os.environ.get("RUN_BUDGET_USD", "5")),

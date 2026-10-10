@@ -19,6 +19,18 @@ from bioverdict.store.runs_repo import DONE, get_run, load_claims, load_events
 from bioverdict.store.verification_repo import load_checks
 
 # The sections the reasoning modules write: a report must say something about each of them.
+# Checks that report on a claim without correcting it: they are not "corrections by code".
+ADVISORY_CHECKS = frozenset(
+    {
+        "skeptic_objection",
+        "skeptic_ungrounded",
+        "entailment",
+        "entailment_unjudged",
+        "claim_downgraded",
+        "source_authority",
+        "temporal_validity",
+    }
+)
 REQUIRED_SECTIONS = tuple(dict.fromkeys(module.section for module in ALL_MODULES))
 
 
@@ -49,6 +61,11 @@ class RunMetrics(BaseModel):
     citations_rejected: int = 0  # citations the model proposed and code could not ground
     claims_dropped: int = 0  # claims removed because of that
     other_corrections: int = 0
+    # The judge (B8): of the links it read, the share whose direction it confirmed. Links it was
+    # not asked about, or did not answer, are in neither number.
+    entailment_judged: int = 0
+    entailment_confirmed: int = 0
+    skeptic_objections: int = 0  # grounded objections that became contradicting links
 
     seconds: float | None = None
     llm_calls: int = 0
@@ -112,5 +129,11 @@ def run_metrics(conn: sqlite3.Connection, run_id: str) -> RunMetrics:
     metrics.sections_covered = len({c.section for c in claims} & set(REQUIRED_SECTIONS))
     metrics.citations_rejected = sum(c.check_name == QUOTE_CHECK for c in checks)
     metrics.claims_dropped = sum(c.check_name == DROPPED_CHECK for c in checks)
-    metrics.other_corrections = len(checks) - metrics.citations_rejected - metrics.claims_dropped
+    metrics.other_corrections = sum(
+        c.check_name not in {QUOTE_CHECK, DROPPED_CHECK, *ADVISORY_CHECKS} for c in checks
+    )
+    judged = [c for c in checks if c.check_name == "entailment"]
+    metrics.entailment_judged = len(judged)
+    metrics.entailment_confirmed = sum(c.passed for c in judged)
+    metrics.skeptic_objections = sum(c.check_name == "skeptic_objection" for c in checks)
     return metrics

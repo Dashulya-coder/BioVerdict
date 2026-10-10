@@ -21,6 +21,7 @@ from bioverdict.pipeline.reason_score import (
     drop_checks,
     indication_of,
     reason_and_score,
+    verify_pass,
 )
 from bioverdict.reasoning.classify_evidence import classify_new_evidence
 from bioverdict.scoring.financials import financial_model, with_financials
@@ -45,6 +46,7 @@ from bioverdict.store.runs_repo import (
     save_resolver,
 )
 from bioverdict.store.verification_repo import save_checks
+from bioverdict.verification import rule_checks
 
 log = logging.getLogger(__name__)
 
@@ -180,6 +182,11 @@ def classify_and_score(
     found = classify_new_evidence(llm, run_id, claims, links, added, bundle)
     merged_claims = [c.model_copy(update={"run_id": run_id}) for c in claims] + found.new_claims
     merged_links = [*links, *found.links, *found.new_claim_links]
+    # Links the model has just placed are checked like the ones the reasoning step wrote.
+    placed = {(l.claim_id, l.evidence_id) for l in [*found.links, *found.new_claim_links]}
+    merged_claims, merged_links = verify_pass(
+        conn, run_id, bundle, llm, merged_claims, merged_links, only=placed, rules=False
+    )
     fin = financial_model(bundle, indication_of(conn, run_id))
     scored, result = rescore(
         merged_claims,
@@ -190,7 +197,7 @@ def classify_and_score(
     )
     result = with_financials(result, fin)
     save_claims(conn, run_id, scored, merged_links, bundle.version)
-    save_checks(conn, run_id, drop_checks(found.drops, set()))
+    save_checks(conn, run_id, [*drop_checks(found.drops, set()), *rule_checks(scored)])
     add_event(
         conn,
         run_id,

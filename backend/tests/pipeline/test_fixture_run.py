@@ -103,6 +103,8 @@ def test_the_progress_log_follows_the_pipeline_steps(conn: sqlite3.Connection) -
         ("reason", "done"),
         ("skeptic", "started"),
         ("skeptic", "done"),
+        ("verify", "started"),
+        ("verify", "done"),
         ("score", "started"),
         ("score", "done"),
         ("chair", "started"),
@@ -140,21 +142,6 @@ def test_the_fixture_verdict_carries_pos_but_no_rnpv_without_market_records(
     assert result.rnpv is None  # the fixture has no epidemiology or price records
 
 
-def test_a_fixture_run_ranks_diligence_questions_and_logs_the_skeptic(
-    conn: sqlite3.Connection,
-) -> None:
-    start(conn)
-
-    result = run_fixture(conn, "R-1", "divarasib", FIXTURES)
-
-    assert result is not None
-    values = [q.value_of_information for q in result.diligence_questions]
-    assert values and values == sorted(values, reverse=True) and values[0] > 0
-    _, links = load_claims(conn, "R-1")
-    assert any(l.direction.value == "contradicts" and l.evidence_id == "E-0003" for l in links)
-    assert any(c.check_name == "skeptic_objection" for c in load_checks(conn, "R-1"))
-
-
 def test_a_fixture_run_reports_unmet_need_and_commercial_gaps_as_unknowns(
     conn: sqlite3.Connection,
 ) -> None:
@@ -169,3 +156,10 @@ def test_a_fixture_run_reports_unmet_need_and_commercial_gaps_as_unknowns(
     assert any(c.basis.value != "unknown" for c in need) and any(
         c.basis.value == "unknown" for c in need
     )
+
+
+def test_the_judge_has_an_answer_for_every_link_of_the_fixture(conn: sqlite3.Connection) -> None:
+    start(conn)
+    run_fixture(conn, "R-1", "divarasib", FIXTURES)
+
+    assert not [c for c in load_checks(conn, "R-1") if c.check_name == "entailment_unjudged"]

@@ -29,6 +29,7 @@ from bioverdict.store.models import (
 )
 from bioverdict.store.runs_repo import DONE, add_event, finish_run, get_run, save_claims
 from bioverdict.store.verification_repo import save_checks
+from bioverdict.verification import rule_checks, verify_links
 
 log = logging.getLogger(__name__)
 
@@ -106,6 +107,49 @@ def skeptic_pass(
     return claims, links, found.objections
 
 
+def verify_pass(
+    conn: sqlite3.Connection,
+    run_id: str,
+    bundle: Bundle,
+    llm: LLM,
+    claims: list[Claim],
+    links: list[ClaimEvidenceLink],
+    only: set[tuple[str, str]] | None = None,
+    rules: bool = True,
+) -> tuple[list[Claim], list[ClaimEvidenceLink]]:
+    """Entailment judge, then the authority and temporal rules (docs/architecture.md, section 7).
+
+    A link the judge does not confirm is removed, a claim left without support becomes a
+    hypothesis, and the confidences follow by formula. If the judge cannot be reached the report
+    is made with the links as they are and the run says `verify skipped`; the rules still run.
+    """
+    add_event(conn, run_id, "verify", "started")
+    try:
+        found = verify_links(llm, bundle, claims, links, only)
+    except LLMError as exc:
+        log.warning("verify skipped for %s: %s", run_id, exc)
+        add_event(conn, run_id, "verify", "skipped", f"{type(exc).__name__}")
+    else:
+        save_checks(conn, run_id, found.checks)
+        if found.removed:
+            claims = apply_confidence(
+                found.claims, found.links, bundle.evidence_by_id(), bundle.as_of
+            )
+            links = found.links
+        add_event(
+            conn,
+            run_id,
+            "verify",
+            "done",
+            f"{found.judged} link(s) judged by {', '.join(found.models) or 'nobody'}, "
+            f"{found.removed} not confirmed and removed, "
+            f"{len(found.downgraded)} claim(s) downgraded to hypothesis",
+        )
+    if rules:
+        save_checks(conn, run_id, rule_checks(claims))
+    return claims, links
+
+
 def chair_pass(
     conn: sqlite3.Connection,
     run_id: str,
@@ -162,6 +206,7 @@ def reason_and_score(
     )
 
     claims, links, objections = skeptic_pass(conn, run_id, bundle, llm, claims, links)
+    claims, links = verify_pass(conn, run_id, bundle, llm, claims, links)
     save_claims(conn, run_id, claims, links, bundle.version)
 
     add_event(conn, run_id, "score", "started")

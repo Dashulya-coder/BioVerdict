@@ -109,6 +109,10 @@ Collect agents write **evidence**. Reason steps write **claims**. Neither writes
 
 A claim failing 1 or 2 is dropped. A claim failing 3 is downgraded to `hypothesis`. Failures are logged.
 
+How gate 3 works in the code (`verification/entailment.py`): the judge (step `judge`) reads each claim with each quote cited for it, and nothing else, and says whether the quote supports it, contradicts it or is unrelated. It is strict (a registry status next to an efficacy claim, another drug, a narrower statement are all "unrelated"). A link whose direction the judge does not confirm is removed and logged (`entailment`, failed), a claim left with no supporting link becomes a hypothesis (`claim_downgraded`), and the confidences are recomputed by the formula. The judge never adds a link or raises a confidence. It also reads the Skeptic's objections and the links placed by a recompute. If it cannot be reached the run says `verify skipped` and the links stay as they are. Gates 4 and 5 (`verification/rules.py`) read what the formula already computed and log `source_authority` (the cited evidence has no weight for the claim type) and `temporal_validity` (the evidence is old).
+
+Who judges: when keys for both vendors are set, the claims are written by one vendor and judged by the other (true independence). With one key the judge is the strongest other model of the same vendor (`gpt-6-astra` on the gateway, Opus with Anthropic), which is a different model but the same family; results should say so (`docs/limitations.md`).
+
 ## 8. Incremental re-underwrite
 
 When evidence is added (live input, time-travel, or injected test document):
