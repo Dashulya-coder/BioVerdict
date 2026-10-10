@@ -507,3 +507,34 @@ test('a report that is not ready or failed says so', async ({ page }) => {
   await page.getByRole('link', { name: 'Report' }).click()
   await expect(page.getByRole('alert')).toContainText('shape this workspace does not understand')
 })
+
+test('diligence questions are ranked by the value of their answer', async ({ page }) => {
+  const ranked = {
+    ...report,
+    diligence_questions: [
+      {
+        text: 'Is exposure reached in tumor?',
+        answered_by: 'experiment',
+        value_of_information: 0.2,
+      },
+      {
+        text: 'Why did the sponsor pause?',
+        answered_by: 'kol_interview',
+        value_of_information: 0.7,
+      },
+    ],
+  }
+  await serve(page, { report: ranked })
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  const questions = page.getByRole('region', { name: 'Questions to ask next' })
+  await expect(questions.getByRole('listitem').first()).toContainText('Why did the sponsor pause?')
+  await expect(questions.getByText('Expert interview')).toBeVisible()
+})
+
+test('with no ranked question the report says the step is not built', async ({ page }) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  await expect(page.getByText('No question was ranked for this run.')).toBeVisible()
+})

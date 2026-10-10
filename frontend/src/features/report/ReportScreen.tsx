@@ -2,6 +2,7 @@ import { Button } from '../../ui/Button'
 import { PageHeading } from '../../ui/PageHeading'
 import { navigate } from '../../app/useScreen'
 import { ClaimList } from './ClaimList'
+import { DiligenceQuestions } from './DiligenceQuestions'
 import { ExecutiveSummary } from './ExecutiveSummary'
 import { TranslationChain } from './TranslationChain'
 import { UnknownFacts } from './UnknownFacts'
@@ -56,6 +57,7 @@ function LoadedReport({ runId }: { runId: string }) {
     <>
       <ExecutiveSummary report={state.report} />
       <TranslationChain report={state.report} />
+      <DiligenceQuestions report={state.report} />
       <UnknownFacts report={state.report} />
       <ClaimList report={state.report} />
     </>
