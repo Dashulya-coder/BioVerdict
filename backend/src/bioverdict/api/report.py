@@ -10,6 +10,7 @@ from bioverdict.api.schemas import (
     ChainLinkView,
     ChainStatus,
     ClaimView,
+    DriverView,
     EventView,
     EvidenceView,
     ExecutiveVerdict,
@@ -17,6 +18,7 @@ from bioverdict.api.schemas import (
     LinkView,
     LLMCallView,
     MarketResponse,
+    ModuleView,
     ReportResponse,
     RunSummary,
     SectionView,
@@ -28,6 +30,7 @@ from bioverdict.market.tam import estimate_market
 from bioverdict.pipeline.reason_score import indication_of
 from bioverdict.scoring.config import ConfidenceConfig, VerdictConfig
 from bioverdict.scoring.financials import financial_model
+from bioverdict.scoring.module_answers import ModuleResult, module_answers
 from bioverdict.scoring.verdict import chain_confidences
 from bioverdict.store.load_bundle import load_bundle
 from bioverdict.store.models import (
@@ -41,6 +44,7 @@ from bioverdict.store.models import (
     ResolverOutput,
     Section,
     SectionStatus,
+    VerdictResult,
 )
 from bioverdict.store.runs_repo import DONE, RunRecord, get_run, load_claims, load_events
 
@@ -128,6 +132,7 @@ def _claim_view(
         chain_link=claim.chain_link,
         gate_signals=claim.gate_signals,
         critical=claim.critical,
+        implication=claim.implication,
         diligence_type=claim.diligence_type.value if claim.diligence_type else None,
         depends_on=claim.depends_on,
         links=[
@@ -177,6 +182,32 @@ def translation_chain(claims: list[Claim]) -> list[ChainLinkView]:
     ]
 
 
+def module_view(result: ModuleResult) -> ModuleView:
+    return ModuleView(
+        module=result.module,
+        title=result.title,
+        question=result.question,
+        answer=result.answer,
+        headline=result.headline,
+        balance=result.balance,
+        favourable=result.favourable,
+        unfavourable=result.unfavourable,
+        claim_ids=result.claim_ids,
+        drivers=[
+            DriverView(claim_id=d.claim_id, contribution=d.contribution) for d in result.drivers
+        ],
+        unknown_count=result.unknown_count,
+        evidence_count=result.evidence_count,
+        gates=result.gates,
+    )
+
+
+def module_views(
+    claims: list[Claim], links: list[ClaimEvidenceLink], result: VerdictResult
+) -> list[ModuleView]:
+    return [module_view(m) for m in module_answers(claims, links, result)]
+
+
 def _sections(claims: list[ClaimView], bundle: Bundle) -> list[SectionView]:
     views = []
     for section in Section:
@@ -216,6 +247,7 @@ def build_report(conn: sqlite3.Connection, run_id: str) -> ReportResponse:
             rnpv=result.rnpv,
         ),
         assumptions=record.resolver.assumptions,
+        modules=module_views(claims, links, result),
         sections=_sections(claim_views, bundle),
         translation_chain=translation_chain(claims),
         translation_chain_probability=result.translation_chain_probability,

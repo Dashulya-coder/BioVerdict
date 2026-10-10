@@ -175,6 +175,7 @@ def save_claims(
             "chain_link": claim.chain_link.value if claim.chain_link else None,
             "gate_signals_json": json.dumps([gate.value for gate in claim.gate_signals]),
             "critical": int(claim.critical),
+            "implication": claim.implication.value,
             "version": version,
         }
         for claim in claims
@@ -183,10 +184,10 @@ def save_claims(
         conn.executemany(
             "INSERT INTO claims (run_id, id, section, claim_type, text, basis, status, confidence, "
             "confidence_parts_json, flags_json, depends_on_json, diligence_type, chain_link, "
-            "gate_signals_json, critical, version) VALUES (:run_id, :id, :section, :claim_type, "
+            "gate_signals_json, critical, implication, version) VALUES (:run_id, :id, :section, :claim_type, "
             ":text, :basis, :status, :confidence, :confidence_parts_json, :flags_json, "
             ":depends_on_json, :diligence_type, :chain_link, :gate_signals_json, :critical, "
-            ":version)",
+            ":implication, :version)",
             claim_rows,
         )
         conn.executemany(
@@ -220,6 +221,8 @@ def load_claims(
                     "chain_link": row["chain_link"],
                     "gate_signals": json.loads(row["gate_signals_json"]),
                     "critical": bool(row["critical"]),
+                    # Runs stored before the column existed have no label: neutral.
+                    "implication": row["implication"] or "neutral",
                 }
             )
         )

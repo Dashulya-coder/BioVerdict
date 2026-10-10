@@ -294,6 +294,35 @@ def test_the_diff_of_a_placed_document_names_only_the_claim_it_touches(conn) -> 
     assert diff.claims[0].new_evidence_ids == [NEW_ID]
 
 
+def test_the_diff_says_which_module_the_document_moved_and_quotes_the_document(conn) -> None:
+    _, target = key_claim(conn)  # a favourable clinical claim
+    classified(conn, {"links": [link_to(target.id, "contradicts")]})
+
+    modules = {m.module.value: m for m in build_diff(conn, "R-1", "R-2").modules}
+
+    assert len(modules) == 6
+    clinical = modules["clinical_development"]
+    assert clinical.changed and clinical.balance_after < clinical.balance_before
+    cause = clinical.causes[0]
+    assert (cause.evidence_id, cause.claim_id, cause.quote) == (NEW_ID, target.id, QUOTE)
+    assert cause.direction.value == "contradicts" and cause.claim_change == "changed"
+    assert cause.confidence_after < cause.confidence_before
+    assert cause.contribution_after < cause.contribution_before
+    assert cause.url == DOC.url
+    untouched = [m for name, m in modules.items() if name.startswith(("disease", "mechanism"))]
+    assert all(not m.changed and m.causes == [] for m in untouched)
+    # The claim is a key claim, so the verdict's own module names the same document.
+    assert modules["investment_underwriting"].causes[0].evidence_id == NEW_ID
+
+
+def test_a_document_that_bears_on_nothing_moves_no_module(conn) -> None:
+    classified(conn, {"links": [], "unmatched": [NEW_ID]})
+
+    modules = build_diff(conn, "R-1", "R-2").modules
+
+    assert all(not m.changed and m.causes == [] for m in modules)
+
+
 def test_a_new_fact_becomes_a_claim_numbered_after_the_existing_ones(conn) -> None:
     before, _ = key_claim(conn)
     fact = {

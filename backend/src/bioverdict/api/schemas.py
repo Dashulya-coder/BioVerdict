@@ -12,6 +12,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from bioverdict.scoring.module_answers import ModuleAnswer, ModuleId
 from bioverdict.store.models import (
     Basis,
     ChainLink,
@@ -22,6 +23,7 @@ from bioverdict.store.models import (
     EvidenceLevel,
     GateId,
     GateResult,
+    Implication,
     Locator,
     Range,
     Section,
@@ -105,6 +107,7 @@ class ClaimView(_View):
     chain_link: ChainLink | None
     gate_signals: list[GateId]
     critical: bool
+    implication: Implication
     diligence_type: str | None
     depends_on: list[str]
     links: list[LinkView]
@@ -121,6 +124,37 @@ class ChainLinkView(_View):
     status: ChainStatus
     confidence: float | None = Field(description="Best claim confidence for this link, if any")
     claim_ids: list[str]
+
+
+class DriverView(_View):
+    claim_id: str
+    contribution: float = Field(
+        description="Pull on the module: above 0 speaks for investing, below 0 against"
+    )
+
+
+class ModuleView(_View):
+    """One of the six underwriting modules: its answer and the claims the answer rests on.
+
+    Computed by code from the claims (`scoring/module_answers.py`); open `claim_ids` in
+    `sections` to follow answer -> claims -> quotes -> sources.
+    """
+
+    module: ModuleId
+    title: str
+    question: str
+    answer: ModuleAnswer
+    headline: str = Field(description="The rule that decided the answer, in words")
+    balance: float | None = Field(
+        description="-1 (all weight against) to +1 (all for); null without weighted claims"
+    )
+    favourable: float
+    unfavourable: float
+    claim_ids: list[str]
+    drivers: list[DriverView] = Field(description="The claims that pull hardest, strongest first")
+    unknown_count: int
+    evidence_count: int = Field(description="Distinct evidence items the module's claims quote")
+    gates: list[str] = Field(description="Fired gates that rest on this module's claims")
 
 
 class ExecutiveVerdict(_View):
@@ -147,6 +181,7 @@ class ReportResponse(_View):
     run: RunSummary
     executive: ExecutiveVerdict
     assumptions: list[str] = Field(description="What the system inferred or could not confirm")
+    modules: list[ModuleView] = Field(description="The six modules, each with its answer")
     sections: list[SectionView]
     translation_chain: list[ChainLinkView]
     translation_chain_probability: float | None
@@ -325,12 +360,49 @@ class ClaimChange(_View):
     )
 
 
+class ModuleCause(_View):
+    """A piece of evidence the earlier run did not have, and the claim it moved."""
+
+    evidence_id: str = Field(description="Its id in the later run")
+    source: str
+    url: str
+    published_at: date | None
+    level: EvidenceLevel
+    direction: Direction
+    quote: str
+    claim_id: str = Field(description="The claim's id in the later run")
+    claim_text: str
+    claim_change: Literal["added", "changed"]
+    confidence_before: float | None
+    confidence_after: float
+    contribution_before: float | None
+    contribution_after: float
+
+
+class ModuleChange(_View):
+    """One module in both runs. `causes` is empty when no new evidence touched it."""
+
+    module: ModuleId
+    title: str
+    answer_before: ModuleAnswer
+    answer_after: ModuleAnswer
+    balance_before: float | None
+    balance_after: float | None
+    headline_before: str
+    headline_after: str
+    changed: bool = Field(description="The answer differs, or the balance moved")
+    causes: list[ModuleCause]
+
+
 class DiffResponse(_View):
     """What differs between two finished runs. Computed by code from the stored records."""
 
     base: RunSide
     head: RunSide
     verdict_changed: bool
+    modules: list[ModuleChange] = Field(
+        description="All six modules, before and after, with the new evidence that moved each"
+    )
     gates: list[GateChange] = Field(description="Only the gates whose state differs")
     chain: list[ChainLinkChange] = Field(description="Only the links whose status differs")
     evidence_added: list[EvidenceView]

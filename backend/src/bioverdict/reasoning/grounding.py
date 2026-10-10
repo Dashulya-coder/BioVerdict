@@ -27,6 +27,7 @@ from bioverdict.store.models import (
     Direction,
     Evidence,
     GateId,
+    Implication,
     Section,
     SectionStatus,
 )
@@ -307,7 +308,15 @@ def _build_claim(
         gate_signals=gates,
         critical=critical,
         diligence_type=diligence,
+        implication=_implication(item.implication, basis, gates),
     )
+
+
+def _implication(proposed: Implication, basis: Basis, gates: list[GateId]) -> Implication:
+    """A gap says nothing for or against; a claim that asserts a gate is against by definition."""
+    if basis is Basis.UNKNOWN:
+        return Implication.NEUTRAL
+    return Implication.UNFAVOURABLE if gates else proposed
 
 
 def resolve_claim_type(

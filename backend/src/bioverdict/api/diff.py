@@ -17,7 +17,15 @@ from bioverdict.api.schemas import (
     ClaimSnapshot,
     DiffResponse,
     GateChange,
+    ModuleCause,
+    ModuleChange,
     RunSide,
+)
+from bioverdict.scoring.module_answers import (
+    SPECS,
+    ModuleId,
+    contribution,
+    module_answers,
 )
 from bioverdict.store.evidence_ids import dedup_key
 from bioverdict.store.load_bundle import load_bundle
@@ -125,6 +133,106 @@ def _claim_changes(
     return changes, unchanged
 
 
+@dataclass(frozen=True)
+class _Moved:
+    """A claim of the later run that quotes evidence the earlier run did not have."""
+
+    old: Claim | None
+    new: Claim
+
+
+def _moved_claims(base: _Run, head: _Run, added: set[EvidenceKey]) -> list[_Moved]:
+    def wording(claim: Claim) -> tuple[Section, str]:
+        return (claim.section, " ".join(claim.text.split()))
+
+    before = {wording(c): c for c in base.claims}
+    return [
+        _Moved(before.get(wording(claim)), claim)
+        for claim in head.claims
+        if any(key in added for key in head.quoted(claim))
+    ]
+
+
+def _causes(head: _Run, moved: list[_Moved], added: set[EvidenceKey]) -> list[ModuleCause]:
+    keys = head.keys()
+    by_id = head.bundle.evidence_by_id()
+    causes = []
+    for item in moved:
+        for link in head.links:
+            if link.claim_id != item.new.id or keys.get(link.evidence_id) not in added:
+                continue
+            evidence = by_id[link.evidence_id]
+            causes.append(
+                ModuleCause(
+                    evidence_id=evidence.id,
+                    source=evidence.source,
+                    url=evidence.url,
+                    published_at=evidence.published_at,
+                    level=evidence.level,
+                    direction=link.direction,
+                    quote=link.quote,
+                    claim_id=item.new.id,
+                    claim_text=item.new.text,
+                    claim_change="changed" if item.old else "added",
+                    confidence_before=item.old.confidence if item.old else None,
+                    confidence_after=item.new.confidence,
+                    contribution_before=contribution(item.old) if item.old else None,
+                    contribution_after=contribution(item.new),
+                )
+            )
+    # The evidence that moved a claim furthest first.
+    return sorted(
+        causes,
+        key=lambda c: (-abs(c.contribution_after - (c.contribution_before or 0.0)), c.claim_id),
+    )
+
+
+MIN_BALANCE_CHANGE = 0.005
+INVESTMENT_CAUSES = 5
+
+
+def module_changes(base: _Run, head: _Run, added: set[EvidenceKey]) -> list[ModuleChange]:
+    """Each module in both runs, with the new evidence that reached its claims.
+
+    The investment module has no claims of its own: its causes are the new evidence on the
+    claims the verdict is decided on (key claims and claims that assert a gate), or, when none
+    of those moved, the evidence that moved any claim furthest.
+    """
+    before = {m.module: m for m in module_answers(base.claims, base.links, base.result)}
+    after = module_answers(head.claims, head.links, head.result)
+    moved = _moved_claims(base, head, added)
+    sections = {spec.module: spec.sections for spec in SPECS}
+    everything = _causes(head, moved, added)
+    changes = []
+    for new in after:
+        old = before[new.module]
+        if new.module is ModuleId.INVESTMENT:
+            deciding = [m for m in moved if m.new.critical or m.new.gate_signals]
+            causes = _causes(head, deciding, added) or everything[:INVESTMENT_CAUSES]
+        else:
+            mine = [m for m in moved if m.new.section in sections[new.module]]
+            causes = _causes(head, mine, added)
+        if old.balance is None or new.balance is None:
+            shifted = old.balance != new.balance
+        else:
+            shifted = abs(new.balance - old.balance) >= MIN_BALANCE_CHANGE
+        changes.append(
+            ModuleChange(
+                module=new.module,
+                title=new.title,
+                answer_before=old.answer,
+                answer_after=new.answer,
+                balance_before=old.balance,
+                balance_after=new.balance,
+                headline_before=old.headline,
+                headline_after=new.headline,
+                changed=old.answer is not new.answer or shifted,
+                causes=causes,
+            )
+        )
+    return changes
+
+
 def chain_changes(before: list[ChainLinkView], after: list[ChainLinkView]) -> list[ChainLinkChange]:
     """The links whose status or confidence differs.
 
@@ -176,6 +284,7 @@ def build_diff(conn: sqlite3.Connection, base_id: str, head_id: str) -> DiffResp
         base=_side(base),
         head=_side(head),
         verdict_changed=base.result.verdict is not head.result.verdict,
+        modules=module_changes(base, head, added),
         gates=gates,
         chain=chain,
         evidence_added=[

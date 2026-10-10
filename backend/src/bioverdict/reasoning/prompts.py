@@ -34,8 +34,9 @@ Rules for every claim:
 - Do not give numbers of your own (probabilities, market sizes, scores). Quote numbers that the
   evidence states.
 - critical is true only for claims the investment decision hinges on (at most four).
-- Be brief: at most 8 claims, each under 250 characters, each quote under 200 characters. The
-  answer has a hard length limit, and a longer one is lost.
+- implication: what the claim means for an investor if it is true. "favourable", "unfavourable"
+  (a failed analog is unfavourable even if this program may differ) or "neutral" (context, and
+  every `unknown`).
 """
 
 # Strongest first, for choosing what to keep when the bundle is too large.
