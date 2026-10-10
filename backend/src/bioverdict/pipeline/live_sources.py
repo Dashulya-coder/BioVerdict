@@ -21,6 +21,7 @@ from bioverdict.agents.collect import CollectPlan
 from bioverdict.connectors.biomarker import BiomarkerFrequencyConnector
 from bioverdict.connectors.clinicaltrials import ClinicalTrialsConnector
 from bioverdict.connectors.edgar import EdgarConnector
+from bioverdict.connectors.ema import EmaConnector
 from bioverdict.connectors.epidemiology import (
     CancerIncidenceConnector,
     CdcIndicatorsConnector,
@@ -29,11 +30,11 @@ from bioverdict.connectors.epidemiology import (
 )
 from bioverdict.connectors.europepmc import EuropePmcConnector
 from bioverdict.connectors.http import DEFAULT_MIN_INTERVAL_S, CachedHttpClient
-from bioverdict.connectors.openfda import OpenFdaConnector
+from bioverdict.connectors.openfda import OpenFdaConnector, OpenFdaIndication
 from bioverdict.connectors.opentargets import OpenTargetsApi, OpenTargetsConnector
 from bioverdict.connectors.pmc import PmcFullTextConnector
 from bioverdict.connectors.pricing import AnalogPricingConnector
-from bioverdict.connectors.pubmed import PubMedConnector
+from bioverdict.connectors.pubmed import PubMedConnector, PubMedSafetyConnector
 from bioverdict.connectors.pubmed_guidelines import PubMedGuidelinesConnector
 from bioverdict.connectors.retry import MAX_ATTEMPTS
 from bioverdict.contracts import Connector
@@ -50,12 +51,19 @@ LIVE_PLANS = (
     CollectPlan(section=Section.MECHANISM, tools=("opentargets", "europepmc")),
     # Full texts last: they repeat PubMed's searches from the cache, and if the section's time
     # runs out it is the abstracts and the registry that have been read.
-    CollectPlan(section=Section.CLINICAL, tools=("clinicaltrials", "pubmed", "pmc_fulltext")),
+    CollectPlan(
+        section=Section.CLINICAL,
+        tools=("clinicaltrials", "pubmed", "pubmed_safety", "pmc_fulltext"),
+    ),
     # What the specialty societies say treats the disease today: the standard of care that a new
     # drug has to beat. The indication is searched, never the asset.
     CollectPlan(section=Section.UNMET_NEED, tools=("pubmed_guidelines",)),
-    # The class in the registry, then what the FDA approved in it and what those labels say.
-    CollectPlan(section=Section.COMPETITION, tools=("clinicaltrials_class", "openfda")),
+    # The class in the registry, what the FDA approved in it and what those labels say, and what
+    # the FDA approved for the indication whatever the target: the drugs a new one competes with.
+    CollectPlan(
+        section=Section.COMPETITION,
+        tools=("clinicaltrials_class", "openfda", "openfda_indication", "ema_medicines"),
+    ),
     # What the sponsor told its investors: designations, holds, programs it stopped.
     CollectPlan(section=Section.FLAGS, tools=("sec_edgar",)),
     # Market records are status facts: stored whole, read by code (`market/tam.py`), no model.
@@ -180,10 +188,13 @@ def _sources(http: CachedHttpClient) -> Sources:
         EdgarConnector(http, registry, os.environ.get("SEC_USER_AGENT")),
         BiomarkerFrequencyConnector(http, registry),
         pubmed,
+        PubMedSafetyConnector(http, api_key=os.environ.get("NCBI_API_KEY") or None),
         PubMedGuidelinesConnector(http, api_key=os.environ.get("NCBI_API_KEY") or None),
         PmcFullTextConnector(http, pubmed),
         EuropePmcConnector(http),
         OpenFdaConnector(http, api_key=os.environ.get("OPENFDA_API_KEY") or None),
+        EmaConnector(http),
+        OpenFdaIndication(http, api_key=os.environ.get("OPENFDA_API_KEY") or None),
         AnalogPricingConnector(http),
         CancerIncidenceConnector(http),
         CdcIndicatorsConnector(http),

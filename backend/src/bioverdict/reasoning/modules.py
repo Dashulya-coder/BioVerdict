@@ -175,7 +175,7 @@ COMPETITION = ReasoningModule(
     allowed_gates=frozenset({GateId.S4}),
     gate_guard=evidence_guard,
     allow_study_fact=True,
-    families=frozenset({"registry", "target_database"}),
+    families=frozenset({"registry", "target_database", "approved_for_indication"}),
 )
 
 UNMET_NEED = ReasoningModule(
@@ -184,7 +184,9 @@ UNMET_NEED = ReasoningModule(
     step="reasoning.unmet_need",
     instruction=_UNMET_NEED,
     claim_type=ClaimType.OTHER,
-    families=frozenset({"target_database", "literature", "regulatory_analog", "company"}),
+    families=frozenset(
+        {"target_database", "literature", "regulatory_analog", "approved_for_indication", "company"}
+    ),
 )
 # The market records that code reads for patients and prices (incidence, prevalence, population,
 # biomarker frequency, analog prices and spending) stay out of every prompt: the numbers are
@@ -195,7 +197,7 @@ COMMERCIAL = ReasoningModule(
     step="reasoning.commercial",
     instruction=_COMMERCIAL,
     claim_type=ClaimType.OTHER,
-    families=frozenset({"regulatory_analog", "sec_filing", "company"}),
+    families=frozenset({"regulatory_analog", "approved_for_indication", "sec_filing", "company"}),
 )
 
 # Order of the plan: translation reads what mechanism and clinical established. The two modules

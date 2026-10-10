@@ -260,3 +260,101 @@ async def test_an_answer_cached_with_a_key_is_found_without_one(tmp_path: Path) 
     await connector(tmp_path, server).fetch(query(), TODAY)
 
     assert len(server.asked) == asked
+
+
+# --- Drugs approved for the indication (answers recorded 2026-10-10) -------------------------------
+
+from bioverdict.connectors.openfda import (
+    INDICATION_FAMILY,
+    MAX_COMPETITORS,
+    OpenFdaIndication,
+    approved_for,
+    indication_position,
+)
+
+MS = Indication(name="multiple sclerosis", efo_id="EFO_0803536")
+
+
+class IndicationFda:
+    """Open Targets lists the drugs approved for MS; openFDA answers for three of them only."""
+
+    def __init__(self) -> None:
+        self.asked: list[httpx.Request] = []
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        self.asked.append(request)
+        if "opentargets" in request.url.host:
+            return httpx.Response(200, json=recorded("indication_ms_disease.json"))
+        drug = request.url.params["search"].split('"')[1].lower()
+        path = RAW / "openfda" / f"indication_label_{drug}.json"
+        if path.exists():
+            return httpx.Response(200, json=json.loads(path.read_text(encoding="utf-8")))
+        return httpx.Response(404, json=NOT_FOUND)
+
+
+def indication_connector(tmp_path: Path, server: IndicationFda) -> OpenFdaIndication:
+    conn = connect(tmp_path / "ind.db")
+    migrate(conn)
+    client = httpx.AsyncClient(transport=httpx.MockTransport(server))
+    return OpenFdaIndication(CachedHttpClient(client, HttpCache(conn), wait=wait_none()))
+
+
+def test_the_drugs_approved_for_the_disease_are_not_the_drugs_approved_for_anything() -> None:
+    names = approved_for(recorded("indication_ms_disease.json"))
+
+    assert {"ocrelizumab", "natalizumab", "ofatumumab", "siponimod", "teriflunomide"} <= set(names)
+    assert "aspirin" not in names and "metformin" not in names  # approved, but not for MS
+    assert "fingolimod" in names and "fingolimod hydrochloride" not in names  # a salt is one drug
+
+
+async def test_the_competitors_of_an_indication_come_from_the_labels_that_name_it(
+    tmp_path: Path,
+) -> None:
+    server = IndicationFda()
+    out = await indication_connector(tmp_path, server).fetch(
+        ResolverOutput(indication=MS, targets=[Target(symbol="BTK", ensembl="ENSG00000010671")]),
+        TODAY,
+    )
+
+    sources = {e.source for e in out}
+    assert any("OCREVUS (ocrelizumab), approved for multiple sclerosis" in s for s in sources)
+    assert any("Gilenya" in s for s in sources)
+    assert {e.source_family for e in out} == {INDICATION_FAMILY}
+    assert all(e.status_key is None or e.status_key.startswith("fda-indication:") for e in out)
+    # a drug of another disease has no label that names this one, and is not asked about twice
+    assert not any("prednisone" in e.source.casefold() for e in out)
+    studies = [e for e in out if ":clinical_studies:" in e.id]
+    assert studies and all(e.level is EvidenceLevel.HUMAN_INTERVENTIONAL for e in studies)
+    assert len({e.independence_group for e in out}) <= MAX_COMPETITORS
+
+
+async def test_the_asset_is_not_its_own_competitor(tmp_path: Path) -> None:
+    out = await indication_connector(tmp_path, IndicationFda()).fetch(
+        ResolverOutput(
+            indication=MS,
+            targets=[Target(symbol="MS4A1")],
+            known_assets=["ocrelizumab"],
+        ),
+        TODAY,
+    )
+
+    assert not any("ocrelizumab" in e.source.casefold() for e in out)
+    assert any("Gilenya" in e.source for e in out)
+
+
+async def test_a_disease_without_an_identifier_reads_nothing(tmp_path: Path) -> None:
+    server = IndicationFda()
+    out = await indication_connector(tmp_path, server).fetch(
+        ResolverOutput(indication=Indication(name="a disease"), targets=[KRAS]), TODAY
+    )
+
+    assert out == [] and server.asked == []
+
+
+def test_a_label_that_lists_the_disease_among_many_ranks_after_one_made_for_it() -> None:
+    made_for = {"indications_and_usage": ["is indicated for the treatment of multiple sclerosis"]}
+    among = {"indications_and_usage": ["allergic states, " * 30 + "multiple sclerosis"]}
+    ms = "Multiple Sclerosis"
+
+    assert indication_position(made_for, ms) < indication_position(among, ms)
+    assert indication_position({"indications_and_usage": ["asthma"]}, ms) is None

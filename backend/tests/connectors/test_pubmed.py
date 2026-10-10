@@ -8,13 +8,16 @@ from tenacity import wait_none
 
 from bioverdict.connectors.http import CachedHttpClient
 from bioverdict.connectors.pubmed import (
+    REVIEW_GROUP,
     PubMedConnector,
     PubMedError,
+    PubMedSafetyConnector,
     build_terms,
     classify,
     parse_articles,
     require_articles,
     require_search_result,
+    safety_terms,
 )
 from bioverdict.contracts import Connector
 from bioverdict.store.db import connect
@@ -330,3 +333,53 @@ async def test_a_rate_limit_inside_a_200_answer_is_raised_and_never_cached(tmp_p
     evidence = await connector.fetch(query(["divarasib"]), date(2026, 10, 6))
 
     assert evidence  # the refused answer was not replayed as "no papers"
+
+
+# --- the safety search: reviews are read, as one source ------------------------------------------
+
+
+def test_a_review_is_left_out_unless_the_search_is_for_safety() -> None:
+    assert REVIEW not in parsed(REVIEW)
+    kept = {e.locator.value: e for e in parse_articles(xml_of(REVIEW), NOW, reviews=True)}
+
+    assert kept[REVIEW].level is EvidenceLevel.HUMAN_OBSERVATIONAL
+    assert kept[REVIEW].independence_group == REVIEW_GROUP  # reviews restate: they count once
+
+
+def test_a_comment_stays_out_of_the_safety_search_and_a_trial_keeps_its_own_group() -> None:
+    found = {e.locator.value: e for e in parse_articles(xml_of(COMMENT, NEJM), NOW, reviews=True)}
+
+    assert COMMENT not in found
+    assert found[NEJM].level is EvidenceLevel.HUMAN_INTERVENTIONAL
+    assert found[NEJM].independence_group != REVIEW_GROUP
+
+
+def test_a_review_is_observational_not_a_trial() -> None:
+    assert classify(["Journal Article", "Review"], []) is None
+    assert classify(["Journal Article", "Review"], [], reviews=True) == (
+        EvidenceLevel.HUMAN_OBSERVATIONAL,
+        SourceKind.PEER_REVIEWED,
+    )
+    assert classify(["Journal Article", "Editorial"], [], reviews=True) is None
+
+
+def test_the_safety_search_asks_about_the_asset_and_about_the_class() -> None:
+    query = ResolverOutput(
+        indication=Indication(name="multiple sclerosis"),
+        targets=[Target(symbol="BTK")],
+        known_assets=["tolebrutinib"],
+    )
+    terms = safety_terms(query)
+
+    assert len(terms) == 2
+    assert terms[0].startswith('("tolebrutinib"[Title/Abstract]) AND (hepatotoxicity')
+    assert terms[1].startswith('(BTK) AND "multiple sclerosis" AND (hepatotoxicity')
+    assert (
+        safety_terms(
+            ResolverOutput(
+                indication=Indication(name="not specified"), targets=[Target(symbol="BTK")]
+            )
+        )
+        == []
+    )
+    assert PubMedSafetyConnector.name == "pubmed_safety" and PubMedSafetyConnector.reviews
