@@ -83,7 +83,7 @@ Swap if it fits better; rehearse the hand-overs.
 3. **Drill-down (60 s).** Verdict -> claim -> evidence quote -> source link. Show a badge for the claim's basis. Show one claim that the verifier dropped, and why.
 4. **Honesty on a sparse asset (60 s).** Run a very sparse asset. Show `evidence sparse`, a wider range, statuses (`not_reported`, `none_found`), and ranked diligence questions with the type of data needed.
 5. **Change of conclusion A: time-travel (90 s).** Same asset with `as_of` before and after a real event. Show the diff screen.
-6. **Change of conclusion B: add evidence live (90 s).** Paste a document from the judges, or use a prepared one. Show a weak result lowering confidence only, then a strong result flipping the verdict.
+6. **Change of conclusion B: add evidence live (90 s).** Paste a document from the judges, or use a prepared one. Show a weak result lowering confidence only, then a strong result moving a module's answer. The verdict changes only if the document fires a gate; no benchmark case shows that yet.
 7. **Trace and cost (30 s).** Run time, tokens, cost, models used, failover count.
 
 ## Candidate events (verify before use)
