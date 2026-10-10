@@ -24,6 +24,7 @@ from bioverdict.llm.errors import (
     RefusalError,
     TransientProviderError,
 )
+from bioverdict.llm.sizing import wire_len
 from bioverdict.llm.types import ProviderRequest, ProviderResponse
 
 SCHEMA_NAME = "answer"
@@ -107,10 +108,10 @@ class OpenAIProvider:
         return self._client
 
     def input_chars(self, request: ProviderRequest) -> int:
-        """What the gateway counts against its request limit: the text of every message, the
-        schema in compact JSON and about 100 characters of its own (measured, 2026-10-09)."""
+        """What the gateway counts against its request limit: the text of every message and the
+        schema in compact JSON, each as it travels (`wire_len`), and about 100 of its own."""
         schema = json.dumps(strict_schema(request.schema), separators=(",", ":"))
-        return len(request.system or "") + len(request.prompt) + len(schema) + _OVERHEAD
+        return wire_len(request.system or "") + wire_len(request.prompt) + len(schema) + _OVERHEAD
 
     def complete(self, request: ProviderRequest) -> ProviderResponse:
         """One structured answer. The reply is read here, so that the tokens of an answer that
