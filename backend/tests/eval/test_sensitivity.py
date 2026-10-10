@@ -114,6 +114,14 @@ def test_the_cases_file_of_the_repository_loads() -> None:
     assert {c.kind for c in cases} == {"strong", "weak", "noise"}
 
 
+def test_the_cases_for_the_other_two_modules_load_and_name_them() -> None:
+    cases = load_cases(FIXTURES.parent / "eval" / "sensitivity-modules.yaml")
+    assert {(c.expect.module, c.expect.direction) for c in cases} == {
+        ("disease_unmet_need", "up"),
+        ("competitive_commercial", "down"),
+    }
+
+
 def _module_diff(*, answer_after: str, with_cause: bool):
     """A diff in which the unmet-need module changes its answer, with or without a new cause."""
     from bioverdict.api.schemas import DiffResponse, ModuleCause, ModuleChange, RunSide

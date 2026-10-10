@@ -77,6 +77,11 @@ That is the third thing criterion A asks for implicitly: change for the right re
       the script has only the time-travel diff. Candidates named in `work-plan.md`: PERSEUS for
       unmet need; FENtrepid or the acceptance of the fenebrutinib filing for competition. Each
       needs a verbatim quote checked against its source, and a paid run.
+      Two documents are ready and checked, not run: `eval/sensitivity-modules.yaml` (disability
+      accumulation on approved treatment, PMID 32511687, for unmet need; the FDA's acceptance of
+      the fenebrutinib filing for competition). Read the two warnings at the top of that file
+      first: a recompute cannot write a new claim of either section, and a balance at -1.00
+      cannot go down.
 - [ ] **Look at the new Report and Compare screens on a run that has a written case** and at
       phone width: both were checked on a stored run without one, and in browser tests.
 - [ ] **Liver safety.** The run checked for coverage had no evidence and no claim on liver
