@@ -35,9 +35,37 @@ export function AnalysisForm({
             }}
             className="space-y-6"
           >
+            {apiMode ? (
+              <>
+                <Field
+                  id="indication"
+                  label="Indication"
+                  placeholder="For example multiple sclerosis"
+                  value={draft.indication}
+                  autoComplete="off"
+                  disabled={loading}
+                  onChange={(event) => {
+                    onChange({ ...draft, indication: event.currentTarget.value })
+                  }}
+                  hint="The disease. With a mechanism this is the whole question: no drug is needed."
+                />
+                <Field
+                  id="mechanism"
+                  label="Mechanism / target"
+                  placeholder="For example BTK inhibitor"
+                  value={draft.mechanism}
+                  autoComplete="off"
+                  disabled={loading}
+                  onChange={(event) => {
+                    onChange({ ...draft, mechanism: event.currentTarget.value })
+                  }}
+                  hint="The target or the mechanism of action, for example KRAS G12C inhibitor."
+                />
+              </>
+            ) : null}
             <Field
               id="asset"
-              label="Asset / drug"
+              label={apiMode ? 'Asset / drug (optional)' : 'Asset / drug'}
               placeholder="Drug name or development code"
               value={draft.asset}
               autoComplete="off"
@@ -48,34 +76,6 @@ export function AnalysisForm({
               }}
               hint={copy.assetHint}
             />
-            {apiMode ? (
-              <>
-                <Field
-                  id="indication"
-                  label="Indication (optional)"
-                  placeholder="For example non-small cell lung cancer"
-                  value={draft.indication}
-                  autoComplete="off"
-                  disabled={loading}
-                  onChange={(event) => {
-                    onChange({ ...draft, indication: event.currentTarget.value })
-                  }}
-                  hint="Left empty, a known drug is analysed in its most advanced indication."
-                />
-                <Field
-                  id="mechanism"
-                  label="Mechanism / target (optional)"
-                  placeholder="For example KRAS G12C inhibitor"
-                  value={draft.mechanism}
-                  autoComplete="off"
-                  disabled={loading}
-                  onChange={(event) => {
-                    onChange({ ...draft, mechanism: event.currentTarget.value })
-                  }}
-                  hint="Give an indication with a mechanism to analyse a target without a named drug."
-                />
-              </>
-            ) : null}
             <Field
               id="cutoff"
               label="Evidence cutoff"
@@ -138,7 +138,12 @@ export function AnalysisForm({
           <h2 className="mb-6 text-sm font-medium">How this run works</h2>
           <ol className="space-y-6">
             {[
-              ['Define the question', 'Choose the drug and the evidence cutoff.'],
+              [
+                'Define the question',
+                apiMode
+                  ? 'Choose an indication and a mechanism, and the evidence cutoff.'
+                  : 'Choose the drug and the evidence cutoff.',
+              ],
               ['Review the assumptions', copy.reviewStep],
               [
                 'Read the original evidence',

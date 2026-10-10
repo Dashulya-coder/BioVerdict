@@ -295,8 +295,8 @@ test('an indication with a mechanism is enough to start a run, and empty fields 
   await serve(page, { posted })
   await page.goto('/')
   await page.getByLabel('Asset / drug').fill('')
-  await page.getByLabel('Indication (optional)').fill('non-small cell lung cancer')
-  await page.getByLabel('Mechanism / target (optional)').fill('KRAS G12C inhibitor')
+  await page.getByLabel('Indication').fill('non-small cell lung cancer')
+  await page.getByLabel('Mechanism / target').fill('KRAS G12C inhibitor')
   await page.getByLabel('Evidence cutoff').fill('2026-10-01')
   await page.getByRole('button', { name: 'Run analysis' }).click()
   await expect(
@@ -311,11 +311,26 @@ test('an indication with a mechanism is enough to start a run, and empty fields 
   ])
 })
 
+test('the form asks for the indication and the mechanism first, and the drug is optional', async ({
+  page,
+}) => {
+  await serve(page)
+  await page.goto('/')
+  const labels = await page.locator('form label').allInnerTexts()
+
+  expect(labels.slice(0, 3)).toEqual([
+    'Indication',
+    'Mechanism / target',
+    'Asset / drug (optional)',
+  ])
+  await expect(page.getByLabel('Asset / drug')).not.toHaveAttribute('required', '')
+})
+
 test('a form with neither a drug nor an indication and mechanism is refused', async ({ page }) => {
   await serve(page)
   await page.goto('/')
   await page.getByLabel('Asset / drug').fill('')
-  await page.getByLabel('Indication (optional)').fill('lung cancer')
+  await page.getByLabel('Indication').fill('lung cancer')
   await page.getByRole('button', { name: 'Run analysis' }).click()
   await expect(page.getByRole('alert')).toContainText('indication together with a mechanism')
 })
@@ -876,8 +891,8 @@ test('a class landscape lists the drugs of experimental arms, and choosing one p
   await serve(page, { evidence: [record] })
   await page.goto('/')
   await page.getByLabel('Asset / drug').fill('')
-  await page.getByLabel('Indication (optional)').fill('non-small cell lung cancer')
-  await page.getByLabel('Mechanism / target (optional)').fill('KRAS G12C inhibitor')
+  await page.getByLabel('Indication').fill('non-small cell lung cancer')
+  await page.getByLabel('Mechanism / target').fill('KRAS G12C inhibitor')
   await page.getByRole('button', { name: 'Run analysis' }).click()
 
   const choice = page.getByRole('region', { name: 'Choose an existing asset' })
@@ -893,8 +908,8 @@ test('a class landscape lists the drugs of experimental arms, and choosing one p
   await choice.getByRole('button', { name: 'Select Synthetic candidate' }).click()
 
   await expect(page.getByLabel('Asset / drug')).toHaveValue('Synthetic candidate')
-  await expect(page.getByLabel('Indication (optional)')).toHaveValue('non-small cell lung cancer')
-  await expect(page.getByLabel('Mechanism / target (optional)')).toHaveValue('KRAS G12C inhibitor')
+  await expect(page.getByLabel('Indication')).toHaveValue('non-small cell lung cancer')
+  await expect(page.getByLabel('Mechanism / target')).toHaveValue('KRAS G12C inhibitor')
 })
 
 test('a reopened class run is a landscape, not a drug named after its run id', async ({ page }) => {
