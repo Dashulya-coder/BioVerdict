@@ -154,6 +154,15 @@ describe it, not the system in general, and the runs were made on successive cod
 | Three runs (Arsenii) | $0.90 to $1.20, the last $0.99; the judge about 60% | 3 min 45 s, 7 min 21 s (lost its Chair step to the old 420 s limit), 5 min 7 s | #105 |
 | `R-20261010-125211-cf5016` (Dasha) | $0.87 | 6 min 20 s | `llm_calls`, `runs` |
 | The run of [`eval.md`](eval.md), section 9 (Dasha) | $0.99 | 357 s | `eval.md` |
+| `R-cf6f3be64e7b409f803f162134a0f174` (no gateway size limit, #122) | $1.23 | 355 s | `llm_calls` |
+| `R-e0a3a432b1a6486da63da74805af1a04` (results as lines, #123 and #124) | $1.78 | 312 s | `llm_calls` |
+| `R-15cc9a4bd8c142be915a0fa54c0497bc` (batches of 12,000, up to four) | $1.47 | 297 s | `llm_calls` |
+| `R-0cb20fbb3dc443b091d01a58d9760476` (the whole bundle read, #125) | $3.07 | 486 s | `llm_calls` |
+| The written case on that bundle (#126) | $0.04 | 37 s | `llm_calls` |
+
+**The current version costs about $3.10 and takes about 9 minutes a run** for this question (77
+model calls plus the synthesis step; the judge, reading 233 links, is the largest part). Reading
+part of the bundle cost $0.87 to $1.78; the modules then left up to 353 evidence items unread.
 
 Not measured: a median or p90 over repeated runs of one code version, other questions, the
 cache hit rate of a warm run (every call above was answered afresh) and failover (none occurred).
