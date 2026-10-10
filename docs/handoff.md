@@ -75,8 +75,9 @@ Each of these was made by one person under time pressure, or not made at all.
    fit the time limit. Does that agree with "a claim that fails verification is dropped"?
 5. **The judge is a model of the same vendor** as the model that writes the claims: the
    gateway lists no other. An independent check needs a second adapter and key.
-6. **The gateway's concurrency limit (4) comes from one observation** and is enforced inside
-   one process (`llm/providers/openai.py`). Two runs started through the API at once exceed it.
+6. **The gateway's concurrency limit is 3** (four probes on 2026-10-10; it was 4 from one
+   observation) and is enforced inside one process (`llm/providers/openai.py`). Two runs started
+   through the API at once exceed it.
 7. **Incremental recompute and a gap.** A new fact that shows a translation-chain link is now a
    translation claim with its `chain_link`, and it retires the `unknown` claim of that link
    (tested with fakes, not yet with a real model). Evidence the model links *to* the `unknown`

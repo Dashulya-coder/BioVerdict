@@ -172,6 +172,34 @@ def test_many_links_are_sent_in_batches_that_fit_a_small_endpoint() -> None:
     assert sum(prompt.count("] claim C-") for _, prompt in llm.calls) == count
 
 
+def test_an_endpoint_limit_makes_the_batches_smaller_and_every_request_fit_it() -> None:
+    from bioverdict.llm import LLMClient, LLMConfig, StepConfig
+    from bioverdict.llm.config import DEFAULT_PRICES, HAIKU
+    from bioverdict.llm.providers.fake import FakeProvider
+    from bioverdict.llm.sizing import wire_len
+    from bioverdict.llm.types import ProviderRequest
+
+    class Sized(FakeProvider):
+        def input_chars(self, request: ProviderRequest) -> int:
+            return wire_len(request.prompt) + 1_500  # the schema and the endpoint's own
+
+    provider = Sized('{"judgments": []}', name="anthropic")
+    config = LLMConfig(
+        steps={"judge": StepConfig(models=[HAIKU])},
+        prices=dict(DEFAULT_PRICES),
+        max_input_chars=16_000,
+    )
+    llm = LLMClient(config, {"anthropic": provider})
+    claims = [claim(f"C-{n}", text="a long claim " * 20) for n in range(1, 61)]
+    links = [link(c.id, "E-0007", ORR) for c in claims]
+
+    verify_links(llm.bind("R-1"), BUNDLE, claims, links)
+
+    assert len(provider.requests) > 2
+    assert all(provider.input_chars(r) <= 16_000 for r in provider.requests)
+    assert sum(r.prompt.count("] claim C-") for r in provider.requests) == 60
+
+
 def test_removing_a_supporter_lowers_the_confidence_by_the_formula() -> None:
     claims = [claim("C-1")]
     links = [link("C-1", "E-0007", ORR)]
@@ -192,7 +220,7 @@ def test_the_judge_is_shown_the_passage_and_the_record_a_quote_comes_from() -> N
     record names the trial."""
     from bioverdict.verification.entailment import MAX_PASSAGE_SHOWN, _passage
 
-    long = "a" * 900 + " the quoted words " + "b" * 900
+    long = "a" * 3000 + " the quoted words " + "b" * 3000
     shown = _passage(long, "the quoted words")
 
     assert _passage("short excerpt", "short") == "short excerpt"
@@ -222,7 +250,7 @@ def test_a_new_link_on_a_context_claim_is_judged_when_it_is_the_change() -> None
 def test_a_failed_request_leaves_its_links_and_keeps_the_others_judged() -> None:
     from bioverdict.llm.errors import LLMError
 
-    claims = [claim(f"C-{n}") for n in range(40)]
+    claims = [claim(f"C-{n}", text="a long claim " * 20) for n in range(60)]
     links = [link(c.id, "E-0007", ORR) for c in claims]
 
     class FlakyJudge:
@@ -273,11 +301,12 @@ SDMT_RECORD = (
 
 
 def test_a_registry_result_is_shown_with_every_value_next_to_its_group() -> None:
-    """The numbers of a result record start after about 450 characters of headings. Cut there,
-    the judge saw the groups and no values, and removed claims that quoted the numbers."""
-    from bioverdict.verification.entailment import MAX_PASSAGE_SHOWN, _passage
+    """The numbers of a result record start after about 450 characters of headings. Cut there
+    (the old passage window), the judge saw the groups and no values, and removed claims that
+    quoted the numbers."""
+    from bioverdict.verification.entailment import _passage
 
-    assert SDMT_RECORD.find('"value"') > MAX_PASSAGE_SHOWN - 50
+    assert SDMT_RECORD.find('"value"') > 450 - 50
     shown = _passage(SDMT_RECORD, '"title": "Teriflunomide 14 mg"')
 
     assert "Teriflunomide 14 mg: 0.329" in shown

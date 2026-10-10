@@ -25,7 +25,8 @@ from pydantic import Field
 
 from bioverdict.contracts import LLM
 from bioverdict.llm.errors import LLMError
-from bioverdict.reasoning.prompts import boundary_tag
+from bioverdict.llm.sizing import wire_len
+from bioverdict.reasoning.prompts import RETRY_RESERVE, boundary_tag
 from bioverdict.reasoning.schemas import _Draft
 from bioverdict.store.models import (
     Basis,
@@ -41,10 +42,14 @@ from bioverdict.store.models import (
 JUDGE_STEP = "judge"
 CHECK_NAME = "entailment"
 UNJUDGED = "entailment_unjudged"
-BATCH_CHARS = 9_000  # of items per request: the gateway takes about 16,000 with the schema
+# Of items per request. The answer is a line per item, so the batch holds about as many items as
+# the 9,000 of a 450-character passage did; an endpoint limit, if set, makes it smaller.
+BATCH_CHARS = 24_000
 MAX_QUOTE_SHOWN = 400
-MAX_PASSAGE_SHOWN = 450  # of the excerpt around the quote
-MAX_RESULT_SHOWN = 1_200  # of a registry result written out as text
+# Of the excerpt around the quote. At 450 the judge removed quotes whose numbers lay just outside
+# the window (docs/eval.md, section 9); the gateway no longer limits the request to 16,000.
+MAX_PASSAGE_SHOWN = 2_000
+MAX_RESULT_SHOWN = 4_000  # of a registry result written out as text
 MAX_WORKERS = 4
 
 # Only these claims lean on their quotes. A hypothesis or an unknown gains nothing from a link.
@@ -213,16 +218,26 @@ def _batches(items: list[str], limit: int) -> list[list[str]]:
     batches: list[list[str]] = [[]]
     used = 0
     for item in items:
-        if batches[-1] and used + len(item) > limit:
+        size = wire_len(item) + 2  # as the endpoint counts it, with the line break
+        if batches[-1] and used + size > limit:
             batches.append([])
             used = 0
         batches[-1].append(item)
-        used += len(item) + 1
+        used += size
     return batches
 
 
 def judge_prompt(bundle: Bundle, items: list[str]) -> str:
     return f"{_preamble(bundle)}\n## Your task\n{_TASK}\n## Items\n" + "\n".join(items) + "\n"
+
+
+def batch_chars(llm: LLM, bundle: Bundle) -> int:
+    """Characters of items per request: BATCH_CHARS, or less when the endpoint takes less."""
+    budget_of = getattr(llm, "input_budget", None)
+    budget = budget_of(JUDGE_STEP, JudgeDraft) if callable(budget_of) else None
+    if budget is None:
+        return BATCH_CHARS
+    return max(1, min(BATCH_CHARS, budget - wire_len(judge_prompt(bundle, [])) - RETRY_RESERVE))
 
 
 def verify_links(
@@ -257,7 +272,7 @@ def verify_links(
         return out
 
     items = [_item(n, by_id[l.claim_id], l, bundle) for n, l in enumerate(judged_links, 1)]
-    prompts = [judge_prompt(bundle, batch) for batch in _batches(items, BATCH_CHARS)]
+    prompts = [judge_prompt(bundle, batch) for batch in _batches(items, batch_chars(llm, bundle))]
 
     def ask(prompt: str) -> LLMResult | None:
         """One request. A failure costs its own links their judgement, not the whole check."""

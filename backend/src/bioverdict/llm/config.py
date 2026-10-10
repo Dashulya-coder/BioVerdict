@@ -24,13 +24,18 @@ ASTRA = "openai:gpt-6-astra"
 MINI = "openai:gpt-5-mini"
 
 
-# The gateway rejects a request above about 16,180 characters (the text of every message plus the
-# response schema in compact JSON plus about 100 of its own), measured 2026-10-09; the margin keeps
-# an estimate that is a little low from costing a refused request.
-GATEWAY_MAX_OUTPUT = (
-    4096  # the gateway refuses max_completion_tokens above ~4,096 (4,000 ok, 5,000 not)
-)
-GATEWAY_INPUT_CHARS = 16_000
+# The gateway refuses max_completion_tokens above 4,096 (4,097 is refused; measured 2026-10-09 and
+# again 2026-10-10). Hidden reasoning tokens count inside it.
+GATEWAY_MAX_OUTPUT = 4096
+# The gateway refused a request above about 16,180 characters on 2026-10-09; on 2026-10-10 it took
+# 128,000 on gpt-6.1-sol and 256,000 on gpt-6-luna. No limit by default; LLM_MAX_INPUT_CHARS puts
+# one back if the gateway does.
+GATEWAY_INPUT_CHARS: int | None = None
+# What bounds a prompt now is the answer: a module batch of 16,000 characters drew up to 3,185 of
+# the 4,096 output tokens on the live run R-20261010-125211-cf5016, so a larger batch would be cut
+# off and retried short. Steps whose answer does not grow with the prompt get more room.
+GATEWAY_BATCH_CHARS = 16_000  # module, extraction and classification prompts
+GATEWAY_SYNTHESIS_CHARS = 60_000  # Skeptic and Chair: room for every claim of a run
 
 
 def _input_limit(default: int | None) -> int | None:
@@ -78,6 +83,9 @@ class StepConfig(BaseModel):
     max_tokens: int = 8000
     max_validation_retries: int = 2  # extra tries on invalid JSON, on the same model
     timeout_s: float = 90.0  # the agent timeout from the plan
+    # Characters this step's prompts are built to (messages and schema), so that the answer fits
+    # max_tokens; None: only the endpoint's limit, if it has one (`LLMClient.input_budget`).
+    prompt_chars: int | None = None
 
 
 # Collection is short (90 s, the agent timeout of the plan); reasoning writes up to 16k tokens
@@ -146,15 +154,30 @@ class LLMConfig(BaseModel):
         if provider == "openai":
             # Reasoning models spend hidden tokens inside max_completion_tokens, and the gateway
             # reserves money for the whole of it: keep the limits as tight as the answers allow.
-            extraction = StepConfig(models=[LUNA], effort="low", max_tokens=3000, timeout_s=90.0)
+            extraction = StepConfig(
+                models=[LUNA],
+                effort="low",
+                max_tokens=3000,
+                timeout_s=90.0,
+                prompt_chars=GATEWAY_BATCH_CHARS,
+            )
             reasoning = StepConfig(
-                models=[SOL, MINI], effort="low", max_tokens=GATEWAY_MAX_OUTPUT, timeout_s=180.0
+                models=[SOL, MINI],
+                effort="low",
+                max_tokens=GATEWAY_MAX_OUTPUT,
+                timeout_s=180.0,
+                prompt_chars=GATEWAY_BATCH_CHARS,
             )
             synthesis = StepConfig(
-                models=[SOL, MINI], effort="high", max_tokens=GATEWAY_MAX_OUTPUT, timeout_s=240.0
+                models=[SOL, MINI],
+                effort="high",
+                max_tokens=GATEWAY_MAX_OUTPUT,
+                timeout_s=240.0,
+                prompt_chars=GATEWAY_SYNTHESIS_CHARS,
             )
             # Not the model that writes the claims (gpt-6.1-sol): the strongest one the gateway
             # lists. A claim is a few hundred characters, so the 5x price is a few cents a run.
+            # The judge sizes its own batches (verification/entailment.py: BATCH_CHARS).
             judge = StepConfig(
                 models=[ASTRA, MINI], effort="high", max_tokens=GATEWAY_MAX_OUTPUT, timeout_s=240.0
             )

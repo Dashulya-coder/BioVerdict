@@ -53,27 +53,42 @@ The organizers give each team a key for an Azure-hosted, OpenAI-compatible gatew
 `TEAM_API_KEY` and `LLM_BASE_URL`; `LLM_PROVIDER=openai` forces it). Models: `gpt-6-luna`,
 `gpt-6.1-sol`, `gpt-6-astra`, `gpt-5-mini` (from `/v1/models`). Probed on 2026-10-09:
 
-- **The limit counts the request as it travels**, JSON-encoded and in UTF-8 bytes (measured
-  2026-10-10): a quotation mark or a line break counts 2, an accented letter 2, a symbol such as
-  the 'greater than or equal' sign 3. A prompt of 15,000 characters of biomedical text can be over
-  16,180 (`llm/sizing.py: wire_len`, used by the adapter and by every prompt builder).
+- **Probed again on 2026-10-10 (evening), small requests on each model:**
+  - *Request size:* no limit seen. `gpt-6.1-sol` took 128,000 characters, `gpt-6-astra` 32,000
+    (larger not tried), `gpt-6-luna` 256,000; 512,000 on `gpt-6-luna` was a 502, probably the
+    model's own context. The preset therefore sets no request limit (below).
+  - *Output:* `max_completion_tokens` of 4,096 is accepted and 4,097 refused, now with a 502
+    `upstream_error` rather than a 400.
+  - *Concurrency:* three requests are served at once. Of 8, 4, 4 and 3 sent together, 3 were
+    answered each time and the rest refused with `429 concurrency_limit`. The key is the team's,
+    so a request from another process takes a slot too. `LLM_MAX_CONCURRENCY` defaults to 3.
+- **A limit counted the request as it travels**, JSON-encoded and in UTF-8 bytes (measured
+  2026-10-10, while the size limit below was in force): a quotation mark or a line break counts 2,
+  an accented letter 2, a symbol such as the 'greater than or equal' sign 3
+  (`llm/sizing.py: wire_len`, used by the adapter and by every prompt builder).
 - Chat completions only. Structured output by `response_format` json_schema in strict mode works,
   and so do a system message, `max_completion_tokens` and `reasoning_effort`.
 - `temperature` and the old `max_tokens` are answered with a **502, and the gateway charges a
   reserved amount for that failed request**. The adapter never sends them.
-- **A request may be at most about 16,180 characters** (the text of every message, plus the
-  response schema as compact JSON, plus about 100 of the gateway's own); a longer one is refused
-  with `400 Input exceeds the conservative input limit`, the same for every model and counted in
-  characters, not tokens. The organizers do not raise it. `LLMConfig.max_input_chars` (16,000
-  with a margin; `LLM_MAX_INPUT_CHARS` overrides it, 0 means none) makes the client refuse a larger
-  request before it is sent (`InputTooLargeError`, no cost) and `LLMClient.input_budget` says how
-  many characters of prompt a step may use. The adapter sends a schema without `title` and
+- **On 2026-10-09 a request could be at most about 16,180 characters** (the text of every
+  message, plus the response schema as compact JSON, plus about 100 of the gateway's own); a
+  longer one was refused with `400 Input exceeds the conservative input limit`. It was gone on
+  2026-10-10 (above). `LLM_MAX_INPUT_CHARS=16000` puts it back: the client then refuses a larger
+  request before it is sent (`InputTooLargeError`, no cost).
+- **What sizes a prompt now is the answer.** A module batch of 16,000 characters drew up to
+  3,185 of the 4,096 output tokens on run `R-20261010-125211-cf5016`, so module, extraction and
+  classification prompts stay at 16,000 (`StepConfig.prompt_chars`, `GATEWAY_BATCH_CHARS`) and
+  more evidence means more batches, not larger ones. The Skeptic and the Chair get 60,000, room
+  for every claim of a run. The judge sizes its own batches (24,000 characters of items, a
+  passage of up to 2,000 characters around each quote instead of 450).
+  `LLMClient.input_budget` gives each step the smaller of its own size and the endpoint's limit. The adapter sends a schema without `title` and
   `description` (the `ModuleDraft` schema is 1.6 thousand characters instead of 2.8).
 - Reasoning models spend hidden reasoning tokens inside `max_completion_tokens` (they are billed
   as output), so the gateway preset keeps the limits tight (3,000 for extraction, 4,096 for
-  reasoning and synthesis). **The gateway refuses `max_completion_tokens` above about 4,096**
-  (4,000 accepted, 5,000 refused with `400 Output token limit is outside the supported range`,
-  measured on all three models), so no step can ask for more.
+  reasoning and synthesis). **The gateway refuses `max_completion_tokens` above 4,096**
+  (4,000 accepted, 5,000 refused with `400 Output token limit is outside the supported range` on
+  2026-10-09, on all three models; 4,097 refused with a 502 on 2026-10-10), so no step can ask
+  for more.
 - Roles used by the preset (`LLMConfig.for_provider("openai")`): resolver and extraction on
   `gpt-6-luna`; reasoning, classification of new evidence and synthesis on `gpt-6.1-sol`, with
   `gpt-5-mini` as the second model. `gpt-6-astra` costs five times `gpt-6.1-sol` and is not used.
