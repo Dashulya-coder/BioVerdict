@@ -456,5 +456,156 @@
         "reason": "a trial status says nothing about the size of the benefit"
       }
     ]
+  },
+  "synthesis": {
+    "theses": [
+      {
+        "kind": "scientific",
+        "sentences": [
+          {
+            "text": "KRAS G12C is a frequent driver mutation in this lung cancer and goes with a poor prognosis, but that is association: no human genetic evidence on losing KRAS function is in the bundle.",
+            "claim_ids": [
+              "C-0001",
+              "C-0003"
+            ]
+          },
+          {
+            "text": "The strongest support for the target is pharmacological: the approved G12C inhibitors already improved progression-free survival over docetaxel.",
+            "claim_ids": [
+              "C-0009"
+            ]
+          },
+          {
+            "text": "Divarasib holds the switch-II pocket in a different conformation from sotorasib and adagrasib, which is laboratory evidence of how it differs, not of benefit.",
+            "claim_ids": [
+              "C-0002"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "translation",
+        "sentences": [
+          {
+            "text": "The first link is shown: divarasib binds KRAS G12C in the switch-II pocket.",
+            "claim_ids": [
+              "C-0013"
+            ]
+          },
+          {
+            "text": "Human exposure and target engagement in tumour tissue are missing links: neither is shown, and response in patients does not prove engagement.",
+            "claim_ids": [
+              "C-0014",
+              "C-0015"
+            ]
+          },
+          {
+            "text": "Patient benefit rests on confirmed responses in Phase 1 and on the sponsor's report of longer progression-free and overall survival in Phase 3.",
+            "claim_ids": [
+              "C-0016",
+              "C-0017"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "development_plan",
+        "sentences": [
+          {
+            "text": "The pivotal trial is under way: a randomized Phase 3 against sotorasib or adagrasib in KRAS G12C-positive advanced non-small cell lung cancer, with progression-free survival by blinded independent central review as its primary endpoint.",
+            "claim_ids": [
+              "C-0004",
+              "C-0005"
+            ]
+          },
+          {
+            "text": "The next step is the full Phase 3 readout, since the size of the benefit (hazard ratios, median progression-free and overall survival) is not in the evidence.",
+            "claim_ids": [
+              "C-0010"
+            ]
+          },
+          {
+            "text": "Patients are selected by the KRAS G12C mutation; whether a first-line trial should follow is open, because what guidelines recommend in first line is not in the evidence.",
+            "claim_ids": [
+              "C-0004",
+              "C-0021"
+            ]
+          },
+          {
+            "text": "No failed program against the same target in this indication is in the bundle, so there is no failure to learn from yet.",
+            "claim_ids": [
+              "C-0011"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "competitive",
+        "sentences": [
+          {
+            "text": "Sotorasib and adagrasib are approved and set the bar: each improved median progression-free survival over docetaxel.",
+            "claim_ids": [
+              "C-0009"
+            ]
+          },
+          {
+            "text": "Divarasib has to beat them head to head, and the sponsor reports that its Phase 3 met its primary and key secondary endpoints.",
+            "claim_ids": [
+              "C-0004",
+              "C-0006"
+            ]
+          },
+          {
+            "text": "The wider landscape (other G12C and RAS(ON) programs, other mechanisms, discontinued programs) was not searched, so competitors beyond the approved two are unknown.",
+            "claim_ids": [
+              "C-0012"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "commercial",
+        "sentences": [
+          {
+            "text": "The patients are those with previously treated KRAS G12C lung cancer, where the approved inhibitors add about two months of progression-free survival over docetaxel and leave room for a better option.",
+            "claim_ids": [
+              "C-0020"
+            ]
+          },
+          {
+            "text": "Whether that is commercially valuable is open: coverage, pricing against the approved inhibitors and the commercial plan are not in the evidence.",
+            "claim_ids": [
+              "C-0022",
+              "C-0023"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "investment",
+        "sentences": [
+          {
+            "text": "The next milestone is the full Phase 3 data; code puts the capital to reach it at $101 million (P10 $65 million, P90 $155 million) and the time at 44 months, on placeholder phase costs.",
+            "claim_ids": [
+              "C-0004",
+              "C-0010"
+            ]
+          },
+          {
+            "text": "The value inflection point is the publication of the Phase 3 numbers, which the evidence does not yet give.",
+            "claim_ids": [
+              "C-0010"
+            ]
+          },
+          {
+            "text": "Roche runs the program, so its own development is the likely course; licensing or acquisition cannot be judged from public evidence.",
+            "claim_ids": [
+              "C-0006",
+              "C-0022"
+            ]
+          }
+        ]
+      }
+    ]
   }
 }

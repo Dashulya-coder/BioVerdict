@@ -30,6 +30,7 @@ from bioverdict.store.models import (
     SectionStatus,
     ServiceFlag,
     SourceKind,
+    Thesis,
     Verdict,
 )
 
@@ -215,6 +216,11 @@ class ReportResponse(_View):
     translation_chain_probability: float | None
     gates: list[GateResult]
     diligence_questions: list[DiligenceQuestion]
+    theses: list[Thesis] = Field(
+        default_factory=list,
+        description="The written theses (AI inference over the claims); every sentence names "
+        "the claims it rests on. Empty for a run whose synthesis step failed or an older run",
+    )
     sources: list[EvidenceView]
     bundle: BundleInfo
 

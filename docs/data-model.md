@@ -205,6 +205,25 @@ our mind") and the Report documentation are updated in the same PR as the code.
 3. `contribution` moved from `module_answers.py` to `scoring/pull.py`, so `verdict.py` and
    `module_answers.py` both import it without a cycle.
 
+## Verdict result: the written theses (accepted by Dasha, 2026-10-10)
+
+`VerdictResult.theses: list[Thesis]` (additive, `default_factory=list`; no SQLite migration, as
+`result_json` is a JSON blob). Served as `ReportResponse.theses`.
+
+```json
+{ "theses": [ { "kind": "scientific",
+                "sentences": [ { "text": "...", "claim_ids": ["C-0001", "C-0003"] } ] } ] }
+```
+
+- `kind` is one of `scientific`, `translation`, `development_plan`, `competitive`, `commercial`,
+  `investment` (`ThesisKind`, in report order), at most once each.
+- A sentence has at least one claim id of the run; at most four sentences a thesis.
+- Written by the synthesis step (`docs/architecture.md`, stage 6a) and grounded by code: a
+  sentence that cites no claim of the run, or holds a number found neither in its cited claims
+  nor in the figures code computed, is dropped. It is inference over claims, not evidence: no
+  claim, gate or score reads it.
+- A stored older run, or a run whose synthesis step failed, has `[]`.
+
 ## SQLite schema (sketch)
 
 ```sql

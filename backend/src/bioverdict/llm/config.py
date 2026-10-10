@@ -43,6 +43,9 @@ GATEWAY_SYNTHESIS_CHARS = 60_000  # the Chair: room for every claim of a run
 # The Skeptic answers from the evidence it reads: 3,881 tokens from 60,000 (5 objections grounded),
 # 1,532 from 30,000 (1 grounded). One run each; 45,000 is between, with room in the answer.
 GATEWAY_SKEPTIC_CHARS = 45_000
+# The synthesis step at high effort from 60,000 was cut off at 4,096 tokens and its short retry
+# kept one sentence a thesis (R-86b324c4bd7e4156af8ac8cfa3cca9bf): medium effort, 40,000.
+GATEWAY_THESES_CHARS = 40_000
 
 
 def _input_limit(default: int | None) -> int | None:
@@ -193,6 +196,9 @@ class LLMConfig(BaseModel):
             config = cls._build(extraction, reasoning, synthesis, judge, dict(GATEWAY_PRICES))
             config.steps["skeptic"] = synthesis.model_copy(
                 update={"prompt_chars": GATEWAY_SKEPTIC_CHARS}
+            )
+            config.steps["synthesis"] = synthesis.model_copy(
+                update={"effort": "medium", "prompt_chars": GATEWAY_THESES_CHARS}
             )
             config.max_input_chars = _input_limit(GATEWAY_INPUT_CHARS)
             return config

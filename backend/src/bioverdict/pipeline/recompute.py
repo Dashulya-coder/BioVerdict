@@ -21,6 +21,7 @@ from bioverdict.pipeline.reason_score import (
     drop_checks,
     reason_and_score,
     run_financials,
+    synthesis_pass,
     verify_pass,
 )
 from bioverdict.reasoning.classify_evidence import classify_new_evidence
@@ -249,6 +250,7 @@ def classify_and_score(
     # because the new evidence may have answered some questions and raised others.
     questions = chair_pass(conn, run_id, bundle, llm, scored, result, [])
     result = result.model_copy(update={"diligence_questions": questions})
+    result = synthesis_pass(conn, run_id, bundle, llm, scored, merged_links, result, fin.missing)
     finish_run(conn, run_id, DONE, result)
     add_event(conn, run_id, "run", "done")
     return result

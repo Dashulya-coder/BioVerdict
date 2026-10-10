@@ -16,8 +16,10 @@ from bioverdict.reasoning.critique import ask, challenge
 from bioverdict.reasoning.grounding import Drop, fill_missing_chain_links
 from bioverdict.reasoning.modules import ALL_MODULES
 from bioverdict.reasoning.prompts import question_text
+from bioverdict.reasoning.synthesis import write_theses
 from bioverdict.scoring.confidence import apply_confidence
 from bioverdict.scoring.financials import Financials, financial_model, with_financials
+from bioverdict.scoring.module_answers import module_answers
 from bioverdict.scoring.verdict import claim_groups, score_verdict
 from bioverdict.store.models import (
     Basis,
@@ -195,6 +197,40 @@ def chair_pass(
     return questions
 
 
+def synthesis_pass(
+    conn: sqlite3.Connection,
+    run_id: str,
+    bundle: Bundle,
+    llm: LLM,
+    claims: list[Claim],
+    links: list[ClaimEvidenceLink],
+    result: VerdictResult,
+    missing: list[str],
+) -> VerdictResult:
+    """The report's written theses (`reasoning/synthesis.py`). Advisory: a failure gives none."""
+    add_event(conn, run_id, "synthesis", "started")
+    modules = [
+        f"{m.title}: {m.answer.value}. {m.headline}" for m in module_answers(claims, links, result)
+    ]
+    try:
+        written = write_theses(llm, bundle, claims, result, modules, missing)
+    except LLMError as exc:
+        log.warning("synthesis skipped for %s: %s", run_id, exc)
+        add_event(conn, run_id, "synthesis", "skipped", f"{type(exc).__name__}")
+        return result
+    kept = sum(len(t.sentences) for t in written.theses)
+    add_event(
+        conn,
+        run_id,
+        "synthesis",
+        "done",
+        f"{kept} sentence(s) in {len(written.theses)} thesis/theses, "
+        f"{len(written.dropped)} dropped by code"
+        + (f": {'; '.join(written.dropped)}" if written.dropped else ""),
+    )
+    return result.model_copy(update={"theses": written.theses})
+
+
 def reason_and_score(
     conn: sqlite3.Connection, run_id: str, bundle: Bundle, llm: LLM
 ) -> VerdictResult:
@@ -237,6 +273,7 @@ def reason_and_score(
 
     questions = chair_pass(conn, run_id, bundle, llm, claims, result, objections)
     result = result.model_copy(update={"diligence_questions": questions})
+    result = synthesis_pass(conn, run_id, bundle, llm, claims, links, result, fin.missing)
 
     finish_run(conn, run_id, DONE, result)
     add_event(conn, run_id, "run", "done")

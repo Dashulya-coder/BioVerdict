@@ -86,6 +86,24 @@ def test_the_report_has_the_documented_shape(client: TestClient) -> None:
     ]
 
 
+def test_the_report_carries_the_theses_each_sentence_with_claims_of_the_run(
+    client: TestClient,
+) -> None:
+    run_id = start(client)
+    report = ReportResponse.model_validate(client.get(f"/runs/{run_id}/report").json())
+
+    claim_ids = {c.id for s in report.sections for c in s.claims}
+    assert [t.kind.value for t in report.theses] == [
+        "scientific",
+        "translation",
+        "development_plan",
+        "competitive",
+        "commercial",
+        "investment",
+    ]
+    assert all(set(s.claim_ids) <= claim_ids for t in report.theses for s in t.sentences)
+
+
 def test_a_claim_and_its_evidence_can_be_drilled_into(client: TestClient) -> None:
     run_id = start(client)
     report = client.get(f"/runs/{run_id}/report").json()
@@ -299,7 +317,7 @@ def test_progress_streams_as_server_sent_events_and_ends(client: TestClient) -> 
     assert [e["event"] for e in events][:2] == ["resolve", "resolve"]
     assert events[-1]["event"] == "end"
     assert json.loads(events[0]["data"])["step"] == "resolve"
-    assert [int(e["id"]) for e in events if "id" in e] == list(range(1, 18))
+    assert [int(e["id"]) for e in events if "id" in e] == list(range(1, 20))
 
 
 def test_a_reconnecting_client_receives_only_what_it_missed(client: TestClient) -> None:
@@ -308,7 +326,7 @@ def test_a_reconnecting_client_receives_only_what_it_missed(client: TestClient) 
     response = client.get(f"/runs/{run_id}/events", headers={"Last-Event-ID": "15"})
 
     ids = [int(e["id"]) for e in parse_sse(response.text) if "id" in e]
-    assert ids == [16, 17]
+    assert ids == [16, 17, 18, 19]
 
 
 def test_events_of_an_unknown_run_are_404(client: TestClient) -> None:
