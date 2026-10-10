@@ -23,6 +23,7 @@ from typing import Literal
 
 from pydantic import Field
 
+from bioverdict.connectors.clinicaltrials import RESULT_HEAD, result_lines
 from bioverdict.contracts import LLM
 from bioverdict.llm.errors import LLMError
 from bioverdict.llm.sizing import wire_len
@@ -126,58 +127,23 @@ def _preamble(bundle: Bundle) -> str:
 
 
 def _result_text(excerpt: str) -> str | None:
-    """A registry result record written as lines of text, or None for any other excerpt.
+    """A registry result record as lines of text (`result_lines`), or None for any other excerpt.
 
-    A record is JSON whose group names come first and whose numbers come after about 450
-    characters of headings. Cut at the window of an ordinary passage, the judge saw the groups
-    and no values, and removed the claims that quoted them. Here every value stands next to the
-    name of its group.
+    Runs collected before the record was stored as lines hold it as JSON: it is written out the
+    same way here, so a recompute of such a run shows the judge every value next to its group.
     """
-    if not excerpt.startswith("{"):
+    if excerpt.startswith(RESULT_HEAD):
+        text = excerpt
+    elif excerpt.startswith("{"):
+        try:
+            record = json.loads(excerpt)
+        except ValueError:
+            return None
+        if not isinstance(record, dict) or "classes" not in record:
+            return None
+        text = result_lines(record)
+    else:
         return None
-    try:
-        record = json.loads(excerpt)
-    except ValueError:
-        return None
-    if not isinstance(record, dict) or "classes" not in record:
-        return None
-    names = {
-        g.get("id"): g.get("title", "") for g in record.get("groups", []) if isinstance(g, dict)
-    }
-    head = [str(record[k]) for k in ("type", "title") if record.get(k)]
-    lines = [f"Outcome measure ({'; '.join(head)})"]
-    for key, label in (
-        ("paramType", "reported as"),
-        ("dispersionType", "spread is"),
-        ("unitOfMeasure", "unit"),
-        ("timeFrame", "time frame"),
-    ):
-        if record.get(key):
-            lines[0] += f"; {label}: {record[key]}"
-    for outcome_class in record.get("classes", []):
-        for category in outcome_class.get("categories", []):
-            label = " / ".join(
-                str(t) for t in (outcome_class.get("title"), category.get("title")) if t
-            )
-            for item in category.get("measurements", []):
-                group = names.get(item.get("groupId"), item.get("groupId"))
-                value = f"{group}: {item.get('value')}"
-                if item.get("lowerLimit") is not None:
-                    value += f" (range {item['lowerLimit']} to {item.get('upperLimit')})"
-                if item.get("spread") is not None:
-                    value += f" (spread {item['spread']})"
-                lines.append(f"{label}: {value}" if label else value)
-    for analysis in record.get("analyses", []):
-        who = ", ".join(str(names.get(g, g)) for g in analysis.get("groupIds", []))
-        parts = [
-            f"{key} {analysis[key]}"
-            for key in ("statisticalMethod", "paramType", "paramValue", "pValue")
-            if analysis.get(key) is not None
-        ]
-        if analysis.get("ciLowerLimit") is not None:
-            parts.append(f"CI {analysis['ciLowerLimit']} to {analysis.get('ciUpperLimit')}")
-        lines.append(f"Analysis of {who or 'the groups'}: " + ", ".join(parts))
-    text = "\n".join(lines)
     return text if len(text) <= MAX_RESULT_SHOWN else text[:MAX_RESULT_SHOWN] + "..."
 
 

@@ -42,16 +42,24 @@ FUTILITY = raw("results_NCT04933695.json")  # terminated for futility: eight mea
 def test_a_primary_result_keeps_the_values_the_registry_posted() -> None:
     [item] = parse_results(SOTORASIB, study("NCT04303780"), NOW)
 
-    fragment = json.loads(item.excerpt)
-    assert (fragment["type"], fragment["title"]) == ("PRIMARY", "Progression-free Survival (PFS)")
-    assert [g["title"] for g in fragment["groups"]] == ["AMG 510", "Docetaxel"]
-    values = [m["value"] for m in fragment["classes"][0]["categories"][0]["measurements"]]
-    assert values == ["5.62", "4.47"]
-    assert fragment["analyses"][0]["paramValue"] == "0.663"
-    assert (fragment["analyses"][0]["ciLowerLimit"], fragment["analyses"][0]["ciUpperLimit"]) == (
-        "0.509",
-        "0.864",
+    lines = item.excerpt.split("\n")
+    assert lines[0].startswith("Outcome measure (PRIMARY; Progression-free Survival (PFS))")
+    assert "AMG 510, Docetaxel" in item.excerpt
+    assert (
+        "5.62 (range 4.27 to 7.75)" in item.excerpt and "4.47 (range 3.02 to 5.68)" in item.excerpt
     )
+    assert "paramValue 0.663" in item.excerpt and "95% CI 0.509 to 0.864" in item.excerpt
+
+
+def test_a_value_without_a_group_id_is_not_given_a_group() -> None:
+    """This fixture was read before group ids were requested: the values cannot be told apart."""
+    [item] = parse_results(SOTORASIB, study("NCT04303780"), NOW)
+
+    assert (
+        "Groups (the record does not say which value is whose): AMG 510, Docetaxel" in item.excerpt
+    )
+    assert "unnamed group: 5.62" in item.excerpt
+    assert "AMG 510: " not in item.excerpt and "Docetaxel: " not in item.excerpt
 
 
 def test_a_result_is_human_evidence_dated_when_it_was_posted() -> None:
@@ -93,21 +101,18 @@ def test_measurements_and_analyses_keep_their_arm_ids_when_order_differs() -> No
     ]
     measure["analyses"] = [{"groupIds": ["G2", "G1"], "pValue": "0.01"}]
     [item] = parse_results(result, study("NCT04303780"), NOW)
-    fragment = json.loads(item.excerpt)
-    titles = {group["id"]: group["title"] for group in fragment["groups"]}
-    values = {
-        titles[m["groupId"]]: m["value"]
-        for m in fragment["classes"][0]["categories"][0]["measurements"]
-    }
-    assert values == {"Control": "4", "Synthetic drug": "6"}
-    assert fragment["analyses"][0]["groupIds"] == ["G2", "G1"]
+
+    # Each value stands next to its own group, as one line a quote can copy.
+    assert "\nControl: 4\n" in item.excerpt and "\nSynthetic drug: 6\n" in item.excerpt
+    assert "Analysis of Control, Synthetic drug: pValue 0.01" in item.excerpt
+    assert "G1" not in item.excerpt and "G2" not in item.excerpt
 
 
 def test_primary_measures_come_first_and_the_number_is_capped() -> None:
     items = parse_results(FUTILITY, study("NCT04933695"), NOW)
 
     assert len(items) == MAX_MEASURES
-    assert json.loads(items[0].excerpt)["type"] == "PRIMARY"
+    assert items[0].excerpt.startswith("Outcome measure (PRIMARY;")
     assert len({i.id for i in items}) == len(items) and len({i.status_key for i in items}) == len(
         items
     )
@@ -118,7 +123,7 @@ def test_every_posted_value_appears_verbatim_in_the_excerpt() -> None:
     [item] = parse_results(SOTORASIB, study("NCT04303780"), NOW)
 
     for measurement in source["classes"][0]["categories"][0]["measurements"]:
-        assert f'"value": "{measurement["value"]}"' in item.excerpt
+        assert f": {measurement['value']} (range" in item.excerpt
     assert source["timeFrame"] in item.excerpt
 
 

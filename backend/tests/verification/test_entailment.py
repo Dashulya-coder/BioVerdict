@@ -1,5 +1,6 @@
 """The judge reports; code removes what it does not confirm and downgrades what is left bare."""
 
+import json
 from pathlib import Path
 
 from bioverdict.llm import FakeLLM
@@ -352,3 +353,16 @@ def test_the_prompt_for_a_result_record_carries_the_numbers_a_claim_quotes() -> 
     text = _item(1, claim_, link("C-1", "E-0007", '"title": "Tolebrutinib 60 mg"'), bundle)
 
     assert "Tolebrutinib 60 mg: 0.364" in text
+
+
+def test_a_result_stored_as_lines_is_shown_whole_with_its_values() -> None:
+    from bioverdict.connectors.clinicaltrials import result_lines
+    from bioverdict.verification.entailment import _passage
+
+    record = json.loads(SDMT_RECORD)
+    text = result_lines(record)
+    shown = _passage(text, "Tolebrutinib 60 mg: 0.364")
+
+    assert shown == text  # the whole record, values and analysis
+    assert "Teriflunomide 14 mg: 0.329" in shown and "pValue 0.31" in shown
+    assert result_lines(record) in _passage(SDMT_RECORD, "x")  # a run stored as JSON: the same
