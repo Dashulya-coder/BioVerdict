@@ -199,6 +199,43 @@ def run_rnpv(
     )
 
 
+@dataclass
+class DevelopmentPlan:
+    """What the development costs and takes, from the stage alone: no market, no price."""
+
+    capital_to_milestone: Range  # USD of the current phase: what it takes to reach its readout
+    capital: Range  # USD of every remaining phase, to approval (not probability-weighted)
+    months_to_milestone: Range  # end of the current phase
+    assumptions: list[str] = field(default_factory=list)
+
+
+def development_plan(stage: str, cfg: RnpvConfig | None = None) -> DevelopmentPlan:
+    """The capital and the time of the development of an asset entering `stage`.
+
+    These need only the phases that remain, so a market that cannot be sized does not take them
+    away. The durations and costs are the placeholders of `RnpvConfig`, said so in the
+    assumptions.
+    """
+    cfg = cfg or RnpvConfig()
+    remaining = bm.PHASES[bm.PHASES.index(stage) :]
+    rng = np.random.default_rng(cfg.seed)
+    durations = np.stack([cfg.durations[p].sample(rng, cfg.draws) for p in remaining], axis=1)
+    costs = np.stack([cfg.costs[p].sample(rng, cfg.draws) for p in remaining], axis=1)
+    return DevelopmentPlan(
+        capital_to_milestone=_range(costs[:, 0]),
+        capital=_range(costs.sum(axis=1)),
+        months_to_milestone=_range(durations[:, 0] * 12),
+        assumptions=[
+            (
+                f"capital and time are modeled from the phases that remain "
+                f"({', '.join(remaining)}): the figures below are placeholders to calibrate, "
+                "not sourced benchmarks"
+            ),
+            *_phase_lines(cfg, remaining),
+        ],
+    )
+
+
 def _tri_text(t: Tri) -> str:
     return f"{t.low:g} / {t.mode:g} / {t.high:g}"
 
@@ -221,8 +258,11 @@ def _assumptions(cfg: RnpvConfig, remaining: list[str], patients: Range, price: 
         f"years of sales before exclusivity ends (none after): {_tri_text(cfg.exclusivity_years)}",
         f"discount rate: {_tri_text(cfg.discount_rate)}",
     ]
-    for phase in remaining:
-        lines.append(
-            f"{phase}: {_tri_text(cfg.durations[phase])} years, ${_tri_text(cfg.costs[phase])} cost"
-        )
-    return lines
+    return lines + _phase_lines(cfg, remaining)
+
+
+def _phase_lines(cfg: RnpvConfig, remaining: list[str]) -> list[str]:
+    return [
+        f"{phase}: {_tri_text(cfg.durations[phase])} years, ${_tri_text(cfg.costs[phase])} cost"
+        for phase in remaining
+    ]

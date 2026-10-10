@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 
 from bioverdict.market.tam import IMPLAUSIBLE_USD, estimate_market
 from bioverdict.scoring.pos import PosResult, probability_of_success
-from bioverdict.scoring.rnpv import RnpvResult, run_rnpv
+from bioverdict.scoring.rnpv import DevelopmentPlan, RnpvResult, development_plan, run_rnpv
 from bioverdict.store.models import Bundle, VerdictResult
 
 _STAGE = re.compile(r"maximumClinicalStage\W{1,6}PHASE_(\d)", re.IGNORECASE)
@@ -45,6 +45,7 @@ class Financials:
     area: str | None = None
     pos: PosResult | None = None
     rnpv: RnpvResult | None = None
+    plan: DevelopmentPlan | None = None  # capital and time: they need a stage, not a market
     evidence_ids: list[str] = field(default_factory=list)
     assumptions: list[str] = field(default_factory=list)
     missing: list[str] = field(default_factory=list)
@@ -137,8 +138,10 @@ def financial_model(bundle: Bundle, indication: str, class_question: bool = Fals
     )
     out.pos = probability_of_success(out.stage, out.area)
     out.assumptions += out.pos.assumptions
+    out.plan = development_plan(out.stage)
     tam = estimate_market(bundle).tam
     if tam is None:
+        out.assumptions += out.plan.assumptions
         out.missing.append("rNPV: the market could not be sized from the bundle (see market)")
         return out
     if tam.tam_usd.p90 > IMPLAUSIBLE_USD:
@@ -148,6 +151,7 @@ def financial_model(bundle: Bundle, indication: str, class_question: bool = Fals
             "everyone with the condition and is a ceiling, not a market a share can be taken of "
             "(see market)"
         )
+        out.assumptions += out.plan.assumptions
         return out
     out.evidence_ids = sorted(set(out.evidence_ids) | set(tam.evidence_ids))
     out.rnpv = run_rnpv(out.pos, out.stage, tam.addressable_patients, tam.annual_price_usd)
@@ -161,9 +165,11 @@ def with_financials(result: VerdictResult, fin: Financials) -> VerdictResult:
     if fin.pos is not None:
         update["pos"] = fin.pos.pos
     if fin.rnpv is not None:
+        update["rnpv"] = fin.rnpv.rnpv
+    if fin.plan is not None:
         update |= {
-            "rnpv": fin.rnpv.rnpv,
-            "capital": fin.rnpv.capital,
-            "months_to_milestone": fin.rnpv.months_to_milestone,
+            "capital": fin.plan.capital,
+            "capital_to_milestone": fin.plan.capital_to_milestone,
+            "months_to_milestone": fin.plan.months_to_milestone,
         }
     return result.model_copy(update=update)

@@ -660,6 +660,7 @@ test('modeled ranges are labelled and shown as P10 to P90', async ({ page }) => 
       pos: range(0.2, 0.4, 0.6),
       rnpv: range(-18_000_000, -8_700_000, 6_300_000),
       capital: range(98_000_000, 136_000_000, 191_000_000),
+      capital_to_milestone: range(9_000_000, 20_000_000, 38_000_000),
       months_to_milestone: range(15, 20, 25),
     },
   }
@@ -670,6 +671,8 @@ test('modeled ranges are labelled and shown as P10 to P90', async ({ page }) => 
   await expect(summary.getByText('−$8.7M')).toBeVisible()
   await expect(summary.getByText('P10 to P90: −$18.0M to $6.3M')).toBeVisible()
   await expect(summary.getByText('Modeled').first()).toBeVisible()
+  await expect(summary.getByText('Capital to next milestone')).toBeVisible()
+  await expect(summary.getByText('$20.0M')).toBeVisible()
 })
 
 test('a report that is not ready or failed says so', async ({ page }) => {

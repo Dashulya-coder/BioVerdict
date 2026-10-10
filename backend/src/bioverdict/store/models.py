@@ -337,7 +337,8 @@ class VerdictResult(_Model):
     translation_chain_probability: float | None = Field(default=None, ge=0, le=1)
     pos: Range | None = None
     rnpv: Range | None = None
-    capital: Range | None = None  # USD
+    capital: Range | None = None  # USD of every remaining phase, to approval
+    capital_to_milestone: Range | None = None  # USD of the current phase, to its readout
     months_to_milestone: Range | None = None
     top_risks: list[str] = Field(default_factory=list, max_length=3)
     top_risk_claims: list[list[str]] = Field(

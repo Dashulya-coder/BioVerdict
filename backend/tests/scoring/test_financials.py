@@ -108,17 +108,51 @@ def test_a_stage_without_a_market_gives_pos_but_no_rnpv() -> None:
     assert fin.rnpv is None and "market" in fin.missing[0]
 
 
+def test_a_stage_without_a_market_still_gives_capital_and_time() -> None:
+    """Capital and time need the phases that remain, not a market: a disease with no market
+    source (multiple sclerosis) used to leave both empty."""
+    fin = financial_model(_bundle('"maximumClinicalStage": "PHASE_2"'), "multiple sclerosis")
+    plan = fin.plan
+
+    assert fin.rnpv is None and plan is not None
+    assert 0 < plan.capital_to_milestone.p50 < plan.capital.p50  # a phase costs less than three
+    assert plan.months_to_milestone.p50 > 0
+    assert any("placeholders" in line for line in fin.assumptions)
+
+
+def test_the_last_phase_has_one_phase_of_capital_to_its_milestone() -> None:
+    fin = financial_model(_bundle('"maximumClinicalStage": "PHASE_3"'), "obesity")
+    assert fin.plan is not None
+    assert fin.plan.capital_to_milestone.p50 < fin.plan.capital.p50
+    ph2 = financial_model(_bundle('"maximumClinicalStage": "PHASE_1"'), "obesity").plan
+    assert ph2 is not None and ph2.capital.p50 > fin.plan.capital.p50  # more phases remain
+
+
+def test_the_verdict_carries_capital_without_an_rnpv() -> None:
+    from bioverdict.scoring.financials import with_financials
+    from bioverdict.scoring.verdict import score_verdict
+
+    fin = financial_model(_bundle('"maximumClinicalStage": "PHASE_2"'), "multiple sclerosis")
+    result = with_financials(score_verdict([], None), fin)
+
+    assert result.rnpv is None
+    assert result.capital == fin.plan.capital if fin.plan else False
+    assert result.capital_to_milestone == fin.plan.capital_to_milestone if fin.plan else False
+    assert result.months_to_milestone is not None
+
+
 def test_with_financials_fills_the_verdict_and_k5_is_held_back_as_a_near_miss() -> None:
     from bioverdict.scoring.financials import Financials, with_financials
     from bioverdict.scoring.pos import probability_of_success
-    from bioverdict.scoring.rnpv import run_rnpv
+    from bioverdict.scoring.rnpv import development_plan, run_rnpv
     from bioverdict.scoring.verdict import score_verdict
 
     pos = probability_of_success("phase3", "oncology")
     rnpv = run_rnpv(pos, "phase3", Range(p10=1, p50=2, p90=3), Range(p10=1e5, p50=1.5e5, p90=2e5))
-    fin = Financials(stage="phase3", area="oncology", pos=pos, rnpv=rnpv)
+    plan = development_plan("phase3")
+    fin = Financials(stage="phase3", area="oncology", pos=pos, rnpv=rnpv, plan=plan)
     result = with_financials(score_verdict([], rnpv.rnpv), fin)
-    assert result.rnpv == rnpv.rnpv and result.capital == rnpv.capital
+    assert result.rnpv == rnpv.rnpv and result.capital == plan.capital
     assert result.pos == pos.pos
     k5 = next(g for g in result.gates if g.gate_id.value == "K5")
     assert not k5.fired and k5.near_miss is not None

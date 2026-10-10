@@ -68,6 +68,8 @@ export const reportSchema = z.object({
     top_risk_claims: z.array(z.array(z.string())).default([]),
     what_would_change_our_mind: z.array(z.string()),
     capital: range.nullable(),
+    // Absent from a report stored by an older API.
+    capital_to_milestone: range.nullable().default(null),
     months_to_milestone: range.nullable(),
     pos: range.nullable(),
     rnpv: range.nullable(),
