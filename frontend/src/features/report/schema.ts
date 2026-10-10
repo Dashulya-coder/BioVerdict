@@ -60,6 +60,19 @@ const moduleSchema = z.object({
   evidence_count: z.number(),
   gates: z.array(z.string()),
 })
+export const thesisKinds = [
+  'scientific',
+  'translation',
+  'development_plan',
+  'competitive',
+  'commercial',
+  'investment',
+] as const
+const thesis = z.object({
+  kind: z.enum(thesisKinds),
+  sentences: z.array(z.object({ text: z.string(), claim_ids: z.array(z.string()) })),
+})
+
 export const reportSchema = z.object({
   executive: z.object({
     verdict: verdictSchema,
@@ -99,6 +112,7 @@ export const reportSchema = z.object({
   diligence_questions: z.array(
     z.object({ text: z.string(), answered_by: z.string(), value_of_information: z.number() }),
   ),
+  theses: z.array(thesis).default([]),
   bundle: z.object({
     evidence_count: z.number(),
     as_of: z.iso.date(),
@@ -110,3 +124,4 @@ export type Report = z.infer<typeof reportSchema>
 export type Range = z.infer<typeof range>
 export type ReportClaim = z.infer<typeof claim>
 export type ReportModule = z.infer<typeof moduleSchema>
+export type Thesis = z.infer<typeof thesis>

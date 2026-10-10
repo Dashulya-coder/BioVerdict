@@ -140,6 +140,8 @@ def test_a_live_run_records_the_same_steps_as_a_fixture_run(conn, tmp_path) -> N
         ("score", "done"),
         ("chair", "started"),
         ("chair", "done"),
+        ("synthesis", "started"),
+        ("synthesis", "done"),
         ("run", "done"),
     ]
 
@@ -181,11 +183,13 @@ def test_the_model_works_through_the_steps_in_order_and_never_resolves_twice(
     steps = [step for step, _ in model.calls]
     assert steps[:2] == ["resolver", "extraction"]
     assert steps[2:] and all(
-        step.startswith("reasoning.") or step in ("skeptic", "judge", "chair") for step in steps[2:]
+        step.startswith("reasoning.") or step in ("skeptic", "judge", "chair", "synthesis")
+        for step in steps[2:]
     )
     # The judge reads every quote with its passage, in as many requests as that takes.
     tail = steps[steps.index("skeptic") :]
-    assert (tail[0], tail[-1]) == ("skeptic", "chair") and set(tail[1:-1]) == {"judge"}
+    assert (tail[0], tail[-2], tail[-1]) == ("skeptic", "chair", "synthesis")
+    assert set(tail[1:-2]) == {"judge"}
 
 
 def test_an_input_without_a_target_fails_with_the_reason(conn, tmp_path) -> None:

@@ -109,6 +109,8 @@ def test_the_progress_log_follows_the_pipeline_steps(conn: sqlite3.Connection) -
         ("score", "done"),
         ("chair", "started"),
         ("chair", "done"),
+        ("synthesis", "started"),
+        ("synthesis", "done"),
         ("run", "done"),
     ]
     assert [e.seq for e in events] == list(range(1, len(events) + 1))

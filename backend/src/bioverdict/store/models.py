@@ -330,6 +330,31 @@ class DiligenceQuestion(_Model):
     value_of_information: float
 
 
+class ThesisKind(StrEnum):
+    """The written parts of the underwriting report the brief asks for, in report order."""
+
+    SCIENTIFIC = "scientific"  # Scientific thesis
+    TRANSLATION = "translation"  # Human translation thesis
+    DEVELOPMENT_PLAN = "development_plan"  # Clinical development plan: the next trial
+    COMPETITIVE = "competitive"  # Competitive landscape
+    COMMERCIAL = "commercial"  # Commercial opportunity: interesting is not the same as valuable
+    INVESTMENT = "investment"  # Value inflection points, financing, licensing or acquisition
+
+
+class ThesisSentence(_Model):
+    text: str = Field(min_length=1)
+    claim_ids: list[str] = Field(min_length=1, description="The claims the sentence rests on")
+
+
+class Thesis(_Model):
+    """A model's synthesis over the claims, labelled as inference. Code keeps a sentence only
+    if it cites claims of the run and every number in it appears in those claims or in the
+    figures code computed (`reasoning/synthesis.py`)."""
+
+    kind: ThesisKind
+    sentences: list[ThesisSentence] = Field(min_length=1)
+
+
 class VerdictResult(_Model):
     verdict: Verdict
     confidence: float = Field(ge=0, le=1)
@@ -347,6 +372,11 @@ class VerdictResult(_Model):
     )
     what_would_change_our_mind: list[str] = Field(default_factory=list)
     diligence_questions: list[DiligenceQuestion] = Field(default_factory=list)
+    theses: list[Thesis] = Field(
+        default_factory=list,
+        description="Written by the synthesis step after the Chair; empty if it failed or for a "
+        "stored older run",
+    )
 
     @model_validator(mode="after")
     def _risks_and_their_claims_line_up(self) -> VerdictResult:

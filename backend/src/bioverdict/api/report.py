@@ -304,6 +304,7 @@ def build_report(conn: sqlite3.Connection, run_id: str) -> ReportResponse:
         translation_chain_probability=result.translation_chain_probability,
         gates=result.gates,
         diligence_questions=result.diligence_questions,
+        theses=result.theses,
         sources=sources,
         bundle=BundleInfo(
             bundle_id=bundle.bundle_id,

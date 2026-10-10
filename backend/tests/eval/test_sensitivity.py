@@ -63,7 +63,12 @@ def placing(conn, direction: str | None):
     )
     answer = {"links": links, "new_claims": [], "unmatched": [] if direction else [NEW_ID]}
     return lambda _run: FakeLLM(
-        {"reasoning.classify": answer, "chair": {"questions": []}, "judge": {"judgments": []}}
+        {
+            "reasoning.classify": answer,
+            "chair": {"questions": []},
+            "synthesis": {"theses": []},
+            "judge": {"judgments": []},
+        }
     )
 
 
@@ -188,7 +193,11 @@ def test_noise_fails_when_an_answer_flips_with_or_without_a_cause() -> None:
 # --- the control: the base run at the case's cutoff, with no document --------------------------------
 
 LATE = date(2026, 10, 7)
-PASSIVE = {"chair": {"questions": []}, "judge": {"judgments": []}}  # and no classification
+PASSIVE = {
+    "chair": {"questions": []},
+    "synthesis": {"theses": []},
+    "judge": {"judgments": []},
+}  # and no classification
 
 
 def test_a_later_cutoff_is_not_mistaken_for_the_effect_of_the_document(conn) -> None:

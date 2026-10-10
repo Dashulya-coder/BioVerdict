@@ -133,7 +133,7 @@ The full list with comments is [`.env.example`](.env.example).
 ```
 Resolver → Collect (one bounded tool loop per section) → FREEZE bundle
         → Reason (six modules, no network) → Grounding (code) → Skeptic → Judge
-        → Scoring (code) → Chair → Report
+        → Scoring (code) → Chair → Synthesis → Report
 ```
 
 - **Resolver.** One model call reads the text; every identifier comes from a database lookup.
@@ -150,6 +150,9 @@ Resolver → Collect (one bounded tool loop per section) → FREEZE bundle
   success, rNPV by Monte Carlo, verdict.
 - **Chair.** Asks the questions only diligence could settle; code ranks them by how much each
   answer could move the verdict.
+- **Synthesis.** Writes the scientific and translation theses, the next-trial plan, the
+  competitive and commercial view and the investment case from the claims and code's figures;
+  code keeps a sentence only if it cites claims and its numbers come from them or from code.
 
 Designed and not built yet: triage, Bull vs Bear, the Chair's targeted second collection round.
 Details: [`docs/architecture.md`](docs/architecture.md).
@@ -203,8 +206,8 @@ Task by task, with owners: [`docs/work-plan.md`](docs/work-plan.md). In short:
 
 - Whole runs with a real model have been made for one question only (BTK inhibitor x multiple
   sclerosis), one run per code version: stability across runs is not measured.
-- The report has no written theses, no plan for the next trial, and no value inflection points,
-  financing needs or deal outcomes.
+- The written theses (including the next-trial plan and the investment case) are a model's
+  synthesis checked for citations and numbers, not for meaning.
 - rNPV is not calibrated: peak share, rebates, margin, discount rate and phase costs and
   durations are placeholders listed with every result, so its figures are modeled, not sourced.
   Multiple sclerosis has no patient count in the sources, so it has no market size and no rNPV.

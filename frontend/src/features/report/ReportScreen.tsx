@@ -7,6 +7,7 @@ import { ExecutiveSummary } from './ExecutiveSummary'
 import { GateList } from './GateList'
 import { ModuleScorecard } from './ModuleScorecard'
 import { Tornado } from './Tornado'
+import { Theses } from './Theses'
 import { TranslationChain } from './TranslationChain'
 import { UnknownFacts } from './UnknownFacts'
 import { useReport } from './useReport'
@@ -59,6 +60,7 @@ function LoadedReport({ runId }: { runId: string }) {
   return (
     <>
       <ExecutiveSummary report={state.report} />
+      <Theses report={state.report} />
       <ModuleScorecard report={state.report} />
       <GateList report={state.report} />
       <TranslationChain report={state.report} />

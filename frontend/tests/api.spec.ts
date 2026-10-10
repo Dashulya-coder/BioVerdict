@@ -531,6 +531,49 @@ test('the report opens with the verdict, the modeled figures and what is missing
   await expect(summary.getByText('Not computed: the market could not be sized.')).toBeVisible()
 })
 
+test("the written case shows each thesis under the brief's title and leads to its claims", async ({
+  page,
+}) => {
+  const withTheses = {
+    ...(structuredClone(report) as object),
+    theses: [
+      {
+        kind: 'scientific',
+        sentences: [
+          {
+            text: 'The mutation is a driver, but that is association, not causation.',
+            claim_ids: ['C-0001'],
+          },
+        ],
+      },
+      {
+        kind: 'translation',
+        sentences: [{ text: 'The first link is shown.', claim_ids: ['C-0013'] }],
+      },
+    ],
+  }
+  await serve(page, { report: withTheses })
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  const theses = page.getByRole('region', { name: 'The underwriting case' })
+  await expect(theses.getByText('AI inference')).toBeVisible()
+  await expect(theses.getByRole('article', { name: 'Scientific thesis' })).toBeVisible()
+  await expect(theses.getByRole('article', { name: 'Human translation thesis' })).toBeVisible()
+  await theses.getByRole('button', { name: 'C-0001' }).click()
+  await expect(
+    page.getByText(
+      '“found in approximately 14% of NSCLC cases and associated with poor prognosis”',
+    ),
+  ).toBeVisible()
+})
+
+test('a run without a written case says why', async ({ page }) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  await expect(page.getByText('No written case for this run')).toBeVisible()
+})
+
 test('the translation chain names every link and draws a missing one as missing', async ({
   page,
 }) => {

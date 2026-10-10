@@ -261,7 +261,12 @@ def classified(conn, answer: dict):
         "R-2",
         lambda: bundle,
         lambda: FakeLLM(
-            {"reasoning.classify": answer, "chair": {"questions": []}, "judge": {"judgments": []}}
+            {
+                "reasoning.classify": answer,
+                "chair": {"questions": []},
+                "synthesis": {"theses": []},
+                "judge": {"judgments": []},
+            }
         ),
     )
 
@@ -450,7 +455,12 @@ def filled(conn, *new_claims: dict, run_id: str = "R-2"):
     answer = {"links": [], "new_claims": list(new_claims)}
     bundle = prepare_recompute(conn, "R-1", run_id, [PK_DOC], EARLY)
     llm = FakeLLM(
-        {"reasoning.classify": answer, "chair": {"questions": []}, "judge": {"judgments": []}}
+        {
+            "reasoning.classify": answer,
+            "chair": {"questions": []},
+            "synthesis": {"theses": []},
+            "judge": {"judgments": []},
+        }
     )
     return finish_recompute(conn, run_id, lambda: bundle, lambda: llm)
 
