@@ -89,6 +89,14 @@ The organizers give each team a key for an Azure-hosted, OpenAI-compatible gatew
   (`GATEWAY_MODULE_CHARS`, up to four batches); extraction keeps 16,000 (its answers stayed under
   900 of 3,000 tokens). The Skeptic wrote 1,532 tokens from 30,000 and grounded 1 objection
   (5 from 60,000), and gets 45,000. The judge's largest answer was 2,220 tokens.
+- **Sizes after the third run** (`R-15cc9a4bd8c142be915a0fa54c0497bc`): every batch repeats about
+  6,900 characters (rules, the module's task, the schema, a retry reserve), so a batch of 12,000
+  carried about 5,000 of evidence, and with four batches the modules left out 353 items (the
+  clinical module 79 of 109, 23 of them trial results; competition 81 of 108, 24 of them drugs
+  approved for the indication). Module batches are 16,000 again, a module reads up to eight, and
+  the rules cap an answer at 15 claims so that it is not cut off. When not everything fits, a
+  module's `first` families go first (`approved_for_indication` for competition, unmet need and
+  commercial). More batches mean a longer run: `RUN_TIMEOUT_S` defaults to 1500.
 - The adapter sends a schema without `title` and `description` (the `ModuleDraft` schema is 1.6
   thousand characters instead of 2.8).
 - Reasoning models spend hidden reasoning tokens inside `max_completion_tokens` (they are billed

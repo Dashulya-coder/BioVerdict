@@ -31,11 +31,13 @@ GATEWAY_MAX_OUTPUT = 4096
 # 128,000 on gpt-6.1-sol and 256,000 on gpt-6-luna. No limit by default; LLM_MAX_INPUT_CHARS puts
 # one back if the gateway does.
 GATEWAY_INPUT_CHARS: int | None = None
-# What bounds a prompt now is the answer, which grows with what the prompt holds. A module batch
-# of 16,000 characters was cut off at 4,096 tokens and retried short twice in two live runs
-# (clinical on R-cf6f3be64e7b409f803f162134a0f174, translation on R-e0a3a432b1a6486da63da74805af1a04),
-# so module and classification batches are 12,000 and more evidence means more batches.
-GATEWAY_MODULE_CHARS = 12_000
+# What bounds a prompt now is the answer, which grows with what the prompt holds. A batch carries
+# about 6,900 characters that every batch repeats (rules, the module's task, the schema, a retry
+# reserve): at 12,000 only about 5,000 were evidence, and with four batches the clinical module
+# left out 79 of its 109 items (R-15cc9a4bd8c142be915a0fa54c0497bc). At 16,000 an answer was cut
+# off at 4,096 tokens twice in two runs, so the module rules cap an answer at 15 claims, and a
+# module may read up to eight batches (`ModuleReasoner.max_batches`).
+GATEWAY_MODULE_CHARS = 16_000
 GATEWAY_EXTRACTION_CHARS = 16_000  # its answers stayed under 900 of its 3,000 tokens
 GATEWAY_SYNTHESIS_CHARS = 60_000  # the Chair: room for every claim of a run
 # The Skeptic answers from the evidence it reads: 3,881 tokens from 60,000 (5 objections grounded),
@@ -112,7 +114,9 @@ class LLMConfig(BaseModel):
     budget_usd: float = 5.0  # RUN_BUDGET_USD
     breaker_threshold: int = 3  # consecutive failures that open a provider's breaker
     breaker_cooldown_s: float = 180.0  # "a few minutes"
-    run_timeout_s: float = 900.0  # RUN_TIMEOUT_S: hard wall-clock limit per run (runs of the demo pair took 4 to 7 minutes)
+    # RUN_TIMEOUT_S: hard wall-clock limit per run. Runs of the demo pair took 4 to 7 minutes with
+    # four module batches; eight, three requests at a time, add about four.
+    run_timeout_s: float = 1500.0
     # Characters an endpoint accepts in one request (messages and response schema together); None:
     # no known limit. The gateway's is measured; LLM_MAX_INPUT_CHARS overrides it.
     max_input_chars: int | None = None
@@ -222,7 +226,7 @@ class LLMConfig(BaseModel):
             },
             prices=prices,
             budget_usd=float(os.environ.get("RUN_BUDGET_USD", "5")),
-            run_timeout_s=float(os.environ.get("RUN_TIMEOUT_S", "900")),
+            run_timeout_s=float(os.environ.get("RUN_TIMEOUT_S", "1500")),
         )
         config.validate_prices()
         return config

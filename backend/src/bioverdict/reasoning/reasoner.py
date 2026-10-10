@@ -48,7 +48,7 @@ class ModuleReasoner:
         confidence: ConfidenceConfig | None = None,
         max_evidence_chars: int = MAX_EVIDENCE_CHARS,
         max_parallel: int | None = None,
-        max_batches: int = 4,  # batches of 12,000 on the gateway: four read what three of 16,000 did
+        max_batches: int = 8,  # enough for every item of the demo pair's bundle at 16,000 a batch
         question: str = "",
     ) -> None:
         self._llm = llm
@@ -74,6 +74,7 @@ class ModuleReasoner:
                     self._max_evidence_chars,
                     families=module.families,
                     question=self._question,
+                    first=module.first,
                 )
             ]
         return build_prompts(
@@ -83,6 +84,7 @@ class ModuleReasoner:
             families=module.families,
             max_batches=self._max_batches,
             question=self._question,
+            first=module.first,
         )
 
     def _workers(self, calls: int) -> int:

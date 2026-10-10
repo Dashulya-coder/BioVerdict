@@ -133,6 +133,8 @@ class ReasoningModule:
     # The source families this module reads. Market records are for code (market/tam.py) and are
     # never shown to a model; None means everything.
     families: frozenset[str] | None = None
+    # Families read before any other when not every item fits the module's batches.
+    first: frozenset[str] = frozenset()
 
 
 MECHANISM = ReasoningModule(
@@ -176,6 +178,9 @@ COMPETITION = ReasoningModule(
     gate_guard=evidence_guard,
     allow_study_fact=True,
     families=frozenset({"registry", "target_database", "approved_for_indication"}),
+    # The approved drugs are registry records by level and went last behind trial results: on
+    # R-15cc9a4bd8c142be915a0fa54c0497bc 24 of them were left out of the module's prompts.
+    first=frozenset({"approved_for_indication"}),
 )
 
 UNMET_NEED = ReasoningModule(
@@ -187,6 +192,7 @@ UNMET_NEED = ReasoningModule(
     families=frozenset(
         {"target_database", "literature", "regulatory_analog", "approved_for_indication", "company"}
     ),
+    first=frozenset({"approved_for_indication"}),  # what treats the disease today
 )
 # The market records that code reads for patients and prices (incidence, prevalence, population,
 # biomarker frequency, analog prices and spending) stay out of every prompt: the numbers are
@@ -198,6 +204,7 @@ COMMERCIAL = ReasoningModule(
     instruction=_COMMERCIAL,
     claim_type=ClaimType.OTHER,
     families=frozenset({"regulatory_analog", "approved_for_indication", "sec_filing", "company"}),
+    first=frozenset({"approved_for_indication"}),  # the drugs a new one is priced against
 )
 
 # Order of the plan: translation reads what mechanism and clinical established. The two modules

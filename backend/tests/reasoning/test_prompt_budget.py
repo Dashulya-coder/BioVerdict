@@ -58,7 +58,8 @@ def test_the_prompt_fits_the_budget_and_keeps_the_retry_reserve(budget: int) -> 
 
 def test_a_cut_keeps_the_strongest_evidence_and_names_what_it_left_out() -> None:
     bundle = big_bundle()
-    built = build_prompt(CLINICAL.instruction, bundle, budget=8000, families=CLINICAL.families)
+    # Room for a few items, not at the edge of one: blocks differ by a few characters.
+    built = build_prompt(CLINICAL.instruction, bundle, budget=9000, families=CLINICAL.families)
     pool = [e for e in bundle.evidence if e.source_family in CLINICAL.families]
     assert built.omitted and len(built.omitted) < len(pool)
     shown = [e for e in pool if e.id not in built.omitted]
@@ -142,7 +143,7 @@ def test_every_module_call_fits_the_batch_size_for_a_large_bundle() -> None:
     config = LLMConfig.for_provider("openai")
     client = LLMClient(config, {"openai": provider})
     ModuleReasoner(client.bind("R-1"), "R-1").reason(big_bundle(150, 800))
-    assert len(ALL_MODULES) <= len(provider.requests) <= 4 * len(ALL_MODULES)
+    assert len(ALL_MODULES) <= len(provider.requests) <= 8 * len(ALL_MODULES)
     for request in provider.requests:
         # No endpoint limit: the step's own size, kept so that the answer fits the output limit.
         assert provider.input_chars(request) + RETRY_RESERVE <= GATEWAY_MODULE_CHARS
@@ -168,3 +169,33 @@ def test_a_registry_result_is_shown_further_than_other_long_excerpts() -> None:
 
     assert len(_block(result, "t", DEFAULT_EXCERPT_CAP)) > RESULT_EXCERPT_CAP
     assert len(_block(paper, "t", DEFAULT_EXCERPT_CAP)) < DEFAULT_EXCERPT_CAP + 300
+
+
+def test_a_module_keeps_the_families_it_names_first_before_stronger_evidence() -> None:
+    """The competition module's approved drugs are registry records by level: without `first`
+    they go last, behind every trial result."""
+    from bioverdict.reasoning.modules import COMPETITION
+
+    approved = [
+        item(900 + i, "approved_for_indication", 500).model_copy(
+            update={"level": LEVELS[-1]}  # registry record
+        )
+        for i in range(3)
+    ]
+    trials = [item(i, "registry", 500) for i in range(1, 40)]
+    bundle = BASE.model_copy(update={"evidence": trials + approved})
+    budget = 9000
+
+    plain = build_prompt(
+        COMPETITION.instruction, bundle, budget=budget, families=COMPETITION.families
+    )
+    kept = build_prompt(
+        COMPETITION.instruction,
+        bundle,
+        budget=budget,
+        families=COMPETITION.families,
+        first=COMPETITION.first,
+    )
+
+    assert all(a.id in plain.omitted for a in approved)
+    assert not any(a.id in kept.omitted for a in approved)
