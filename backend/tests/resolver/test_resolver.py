@@ -134,11 +134,37 @@ async def test_indication_and_mechanism_without_a_drug_still_resolve(tmp_path: P
     assert out.indication.mondo_id == "MONDO_0005233"
 
 
-async def test_without_an_indication_the_run_can_still_go_on(tmp_path: Path) -> None:
+async def test_without_an_indication_a_known_drug_gets_its_most_advanced_one(
+    tmp_path: Path,
+) -> None:
     out = await make_resolver(tmp_path, drug_names=["divarasib"], targets=["KRAS"]).resolve("x")
 
+    assert (out.indication.name, out.indication.mondo_id) == (
+        "non-small cell lung carcinoma",
+        "MONDO_0005233",
+    )
+    note = next(a for a in out.assumptions if a.startswith("indication:"))
+    assert "not stated" in note and "PHASE_3" in note and "also listed" in note
+
+
+async def test_a_typed_indication_wins_over_the_drugs_own(tmp_path: Path) -> None:
+    resolver = make_resolver(
+        tmp_path, drug_names=["divarasib"], targets=["KRAS"], indication="NSCLC"
+    )
+
+    out = await resolver.resolve("x")
+
+    assert out.indication.mondo_id == "MONDO_0005233"
+    assert not any(a.startswith("indication:") for a in out.assumptions)
+
+
+async def test_without_a_confirmed_drug_or_indication_the_run_can_still_go_on(
+    tmp_path: Path,
+) -> None:
+    out = await make_resolver(tmp_path, targets=["KRAS"]).resolve("x")
+
     assert out.indication.mondo_id is None
-    assert any(a.startswith("indication:") for a in out.assumptions)
+    assert any(a.startswith("indication: none stated") for a in out.assumptions)
 
 
 async def test_an_unknown_target_symbol_is_kept_without_ids(tmp_path: Path) -> None:

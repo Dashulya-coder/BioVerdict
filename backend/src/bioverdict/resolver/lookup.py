@@ -36,6 +36,14 @@ query ($ids: [String!]!) {
   }
 }
 """
+INDICATIONS_QUERY = """
+query ($id: String!) {
+  drug(chemblId: $id) {
+    indications { rows { maxClinicalStage disease { id name } } }
+  }
+}
+"""
+STAGE_ORDER = ("UNKNOWN", "PRECLINICAL", "PHASE_1", "PHASE_2", "PHASE_3", "PHASE_4", "APPROVAL")
 TARGETS_QUERY = """
 query ($ids: [String!]!) {
   targets(ensemblIds: $ids) {
@@ -85,6 +93,13 @@ class DiseaseMatch:
     id: str
     name: str
     kind: MatchKind
+
+
+@dataclass(frozen=True)
+class DrugIndication:
+    disease_id: str
+    name: str
+    stage: str  # Open Targets' maxClinicalStage, for example PHASE_3
 
 
 @dataclass(frozen=True)
@@ -167,6 +182,27 @@ class OpenTargetsLookup:
             synonyms=tuple(s["label"] for s in drug["synonyms"]),
         )
         return candidate, drug["drugType"]
+
+    async def drug_indications(self, chembl_id: str) -> list[DrugIndication]:
+        """The diseases Open Targets lists for a drug, the most advanced stage first.
+
+        Equal stages keep Open Targets' order, so the answer is the same on every run.
+        """
+        answer, _ = await self._api.query(
+            {"query": INDICATIONS_QUERY, "variables": {"id": chembl_id}}
+        )
+        drug = answer["data"]["drug"] or {}
+        rows = (drug.get("indications") or {}).get("rows") or []
+        found = [
+            DrugIndication(r["disease"]["id"], r["disease"]["name"], r["maxClinicalStage"])
+            for r in rows
+            if r.get("disease")
+        ]
+
+        def rank(item: DrugIndication) -> int:
+            return STAGE_ORDER.index(item.stage) if item.stage in STAGE_ORDER else 0
+
+        return sorted(found, key=rank, reverse=True)
 
     async def find_target(self, symbol: str) -> TargetMatch | None:
         """The target whose approved symbol is `symbol`, else the only one listing it as a synonym."""

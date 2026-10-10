@@ -60,7 +60,7 @@ class Resolver:
 
         assets, search_names, drug_type = await self._resolve_assets(parsed, assumptions)
         targets = await self._resolve_targets(parsed, assumptions)
-        indication = await self._resolve_indication(parsed, assumptions)
+        indication = await self._resolve_indication(parsed, assets, assumptions)
 
         if not targets:
             raise ResolverError(f"no target could be identified from: {text!r}")
@@ -114,10 +114,11 @@ class Resolver:
                 )
         return targets
 
-    async def _resolve_indication(self, parsed: ParsedInput, assumptions: list[str]) -> Indication:
+    async def _resolve_indication(
+        self, parsed: ParsedInput, assets: list[Asset], assumptions: list[str]
+    ) -> Indication:
         if not parsed.indication:
-            assumptions.append("indication: none stated, so no disease evidence can be fetched")
-            return Indication(name="not specified")
+            return await self._indication_of_drug(assets, assumptions)
 
         resolution = await self._lookup.find_disease(parsed.indication)
         if resolution.chosen is None:
@@ -132,6 +133,33 @@ class Resolver:
             name=chosen.name,
             mondo_id=chosen.id if is_mondo else None,
             efo_id=None if is_mondo else chosen.id,
+        )
+
+    async def _indication_of_drug(self, assets: list[Asset], assumptions: list[str]) -> Indication:
+        """No disease was typed: take the one a confirmed drug is furthest along in.
+
+        This is a choice the user did not make, so it is written into the assumptions with the
+        other indications of the drug; a typed indication always wins.
+        """
+        drug = next((a for a in assets if a.chembl_id), None)
+        listed = (
+            await self._lookup.drug_indications(drug.chembl_id) if drug and drug.chembl_id else []
+        )
+        listed = [i for i in listed if i.stage != "UNKNOWN"]
+        if drug is None or not listed:
+            assumptions.append("indication: none stated, so no disease evidence can be fetched")
+            return Indication(name="not specified")
+        best = listed[0]
+        others = ", ".join(f"{i.name} ({i.stage})" for i in listed[1:4])
+        assumptions.append(
+            f"indication: not stated; {best.name} ({best.stage}) is the most advanced indication "
+            f"of {drug.name} in Open Targets" + (f"; also listed: {others}" if others else "")
+        )
+        is_mondo = best.disease_id.startswith("MONDO_")
+        return Indication(
+            name=best.name,
+            mondo_id=best.disease_id if is_mondo else None,
+            efo_id=None if is_mondo else best.disease_id,
         )
 
 
