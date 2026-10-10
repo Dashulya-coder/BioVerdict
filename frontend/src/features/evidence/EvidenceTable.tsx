@@ -54,7 +54,7 @@ export function EvidenceTable({
                   onClick={() => {
                     onSelect(item.id)
                   }}
-                  className="min-h-11 w-full py-3 text-left font-mono text-xs text-accent"
+                  className="min-h-11 w-full py-3 text-left font-mono text-xs text-ink"
                 >
                   {item.id}
                 </button>

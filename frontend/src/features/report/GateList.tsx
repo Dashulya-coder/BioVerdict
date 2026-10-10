@@ -21,14 +21,14 @@ export function GateList({ report }: { report: Report }) {
   const soft = report.gates.filter((gate) => gate.kind === 'soft')
   return (
     <section aria-labelledby="gates" className="mt-10">
-      <h2 id="gates" className="font-editorial text-2xl">
+      <h2 id="gates" className="text-xl font-semibold tracking-tight">
         Gates
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
         Code applies these rules to the claims. A hard gate that fires means Do Not Invest; a soft
         gate caps the verdict at Conditional.
       </p>
-      <div className="mt-5 grid gap-6 md:grid-cols-2">
+      <div className="mt-5 grid gap-6 lg:grid-cols-2">
         <GateGroup title="Hard gates" gates={hard} />
         <GateGroup title="Soft gates" gates={soft} />
       </div>
@@ -39,15 +39,15 @@ export function GateList({ report }: { report: Report }) {
 function GateGroup({ title, gates }: { title: string; gates: Report['gates'] }) {
   return (
     <div>
-      <h3 className="text-sm font-medium">{title}</h3>
+      <h3 className="text-xs font-medium tracking-wide text-muted uppercase">{title}</h3>
       <ul className="mt-3 space-y-2">
         {gates.map((gate) => (
           <li
             key={gate.gate_id}
-            className={`border bg-surface p-3 text-sm leading-6 ${gate.fired ? 'border-danger/40' : 'border-rule'}`}
+            className={`rounded-md border px-4 py-3 text-sm leading-6 ${gate.fired ? 'border-danger/40 bg-danger/5' : gate.near_miss ? 'border-assumption/30 bg-surface' : 'border-rule bg-surface'}`}
           >
             <p className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-xs">{gate.gate_id}</span>
+              <span className="w-6 font-mono text-xs text-muted">{gate.gate_id}</span>
               {gate.fired ? (
                 <Badge tone="error">Fired</Badge>
               ) : gate.near_miss ? (

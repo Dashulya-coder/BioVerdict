@@ -7,10 +7,10 @@ export function AnalysisSteps({ active }: { active: 0 | 1 | 2 }) {
         <li
           key={label}
           aria-current={index === active ? 'step' : undefined}
-          className={`flex items-center gap-2 text-xs ${index <= active ? 'text-accent' : 'text-muted'}`}
+          className={`flex items-center gap-2 text-xs ${index <= active ? 'text-ink' : 'text-muted'}`}
         >
           <span
-            className={`flex size-5 items-center justify-center rounded-full border font-mono text-[10px] ${index <= active ? 'border-accent/40 bg-accent/10' : 'border-rule'}`}
+            className={`flex size-5 items-center justify-center rounded-full border font-mono text-[10px] ${index <= active ? 'border-control bg-raised' : 'border-rule'}`}
           >
             {index + 1}
           </span>

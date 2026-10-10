@@ -583,6 +583,22 @@ test("the report lists its parts in the brief's order and the sources of its maj
   await sources.getByRole('button', { name: 'C-0006' }).first().click()
 })
 
+test('a contents link moves within the report and does not leave it', async ({ page }) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  const contents = page.getByRole('navigation', { name: 'Contents of the report' })
+  // The address hash names the screen: a plain `#questions` link would open the input screen.
+  await contents.getByRole('link', { name: /Highest-value diligence questions/ }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Highest-value diligence questions' }),
+  ).toBeInViewport()
+  await expect(
+    page.getByRole('heading', { name: 'Verdict and the reasons behind it' }),
+  ).toBeVisible()
+  expect(new URL(page.url()).hash).toBe('#report')
+})
+
 test('a run without a written case says why', async ({ page }) => {
   await serve(page)
   await openRun(page, 'divarasib')
@@ -913,10 +929,13 @@ test('each module gives its answer and opens onto its claims, quotes and sources
 
   const scorecard = page.getByRole('region', { name: 'Six modules, six answers' })
   await expect(scorecard.getByText('Supports the case', { exact: true })).toBeVisible()
+  // One module is open at a time: the first by default, another when it is picked.
+  await expect(scorecard.getByText('Is the target causal for the disease?')).toBeVisible()
+  await expect(scorecard.getByText('+0.80 for')).toBeVisible()
+  await scorecard.getByRole('button', { name: /Investment underwriting/ }).click()
   await expect(scorecard.getByText('Conditional: gates fired: S1')).toBeVisible()
   await expect(scorecard.getByText('Gate S1 fired')).toBeVisible()
-  await scorecard.getByText('Is the target causal for the disease?').click()
-  await expect(scorecard.getByText('+0.80 for')).toBeVisible()
+  await scorecard.getByRole('button', { name: /Mechanism and biological validation/ }).click()
   await scorecard
     .getByText('KRAS G12C is a frequent, poor-prognosis driver mutation in NSCLC')
     .click()
@@ -983,4 +1002,10 @@ test('a reopened class run is a landscape, not a drug named after its run id', a
 
   await expect(page.getByText('Class landscape — select an asset below')).toBeVisible()
   await expect(page.getByRole('region', { name: 'Choose an existing asset' })).toBeVisible()
+
+  // The evidence screen names the question, not an empty drug.
+  await page.getByRole('link', { name: 'Evidence', exact: true }).click()
+  await expect(
+    page.getByText('for BTK inhibitor in multiple sclerosis, visible by', { exact: false }),
+  ).toBeVisible()
 })

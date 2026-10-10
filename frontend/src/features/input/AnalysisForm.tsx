@@ -118,12 +118,12 @@ export function AnalysisForm({
                 <Icon name="arrow" />
               </Button>
             </div>
-            <p role="status" aria-live="polite" className="text-xs text-accent">
+            <p role="status" aria-live="polite" className="text-xs text-muted">
               {progress ?? ''}
             </p>
           </form>
           {apiMode ? null : (
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border border-rule bg-surface px-5 py-4">
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 panel px-5 py-4">
               <div>
                 <p className="mb-1 text-xs text-muted">Available demo</p>
                 <p className="text-sm">
@@ -151,7 +151,7 @@ export function AnalysisForm({
               ],
             ].map(([title, text], index) => (
               <li key={title} className="flex gap-3">
-                <span className="pt-0.5 font-mono text-xs text-accent">0{index + 1}</span>
+                <span className="pt-0.5 font-mono text-xs text-ink">0{index + 1}</span>
                 <div>
                   <h3 className="text-sm">{title}</h3>
                   <p className="mt-2 text-xs leading-6 text-muted">{text}</p>

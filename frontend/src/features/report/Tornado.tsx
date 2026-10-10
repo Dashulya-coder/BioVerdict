@@ -25,7 +25,7 @@ export function Tornado({ runId }: { runId: string }) {
   const state: State = loaded?.runId === runId ? loaded.state : { kind: 'loading' }
   return (
     <section aria-labelledby="tornado" className="mt-10">
-      <h2 id="tornado" className="font-editorial text-2xl">
+      <h2 id="tornado" className="text-xl font-semibold tracking-tight">
         What moves the rNPV
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">

@@ -14,7 +14,7 @@ function CauseItem({ cause }: { cause: Cause }) {
   return (
     <li className="border-l-2 border-accent/50 bg-raised p-3">
       <p className="text-xs text-muted">
-        <span className="font-mono text-accent">{cause.evidence_id}</span> · {cause.source} ·{' '}
+        <span className="font-mono text-ink">{cause.evidence_id}</span> · {cause.source} ·{' '}
         {levelLabels[cause.level]} · {formatDate(cause.published_at)}
       </p>
       <blockquote className="mt-2 text-sm leading-6">“{cause.quote}”</blockquote>
@@ -31,7 +31,7 @@ function CauseItem({ cause }: { cause: Cause }) {
         href={cause.url}
         target="_blank"
         rel="noreferrer"
-        className="mt-2 inline-block text-xs text-accent underline"
+        className="mt-2 inline-block text-xs text-ink underline decoration-control underline-offset-4"
       >
         Open the source: {cause.source}
       </a>

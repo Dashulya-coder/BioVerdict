@@ -1,99 +1,51 @@
 import { Badge } from '../../ui/Badge'
-import { money, months, percent } from './numbers'
-import { RangeStat } from './RangeStat'
+import { Overview } from './Overview'
 import type { Report } from './schema'
 import { showClaim } from './showClaim'
 
-const verdictNote: Record<Report['executive']['verdict'], string> = {
-  Invest: 'All conditions of the rule hold. Diligence still applies.',
-  Conditional: 'Promising, but a gap or a risk below must be resolved first.',
-  'Do Not Invest': 'A hard gate fired, or the evidence does not support the case.',
-}
+const jump = 'ml-2 font-mono text-xs text-ink underline decoration-control underline-offset-4'
 
-export function ExecutiveSummary({ report }: { report: Report }) {
-  const { executive, gates, translation_chain_probability: chain } = report
-  const fired = gates.filter((gate) => gate.fired)
+export function ExecutiveSummary({
+  report,
+  onSelectModule,
+}: {
+  report: Report
+  onSelectModule: (module: string) => void
+}) {
+  const { executive } = report
   return (
-    <section aria-labelledby="executive" className="border-y border-rule py-8">
+    <section aria-labelledby="executive">
       <h2 id="executive" className="sr-only">
         Executive verdict
       </h2>
-      <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
-        <div>
-          <p className="text-xs text-muted">Verdict</p>
-          <p className="font-editorial text-4xl">{executive.verdict}</p>
-          <p className="mt-2 max-w-sm text-sm text-muted">{verdictNote[executive.verdict]}</p>
-        </div>
-        <dl className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
-          <div className="border-l border-rule pl-4">
-            <dt className="text-xs text-muted">Confidence in the claims</dt>
-            <dd className="font-editorial text-2xl">{percent(executive.confidence)}</dd>
-          </div>
-          <div className="border-l border-rule pl-4">
-            <dt className="text-xs text-muted">Translation chain</dt>
-            <dd className="font-editorial text-2xl">{chain === null ? 'n/a' : percent(chain)}</dd>
-          </div>
-          <div className="border-l border-rule pl-4">
-            <dt className="text-xs text-muted">Gates fired</dt>
-            <dd className="font-editorial text-2xl">{fired.length.toString()}</dd>
-            <dd className="text-xs text-muted">{fired.map((gate) => gate.gate_id).join(', ')}</dd>
-          </div>
-        </dl>
-      </div>
-      <dl id="capital" className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
-        <RangeStat
-          label="Probability of success"
-          range={executive.pos}
-          format={percent}
-          missing="Not computed: the bundle names no clinical stage."
-        />
-        <RangeStat
-          label="rNPV"
-          range={executive.rnpv}
-          format={money}
-          missing="Not computed: the market could not be sized. Invest needs it."
-        />
-        <RangeStat
-          label="Capital to next milestone"
-          range={executive.capital_to_milestone}
-          format={money}
-          missing="Not computed: the bundle names no clinical stage."
-        />
-        <RangeStat
-          label="Capital to approval"
-          range={executive.capital}
-          format={money}
-          missing="Not computed: the bundle names no clinical stage."
-        />
-        <RangeStat
-          label="Time to next milestone"
-          range={executive.months_to_milestone}
-          format={months}
-          missing="Not computed: the bundle names no clinical stage."
-        />
-      </dl>
-      <div className="mt-8 grid gap-8 md:grid-cols-2">
-        <div>
+      <Overview report={report} onSelectModule={onSelectModule} />
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <div className="panel p-5">
           <h3 id="risks" className="text-sm font-medium">
             Key risks and failure modes
           </h3>
           {executive.top_risks.length ? (
-            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6">
+            <ol className="mt-3 space-y-2.5 text-sm leading-6">
               {executive.top_risks.map((risk, index) => (
-                <li key={risk}>
-                  {risk}
-                  {(executive.top_risk_claims[index] ?? []).map((claimId) => (
-                    <button
-                      key={claimId}
-                      type="button"
-                      onClick={() => {
-                        showClaim(claimId)
-                      }}
-                      className="ml-2 font-mono text-xs text-accent underline"
-                    >
-                      {claimId}
-                    </button>
-                  ))}
+                <li key={risk} className="flex gap-3">
+                  <span className="w-4 shrink-0 text-muted tabular-nums">
+                    {(index + 1).toString()}
+                  </span>
+                  <span>
+                    {risk}
+                    {(executive.top_risk_claims[index] ?? []).map((claimId) => (
+                      <button
+                        key={claimId}
+                        type="button"
+                        onClick={() => {
+                          showClaim(claimId)
+                        }}
+                        className={jump}
+                      >
+                        {claimId}
+                      </button>
+                    ))}
+                  </span>
                 </li>
               ))}
             </ol>
@@ -101,10 +53,10 @@ export function ExecutiveSummary({ report }: { report: Report }) {
             <p className="mt-3 text-sm text-muted">No risk was ranked.</p>
           )}
         </div>
-        <div>
+        <div className="panel p-5">
           <h3 className="text-sm font-medium">What would change our mind</h3>
           {executive.what_would_change_our_mind.length ? (
-            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6">
+            <ul className="mt-3 list-disc space-y-2.5 pl-5 text-sm leading-6 marker:text-control">
               {executive.what_would_change_our_mind.map((item) => (
                 <li key={item}>{item}</li>
               ))}
@@ -115,9 +67,9 @@ export function ExecutiveSummary({ report }: { report: Report }) {
         </div>
       </div>
       {report.assumptions.length ? (
-        <div className="mt-8">
+        <div className="mt-4 rounded-lg border border-rule p-5">
           <Badge tone="assumption">Assumptions</Badge>
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm leading-6 text-muted">
             {report.assumptions.map((item) => (
               <li key={item}>{item}</li>
             ))}

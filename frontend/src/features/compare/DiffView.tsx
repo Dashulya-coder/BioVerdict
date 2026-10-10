@@ -22,7 +22,7 @@ function EvidenceList({ title, items }: { title: string; items: readonly DiffEvi
         {items.map((item) => (
           <li key={item.id} className="py-4">
             <p className="flex flex-wrap items-center gap-3 text-xs text-muted">
-              <span className="font-mono text-accent">{item.id}</span>
+              <span className="font-mono text-ink">{item.id}</span>
               {item.source} · {formatDate(item.published_at)}
               {item.claim_ids.length ? (
                 <span>quoted by {item.claim_ids.join(', ')}</span>
@@ -85,7 +85,7 @@ export function DiffView({ diff }: { diff: RunDiff }) {
                     </th>
                     <td className="py-3 pr-4 font-mono text-xs">{before}</td>
                     <td
-                      className={`py-3 font-mono text-xs ${before === after ? '' : 'text-accent'}`}
+                      className={`py-3 font-mono text-xs ${before === after ? 'text-muted' : 'text-ink'}`}
                     >
                       {after}
                     </td>
@@ -147,7 +147,7 @@ export function DiffView({ diff }: { diff: RunDiff }) {
               </p>
               <p className="mt-2 text-sm leading-6">{claim.text}</p>
               {claim.new_evidence_ids.length ? (
-                <p className="mt-2 text-xs text-accent">
+                <p className="mt-2 text-xs text-muted">
                   Rests on evidence the earlier run did not have:{' '}
                   {claim.new_evidence_ids.join(', ')}
                 </p>

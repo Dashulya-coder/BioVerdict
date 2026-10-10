@@ -274,7 +274,8 @@ live one; `eval`, `warm` and `doctor` are described in the [runbook](runbook.md)
 
 ## 6. Milestones
 
-Frontend status: the English dark console with shared tokens and typed primitives. Input →
+Frontend status: the English dark console with shared tokens and typed primitives; redesigned on
+2026-10-11 (neutral black palette, verdict first, tiles and cards; `docs/design-system.md`). Input →
 resolved assumptions → evidence explorer and sources, and comparing runs, work on the API
 (`pnpm dev:api`) and on the prepared Divarasib snapshot. The report screen (B5) works on the API:
 executive verdict, modeled ranges, translation chain, claim drill-down and open questions;

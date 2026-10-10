@@ -1,4 +1,5 @@
 import { Badge } from '../../ui/Badge'
+import { Meter } from '../../ui/Meter'
 import { percent } from './numbers'
 import type { Report } from './schema'
 
@@ -10,9 +11,14 @@ const names: Record<string, string> = {
   patient_benefit: 'Patient benefit',
 }
 const status = {
-  supported: { label: 'Supported', tone: 'fact', border: 'border-accent' },
-  weak: { label: 'Weak', tone: 'assumption', border: 'border-assumption' },
-  missing: { label: 'Missing', tone: 'error', border: 'border-danger border-dashed' },
+  supported: { label: 'Supported', tone: 'positive', meter: 'positive', border: 'border-rule' },
+  weak: { label: 'Weak', tone: 'assumption', meter: 'assumption', border: 'border-assumption/40' },
+  missing: {
+    label: 'Missing',
+    tone: 'error',
+    meter: 'danger',
+    border: 'border-danger/60 border-dashed',
+  },
 } as const
 
 /**
@@ -23,7 +29,7 @@ export function TranslationChain({ report }: { report: Report }) {
   const chain = report.translation_chain_probability
   return (
     <section aria-labelledby="chain" className="mt-10">
-      <h2 id="chain" className="font-editorial text-2xl">
+      <h2 id="chain" className="text-xl font-semibold tracking-tight">
         Translation chain
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
@@ -36,14 +42,26 @@ export function TranslationChain({ report }: { report: Report }) {
         {report.translation_chain.map((item, index) => {
           const look = status[item.status]
           return (
-            <li key={item.link} className={`relative border-t-2 bg-surface p-4 ${look.border}`}>
-              <p className="font-mono text-xs text-muted">Link {(index + 1).toString()}</p>
-              <p className="mt-1 text-sm font-medium">{names[item.link] ?? item.link}</p>
-              <p className="mt-3 flex flex-wrap items-center gap-2">
+            <li
+              key={item.link}
+              className={`relative rounded-lg border bg-surface p-4 ${look.border}`}
+            >
+              {index > 0 ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-8 -left-3 hidden h-px w-3 bg-control md:block"
+                />
+              ) : null}
+              <p className="font-mono text-[11px] text-muted">Link {(index + 1).toString()}</p>
+              <p className="mt-1 text-sm font-semibold">{names[item.link] ?? item.link}</p>
+              <p className="mt-4 flex flex-wrap items-center justify-between gap-2">
                 <Badge tone={look.tone}>{look.label}</Badge>
-                <span className="text-xs text-muted">
+                <span className="figure text-lg">
                   {item.confidence === null ? 'no claim' : percent(item.confidence)}
                 </span>
+              </p>
+              <p className="mt-3">
+                <Meter value={item.confidence} tone={look.meter} />
               </p>
               <p className="mt-3 font-mono text-xs text-muted">
                 {item.claim_ids.length ? item.claim_ids.join(', ') : 'No claim for this link'}

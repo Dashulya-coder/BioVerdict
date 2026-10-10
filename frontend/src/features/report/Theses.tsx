@@ -8,7 +8,7 @@ export function Theses({ report }: { report: Report }) {
   return (
     <section aria-labelledby="theses" className="mt-10">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 id="theses" className="font-editorial text-2xl">
+        <h2 id="theses" className="text-xl font-semibold tracking-tight">
           The underwriting case
         </h2>
         <Badge tone="assumption">AI inference</Badge>
@@ -25,7 +25,7 @@ export function Theses({ report }: { report: Report }) {
               key={thesis.kind}
               id={`thesis-${thesis.kind}`}
               aria-label={thesisTitles[thesis.kind]}
-              className="border border-rule bg-surface p-5"
+              className="panel p-5"
             >
               <h3 className="font-editorial text-lg">{thesisTitles[thesis.kind]}</h3>
               <ul className="mt-3 space-y-3">
@@ -39,7 +39,7 @@ export function Theses({ report }: { report: Report }) {
                         onClick={() => {
                           showClaim(claimId)
                         }}
-                        className="ml-2 font-mono text-xs text-accent underline"
+                        className="ml-2 font-mono text-xs text-ink underline decoration-control underline-offset-4"
                       >
                         {claimId}
                       </button>

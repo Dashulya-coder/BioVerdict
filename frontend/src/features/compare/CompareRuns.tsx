@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { addEvidence, compareRuns, listFinishedRuns } from '../../app/api-client'
 import { evidenceLevels, levelLabels, sourceKinds, sourceLabels } from '../../app/constants'
-import { formatDate } from '../../app/format'
+import { formatDate, subjectOf } from '../../app/format'
 import { addedEvidenceSchema } from '../../app/schemas'
 import { WorkspaceError } from '../../app/WorkspaceError'
 import { Button } from '../../ui/Button'
@@ -26,14 +26,6 @@ const emptyDocument = {
 }
 const selectClass =
   'mt-2 min-h-11 w-full rounded-sm border border-control bg-sidebar px-3 py-2.5 text-sm'
-
-/** The drug, or for a run without one the mechanism and the indication. */
-function subjectOf(input: { asset: string; mechanism: string; indication: string }): string {
-  if (input.asset) return input.asset
-  return (
-    [input.mechanism, input.indication].filter((part) => part !== '').join(' in ') || 'this run'
-  )
-}
 
 function describe(run: RunSummary): string {
   const subject = [run.input.asset, run.input.query, run.input.mechanism, run.input.indication]
@@ -134,7 +126,7 @@ export function CompareRuns({
         description={`See what moved the report of ${subjectOf(analysis.input)}: against another run, or after adding a document. The run must have finished.`}
       />
       {finished ? null : (
-        <p role="status" className="mb-8 max-w-2xl text-sm text-assumption">
+        <p role="status" className="mb-8 max-w-2xl text-sm text-ink">
           {status?.status === 'failed'
             ? 'This run failed, so it has no report to compare. Start a new analysis.'
             : 'This run is still reasoning over its evidence. Comparing and adding a document open when it has finished.'}
@@ -288,7 +280,7 @@ export function CompareRuns({
 
       <div className="mt-10 border-t border-rule pt-8">
         {result.kind === 'working' ? (
-          <p role="status" aria-live="polite" className="text-sm text-accent">
+          <p role="status" aria-live="polite" className="text-sm text-muted">
             {result.text}
           </p>
         ) : null}

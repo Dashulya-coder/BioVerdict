@@ -7,7 +7,7 @@ export function CallTable({ trace }: { trace: FullTrace }) {
   if (!calls.length) return null
   return (
     <section aria-labelledby="calls" className="mt-10">
-      <h2 id="calls" className="font-editorial text-2xl">
+      <h2 id="calls" className="text-xl font-semibold tracking-tight">
         Every model call
       </h2>
       <div className="mt-4 overflow-x-auto">

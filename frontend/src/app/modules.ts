@@ -9,7 +9,7 @@ export const answerLabels: Record<ModuleAnswer, string> = {
   insufficient: 'Not enough evidence',
 }
 export const answerTones = {
-  supports: 'fact',
+  supports: 'positive',
   mixed: 'assumption',
   against: 'error',
   insufficient: 'neutral',

@@ -6,7 +6,7 @@ export function StepCosts({ trace }: { trace: FullTrace }) {
   const steps = byStep(trace.llm_calls)
   return (
     <section aria-labelledby="steps" className="mt-10">
-      <h2 id="steps" className="font-editorial text-2xl">
+      <h2 id="steps" className="text-xl font-semibold tracking-tight">
         Cost by step
       </h2>
       {steps.length ? (

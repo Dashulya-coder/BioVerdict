@@ -7,7 +7,7 @@ const tone = (status: string) =>
 export function Timeline({ trace }: { trace: FullTrace }) {
   return (
     <section aria-labelledby="timeline" className="mt-10">
-      <h2 id="timeline" className="font-editorial text-2xl">
+      <h2 id="timeline" className="text-xl font-semibold tracking-tight">
         Steps in order
       </h2>
       {trace.events.length ? (

@@ -11,7 +11,7 @@ export function AssetSelection({
 }) {
   const found = candidates(analysis.evidence)
   return (
-    <section aria-labelledby="asset-selection" className="mt-8 border border-rule bg-surface p-5">
+    <section aria-labelledby="asset-selection" className="mt-8 panel p-5">
       <h2 id="asset-selection" className="text-lg font-medium">
         Choose an existing asset
       </h2>
@@ -33,7 +33,7 @@ export function AssetSelection({
                   {candidate.records.map((record) => (
                     <li key={record.study}>
                       <a
-                        className="text-accent underline"
+                        className="text-ink underline decoration-control underline-offset-4"
                         href={record.url}
                         target="_blank"
                         rel="noreferrer"
@@ -60,7 +60,7 @@ export function AssetSelection({
           ))}
         </ul>
       ) : (
-        <p className="mt-4 text-sm text-assumption">
+        <p className="mt-4 text-sm text-ink">
           No experimental drug names were available in these records. Older saved bundles may lack
           the trial-arm details. Review the evidence and enter a verified asset name.
         </p>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { copy } from '../../app/copy'
-import { formatDate } from '../../app/format'
+import { formatDate, subjectOf } from '../../app/format'
 import { PageHeading } from '../../ui/PageHeading'
 import { Button } from '../../ui/Button'
 import { Icon } from '../../ui/Icon'
@@ -32,7 +32,7 @@ export function EvidenceExplorer({
         <PageHeading
           eyebrow={mode === 'sources' ? '03 / Sources' : '03 / Evidence'}
           title={mode === 'sources' ? 'Original sources' : 'Evidence explorer'}
-          description={`${copy.evidenceLead} for ${analysis.input.asset}, visible by ${formatDate(analysis.input.as_of)}. Read the source before the conclusion.`}
+          description={`${copy.evidenceLead} for ${subjectOf(analysis.input)}, visible by ${formatDate(analysis.input.as_of)}. Read the source before the conclusion.`}
         />
         <Button variant="secondary" onClick={onBack}>
           <Icon name="back" />
@@ -54,7 +54,7 @@ export function EvidenceExplorer({
           <EvidenceInspector key={selected.id} evidence={selected} />
         </div>
       ) : (
-        <section className="border border-rule bg-surface px-6 py-12 text-center">
+        <section className="panel px-6 py-12 text-center">
           <h2 className="text-lg font-medium">
             {analysis.evidence.length ? 'No matching evidence' : 'No evidence by this cutoff'}
           </h2>

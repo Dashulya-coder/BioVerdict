@@ -17,10 +17,7 @@ export function EvidenceInspector({ evidence }: { evidence: Evidence }) {
     }
   }
   return (
-    <aside
-      aria-label="Evidence detail"
-      className="min-w-0 self-start border border-rule bg-surface p-5 xl:sticky xl:top-6"
-    >
+    <aside aria-label="Evidence detail" className="min-w-0 self-start panel p-5 xl:sticky xl:top-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="mb-2 text-xs text-muted">Selected evidence</p>
@@ -55,7 +52,7 @@ export function EvidenceInspector({ evidence }: { evidence: Evidence }) {
           href={evidence.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-11 items-center gap-2 rounded-sm border border-control px-3 text-xs text-accent hover:bg-raised"
+          className="inline-flex min-h-11 items-center gap-2 rounded-sm border border-control px-3 text-xs text-muted hover:bg-raised"
         >
           Open original source
           <Icon name="external" />

@@ -24,7 +24,7 @@ export function UnknownFacts({ report }: { report: Report }) {
   }
   return (
     <section aria-labelledby="unknowns" className="mt-10">
-      <h2 id="unknowns" className="font-editorial text-2xl">
+      <h2 id="unknowns" className="text-xl font-semibold tracking-tight">
         Critical unknowns
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
