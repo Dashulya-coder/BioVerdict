@@ -1,19 +1,21 @@
 import type { ReactNode } from 'react'
 
 type Tone = 'neutral' | 'fact' | 'assumption' | 'error' | 'positive'
-const tones: Record<Tone, string> = {
-  neutral: 'border-rule bg-raised text-muted',
-  fact: 'border-accent/30 bg-accent/10 text-accent',
-  assumption: 'border-assumption/30 bg-assumption/10 text-assumption',
-  error: 'border-danger/30 bg-danger/10 text-danger',
-  positive: 'border-positive/30 bg-positive/10 text-positive',
+// The label is always plain text. A status is told by a small square beside it, so that colour
+// marks a state and never paints the words.
+const markers: Record<Tone, string | null> = {
+  neutral: null,
+  fact: null,
+  assumption: 'bg-assumption',
+  error: 'bg-danger',
+  positive: 'bg-positive',
 }
 
 export function Badge({ children, tone = 'neutral' }: { children: ReactNode; tone?: Tone }) {
+  const marker = markers[tone]
   return (
-    <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs leading-5 font-medium whitespace-nowrap ${tones[tone]}`}
-    >
+    <span className="inline-flex items-center gap-1.5 rounded-sm border border-rule px-1.5 py-px text-xs leading-5 whitespace-nowrap text-muted">
+      {marker ? <span aria-hidden="true" className={`size-1.5 ${marker}`} /> : null}
       {children}
     </span>
   )

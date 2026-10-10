@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { showPart } from './showClaim'
 import { thesisTitles } from './thesisTitles'
 
 /** The parts of the underwriting report in the order the brief lists them, then the rest. */
@@ -24,26 +25,17 @@ const more: { target: string; label: string }[] = [
   { target: 'claims', label: 'All claims and their evidence' },
 ]
 
-/**
- * Brings a part of the report into view. The address hash names the screen (`useScreen`), so a
- * plain `#part` link would leave the report for the input screen: the jump is made by script.
- * A part this run does not have (a thesis the synthesis step did not write) falls back to the
- * written case as a whole.
- */
-function show(target: string) {
-  const part = document.getElementById(target) ?? document.getElementById('theses')
-  part?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
+/** A part this run does not have (a thesis the synthesis step did not write) falls back to
+ * the written case as a whole. */
 function Jump({ target, children }: { target: string; children: ReactNode }) {
   return (
     <a
       href={`#${target}`}
       onClick={(event) => {
         event.preventDefault()
-        show(target)
+        showPart(target, 'theses')
       }}
-      className="inline-flex items-center gap-1.5 rounded-full border border-rule bg-surface px-3 py-1.5 text-xs whitespace-nowrap text-muted transition-colors hover:border-control hover:text-ink"
+      className="text-muted underline-offset-4 hover:text-ink hover:underline"
     >
       {children}
     </a>
@@ -52,18 +44,20 @@ function Jump({ target, children }: { target: string; children: ReactNode }) {
 
 export function Contents() {
   return (
-    <nav aria-label="Contents of the report" className="mt-8 border-y border-rule py-5">
-      <ol className="flex flex-wrap gap-2">
+    <nav aria-label="Contents of the report" className="mt-8 border-y border-rule py-5 text-sm">
+      <ol className="grid gap-x-8 gap-y-1.5 sm:grid-cols-2 xl:grid-cols-3">
         {brief.map((item, index) => (
           <li key={item.target}>
             <Jump target={item.target}>
-              <span className="font-mono text-[11px] text-accent">{(index + 1).toString()}</span>
+              <span className="mr-2 inline-block w-5 text-right tabular-nums">
+                {(index + 1).toString()}
+              </span>
               {item.label}
             </Jump>
           </li>
         ))}
       </ol>
-      <p className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
+      <p className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1 text-muted">
         Also:
         {more.map((item) => (
           <Jump key={item.target} target={item.target}>

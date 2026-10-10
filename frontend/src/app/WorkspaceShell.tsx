@@ -50,7 +50,7 @@ export function WorkspaceShell({
         Skip to workspace
       </a>
       <Sidebar screen={screen} />
-      <header className="sticky top-0 z-20 flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-rule bg-canvas/85 px-6 py-3 backdrop-blur lg:px-10">
+      <header className="sticky top-0 z-20 flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-rule bg-canvas px-6 py-3 lg:px-10">
         <p className="text-sm text-muted">
           Workspace <span className="mx-3 text-rule">/</span>
           <span className="text-ink">{titles[screen]}</span>
@@ -92,9 +92,12 @@ export function WorkspaceShell({
         className="mx-auto max-w-[1600px] p-6 focus-visible:outline-none lg:p-10"
       >
         {analysis && isLandscape(analysis) ? (
-          <p className="mb-8 rounded-lg border border-assumption/30 bg-assumption/5 px-4 py-3 text-sm leading-6">
+          <p className="mb-8 rounded-md border border-rule bg-surface px-4 py-3 text-sm leading-6 text-muted">
             Class landscape for {analysis.resolver.indication.name}. Select an existing asset on the{' '}
-            <a href="#resolved" className="text-accent underline">
+            <a
+              href="#resolved"
+              className="text-ink underline decoration-control underline-offset-4"
+            >
               resolved input
             </a>{' '}
             screen for an asset-specific investment analysis. The class assessment combines several

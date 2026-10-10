@@ -33,7 +33,7 @@ export function AssetSelection({
                   {candidate.records.map((record) => (
                     <li key={record.study}>
                       <a
-                        className="text-accent underline"
+                        className="text-ink underline decoration-control underline-offset-4"
                         href={record.url}
                         target="_blank"
                         rel="noreferrer"
@@ -60,7 +60,7 @@ export function AssetSelection({
           ))}
         </ul>
       ) : (
-        <p className="mt-4 text-sm text-assumption">
+        <p className="mt-4 text-sm text-ink">
           No experimental drug names were available in these records. Older saved bundles may lack
           the trial-arm details. Review the evidence and enter a verified asset name.
         </p>

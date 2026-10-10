@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Button } from '../../ui/Button'
 import { PageHeading } from '../../ui/PageHeading'
 import { navigate } from '../../app/useScreen'
@@ -8,6 +9,7 @@ import { ExecutiveSummary } from './ExecutiveSummary'
 import { GateList } from './GateList'
 import { ModuleScorecard } from './ModuleScorecard'
 import { Tornado } from './Tornado'
+import { showPart } from './showClaim'
 import { Sources } from './Sources'
 import { Theses } from './Theses'
 import { TranslationChain } from './TranslationChain'
@@ -21,7 +23,7 @@ export function ReportScreen({ analysis }: { analysis: PreparedAnalysis }) {
       <PageHeading
         eyebrow="Underwriting report"
         title="Verdict and the reasons behind it"
-        description="Code decides the verdict from grounded claims. Every number marked Modeled follows from stated assumptions."
+        description="Code decides the verdict from grounded claims. Modeled numbers follow from stated assumptions."
       />
       {analysis.runId ? (
         <LoadedReport runId={analysis.runId} />
@@ -47,6 +49,7 @@ export function ReportScreen({ analysis }: { analysis: PreparedAnalysis }) {
 
 function LoadedReport({ runId }: { runId: string }) {
   const state = useReport(runId)
+  const [module, setModule] = useState<string | null>(null)
   if (state.kind === 'loading')
     return (
       <p role="status" className="text-sm text-muted">
@@ -61,10 +64,16 @@ function LoadedReport({ runId }: { runId: string }) {
     )
   return (
     <>
-      <ExecutiveSummary report={state.report} />
+      <ExecutiveSummary
+        report={state.report}
+        onSelectModule={(name) => {
+          setModule(name)
+          showPart('modules')
+        }}
+      />
       <Contents />
       <Theses report={state.report} />
-      <ModuleScorecard report={state.report} />
+      <ModuleScorecard report={state.report} selected={module} onSelect={setModule} />
       <GateList report={state.report} />
       <TranslationChain report={state.report} />
       <Tornado runId={runId} />

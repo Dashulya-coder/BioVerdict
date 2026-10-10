@@ -25,7 +25,12 @@ The source of truth for tokens is `frontend/src/index.css`, shared by both track
 | `danger` | `#F08A80` | Failures, fired gates, weight against, a Do Not Invest verdict |
 | `positive` | `#6FD49A` | Weight for, a supported link, an Invest verdict |
 
-Use semantic utilities: `bg-canvas`, `text-ink`, `border-rule`, `text-assumption`.
+**Colour goes on marks, not on words.** Text is `ink` or `muted`. A status colour is used for a
+bar, a ring, a border or the small square of a `Badge`; a link is underlined ink, not accent
+text. The exceptions are error messages (`text-danger`). No tinted pills, gradients, glows or
+letter-spaced uppercase labels: they read as a generated template.
+
+Use semantic utilities: `bg-canvas`, `text-ink`, `border-rule`, `bg-assumption`.
 Avoid new raw colors in feature components. The sage accent is for interaction and provenance;
 a favourable result is `positive`, never the accent. A verdict is coloured through
 `verdictLook` (`src/app/verdict.ts`) and nowhere else. A quoted source fact is not a claim of
@@ -41,8 +46,8 @@ reassuring result.
 - Body: 14px, 20–28px line height. Metadata: 12px. Page headings: 30–36px, medium weight.
   Source quotations: 14px with at least 24px line height. Preserve their original wording.
 - Use the Tailwind 4px spacing scale. Field gaps 8px; related groups 16px; panel padding
-  24px; page padding 24px on mobile and 40px on desktop. Corners: 6px controls, 8px tiles,
-  12px panels, full for badges.
+  24px; page padding 24px on mobile and 40px on desktop. Corners: 4px badges and small
+  marks, 6px controls, 8px panels.
 - Section headings are 20px semibold Inter. A number a reader compares uses the `figure`
   utility (semibold, tabular digits). A bordered block uses the `panel` utility.
 - Desktop: persistent sidebar with two groups (Analysis, Results), sticky top bar, generous central work area. Evidence uses
@@ -52,6 +57,15 @@ reassuring result.
 - Use rules and subtle surface differences for hierarchy. Keep one primary action per
   screen. Avoid gradients, glow, oversized marketing headings and decorative charts.
 
+## The report
+
+The report opens with an overview on one screen (`features/report/Overview.tsx`): the verdict
+with a ring for the confidence, the six modules on one against/for axis, the modeled figures,
+the translation chain, the gates, how many records became claims and kept quotes, and the
+question worth most. A tile leads to its part of the report. "Six modules, six answers" shows
+one module at a time: its answer, its scale, and the claims that pull against and for, each
+opening onto its quotation.
+
 ## Shared components
 
 Import directly from `frontend/src/ui/`; keep feature behavior out of these primitives.
@@ -60,7 +74,7 @@ Import directly from `frontend/src/ui/`; keep feature behavior out of these prim
 |---|---|
 | `Button` | Native button props; `primary`, `secondary`, `ghost`; defaults to `type="button"` |
 | `Field` | Required `id`/`label`, native input props, optional hint or error; links accessible descriptions |
-| `Badge` | `neutral`, `fact`, `assumption`, `error`, `positive`; always has readable text |
+| `Badge` | `neutral`, `fact`, `assumption`, `error`, `positive`; plain text in a thin frame, the tone shown by a small square |
 | `Meter` | A share from 0 to 1 as a bar, in a status colour; decorative, the number is written beside it |
 | `Icon` | Small decorative SVGs; accompanying text supplies the accessible name |
 | `PageHeading` | Eyebrow, title and description; one page-level `h1` |

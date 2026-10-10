@@ -929,10 +929,13 @@ test('each module gives its answer and opens onto its claims, quotes and sources
 
   const scorecard = page.getByRole('region', { name: 'Six modules, six answers' })
   await expect(scorecard.getByText('Supports the case', { exact: true })).toBeVisible()
+  // One module is open at a time: the first by default, another when it is picked.
+  await expect(scorecard.getByText('Is the target causal for the disease?')).toBeVisible()
+  await expect(scorecard.getByText('+0.80 for')).toBeVisible()
+  await scorecard.getByRole('button', { name: /Investment underwriting/ }).click()
   await expect(scorecard.getByText('Conditional: gates fired: S1')).toBeVisible()
   await expect(scorecard.getByText('Gate S1 fired')).toBeVisible()
-  await scorecard.getByText('Is the target causal for the disease?').click()
-  await expect(scorecard.getByText('+0.80 for')).toBeVisible()
+  await scorecard.getByRole('button', { name: /Mechanism and biological validation/ }).click()
   await scorecard
     .getByText('KRAS G12C is a frequent, poor-prognosis driver mutation in NSCLC')
     .click()

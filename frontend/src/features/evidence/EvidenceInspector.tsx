@@ -52,7 +52,7 @@ export function EvidenceInspector({ evidence }: { evidence: Evidence }) {
           href={evidence.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-11 items-center gap-2 rounded-sm border border-control px-3 text-xs text-accent hover:bg-raised"
+          className="inline-flex min-h-11 items-center gap-2 rounded-sm border border-control px-3 text-xs text-muted hover:bg-raised"
         >
           Open original source
           <Icon name="external" />

@@ -26,20 +26,12 @@ export function Sidebar({ screen }: { screen: Screen }) {
     <aside className="border-b border-rule bg-sidebar lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-60 lg:flex-col lg:border-r lg:border-b-0">
       <a
         href="#new"
-        className="flex min-h-16 items-center gap-3 px-5 py-4"
+        className="flex min-h-16 items-center px-6 py-4"
         aria-label="BioVerdict, new analysis"
       >
-        <span
-          aria-hidden="true"
-          className="flex size-8 items-center justify-center rounded-md bg-accent font-editorial text-lg font-semibold text-sidebar"
-        >
-          B
-        </span>
         <span>
-          <span className="block font-editorial text-lg leading-5 font-medium">BioVerdict</span>
-          <span className="hidden font-mono text-[10px] tracking-[0.14em] text-muted uppercase lg:block">
-            Research workspace
-          </span>
+          <span className="block font-editorial text-xl leading-6 font-medium">BioVerdict</span>
+          <span className="hidden text-xs text-muted lg:block">Research workspace</span>
         </span>
       </a>
       <nav
@@ -48,9 +40,7 @@ export function Sidebar({ screen }: { screen: Screen }) {
       >
         {groups.map((group) => (
           <div key={group.title} className="flex gap-1 lg:mb-5 lg:flex-col">
-            <p className="hidden px-3 pb-2 text-[11px] font-medium tracking-wide text-muted/70 uppercase lg:block">
-              {group.title}
-            </p>
+            <p className="hidden px-3 pb-2 text-xs text-muted lg:block">{group.title}</p>
             {group.links.map((item) => (
               <a
                 key={item.screen}
@@ -58,7 +48,7 @@ export function Sidebar({ screen }: { screen: Screen }) {
                 aria-current={current === item.screen ? 'page' : undefined}
                 className={`flex min-h-11 items-center gap-3 rounded-md px-3 py-2.5 text-sm whitespace-nowrap transition-colors ${current === item.screen ? 'bg-selected font-medium text-ink shadow-[inset_2px_0_0_var(--color-accent)]' : 'text-muted hover:bg-surface hover:text-ink'}`}
               >
-                <Icon name={item.icon} className={current === item.screen ? 'text-accent' : ''} />
+                <Icon name={item.icon} className={''} />
                 {item.label}
               </a>
             ))}

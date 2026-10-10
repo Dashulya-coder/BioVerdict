@@ -118,7 +118,7 @@ export function AnalysisForm({
                 <Icon name="arrow" />
               </Button>
             </div>
-            <p role="status" aria-live="polite" className="text-xs text-accent">
+            <p role="status" aria-live="polite" className="text-xs text-muted">
               {progress ?? ''}
             </p>
           </form>
@@ -151,7 +151,7 @@ export function AnalysisForm({
               ],
             ].map(([title, text], index) => (
               <li key={title} className="flex gap-3">
-                <span className="pt-0.5 font-mono text-xs text-accent">0{index + 1}</span>
+                <span className="pt-0.5 font-mono text-xs text-ink">0{index + 1}</span>
                 <div>
                   <h3 className="text-sm">{title}</h3>
                   <p className="mt-2 text-xs leading-6 text-muted">{text}</p>

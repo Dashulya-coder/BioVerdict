@@ -126,7 +126,7 @@ export function CompareRuns({
         description={`See what moved the report of ${subjectOf(analysis.input)}: against another run, or after adding a document. The run must have finished.`}
       />
       {finished ? null : (
-        <p role="status" className="mb-8 max-w-2xl text-sm text-assumption">
+        <p role="status" className="mb-8 max-w-2xl text-sm text-ink">
           {status?.status === 'failed'
             ? 'This run failed, so it has no report to compare. Start a new analysis.'
             : 'This run is still reasoning over its evidence. Comparing and adding a document open when it has finished.'}
@@ -280,7 +280,7 @@ export function CompareRuns({
 
       <div className="mt-10 border-t border-rule pt-8">
         {result.kind === 'working' ? (
-          <p role="status" aria-live="polite" className="text-sm text-accent">
+          <p role="status" aria-live="polite" className="text-sm text-muted">
             {result.text}
           </p>
         ) : null}

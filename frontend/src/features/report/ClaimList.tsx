@@ -70,13 +70,13 @@ function ClaimDetail({ claim }: { claim: ReportClaim }) {
               </p>
               <blockquote className="mt-2 text-sm leading-6">“{link.quote}”</blockquote>
               {link.judged === 'judged' ? null : (
-                <p className="mt-2 text-xs text-assumption">{unjudgedLabels[link.judged]}</p>
+                <p className="mt-2 text-xs text-ink">{unjudgedLabels[link.judged]}</p>
               )}
               <a
                 href={link.url}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-2 inline-block text-xs text-accent underline"
+                className="mt-2 inline-block text-xs text-ink underline decoration-control underline-offset-4"
               >
                 Open the original source: {link.source}
               </a>
@@ -129,14 +129,16 @@ export function ClaimRow({ claim, anchored = false }: { claim: ReportClaim; anch
             <span className="font-mono">{claim.id}</span>
             <span>{basisNames[claim.basis] ?? claim.basis}</span>
             {claim.critical ? <span className="text-ink">Key claim</span> : null}
-            {unjudged(claim) ? <span className="text-assumption">Quotes not judged</span> : null}
+            {unjudged(claim) ? <span className="text-ink">Quotes not judged</span> : null}
             {claim.flags.map((flag) => (
               <span key={flag}>{flag}</span>
             ))}
             {claim.gate_signals.map((gate) => (
               <span key={gate}>Signals {gate}</span>
             ))}
-            <span className="ml-auto text-accent group-open:hidden">Show evidence</span>
+            <span className="ml-auto text-ink underline decoration-control underline-offset-4 group-open:hidden">
+              Show evidence
+            </span>
           </span>
         </summary>
         <ClaimDetail claim={claim} />
@@ -174,7 +176,7 @@ export function ClaimList({ report }: { report: Report }) {
               </span>
             </h3>
             {statusNotes[section.status] && !readFromOthers(section) ? (
-              <p className="mt-1 text-xs text-assumption">{statusNotes[section.status]}</p>
+              <p className="mt-1 text-xs text-ink">{statusNotes[section.status]}</p>
             ) : null}
             {section.claims.length ? (
               <ul className="mt-3 space-y-2">

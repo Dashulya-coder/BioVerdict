@@ -49,7 +49,7 @@ export function Sources({ report }: { report: Report }) {
                   onClick={() => {
                     showClaim(claimId)
                   }}
-                  className="ml-2 font-mono text-xs text-accent underline"
+                  className="ml-2 font-mono text-xs text-ink underline decoration-control underline-offset-4"
                 >
                   {claimId}
                 </button>
