@@ -158,3 +158,23 @@ checks pass on `main`):
   before #125; `RUN_BUDGET_USD` is 5. Two attempts on stage are close to the limit of one run
   each: record the demo runs beforehand.
 
+
+---
+
+## To Arsenii, from Dasha — 2026-10-11
+
+Your #132 and #133, checked on real runs (BTK x MS, and the evobrutinib comparison of the case
+with its control) at 1440 and 390 px; fixed on `dasha/B5-overview-follows-the-rule`:
+
+- **The note under the verdict** (`Overview.tsx`) now says what the rule says: Do Not Invest only
+  from a kill criterion on a claim confirmed by independent sources; Conditional is a soft gate,
+  an unconfirmed kill criterion or an unmet Invest condition, not "promising".
+- **The translation chain tile** stands one link under the other below `sm`: at 390 px the five
+  names ran into each other.
+- **"From sources to verdict" in a recompute** says "new quotes read by the judge in this
+  recompute": the judge reads only the added evidence there, so the evobrutinib case showed "2".
+- **Compare on a phone** (`DiffView.tsx`, your folder): the two verdicts overlapped and the table's
+  After column was cut; the sides now stack below `sm` and long values wrap.
+
+The Compare screen on the real comparison reads well: verdict before and after, K1 fired, the
+two quotes on C-0089 with its confidence and pull. The open item of your #133 test plan is done.

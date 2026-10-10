@@ -7,10 +7,13 @@ import { money, months, percent, rangeText } from './numbers'
 import type { Range, Report, ReportModule } from './schema'
 import { showPart } from './showClaim'
 
+// What the rule of scoring.md ("Verdict mapping") says each verdict means, nothing more: Do Not
+// Invest comes only from a kill criterion, and Conditional is not a judgement of promise.
 const verdictNote: Record<Report['executive']['verdict'], string> = {
-  Invest: 'All conditions of the rule hold. Diligence still applies.',
-  Conditional: 'Promising, but a gap or a risk below must be resolved first.',
-  'Do Not Invest': 'A hard gate fired, or the evidence does not support the case.',
+  Invest: 'Every condition of the rule holds. Diligence still applies.',
+  Conditional:
+    'A soft gate fired, a kill criterion awaits a second source, or a condition for Invest is not met: see below.',
+  'Do Not Invest': 'A kill criterion fired on a claim confirmed by independent sources.',
 }
 const answerFills: Record<ModuleAnswer, string> = {
   supports: 'bg-positive',
@@ -204,24 +207,31 @@ function ChainTile({ report }: { report: Report }) {
       aside={chain === null ? 'n/a' : `${percent(chain)} that the whole chain holds`}
       className="lg:col-span-7"
     >
-      <ol className="mt-5 flex">
+      {/* A column per link from `sm` up; on a phone five columns leave the names no room, so
+          the links stand one under the other. */}
+      <ol className="mt-5 space-y-3 sm:flex sm:space-y-0">
         {report.translation_chain.map((item, index) => {
           const look = linkLooks[item.status]
           return (
-            <li key={item.link} className="relative flex-1 text-center">
+            <li
+              key={item.link}
+              className="relative flex items-center gap-3 sm:block sm:min-w-0 sm:flex-1 sm:text-center"
+            >
               {index > 0 ? (
                 <span
                   aria-hidden="true"
-                  className="absolute top-4 right-[calc(50%+1.25rem)] left-[calc(-50%+1.25rem)] h-px bg-rule"
+                  className="absolute top-4 right-[calc(50%+1.25rem)] left-[calc(-50%+1.25rem)] hidden h-px bg-rule sm:block"
                 />
               ) : null}
               <span
-                className={`mx-auto flex size-8 items-center justify-center rounded-full border-2 figure text-[11px] ${look.ring}`}
+                className={`flex size-8 shrink-0 items-center justify-center rounded-full border-2 figure text-[11px] sm:mx-auto ${look.ring}`}
               >
                 {item.confidence === null ? '–' : (item.confidence * 100).toFixed(0)}
               </span>
-              <span className="mt-2 block text-xs">{linkNames[item.link] ?? item.link}</span>
-              <span className="block text-xs text-muted">{look.label}</span>
+              <span className="sm:block">
+                <span className="block text-xs sm:mt-2">{linkNames[item.link] ?? item.link}</span>
+                <span className="block text-xs text-muted">{look.label}</span>
+              </span>
             </li>
           )
         })}
@@ -272,10 +282,18 @@ function FlowTile({ report }: { report: Report }) {
   const links = claims.flatMap((claim) => claim.links)
   const kept = links.filter((link) => link.judged === 'judged').length
   const removed = claims.flatMap((claim) => claim.checks).filter((c) => c.check === 'entailment')
+  // A recompute (a later bundle version) asks the judge only about the quotes of the added
+  // evidence; the quotes it carried over were judged in the run it grew from.
+  const recompute = report.bundle.version > 1
   const steps = [
     { label: 'evidence records', count: report.bundle.evidence_count },
     { label: 'claims', count: claims.length },
-    { label: 'quotes read by the judge', count: kept + removed.length },
+    {
+      label: recompute
+        ? 'new quotes read by the judge in this recompute'
+        : 'quotes read by the judge',
+      count: kept + removed.length,
+    },
     { label: 'quotes it kept', count: kept },
   ]
   const top = Math.max(1, ...steps.map((step) => step.count))

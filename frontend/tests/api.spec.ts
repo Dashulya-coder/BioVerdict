@@ -526,6 +526,9 @@ test('the report opens with the verdict, the modeled figures and what is missing
   await page.getByRole('link', { name: 'Report' }).click()
   const summary = page.getByRole('region', { name: 'Executive verdict' })
   await expect(summary.getByText('Conditional', { exact: true })).toBeVisible()
+  // The note says what the rule means by Conditional, not that the case is promising.
+  await expect(summary.getByText(/A soft gate fired, a kill criterion awaits/)).toBeVisible()
+  await expect(summary.getByText('quotes read by the judge', { exact: true })).toBeVisible()
   await expect(summary.getByText('Key risks and failure modes')).toBeVisible()
   await expect(summary.getByText('What would change our mind')).toBeVisible()
   await expect(summary.getByText('Not computed: the market could not be sized.')).toBeVisible()

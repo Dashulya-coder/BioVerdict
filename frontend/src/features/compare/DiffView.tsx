@@ -46,7 +46,7 @@ function EvidenceList({ title, items }: { title: string; items: readonly DiffEvi
 
 function VerdictSide({ label, side }: { label: string; side: Side }) {
   return (
-    <div className="relative min-w-0 flex-1 p-6 pl-7">
+    <div className="relative min-w-0 flex-1 basis-56 p-6 pl-7">
       <span
         aria-hidden="true"
         className={`absolute inset-y-6 left-0 w-1 rounded-full ${verdictLook(side.verdict).fill}`}
@@ -78,7 +78,8 @@ export function DiffView({ diff }: { diff: RunDiff }) {
         <div className="panel">
           <div className="flex flex-wrap items-center">
             <VerdictSide label="Before" side={diff.base} />
-            <span aria-hidden="true" className="px-2 text-2xl text-muted">
+            {/* On a phone the two sides stand one under the other, and the arrow goes. */}
+            <span aria-hidden="true" className="hidden px-2 text-2xl text-muted sm:inline">
               →
             </span>
             <VerdictSide label="After" side={diff.head} />
@@ -90,7 +91,7 @@ export function DiffView({ diff }: { diff: RunDiff }) {
           </p>
         </div>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[480px] text-left text-sm">
+          <table className="w-full text-left text-sm">
             <thead className="text-xs text-muted">
               <tr className="border-b border-rule">
                 <th scope="col" className="py-2 pr-4 font-normal" />
@@ -111,9 +112,11 @@ export function DiffView({ diff }: { diff: RunDiff }) {
                     <th scope="row" className="py-2 pr-4 text-xs font-normal text-muted">
                       {label}
                     </th>
-                    <td className="py-2 pr-4 font-mono text-xs text-muted">{before}</td>
+                    <td className="py-2 pr-4 font-mono text-xs wrap-anywhere text-muted">
+                      {before}
+                    </td>
                     <td
-                      className={`py-2 font-mono text-xs ${before === after ? 'text-muted' : 'font-semibold text-ink'}`}
+                      className={`py-2 font-mono text-xs wrap-anywhere ${before === after ? 'text-muted' : 'font-semibold text-ink'}`}
                     >
                       {after}
                     </td>
