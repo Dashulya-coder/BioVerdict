@@ -13,6 +13,7 @@ const links = apiMode
       ...snapshotLinks,
       { screen: 'report', label: 'Report', icon: 'check' },
       { screen: 'compare', label: 'Compare', icon: 'check' },
+      { screen: 'trace', label: 'Trace', icon: 'search' },
     ] as const)
   : snapshotLinks
 
@@ -49,12 +50,6 @@ export function Sidebar({ screen }: { screen: Screen }) {
           </a>
         ))}
       </nav>
-      <div className="mx-6 mt-7 hidden border-t border-rule pt-5 text-sm text-muted lg:block">
-        <p>Underwriting</p>
-        <p className="mt-3 flex justify-between text-muted/70">
-          Trace <span className="text-xs">Coming soon</span>
-        </p>
-      </div>
       <div className="absolute bottom-7 hidden px-6 text-xs leading-6 text-muted lg:block">
         <span className="mb-2 block h-px w-8 bg-accent/50" />
         Evidence before conclusions.

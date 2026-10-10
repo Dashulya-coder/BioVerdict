@@ -6,17 +6,31 @@ caller injects: canned answers for a fixture run, the real client for a live one
 
 from __future__ import annotations
 
+import logging
 import sqlite3
 
 from bioverdict.contracts import LLM
+from bioverdict.llm.errors import LLMError
 from bioverdict.reasoning import ModuleReasoner
+from bioverdict.reasoning.critique import ask, challenge
 from bioverdict.reasoning.grounding import Drop, fill_missing_chain_links
 from bioverdict.reasoning.modules import ALL_MODULES
+from bioverdict.scoring.confidence import apply_confidence
 from bioverdict.scoring.financials import financial_model, with_financials
 from bioverdict.scoring.verdict import score_verdict
-from bioverdict.store.models import Basis, Bundle, VerdictResult, VerificationCheck
+from bioverdict.store.models import (
+    Basis,
+    Bundle,
+    Claim,
+    ClaimEvidenceLink,
+    DiligenceQuestion,
+    VerdictResult,
+    VerificationCheck,
+)
 from bioverdict.store.runs_repo import DONE, add_event, finish_run, get_run, save_claims
 from bioverdict.store.verification_repo import save_checks
+
+log = logging.getLogger(__name__)
 
 QUOTE_CHECK = "quote_in_source"  # a citation that code could not ground in the bundle
 DROPPED_CHECK = "claim_dropped"  # the claim was removed from the report for that reason
@@ -56,6 +70,70 @@ def indication_of(conn: sqlite3.Connection, run_id: str) -> str:
     return resolver.indication.name if resolver is not None else ""
 
 
+def skeptic_pass(
+    conn: sqlite3.Connection,
+    run_id: str,
+    bundle: Bundle,
+    llm: LLM,
+    claims: list[Claim],
+    links: list[ClaimEvidenceLink],
+) -> tuple[list[Claim], list[ClaimEvidenceLink], list[str]]:
+    """Objections grounded in the bundle become `contradicts` links; confidence follows by formula.
+
+    The Skeptic is advisory: when its model call fails the report is made without it, and the
+    run says so in its events. Returns the claims, the links and the text of the kept objections.
+    """
+    add_event(conn, run_id, "skeptic", "started")
+    try:
+        found = challenge(llm, bundle, claims, links)
+    except LLMError as exc:
+        log.warning("skeptic skipped for %s: %s", run_id, exc)
+        add_event(conn, run_id, "skeptic", "skipped", f"{type(exc).__name__}")
+        return claims, links, []
+    save_checks(conn, run_id, found.checks)
+    dropped = sum(not c.passed for c in found.checks)
+    add_event(
+        conn,
+        run_id,
+        "skeptic",
+        "done",
+        f"{len(found.links)} objection(s) grounded in the evidence, {dropped} dropped by code",
+    )
+    if not found.links:
+        return claims, links, found.objections
+    links = [*links, *found.links]
+    claims = apply_confidence(claims, links, bundle.evidence_by_id(), bundle.as_of)
+    return claims, links, found.objections
+
+
+def chair_pass(
+    conn: sqlite3.Connection,
+    run_id: str,
+    bundle: Bundle,
+    llm: LLM,
+    claims: list[Claim],
+    result: VerdictResult,
+    objections: list[str],
+) -> list[DiligenceQuestion]:
+    """The Chair's questions, ranked by code. Advisory like the Skeptic: a failure gives none."""
+    add_event(conn, run_id, "chair", "started")
+    try:
+        questions = ask(
+            llm,
+            bundle,
+            claims,
+            [g.near_miss for g in result.gates if g.near_miss],
+            objections,
+            rnpv=result.rnpv,
+        )
+    except LLMError as exc:
+        log.warning("chair skipped for %s: %s", run_id, exc)
+        add_event(conn, run_id, "chair", "skipped", f"{type(exc).__name__}")
+        return []
+    add_event(conn, run_id, "chair", "done", f"{len(questions)} diligence question(s), ranked")
+    return questions
+
+
 def reason_and_score(
     conn: sqlite3.Connection, run_id: str, bundle: Bundle, llm: LLM
 ) -> VerdictResult:
@@ -72,7 +150,6 @@ def reason_and_score(
     claims = [c for c in claims if c.id not in rejected]
     links = [link for link in links if link.claim_id not in rejected]
     claims += fill_missing_chain_links(claims, bundle, run_id, next_number)
-    save_claims(conn, run_id, claims, links, bundle.version)
     save_checks(conn, run_id, drop_checks(reasoner.trace.drops, rejected))
     corrections = sum(not d.is_citation_failure for d in reasoner.trace.drops)
     add_event(
@@ -84,10 +161,16 @@ def reason_and_score(
         f"{', '.join(sorted(rejected)) or 'none'}; {corrections} other corrections by code",
     )
 
+    claims, links, objections = skeptic_pass(conn, run_id, bundle, llm, claims, links)
+    save_claims(conn, run_id, claims, links, bundle.version)
+
     add_event(conn, run_id, "score", "started")
     fin = financial_model(bundle, indication_of(conn, run_id))
     result = with_financials(score_verdict(claims, fin.rnpv.rnpv if fin.rnpv else None), fin)
     add_event(conn, run_id, "score", "done", f"{result.verdict.value} ({result.confidence:.2f})")
+
+    questions = chair_pass(conn, run_id, bundle, llm, claims, result, objections)
+    result = result.model_copy(update={"diligence_questions": questions})
 
     finish_run(conn, run_id, DONE, result)
     add_event(conn, run_id, "run", "done")

@@ -299,16 +299,16 @@ def test_progress_streams_as_server_sent_events_and_ends(client: TestClient) -> 
     assert [e["event"] for e in events][:2] == ["resolve", "resolve"]
     assert events[-1]["event"] == "end"
     assert json.loads(events[0]["data"])["step"] == "resolve"
-    assert [int(e["id"]) for e in events if "id" in e] == list(range(1, 12))
+    assert [int(e["id"]) for e in events if "id" in e] == list(range(1, 16))
 
 
 def test_a_reconnecting_client_receives_only_what_it_missed(client: TestClient) -> None:
     run_id = start(client)
 
-    response = client.get(f"/runs/{run_id}/events", headers={"Last-Event-ID": "9"})
+    response = client.get(f"/runs/{run_id}/events", headers={"Last-Event-ID": "13"})
 
     ids = [int(e["id"]) for e in parse_sse(response.text) if "id" in e]
-    assert ids == [10, 11]
+    assert ids == [14, 15]
 
 
 def test_events_of_an_unknown_run_are_404(client: TestClient) -> None:

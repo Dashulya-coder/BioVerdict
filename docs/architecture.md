@@ -35,7 +35,7 @@ flowchart TD
   COL --> FRZ[Freeze: content-hashed bundle v1]
   FRZ --> B1[Translation chain]
   FRZ --> B2[Commercial and market]
-  B1 --> BB[Bull vs Bear]
+  B1 --> BB[Skeptic]
   B2 --> BB
   BB --> CH[Chair: critical unknowns]
   CH -- targeted round, max 2-3 --> COL2[Collect: only requested items] --> FRZ2[Bundle v2]
@@ -65,8 +65,8 @@ A targeted second round (from Chair) runs Collect only for the requested items, 
 2. **Triage (1-2 min).** Basic facts, red flags, whether any human evidence exists. Decides which sections need depth and which can stay shallow, which controls cost.
 3. **Stage 1, parallel.** Disease and unmet need; mechanism validation; clinical/trials; competition and pipeline; red/green flags; IP and regulatory.
 4. **Stage 2, parallel, depends on stage 1.** Translation chain (needs mechanism and clinical); commercial and market (needs disease and competition).
-5. **Bull vs Bear.** Two reasoning steps build the strongest case for and against, over the same frozen bundle. Bear looks specifically for contradicting evidence and failed analogs.
-6. **Chair.** Lists critical unknowns. Triggers up to 2-3 targeted rounds. What stays unanswered becomes a diligence question.
+5. **Skeptic.** One reasoning step over the same frozen bundle and the claims so far looks for evidence that contradicts them and for failed analogs. An objection is kept only when its quote is in the cited evidence; it becomes a `contradicts` link on the claim and the formula recomputes the confidence. An ungrounded objection is dropped and logged (`skeptic_ungrounded`). If the call fails the report is made without it and the run logs `skeptic skipped`.
+6. **Chair.** Lists what only diligence could settle, as questions about claims; code ranks them by value of information (`scoring.md`). What stays unanswered becomes a diligence question. Not built yet: the targeted second round of collection (bundle v2) that the Chair would trigger.
 7. **Scoring (code).** Gates, confidence, probability of success, rNPV, capital, verdict. See [`scoring.md`](scoring.md).
 8. **Verification.** Grounding and entailment checks before the report is released.
 
@@ -79,7 +79,7 @@ Each agent is a node with a declared contract.
 | `name` | `competition` |
 | `depends_on` | `["resolver"]` |
 | `tools` | `ctgov_search`, `openfda_labels`, `opentargets_drugs` |
-| `model` | cheaper model for collection, stronger for Bear and Chair |
+| `model` | cheaper model for collection, stronger for Skeptic and Chair |
 | `max_steps` | 8 tool calls |
 | `timeout_s` | 90, after which the section is marked `incomplete` |
 | `output_schema` | `{ evidence: [...], claims: [...], unknowns: [...] }` |

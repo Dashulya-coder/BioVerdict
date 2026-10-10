@@ -102,10 +102,10 @@ Priorities: **P0** minimum for an end-to-end verdict with drill-down; **P1** nee
 | B6 | Reasoning modules: disease and unmet need; commercial opportunity (uses TAM numbers from A9) | P1 | 3 |  | [ ] | Domain checklists documented. | Implement disease/unmet-need and commercial modules; consume A9 TAM. |
 | B7 | rNPV Monte Carlo, capital and time to milestone, tornado chart | P1 | 3 |  | [~] | Engine (`scoring/rnpv.py`, #79), stage/market wiring into the verdict and `GET /runs/{id}/financials` with the tornado (#85). The stage is the asset's stage in the run's indication when the bundle gives one. Non-market inputs are labeled placeholders; until they are calibrated K5 is a near miss, not a kill, and a ceiling-sized market gives no rNPV (#88). | Calibrate the placeholder inputs (needs sources), then set `rnpv_calibrated`; tornado chart in the UI (B5). |
 | B8 | Verification: entailment judge (other provider), source authority, temporal validity | P1 | 3 | yes | [~] | Quote/ID grounding in B2; shared cutoff filter. Strict failed-citation claim dropping added by fixture CLI #33. | Implement independent entailment judge, authority/temporal verification and persist verification results. Quote match alone is insufficient. |
-| B9 | Skeptic and Chair steps; diligence questions ranked by value of information | P1 | 3 |  | [ ] | Design documented. | Implement Skeptic, Chair and ranked diligence questions. |
+| B9 | Skeptic and Chair steps; diligence questions ranked by value of information | P1 | 3 |  | [~] | Skeptic (grounded objections become `contradicts` links, confidence recomputed by the formula) and Chair (questions about claims) as model steps after reasoning; questions ranked by code from the verdict recomputed for each answer (`scoring/voi.py`); both steps are advisory and a failed call is logged as skipped. Fixture run, live run and the recompute path produce `diligence_questions`. | The Chair's targeted second collection round (bundle v2); whether the Skeptic's `contradicts` direction holds needs the judge (B8); measure on a live model; calibrate the VoI placeholders. |
 | B10 | Eval set: cases and expectations, sensitivity tests (strong, weak, noise), baselines | P1 | 4 | yes | [~] | Reasoning and scoring unit tests cover evidence/confidence/gate behavior. | Create eval cases/expectations, full strong/weak/noise sensitivity runs and baselines; pair with A8/A7. |
 | B11 | Domain pack (oncology), docs content: sources, limitations, results, demo script | P2 | 3 |  | [~] | Oncology domain pack, source/limitation docs and demo script exist. | Complete measured eval results and working demo examples after M4; review documented claims against actual output. |
-| B12 | Trace and cost panel, progress UI | P2 | 2 |  | [ ] | Trace API/SSE in #31; shared shell in #34. | Implement trace/cost panel and actual run progress in UI. |
+| B12 | Trace and cost panel, progress UI | P2 | 2 |  | [~] | Trace API/SSE in #31; shared shell in #34; `bioverdict cost` (#95). Trace screen (`#trace`, API mode): cost, tokens and calls of the run, cost by step, every model call with its model, time, cache hit, failover and error, and the steps in order; it follows a running run. | Check on a live run; link a step to its claims; progress bar from the SSE stream. |
 | B13 | Reasoning modules: IP/regulatory and red/green flags | P3 | 3 |  | [ ] | IP/regulatory design documented. | Implement reasoning modules and red/green flags. |
 
 ## 3. Why the tracks run in parallel
@@ -171,7 +171,8 @@ Frontend status: the English dark console with shared tokens and typed primitive
 resolved assumptions → evidence explorer and sources, and comparing runs, work on the API
 (`pnpm dev:api`) and on the prepared Divarasib snapshot. The report screen (B5) works on the API:
 executive verdict, modeled ranges, translation chain, claim drill-down and open questions; its
-gates list, ranked questions and tornado, and the trace screen (B12), are not built.
+gates list, ranked questions and tornado are not built. The trace screen (B12) shows the cost and the
+calls of a run.
 
 | Milestone | Meaning | Who | Status / remaining |
 |---|---|---|---|

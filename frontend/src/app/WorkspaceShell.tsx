@@ -13,6 +13,7 @@ const titles: Record<Screen, string> = {
   sources: 'Sources',
   compare: 'Compare runs',
   report: 'Report',
+  trace: 'Trace and cost',
 }
 
 export function WorkspaceShell({
