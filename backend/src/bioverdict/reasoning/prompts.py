@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from bioverdict.llm.sizing import wire_len
 from bioverdict.store.models import Bundle, Evidence, EvidenceLevel, SourceKind
 
 # About 40k tokens of evidence. A larger bundle is cut down by priority, never silently:
@@ -94,7 +95,7 @@ def render_evidence(
     blocks = {e.id: _block(e, tag, excerpt_cap) for e in evidence}
     separator = 2  # the blank line between two blocks
     omitted: list[str] = []
-    if sum(len(b) + separator for b in blocks.values()) > max_chars:
+    if sum(wire_len(b) + separator for b in blocks.values()) > max_chars:
         priority = sorted(
             evidence,
             key=lambda e: (
@@ -106,8 +107,9 @@ def render_evidence(
         )
         used, keep = 0, set()
         for e in priority:
-            if used + len(blocks[e.id]) + separator <= max_chars:
-                used += len(blocks[e.id]) + separator
+            size = wire_len(blocks[e.id]) + separator
+            if used + size <= max_chars:
+                used += size
                 keep.add(e.id)
         omitted = sorted(e.id for e in evidence if e.id not in keep)
         blocks = {i: b for i, b in blocks.items() if i in keep}
@@ -157,7 +159,7 @@ def build_prompt(
         evidence, omitted = render_evidence(pool, tag, max_chars)
     else:
         sample = batch_note + _NOTE.format(count=999)
-        room = max(0, budget - len(_assemble(instruction, bundle, "", sample)) - RETRY_RESERVE)
+        room = max(0, budget - wire_len(_assemble(instruction, bundle, "", sample)) - RETRY_RESERVE)
         evidence, omitted = render_evidence(pool, tag, room, excerpt_cap)
     # What was left out of an earlier batch is read in a later one: only the last says "left out".
     note = batch_note + (_NOTE.format(count=len(omitted)) if omitted and batch is None else "")

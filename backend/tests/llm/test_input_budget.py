@@ -165,3 +165,14 @@ def test_a_limit_that_is_not_a_number_is_a_configuration_error(
     monkeypatch.setenv("LLM_MAX_INPUT_CHARS", "lots")
     with pytest.raises(ConfigError, match="LLM_MAX_INPUT_CHARS"):
         LLMConfig.for_provider("openai")
+
+
+def test_the_gateway_counts_a_quote_a_line_break_and_an_accent_by_how_they_travel() -> None:
+    from bioverdict.llm.sizing import wire_len
+
+    assert wire_len("abc") == 3
+    assert wire_len('"') == 2 and wire_len("\n") == 2 and wire_len("é") == 2 and wire_len("≥") == 3
+    provider = OpenAIProvider(client=object())
+    plain = ProviderRequest(model="m", prompt="x" * 100, schema=Answer)
+    quoted = ProviderRequest(model="m", prompt='"' * 100, schema=Answer)
+    assert provider.input_chars(quoted) == provider.input_chars(plain) + 100

@@ -53,6 +53,10 @@ The organizers give each team a key for an Azure-hosted, OpenAI-compatible gatew
 `TEAM_API_KEY` and `LLM_BASE_URL`; `LLM_PROVIDER=openai` forces it). Models: `gpt-6-luna`,
 `gpt-6.1-sol`, `gpt-6-astra`, `gpt-5-mini` (from `/v1/models`). Probed on 2026-10-09:
 
+- **The limit counts the request as it travels**, JSON-encoded and in UTF-8 bytes (measured
+  2026-10-10): a quotation mark or a line break counts 2, an accented letter 2, a symbol such as
+  the 'greater than or equal' sign 3. A prompt of 15,000 characters of biomedical text can be over
+  16,180 (`llm/sizing.py: wire_len`, used by the adapter and by every prompt builder).
 - Chat completions only. Structured output by `response_format` json_schema in strict mode works,
   and so do a system message, `max_completion_tokens` and `reasoning_effort`.
 - `temperature` and the old `max_tokens` are answered with a **502, and the gateway charges a

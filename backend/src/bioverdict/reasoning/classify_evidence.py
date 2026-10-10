@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from pydantic import BaseModel, ConfigDict, Field
 
 from bioverdict.contracts import LLM
+from bioverdict.llm.sizing import wire_len
 from bioverdict.reasoning.grounding import MIN_QUOTE_CHARS, Drop, DropKind, ground_draft
 from bioverdict.reasoning.modules import CLINICAL
 from bioverdict.reasoning.prompts import (
@@ -119,7 +120,7 @@ def build_prompts(
     if budget is None:
         return [(build_prompt(claims, new_evidence, bundle), new_evidence)], []
     tag = boundary_tag(bundle)
-    room = max(0, budget - len(_assemble(claims, "", bundle)) - RETRY_RESERVE)
+    room = max(0, budget - wire_len(_assemble(claims, "", bundle)) - RETRY_RESERVE)
     prompts: list[tuple[str, list[Evidence]]] = []
     remaining = new_evidence
     while remaining and len(prompts) < MAX_BATCHES:

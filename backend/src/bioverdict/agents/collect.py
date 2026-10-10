@@ -27,6 +27,7 @@ from bioverdict.llm.errors import (
     LLMError,
     RunTimeoutError,
 )
+from bioverdict.llm.sizing import wire_len
 from bioverdict.reasoning.prompts import RETRY_RESERVE
 from bioverdict.store.bundle import select_bundle_evidence
 from bioverdict.store.models import (
@@ -101,7 +102,7 @@ def _fit(
     room = min(plan.max_chars, sum(len(record.excerpt) for record in records))
     for _ in range(8):
         prompt, supplied, _ = prepare_prompt(records, query, plan.section, room, whole_records=True)
-        over = 0 if limit is None else len(prompt) + RETRY_RESERVE - limit
+        over = 0 if limit is None else wire_len(prompt) + RETRY_RESERVE - limit
         if over <= 0 or room <= 128:
             return prompt, supplied
         room = max(128, room - over - 64)
