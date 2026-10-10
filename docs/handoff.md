@@ -126,19 +126,21 @@ changed is in [`collection.md`](collection.md) ("Three tools were added for the 
 
 ## To Dasha, from Arsenii — 2026-10-11
 
-**The interface was redesigned** on `arsenii/F2-redesign`, and it touches your folders
-(`features/report/`, `features/trace/`): a neutral black palette, the verdict first and in its
-colour, tiles with meters, cards for the modules, the gates and the chain. Texts, roles and the
-API shapes are unchanged; the browser tests pass. The branch is built on top of your #129, so
-merge #129 first. What changed and the tokens are in [`design-system.md`](design-system.md); the
-screens are on the [Canva board](https://www.canva.com/d/T-qG6_ucTsY8fFk). Say if a colour or a
-block reads wrong on your screens.
+**The interface was redesigned and merged** (#132, #133), and it touches your folders
+(`features/report/`, `features/trace/`). The palette is a neutral black; colour goes on marks
+(a bar, a ring, a border, the square of a badge) and not on words, so the verdict is written in
+plain ink with a coloured ring beside it. The Report opens with an overview on one screen
+(`Overview.tsx`), and "Six modules, six answers" shows one module at a time, its claims in two
+columns, against and for. Compare opens with both verdicts side by side and gives each module a
+track for its balance before and after. Texts and API shapes are unchanged, except that one
+browser test now picks a module before it reads it. The rules are in
+[`design-system.md`](design-system.md), the stage order in [`demo-script.md`](demo-script.md),
+the screens on the [Canva board](https://www.canva.com/d/RAqo-unHbPofeXK) (pages 2 to 8 are the
+merged state; the later pages are earlier options).
 
-**A defect in #129, fixed on that branch:** a link of the report's contents (`#executive`,
-`#questions`, ...) changed the address hash, and the hash names the screen (`app/useScreen.ts`),
-so every contents link opened the New analysis screen. `Contents.tsx` now scrolls by script, and
-a browser test clicks a link. If #129 is merged alone, the links are broken until the redesign
-is merged.
+**Please look, on your latest run:** the Report with a written case ("The underwriting case"
+was seen empty only, the stored run here has none), and Compare on a real recompute with six
+modules and several causes (seen on test data only). Say if a block reads wrong.
 
 **From reading #111 to #128** (no paid run; `pytest`, ruff, `check_compat` and the frontend
 checks pass on `main`):

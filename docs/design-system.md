@@ -1,8 +1,8 @@
 # BioVerdict design system
 
 Direction: **dark analytical workspace**, English interface. The layout and the neutral black
-palette below date from 2026-10-11 ([Canva board](https://www.canva.com/d/T-qG6_ucTsY8fFk):
-every screen, two other colour options and the screen before); they replace the olive palette
+palette below date from 2026-10-11 ([Canva board](https://www.canva.com/d/RAqo-unHbPofeXK):
+pages 2 to 8 are the merged screens, the rest are earlier options and the screen before); they replace the olive palette
 of 2026-10-07. The palette is proposed by Arsenii and awaits both tracks' approval: changing it
 is a change of the tokens only. Quotes, dates and identifiers come from run data.
 The source of truth for tokens is `frontend/src/index.css`, shared by both tracks.
