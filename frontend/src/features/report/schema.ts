@@ -16,6 +16,7 @@ const link = z.object({
   level: z.enum(evidenceLevels),
   published_at: z.iso.date().nullable(),
   badge,
+  judged: z.enum(['judged', 'not_judged', 'no_answer']).default('judged'),
 })
 const claim = z.object({
   id: z.string(),
@@ -42,6 +43,7 @@ const claim = z.object({
   diligence_type: z.string().nullable(),
   depends_on: z.array(z.string()),
   links: z.array(link),
+  checks: z.array(z.object({ check: z.string(), detail: z.string() })).default([]),
 })
 const moduleSchema = z.object({
   module: z.string(),
@@ -63,6 +65,7 @@ export const reportSchema = z.object({
     verdict: verdictSchema,
     confidence: z.number(),
     top_risks: z.array(z.string()),
+    top_risk_claims: z.array(z.array(z.string())).default([]),
     what_would_change_our_mind: z.array(z.string()),
     capital: range.nullable(),
     months_to_milestone: range.nullable(),

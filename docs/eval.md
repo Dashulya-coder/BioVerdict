@@ -76,7 +76,7 @@ A deal or market reaction is a noisy proxy for an expert verdict. Record it as a
   recorded_at: 2026-10-10
 ```
 
-The cases in the repository are a reading of the public record by a person, each fact with the address it came from; none is an expert's answer. The demo pair is `btk-ms-demo`: a BTK inhibitor in multiple sclerosis, entered as an indication and a mechanism, no drug name. It is a class with mixed phase 3 results (fenebrutinib and remibrutinib beat teriflunomide in relapsing MS; evobrutinib and tolebrutinib failed; the FDA refused tolebrutinib in non-relapsing secondary progressive MS), a recognised liver risk, and no approval yet. The three backtests (`evobrutinib-2023-11`, `fenebrutinib-2025-10`, `tolebrutinib-2025-12`) are dated before the readout whose result is recorded as the `outcome`; judge the argument and the risks, not only the verdict (section 5). Sensitivity tests are a separate file, `eval/sensitivity.yaml` (section 8).
+The cases in the repository are a reading of the public record by a person, each fact with the address it came from; none is an expert's answer. The demo pair is `btk-ms-demo`: a BTK inhibitor in multiple sclerosis, entered as an indication and a mechanism, no drug name. It is a class with mixed phase 3 results (fenebrutinib and remibrutinib beat teriflunomide in relapsing MS; evobrutinib and tolebrutinib failed; the FDA issued a complete response letter for tolebrutinib in non-relapsing secondary progressive MS, Sanofi, 2025-12-24; the EU authorised it as Cenrifki on 2026-06-19 for secondary progressive MS without relapses in the last two years, with liver monitoring, EMA, checked 2026-10-10), and a recognised liver risk. An earlier version of this paragraph said "no approval yet": that was wrong for the EU. The three backtests (`evobrutinib-2023-11`, `fenebrutinib-2025-10`, `tolebrutinib-2025-12`) are dated before the readout whose result is recorded as the `outcome`; judge the argument and the risks, not only the verdict (section 5). Sensitivity tests are a separate file, `eval/sensitivity.yaml` (section 8).
 
 ## 5. Time-travel backtesting
 
@@ -169,7 +169,7 @@ Live runs of 2026-10-10 on the public sources and the team gateway (`gpt-6.1-sol
 |---|---|---|---|---|---|---|---|---|
 | Conditional (0.62) | Conditional | 89/89 | 48/48 | 6/6 | 106 (7 unknown) | 70 links judged, 31 removed, 26 claims downgraded, 42 links of context claims not judged | 357 s | $0.99 |
 
-Modules of that run: unmet need supports (weight 0.21 for, 0.00 against), mechanism mixed, translation mixed, clinical development mixed (1.74 for, 1.79 against), competitive and commercial against, investment mixed (gates S1 and S2, PoS 47% modeled). The report's three "top risks" are the gate and key-claim texts ("a link of the translation chain is missing", "a key claim rests on too little evidence", a key claim at 30%), not the risks a person would name (liver injury, no approval, mixed phase 3 results); those are in the claims and the Chair's eight questions. The recorded expected risks therefore match by shared words at about 0.
+Modules of that run: unmet need supports (weight 0.21 for, 0.00 against), mechanism mixed, translation mixed, clinical development mixed (1.74 for, 1.79 against), competitive and commercial against, investment mixed (gates S1 and S2, PoS 47% modeled). The report's three "top risks" are the gate and key-claim texts ("a link of the translation chain is missing", "a key claim rests on too little evidence", a key claim at 30%), not the risks a person would name (liver injury, regional regulatory status, mixed phase 3 results); those are in the claims and the Chair's eight questions. The recorded expected risks therefore match by shared words at about 0.
 
 **A base run with an earlier cutoff** (`--as-of 2024-06-30`): 46 evidence items (the run of today has 171), Conditional (0.52), 61 claims, judge 25 links judged and 4 removed. Registry results are dated by the last update of the record, so far fewer trial results are seen: the benchmark below runs on this thin base.
 
@@ -186,5 +186,19 @@ Modules of that run: unmet need supports (weight 0.21 for, 0.00 against), mechan
 *Method note.* That run compared each case with the base, and the noise case passed only after a drift exception was added to its rule. Since then the runner compares each case with a control at the same cutoff and the noise rule has no exception (section 8); this table was not re-run with it and is kept as the record of the first run.
 
 What it means for the benchmark: the two failures that are not the system's are the ceiling (a balance at +1.00 cannot show an expected rise; the base should be one where the balances are not saturated, or the weak case should expect no move) and the cutoff (a base and a recompute two years apart drift together). The benchmark has never been run with the cutoff of the base equal to that of the recompute, which would need documents dated before the base.
+
+**Coverage of the medical reference set** (`docs/finals-audit.md`, "Medical reference set for the finals"; run `R-20261010-125211-cf5016`, as of 2026-10-10, one live run). This is a **development set, written by us, not held out**: it shows what the bundle and the claims contain, not how the system performs on items it has not seen. Method: each item is looked up in the run's evidence (`/runs/<id>/evidence`) by trial id, PMID or source address; an item counts as *cited* only if a claim has a link to one of its evidence records (`/runs/<id>/report`), not if the claim text happens to mention it.
+
+| Reference item | In the bundle | Cited by a claim |
+|---|---|---|
+| HERCULES, NCT04411641 | 9 registry records; the NEJM paper is not among them | yes: 6 claims (C-0042, C-0043, C-0045 to C-0048) |
+| GEMINI 1/2, PMID 40202623 | yes (E-0112, PubMed) | yes: 4 claims (C-0005, C-0022, C-0023, C-0071) |
+| evolutionRMS 1/2, PMID 39307151 | yes (E-0111, PubMed) | yes: 4 claims (C-0004, C-0015, C-0016, C-0070) |
+| PERSEUS, NCT04458051 | 3 registry records (E-0050 to E-0052) | **no: 0 claims** |
+| Cenrifki EPAR (EMA) | no | no |
+| FENtrepid (Roche, 2026-02-07) | no | no |
+| Fenebrutinib FDA filing acceptance (Roche, 2026-09-30) | no | no |
+
+Also checked: no evidence record and no claim mentions liver injury or hepatic safety (the system's biggest known risk for the class). 39 of the 156 evidence records are cited by any claim: registry 13 of 78, regulatory analogs 13 of 45, literature 10 of 13, preprints 3 of 4, approved analogs 0 of 8, CMS spending 0 of 4, population 0 of 3, target database 0 of 1. Six of the 11 registry trials in the bundle have no citing claim (NCT04458051, NCT04742400, NCT05064436, NCT07067463, NCT07299019, NCT07776743). Reading it: 3 of 7 items are reached by claims, 4 of 7 are absent or unused, and the three absent items are EMA and sponsor press releases, which no connector fetched in this run; the cause of the unused records (modules not given them, or a limit) is not yet checked.
 
 **Not done:** the backtests (`evobrutinib-2023-11`, `fenebrutinib-2025-10`, `tolebrutinib-2025-12`) have not been run on the current code; the closed-book leakage probe and the bare-LLM baseline (paid calls to a model without retrieval, and a way to score its answers); the hand-labelled sample for judge agreement (31 of 70 links removed here, 13 of 72 in the run Arsenii measured: whether either is right needs a person); three repeated runs for stability.
