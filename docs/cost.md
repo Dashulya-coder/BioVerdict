@@ -78,7 +78,10 @@ The organizers give each team a key for an Azure-hosted, OpenAI-compatible gatew
   `gpt-6-luna`; reasoning, classification of new evidence and synthesis on `gpt-6.1-sol`, with
   `gpt-5-mini` as the second model. `gpt-6-astra` costs five times `gpt-6.1-sol` and is not used.
 - The gateway has one vendor's models only, so a judge "from a different provider" (B8) cannot be
-  had here; use a different model family if one is added, and say so in the results.
+  had from it alone. The `judge` step runs on `gpt-6-astra` (the strongest model, not the one that
+  writes the claims; `gpt-5-mini` second) and, when an Anthropic key is also set, on Opus instead
+  (the claims stay on the gateway). A run's trace says which model judged. A claim and its quotes
+  are a few hundred characters, so a run's judge calls cost a few cents even on `gpt-6-astra`.
 - Prices in `GATEWAY_PRICES` are the list prices above; `gpt-5-mini` is a public list price not
   checked against the gateway. The gateway bills its own reserved amounts: compare a run's
   `llm_calls` cost with the portal after the first runs.

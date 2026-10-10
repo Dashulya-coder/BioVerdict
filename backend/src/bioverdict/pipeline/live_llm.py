@@ -61,16 +61,37 @@ def require_configured() -> None:
         raise ConfigError(f"{key_variable(provider)} is not set: a live run needs a model")
 
 
+def other_provider(provider: str) -> str | None:
+    """The vendor that can judge `provider`'s claims: the other one, when its key is set."""
+    other = "openai" if provider == "anthropic" else "anthropic"
+    return other if has_key(other) else None
+
+
 def live_llm(run_id: str, db_path: Path | None = None) -> LLM:
-    """A client for one run: its budget and deadline are counted for this run only."""
+    """A client for one run: its budget and deadline are counted for this run only.
+
+    When both vendors have a key the entailment judge runs on the vendor that did not write the
+    claims; with one key it runs on a stronger model of the same vendor (see `judge_vendor`).
+    """
     require_configured()
     provider = select_provider()
     assert provider is not None
-    adapter = AnthropicProvider() if provider == "anthropic" else OpenAIProvider()
+    adapters = {"anthropic": AnthropicProvider, "openai": OpenAIProvider}
+    config = LLMConfig.for_provider(provider)
+    providers = {provider: adapters[provider]()}
+    judge = other_provider(provider)
+    if judge is not None:
+        config = config.with_judge_from(LLMConfig.for_provider(judge))
+        providers[judge] = adapters[judge]()
     client = LLMClient(
-        LLMConfig.for_provider(provider),
-        {adapter.name: adapter},
+        config,
+        providers,
         cache=DiskCache(settings.cache_dir() / "llm"),
         call_log=SqliteCallLog(db_path or settings.db_path()),
     )
     return client.bind(run_id)
+
+
+def judge_vendor(provider: str) -> str:
+    """Which vendor judges a run, for the runbook and the doctor: 'other' or 'same'."""
+    return "other" if other_provider(provider) else "same"

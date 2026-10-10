@@ -22,7 +22,7 @@ These become diligence questions with the data type named.
 
 - **Public data only.** Curated commercial databases are out of scope.
 - **Unapproved drugs:** no label, no adverse-event database, no Orange/Purple Book entry; see `sources.md`.
-- **Language models guess.** The closed-world design and quote gate reduce, but do not eliminate, wrong or unsupported claims. The entailment judge is scored against a manual sample and is not perfect.
+- **Language models guess.** The closed-world design and quote gate reduce, but do not eliminate, wrong or unsupported claims. The entailment judge is scored against a manual sample and is not perfect. With one vendor's key the judge is a different model of the same vendor as the model that wrote the claims, so a blind spot of the family is shared; with both keys it is another vendor.
 - **Historical backtests leak.** Models know many outcomes; we judge arguments and risks, not only verdicts.
 - **No ground truth.** Outcomes take years; we measure process quality, stability and sensitivity.
 - **Calibration is limited.** Thresholds are tuned on a small set built from public signals, not on expert verdicts.

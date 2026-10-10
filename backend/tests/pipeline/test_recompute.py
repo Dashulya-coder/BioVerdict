@@ -251,7 +251,9 @@ def classified(conn, answer: dict):
         conn,
         "R-2",
         lambda: bundle,
-        lambda: FakeLLM({"reasoning.classify": answer, "chair": {"questions": []}}),
+        lambda: FakeLLM(
+            {"reasoning.classify": answer, "chair": {"questions": []}, "judge": {"judgments": []}}
+        ),
     )
 
 
@@ -320,7 +322,10 @@ def test_an_invented_quote_places_nothing_and_the_run_still_finishes(conn) -> No
     assert result is not None
     after, _ = load_claims(conn, "R-2")
     assert [c.confidence for c in after] == [c.confidence for c in before]
-    checks = conn.execute("SELECT check_name FROM verification_log WHERE run_id = 'R-2'").fetchall()
+    checks = conn.execute(
+        "SELECT check_name FROM verification_log WHERE run_id = 'R-2' "
+        "AND check_name NOT IN ('source_authority', 'temporal_validity')"
+    ).fetchall()
     assert [row["check_name"] for row in checks] == ["quote_in_source"]
 
 

@@ -270,5 +270,105 @@
         "answered_by": "experiment"
       }
     ]
+  },
+  "judge": {
+    "judgments": [
+      {
+        "claim_id": "C-0001",
+        "evidence_id": "E-0006",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0001",
+        "evidence_id": "E-0015",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0002",
+        "evidence_id": "E-0010",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0004",
+        "evidence_id": "E-0001",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0005",
+        "evidence_id": "E-0002",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0006",
+        "evidence_id": "E-0005",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0007",
+        "evidence_id": "E-0007",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0007",
+        "evidence_id": "E-0009",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0008",
+        "evidence_id": "E-0008",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0009",
+        "evidence_id": "E-0011",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0009",
+        "evidence_id": "E-0012",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0013",
+        "evidence_id": "E-0010",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0016",
+        "evidence_id": "E-0007",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0017",
+        "evidence_id": "E-0005",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0018",
+        "evidence_id": "E-0008",
+        "relation": "supports",
+        "reason": "the quote states it"
+      },
+      {
+        "claim_id": "C-0017",
+        "evidence_id": "E-0003",
+        "relation": "unrelated",
+        "reason": "a trial status says nothing about the size of the benefit"
+      }
+    ]
   }
 }

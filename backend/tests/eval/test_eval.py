@@ -82,7 +82,11 @@ def test_citations_of_evidence_after_the_cutoff_are_counted_and_logged(conn) -> 
     rejected = [c for c in checks if c.check_name == "quote_in_source"]
     dropped = [c for c in checks if c.check_name == "claim_dropped"]
     assert len(rejected) == m.citations_rejected and len(dropped) == m.claims_dropped
-    assert all(not c.passed and c.detail for c in checks)
+    assert all(
+        not c.passed and c.detail
+        for c in checks
+        if c.check_name in {"quote_in_source", "claim_dropped"}
+    )
     assert {c.claim_id for c in rejected} <= {c.claim_id for c in dropped}
 
 

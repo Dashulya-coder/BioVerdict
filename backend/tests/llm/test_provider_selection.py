@@ -17,6 +17,7 @@ STEPS = {
     "reasoning.classify",
     "skeptic",
     "chair",
+    "judge",
     "synthesis",
 }
 
@@ -87,3 +88,40 @@ def test_the_anthropic_preset_is_the_default_and_unknown_providers_are_refused()
     assert LLMConfig.for_provider("anthropic") == LLMConfig.default()
     with pytest.raises(ConfigError, match="unknown provider"):
         LLMConfig.for_provider("gemini")
+
+
+def test_the_judge_runs_on_the_other_vendor_when_both_have_a_key() -> None:
+    from bioverdict.llm.config import ASTRA, OPUS
+
+    anthropic = LLMConfig.for_provider("anthropic")
+    gateway = LLMConfig.for_provider("openai")
+
+    assert anthropic.step("judge").models == [OPUS] and gateway.step("judge").models[0] == ASTRA
+    moved = anthropic.with_judge_from(gateway)
+    assert moved.step("judge").models[0] == ASTRA
+    assert moved.step("reasoning.clinical").models == anthropic.step("reasoning.clinical").models
+    assert ASTRA in moved.prices
+    assert anthropic.step("judge").models == [OPUS]  # the original is untouched
+
+
+def test_the_judge_is_never_the_model_that_writes_the_claims() -> None:
+    for provider in ("anthropic", "openai"):
+        config = LLMConfig.for_provider(provider)
+        assert config.step("judge").models[0] != config.step("reasoning.clinical").models[0]
+
+
+def test_a_live_client_judges_on_the_other_vendor_only_when_it_has_a_key(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    monkeypatch.setenv("CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("TEAM_API_KEY", "team")
+    one = live_llm("R-1", tmp_path / "t.db")
+    assert set(one._client._providers) == {"openai"}
+    assert one._client._config.step("judge").models[0].startswith("openai:")
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "claude")
+    monkeypatch.setenv("LLM_PROVIDER", "openai")  # the claims are still written on the gateway
+    both = live_llm("R-2", tmp_path / "t.db")
+    assert set(both._client._providers) == {"openai", "anthropic"}
+    assert both._client._config.step("judge").models[0].startswith("anthropic:")
+    assert both._client._config.step("reasoning.clinical").models[0].startswith("openai:")

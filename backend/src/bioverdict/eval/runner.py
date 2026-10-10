@@ -240,6 +240,8 @@ def summary(report: EvalReport) -> str:
         f"- Unknowns with a diligence type: {honest}.",
         f"- Citations rejected by code: {_total(finished, 'citations_rejected')}; "
         + f"claims dropped for that: {_total(finished, 'claims_dropped')}.",
+        f"- Citation support (judge): {_total(finished, 'entailment_confirmed')} of "
+        + f"{_total(finished, 'entailment_judged')} judged links confirmed.",
         f"- Model calls: {_total(runs, 'llm_calls')} ({_total(runs, 'cache_hits')} from cache), "
         + f"cost ${sum(run.cost_usd for run in runs):.4f}.",
     ]
