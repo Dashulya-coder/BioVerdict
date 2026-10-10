@@ -1,12 +1,113 @@
-# Regression cases (docs/eval.md, section 4). The cases and their expectations are B10 (Dasha).
-# This file holds one case so that the runner has something to run:
+# Evaluation cases (docs/eval.md, sections 4 and 5). The cases and their expectations are B10 (Dasha).
 #   cd backend && uv run bioverdict eval --cases ../eval/cases.yaml --out ../eval/results/<date>
+# `set` says what a case is for: demo (the pair shown on stage), backtest (a retrospective case
+# whose `outcome` is known and never shown to the model), regression, smoke (the runner runs).
+# Sensitivity tests are not here: they are `eval/sensitivity.yaml`, run by `bioverdict sensitivity`.
 # In fixture mode only assets with a fixture can finish; other cases are reported as failed.
+# Every expectation is a reading of the public record by a person, not an expert's answer.
+- id: btk-ms-demo
+  set: demo
+  input:
+    indication: multiple sclerosis
+    mechanism: BTK inhibitor
+  expected_verdict:
+  - Conditional
+  expected_top_risks:
+  - 'No BTK inhibitor is approved for multiple sclerosis: the FDA refused tolebrutinib in non-relapsing
+    secondary progressive MS'
+  - Drug-induced liver injury is a recognised risk of the class
+  - 'Phase 3 results are mixed across the class: evobrutinib and tolebrutinib failed, fenebrutinib and
+    remibrutinib beat teriflunomide'
+  - Most relapsing-MS trials compare with teriflunomide, not with the higher-efficacy anti-CD20 antibodies
+  signals:
+  - text: 'Fenebrutinib: FENhance 1 and 2 reduced the annualised relapse rate versus teriflunomide in
+      relapsing MS; FENtrepid was noninferior to ocrelizumab in primary progressive MS'
+    url: https://www.roche.com/media/releases/med-cor-2026-04-21c
+    date: 2026-04-21
+  - text: 'Remibrutinib: REMODEL-1 and -2 met the primary endpoint versus teriflunomide; no liver safety
+      signal reported by the sponsor'
+    url: https://www.novartis.com/news/media-releases/novartis-remibrutinib-high-efficacy-oral-btk-inhibitor-significantly-reduces-relapse-rates-and-shows-favorable-safety-profile-phase-iii-rms-trials
+    date: 2026-09-01
+  - text: 'Tolebrutinib: PERSEUS in primary progressive MS did not meet its primary endpoint; drug-induced
+      liver injury is an identified risk'
+    url: https://www.sanofi.com/assets/dotcom/pressreleases/2025/2025-12-15-06-05-00-3205094-en.pdf
+    date: 2025-12-15
+  - text: 'Tolebrutinib: the FDA issued a complete response letter for non-relapsing secondary progressive
+      MS'
+    url: https://multiplesclerosisnewstoday.com/news-posts/2025/12/29/fda-denies-tolebrutinib-approval-nonrelapsing-progressive-ms/
+    date: 2025-12-29
+  - text: 'Evobrutinib: the two phase 3 EVOLUTION trials did not beat teriflunomide on annualised relapse
+      rate'
+    url: https://www.mssociety.org.uk/research/latest-research/latest-research-news-and-blogs/phase-3-trials-show-evobrutinib-no-better-existing-treatments-people-relapsing-ms
+    date: 2023-12-05
+  recorded_by: Dasha (the demo pair; a reading of the public record, not an expert's answer)
+  recorded_at: 2026-10-10
+- id: evobrutinib-2023-11
+  set: backtest
+  input:
+    asset: evobrutinib
+  as_of: 2023-11-30
+  expected_verdict:
+  - Conditional
+  - Do Not Invest
+  expected_top_risks:
+  - 'No phase 3 result yet: the benefit over teriflunomide is not shown'
+  - Liver enzyme elevations
+  outcome:
+    text: The two phase 3 EVOLUTION trials in relapsing MS did not show a lower annualised relapse rate
+      than teriflunomide.
+    url: https://www.mssociety.org.uk/research/latest-research/latest-research-news-and-blogs/phase-3-trials-show-evobrutinib-no-better-existing-treatments-people-relapsing-ms
+    date: 2023-12-05
+  signals: []
+  recorded_by: Dasha (a retrospective case; the expectation is a range, not an expert's answer)
+  recorded_at: 2026-10-10
+- id: fenebrutinib-2025-10
+  set: backtest
+  input:
+    asset: fenebrutinib
+  as_of: 2025-10-31
+  expected_verdict:
+  - Conditional
+  - Invest
+  expected_top_risks:
+  - Liver safety
+  - Phase 3 readouts still pending
+  outcome:
+    text: Genentech reported that FENhance 2 reduced the annualised relapse rate versus teriflunomide
+      and that FENtrepid was noninferior to ocrelizumab in primary progressive MS.
+    url: https://www.neurologylive.com/view/fenebrutinib-hits-key-phase-3-marks-relapsing-primary-progressive-ms
+    date: 2025-11-09
+  signals: []
+  recorded_by: Dasha (a retrospective case; the expectation is a range, not an expert's answer)
+  recorded_at: 2026-10-10
+- id: tolebrutinib-2025-12
+  set: backtest
+  input:
+    asset: tolebrutinib
+  as_of: 2025-12-01
+  expected_verdict:
+  - Conditional
+  - Do Not Invest
+  expected_top_risks:
+  - Drug-induced liver injury
+  - The FDA review of non-relapsing secondary progressive MS was delayed again
+  - The primary progressive trial (PERSEUS) had not read out
+  outcome:
+    text: PERSEUS in primary progressive MS did not meet its primary endpoint (2025-12-15) and the FDA
+      issued a complete response letter for non-relapsing secondary progressive MS (December 2025).
+    url: https://www.sanofi.com/assets/dotcom/pressreleases/2025/2025-12-15-06-05-00-3205094-en.pdf
+    date: 2025-12-15
+  signals: []
+  recorded_by: Dasha (a retrospective case with sensitivity probes; not an expert's answer)
+  recorded_at: 2026-10-10
 - id: divarasib-2026-10
-  input: { asset: divarasib }
+  set: smoke
+  input:
+    asset: divarasib
   as_of: 2026-10-07
-  # From the schema example in docs/eval.md; not an expert's answer. Replace when B10 records one.
-  expected_verdict: [Conditional, Invest]
+  expected_verdict:
+  - Conditional
+  - Invest
   expected_top_risks: []
   signals: []
   recorded_by: Arsenii (runner smoke case)

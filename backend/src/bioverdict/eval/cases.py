@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date as date_type
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
@@ -42,6 +43,23 @@ class Signal(BaseModel):
     date: date_type | str | None = None  # YAML reads a bare date as a date
 
 
+# Which collection a case belongs to. `demo` is the pair shown on stage, `regression` holds
+# expert-style expectations, `backtest` is a retrospective case whose `outcome` is known, and
+# `smoke` only proves that the runner runs.
+CaseSet = Literal["demo", "regression", "backtest", "smoke"]
+
+
+class Outcome(BaseModel):
+    """What happened after `as_of`, for a retrospective case. It is never shown to the model: the
+    report puts it beside the verdict and the risks so that a person can judge the argument."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    text: str
+    url: str | None = None
+    date: date_type | str | None = None
+
+
 class EvalCase(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -53,6 +71,8 @@ class EvalCase(BaseModel):
     signals: list[Signal] = []
     recorded_by: str | None = None
     recorded_at: date_type | str | None = None
+    set: CaseSet = "regression"
+    outcome: Outcome | None = None  # backtests: what happened next
 
 
 _CASES = TypeAdapter(list[EvalCase])

@@ -224,3 +224,21 @@ def test_an_objection_lowers_the_claim_it_contradicts_by_the_formula(conn) -> No
 
     assert len(links) == 2 and objections
     assert out[0].confidence < before[0].confidence
+
+
+def test_a_long_list_of_notes_cannot_crowd_the_claims_out_of_the_chairs_request() -> None:
+    from bioverdict.llm.sizing import wire_len
+    from bioverdict.reasoning.prompts import RETRY_RESERVE
+
+    budget = 16_000
+    claims = [
+        claim(f"C-{n:04d}", 0.8, text="a fairly long claim about the drug " * 6)
+        for n in range(1, 81)
+    ]
+    claims.append(claim("C-9999", 0.9, critical=True, text="the key claim"))
+
+    chair = chair_prompt(BUNDLE, claims, ["near miss " * 60] * 40, ["objection " * 60] * 40, budget)
+
+    assert wire_len(chair) + RETRY_RESERVE <= budget
+    assert chair.count("- near miss") == 8 and chair.count("- objection") == 8
+    assert "C-9999" in chair

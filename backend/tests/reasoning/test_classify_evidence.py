@@ -357,3 +357,35 @@ def test_an_inference_without_any_citation_is_not_added() -> None:
         ),
     )
     assert found.new_claims == [] and len(found.rejected_claims) == 1
+
+
+def test_a_report_of_dozens_of_claims_still_leaves_room_for_the_new_evidence() -> None:
+    from bioverdict.llm.sizing import wire_len
+    from bioverdict.reasoning.classify_evidence import build_prompts
+    from bioverdict.reasoning.prompts import RETRY_RESERVE
+
+    claims, _, _ = finished_run()
+    many = [
+        claims[0].model_copy(
+            update={"id": f"C-{n:04d}", "text": "a long claim about the drug " * 12}
+        )
+        for n in range(1, 71)
+    ]
+    document = added(
+        "E-9001", "A decisive result, stated plainly.", EvidenceLevel.HUMAN_INTERVENTIONAL, "g"
+    )
+    budget = 16_000
+
+    prompts, unread = build_prompts(many, [document], BUNDLE, budget)
+
+    assert unread == [] and len(prompts) == 1
+    text, shown = prompts[0]
+    assert shown == [document] and "A decisive result, stated plainly." in text
+    assert wire_len(text) + RETRY_RESERVE <= budget
+    assert "[C-0070]" in text  # every claim can still be linked
+
+
+def test_evidence_about_another_drug_or_disease_is_to_be_left_unmatched() -> None:
+    prompt = build_prompt([], [], BUNDLE)
+
+    assert "another drug" in prompt and "unmatched" in prompt

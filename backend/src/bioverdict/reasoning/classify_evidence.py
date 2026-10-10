@@ -48,10 +48,13 @@ where the new evidence belongs.
    A weak or indirect result (a cell experiment against a human finding) is still a link: how
    much it matters is decided by code, not by you.
 2. new_claims: only for a fact the new evidence states that no existing claim already states
-   (for example a trial stopped for futility, or a safety action). Same rules as for any claim: a
-   verbatim quote, a basis, no numbers of your own. Leave the list empty when the existing claims
-   already cover the evidence.
-3. unmatched: ids of new evidence that bears on nothing in the report.
+   (for example a trial stopped for futility, or a safety action), and only about the asset or
+   class this report is about, in the disease it is about. Same rules as for any claim: a verbatim
+   quote, a basis, no numbers of your own. Leave the list empty when the existing claims already
+   cover the evidence.
+3. unmatched: ids of new evidence that bears on nothing in the report. Evidence about another drug
+   or another disease belongs here, even if it is a strong result: it is not a link and not a
+   new claim.
 
 Never give a confidence, a probability or a verdict.
 """
@@ -90,17 +93,36 @@ MAX_CLAIM_CHARS = 240  # an existing claim is shown by its beginning in the prom
 MAX_BATCHES = 6
 
 
-def _existing(claims: list[Claim]) -> str:
+MIN_CLAIM_CHARS = 60  # a claim is never shown by less than this when the prompt is crowded
+EVIDENCE_ROOM = 2_000  # what a prompt keeps for the new evidence, however many claims there are
+LINE_OVERHEAD = 50  # "[C-0007] (clinical, extracted) " and the newline
+
+
+def _existing(claims: list[Claim], cap: int = MAX_CLAIM_CHARS) -> str:
     return "\n".join(
-        f"[{c.id}] ({c.section.value}, {c.basis.value}) {c.text[:MAX_CLAIM_CHARS]}"
+        f"[{c.id}] ({c.section.value}, {c.basis.value}) {c.text[:cap]}"
         for c in sorted(claims, key=lambda c: c.id)
     )
 
 
-def _assemble(claims: list[Claim], evidence: str, bundle: Bundle) -> str:
+def claim_cap(claims: list[Claim], budget: int | None, bundle: Bundle) -> int:
+    """How much of each claim the prompt shows. A report of dozens of claims would otherwise leave
+    no room for the new evidence on a small endpoint (a live run of 61 claims turned the added
+    document away as "not read"): the claims are shortened, down to `MIN_CLAIM_CHARS`, before the
+    evidence is."""
+    if budget is None or not claims:
+        return MAX_CLAIM_CHARS
+    room = budget - wire_len(_assemble([], "", bundle)) - RETRY_RESERVE - EVIDENCE_ROOM
+    each = room // len(claims) - LINE_OVERHEAD
+    return max(MIN_CLAIM_CHARS, min(MAX_CLAIM_CHARS, each))
+
+
+def _assemble(
+    claims: list[Claim], evidence: str, bundle: Bundle, cap: int = MAX_CLAIM_CHARS
+) -> str:
     return (
         CLOSED_WORLD.format(as_of=bundle.as_of.isoformat(), tag=boundary_tag(bundle))
-        + f"\n## Your task\n{_TASK}\n## Existing claims\n{_existing(claims) or '(none)'}\n"
+        + f"\n## Your task\n{_TASK}\n## Existing claims\n{_existing(claims, cap) or '(none)'}\n"
         + f"\n## New evidence\n{evidence}\n"
     )
 
@@ -122,7 +144,8 @@ def build_prompts(
     if budget is None:
         return [(build_prompt(claims, new_evidence, bundle), new_evidence)], []
     tag = boundary_tag(bundle)
-    room = max(0, budget - wire_len(_assemble(claims, "", bundle)) - RETRY_RESERVE)
+    cap = claim_cap(claims, budget, bundle)
+    room = max(0, budget - wire_len(_assemble(claims, "", bundle, cap)) - RETRY_RESERVE)
     prompts: list[tuple[str, list[Evidence]]] = []
     remaining = new_evidence
     while remaining and len(prompts) < MAX_BATCHES:
@@ -131,7 +154,7 @@ def build_prompts(
         shown = [e for e in remaining if e.id not in left]
         if not shown:  # not even one piece fits beside the claims
             break
-        prompts.append((_assemble(claims, text, bundle), shown))
+        prompts.append((_assemble(claims, text, bundle, cap), shown))
         remaining = [e for e in remaining if e.id in left]
     return prompts, [e.id for e in remaining]
 

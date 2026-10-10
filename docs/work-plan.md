@@ -58,8 +58,8 @@ against `eval/sensitivity.yaml`.
    later cutoff and move the `as_of` of the sensitivity cases with it.
 2. `bioverdict sensitivity` on that base: it has never been run with a real model. Its table
    goes to `docs/eval.md`, section 9.
-3. Run time: the last two runs took 7 min 21 s and 5 min 7 s against `RUN_TIMEOUT_S=420`. Raise the limit on the demo machine
-   and pre-warm the model cache.
+3. Run time: the last two runs took 7 min 21 s and 5 min 7 s against `RUN_TIMEOUT_S=420`; the default is now 900. Check the `.env` of the demo machine (a copy of
+   the old `.env.example` says 420) and pre-warm the model cache.
 4. No patient count for multiple sclerosis in the connectors, so no market size and no rNPV for
    the demo pair (A9).
 5. The same trial result is restated by the mechanism, translation and clinical modules and

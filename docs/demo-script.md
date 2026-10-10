@@ -52,8 +52,9 @@ That is the third thing criterion A asks for implicitly: change for the right re
       `--as-of 2024-06-30` as the base for time travel and the benchmark (Dasha, paid).
 - [ ] `bioverdict sensitivity` on that base; paste the table into [eval](eval.md), section 9.
       It has never been run with a real model: if a case fails, show it as failed.
-- [ ] `RUN_TIMEOUT_S`: a run for this pair took 4 to 7 minutes on the gateway; the default 420
-      seconds cut the Chair off once. Raise it for the demo machine and pre-warm the model cache.
+- [ ] `RUN_TIMEOUT_S`: a run for this pair took 4 to 7 minutes on the gateway; the old default of 420
+      seconds cut the Chair off once and the default is now 900. A `.env` copied from an older
+      `.env.example` still says 420: set it to 900 on the demo machine, and pre-warm the model cache.
 - [ ] rNPV for multiple sclerosis is not computed (no open prevalence source in the connectors).
       Say so; do not present a market number.
 

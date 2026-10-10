@@ -59,19 +59,24 @@ Candidate cases from our plan (verify each fact by search before recording an ex
 
 A deal or market reaction is a noisy proxy for an expert verdict. Record it as a *signal*, and write expectations as ranges ("Conditional or better") unless the signal is clear.
 
-`eval/cases.yaml` schema:
+`eval/cases.yaml` schema (`eval/cases.py`; `set` and `outcome` are optional, so an older file still loads):
 
 ```yaml
-- id: divarasib-2026-10
-  input: { asset: divarasib }
-  as_of: 2026-10-06
-  expected_verdict: [Conditional, Invest]
-  expected_top_risks: ["competition from approved KRAS G12C inhibitors", "..."]
+- id: tolebrutinib-2025-12
+  set: backtest                      # demo | regression | backtest | smoke   (default: regression)
+  input: { asset: tolebrutinib }     # or { indication: ..., mechanism: ... } or { query: "..." }
+  as_of: 2025-12-01
+  expected_verdict: [Conditional, Do Not Invest]
+  expected_top_risks: ["Drug-induced liver injury", "..."]
   signals:
     - { text: "...", url: "...", date: "..." }
+  outcome:                           # a backtest: what happened after as_of; never shown to the model
+    { text: "...", url: "...", date: 2025-12-15 }
   recorded_by: Dasha
-  recorded_at: TODO
+  recorded_at: 2026-10-10
 ```
+
+The cases in the repository are a reading of the public record by a person, each fact with the address it came from; none is an expert's answer. The demo pair is `btk-ms-demo`: a BTK inhibitor in multiple sclerosis, entered as an indication and a mechanism, no drug name. It is a class with mixed phase 3 results (fenebrutinib and remibrutinib beat teriflunomide in relapsing MS; evobrutinib and tolebrutinib failed; the FDA refused tolebrutinib in non-relapsing secondary progressive MS), a recognised liver risk, and no approval yet. The three backtests (`evobrutinib-2023-11`, `fenebrutinib-2025-10`, `tolebrutinib-2025-12`) are dated before the readout whose result is recorded as the `outcome`; judge the argument and the risks, not only the verdict (section 5). Sensitivity tests are a separate file, `eval/sensitivity.yaml` (section 8).
 
 ## 5. Time-travel backtesting
 
