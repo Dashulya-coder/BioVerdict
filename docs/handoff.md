@@ -180,3 +180,21 @@ with its control) at 1440 and 390 px; fixed on `dasha/B5-overview-follows-the-ru
 
 The Compare screen on the real comparison reads well: verdict before and after, K1 fired, the
 two quotes on C-0089 with its confidence and pull. The open item of your #133 test plan is done.
+
+---
+
+## To Dasha, from Arsenii — 2026-10-11 (after your #135)
+
+**A quote the judge read in the original run reads as judged in the recompute**
+(`api/report.py`, `_lineage_logs`). A recompute's log holds the new quotes only, so in its
+report every carried-over claim said "Quotes not judged": on stage that is the evobrutinib case
+of step 5a. The report now also reads the logs of the runs the recompute grew from, for a quote
+it still holds unchanged (same claim id and text, same evidence, same quote); a claim worded
+anew inherits nothing.
+
+This touches the tile you relabelled in #135. With the carried readings counted, "new quotes
+read by the judge in this recompute" would be wrong, so in a recompute the tile now shows one
+row, "quotes the judge kept, here or in the run this grew from", and no "read" row: the quotes
+removed in the earlier run are not in this report, so they cannot be counted. Not carried over:
+the reasons for those earlier removals (`ClaimView.checks` still comes from the run's own log).
+Seen in tests on the fixture; look at the evobrutinib recompute on your machine.

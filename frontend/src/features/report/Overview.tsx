@@ -282,19 +282,17 @@ function FlowTile({ report }: { report: Report }) {
   const links = claims.flatMap((claim) => claim.links)
   const kept = links.filter((link) => link.judged === 'judged').length
   const removed = claims.flatMap((claim) => claim.checks).filter((c) => c.check === 'entailment')
-  // A recompute (a later bundle version) asks the judge only about the quotes of the added
-  // evidence; the quotes it carried over were judged in the run it grew from.
+  // A recompute (a later bundle version) asks the judge about the added evidence only, and the
+  // report carries over its reading of the quotes kept from the run it grew from. The quotes it
+  // removed back then are not in this report, so "read" cannot be counted here: only "kept".
   const recompute = report.bundle.version > 1
   const steps = [
     { label: 'evidence records', count: report.bundle.evidence_count },
     { label: 'claims', count: claims.length },
-    {
-      label: recompute
-        ? 'new quotes read by the judge in this recompute'
-        : 'quotes read by the judge',
-      count: kept + removed.length,
-    },
-    { label: 'quotes it kept', count: kept },
+    recompute
+      ? { label: 'quotes the judge kept, here or in the run this grew from', count: kept }
+      : { label: 'quotes read by the judge', count: kept + removed.length },
+    ...(recompute ? [] : [{ label: 'quotes it kept', count: kept }]),
   ]
   const top = Math.max(1, ...steps.map((step) => step.count))
   return (
