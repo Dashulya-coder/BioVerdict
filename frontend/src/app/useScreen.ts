@@ -16,7 +16,8 @@ function snapshot(): Screen {
     value === 'evidence' ||
     value === 'sources' ||
     value === 'compare' ||
-    value === 'report'
+    value === 'report' ||
+    value === 'trace'
     ? value
     : 'new'
 }
