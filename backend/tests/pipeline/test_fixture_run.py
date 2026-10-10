@@ -153,3 +153,19 @@ def test_a_fixture_run_ranks_diligence_questions_and_logs_the_skeptic(
     _, links = load_claims(conn, "R-1")
     assert any(l.direction.value == "contradicts" and l.evidence_id == "E-0003" for l in links)
     assert any(c.check_name == "skeptic_objection" for c in load_checks(conn, "R-1"))
+
+
+def test_a_fixture_run_reports_unmet_need_and_commercial_gaps_as_unknowns(
+    conn: sqlite3.Connection,
+) -> None:
+    start(conn)
+    run_fixture(conn, "R-1", "divarasib", FIXTURES)
+
+    claims, _ = load_claims(conn, "R-1")
+
+    commercial = [c for c in claims if c.section.value == "commercial"]
+    assert commercial and all(c.basis.value == "unknown" and c.diligence_type for c in commercial)
+    need = [c for c in claims if c.section.value == "unmet_need"]
+    assert any(c.basis.value != "unknown" for c in need) and any(
+        c.basis.value == "unknown" for c in need
+    )

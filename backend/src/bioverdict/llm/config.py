@@ -160,6 +160,8 @@ class LLMConfig(BaseModel):
                 "reasoning.translation": reasoning,
                 "reasoning.clinical": reasoning,
                 "reasoning.competition": reasoning,
+                "reasoning.unmet_need": reasoning,
+                "reasoning.commercial": reasoning,
                 "reasoning.classify": reasoning,
                 "skeptic": synthesis,
                 "chair": synthesis,
