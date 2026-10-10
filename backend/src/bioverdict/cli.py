@@ -24,6 +24,10 @@ from bioverdict.cost_report import cost_of_run, cost_of_runs
 from bioverdict.doctor import Probe, render, run_checks
 from bioverdict.eval.cases import load_cases
 from bioverdict.eval.runner import StartRun, run_cases, summary, write_report
+from bioverdict.eval.sensitivity import load_cases as load_sensitivity_cases
+from bioverdict.eval.sensitivity import run_cases as run_sensitivity
+from bioverdict.eval.sensitivity import summary as sensitivity_summary
+from bioverdict.eval.sensitivity import write_report as write_sensitivity
 from bioverdict.eval.warm import load_assets, table, warm
 from bioverdict.llm.errors import ConfigError
 from bioverdict.pipeline.fixture_run import fixture_names, run_fixture
@@ -66,6 +70,15 @@ def main(
         "--refresh", action="store_true", help="download again what is already cached"
     )
 
+    sensitive = commands.add_parser(
+        "sensitivity", help="add documents to a finished run and check which modules move"
+    )
+    sensitive.add_argument(
+        "--run", required=True, help="the finished run the documents are added to"
+    )
+    sensitive.add_argument("--cases", type=Path, required=True, help="YAML file of documents")
+    sensitive.add_argument("--out", type=Path, required=True, help="directory for the results")
+
     doctor = commands.add_parser("doctor", help="check that this machine is ready for a run")
     doctor.add_argument("--offline", action="store_true", help="do not contact the sources")
 
@@ -73,7 +86,7 @@ def main(
     cost.add_argument("--run", help="show this run step by step; default: the latest runs")
     cost.add_argument("--limit", type=int, default=10, help="how many latest runs to list")
 
-    for command in (run, evaluate, warming, doctor, cost):
+    for command in (run, evaluate, warming, doctor, cost, sensitive):
         command.add_argument("--db", type=Path, help="SQLite path; defaults to DB_PATH")
     for command in (run, evaluate, doctor):
         command.add_argument("--fixtures", type=Path, help="fixture directory (FIXTURES_DIR)")
@@ -94,6 +107,9 @@ def main(
             print(f"cost: {exc}", file=sys.stderr)
             return 1
         return 0
+
+    if args.command == "sensitivity":
+        return _sensitivity(parser, args)
 
     if args.command == "warm":
         patient = paced_sources(WARM_INTERVAL_S, WARM_ATTEMPTS, refresh=args.refresh)
@@ -197,6 +213,27 @@ def _eval(
         )
         return 1
     return 0
+
+
+def _sensitivity(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
+    """Needs a model (the new document is placed by one), whatever the mode of the base run."""
+    try:
+        require_configured()
+        cases = load_sensitivity_cases(args.cases)
+    except ConfigError as exc:
+        parser.error(str(exc))
+    except (OSError, ValueError) as exc:
+        parser.error(f"cases cannot be read: {exc}")
+    print(f"{len(cases)} document(s) added to {args.run}: paid model calls.", file=sys.stderr)
+    try:
+        with closing(settings.open_database(args.db)) as conn:
+            report = run_sensitivity(conn, args.run, cases, lambda run: live_llm(run, args.db))
+        write_sensitivity(report, args.out)
+    except (OSError, sqlite3.Error) as exc:
+        print(f"sensitivity: {exc}", file=sys.stderr)
+        return 1
+    sys.stdout.write(sensitivity_summary(report))
+    return 0 if report.passed == len(report.cases) else 1
 
 
 def _warm(

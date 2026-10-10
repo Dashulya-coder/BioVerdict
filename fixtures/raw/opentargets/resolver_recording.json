@@ -1,4 +1,86 @@
 {
+ "03485ddd63bbadb5bdbfa7311d54a91ba7d1e4276c172c8f1c54e59f77932672": {
+  "answer": {
+   "data": {
+    "diseases": [
+     {
+      "id": "MONDO_0006559",
+      "name": "hidradenitis suppurativa",
+      "parents": [
+       {
+        "id": "MONDO_0002260"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "acne inversa",
+         "ectopic acne",
+         "fox den disease",
+         "hidradenitis suppurativa",
+         "pyoderma fistulans significa",
+         "verneuil disease",
+         "Acne inversa, familial",
+         "HS",
+         "hidradenitis"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": [
+         "acne inversa, familial"
+        ]
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0024516",
+      "name": "familial acne inversa",
+      "parents": [
+       {
+        "id": "MONDO_0006559"
+       },
+       {
+        "id": "MONDO_0100118"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "ACNINV",
+         "familial hidradenitis suppurativa",
+         "hereditary hidradenitis suppurativa"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  diseases(efoIds: $ids) {\n    id name\n    synonyms { terms }\n    parents { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "MONDO_0006559",
+     "MONDO_0024516"
+    ]
+   }
+  }
+ },
  "037f43c67a6feab6be26c90cf1b1261b81e879267277a4c04f702d6f304e2f32": {
   "answer": {
    "data": {
@@ -2169,6 +2251,55 @@
    }
   }
  },
+ "22528ff526f90ba5db0eced5969d0ac1c3e7e1ad9f439ea24962abf3c9b6b157": {
+  "answer": {
+   "data": {
+    "diseases": [
+     {
+      "id": "MONDO_0005233",
+      "name": "non-small cell lung carcinoma",
+      "parents": [
+       {
+        "id": "MONDO_0005138"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "NSCLC",
+         "NSCLC - non-small cell lung cancer",
+         "non-small cell cancer of lung",
+         "non-small cell cancer of the lung",
+         "non-small cell carcinoma of lung",
+         "non-small cell carcinoma of the lung",
+         "non-small cell lung cancer",
+         "non-small cell lung carcinoma",
+         "non-small cell lung carcinoma (disease)"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  diseases(efoIds: $ids) {\n    id name\n    synonyms { terms }\n    parents { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "MONDO_0005233"
+    ]
+   }
+  }
+ },
  "238cce57efe06be31629e67a8906b20f132afd4e582b4c0b91e027750dbca1c0": {
   "answer": {
    "data": {
@@ -2631,6 +2762,367 @@
     "entity": "drug",
     "name": "SAR444656",
     "size": 10
+   }
+  }
+ },
+ "37a8fa0e51debb24cb23760e85b655b90e2d48b30294dde22f64f25bde89ffce": {
+  "answer": {
+   "data": {
+    "diseases": [
+     {
+      "id": "MONDO_0011122",
+      "name": "obesity disorder",
+      "parents": [
+       {
+        "id": "MONDO_0003916"
+       },
+       {
+        "id": "HP_0004324"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "obesity",
+         "obesity disease",
+         "Having too much body fat",
+         "Adiposis",
+         "Adiposity",
+         "Obese",
+         "Obese (finding)",
+         "Obesity (disorder)",
+         "Obesity NOS",
+         "Obesity [Ambiguous]",
+         "Obesity, unspecified",
+         "Overweight and obesity"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0019182",
+      "name": "inherited obesity",
+      "parents": [
+       {
+        "id": "Orphanet_183573"
+       },
+       {
+        "id": "MONDO_0003847"
+       },
+       {
+        "id": "MONDO_0011122"
+       },
+       {
+        "id": "MONDO_0005151"
+       },
+       {
+        "id": "Orphanet_156638"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "genetic obesity",
+         "genetic obesity (disease)",
+         "leanness, inherited, autosomal recessive",
+         "monogenic obesity",
+         "obesity, association with, Autosomal recessive",
+         "obesity, early-onset, susceptibility to, Autosomal recessive",
+         "obesity, late-onset, Autosomal recessive",
+         "obesity, mild, early-onset, Autosomal recessive",
+         "obesity, severe, Autosomal recessive",
+         "obesity, severe, and type II diabetes, Autosomal recessive",
+         "obesity, susceptibility to, Autosomal recessive"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0005139",
+      "name": "morbid obesity",
+      "parents": [
+       {
+        "id": "MONDO_0011122"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "Morbid Obesities",
+         "Morbid obesity (disorder)",
+         "Obesities, Morbid",
+         "Obesity, Morbid",
+         "Severe obesity"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0013991",
+      "name": "obesity due to congenital leptin deficiency",
+      "parents": [
+       {
+        "id": "MONDO_0015770"
+       },
+       {
+        "id": "MONDO_0019182"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "Congenital Leptin Deficiency",
+         "obesity, morbid, due to leptin deficiency"
+        ]
+       },
+       {
+        "terms": [
+         "LEPD",
+         "leptin deficiency or dysfunction"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0012335",
+      "name": "obesity due to pro-opiomelanocortin deficiency",
+      "parents": [
+       {
+        "id": "MONDO_0019182"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "POMC Deficiency",
+         "POMC deficiency",
+         "obesity, adrenal insufficiency, and red hair due to POMC deficiency"
+        ]
+       },
+       {
+        "terms": [
+         "OBAIRH"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0010961",
+      "name": "obesity due to prohormone convertase I deficiency",
+      "parents": [
+       {
+        "id": "MONDO_0019182"
+       },
+       {
+        "id": "MONDO_0015770"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "PCI deficiency",
+         "PCSK1 Deficiency"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0019115",
+      "name": "obesity due to melanocortin 4 receptor deficiency",
+      "parents": [
+       {
+        "id": "MONDO_0019182"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "MC4R deficiency"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0019506",
+      "name": "obesity-colitis-hypothyroidism-cardiac hypertrophy-developmental delay syndrome",
+      "parents": [
+       {
+        "id": "OTAR_0000018"
+       },
+       {
+        "id": "Orphanet_181396"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "Obesity - colitis - hypothyroidism - cardiac hypertrophy - developmental delay"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0017408",
+      "name": "rapid-onset childhood obesity-hypothalamic dysfunction-hypoventilation-autonomic dysregulation syndrome",
+      "parents": [
+       {
+        "id": "MONDO_0005151"
+       },
+       {
+        "id": "Orphanet_240371"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "ROHHAD",
+         "ROHHAD syndrome",
+         "ROHHADNET",
+         "Rapid-onset Obesity with Hypothalamic Dysfunction, Hypoventilation, and Autonomic Dysregulation",
+         "rapid-onset childhood obesity-hypothalamic dysfunction-hypoventilation-autonomic dysregulation-neural tumors syndrome",
+         "rapid-onset childhood obesity-hypothalamic dysfunction-hypoventilation-autonomic dysregulation-neural tumours syndrome",
+         "rapid-onset obesity with hypothalamic dysfunction, hypoventilation, and autonomic dysregulation",
+         "rapid-onset obesity with hypothalamic dysfunction, hypoventilation, and autonomic dysregulation syndrome",
+         "Rapid-onset childhood obesity - hypothalamic dysfunction-hypoventilation-autonomic dysregulation - neural tumors",
+         "Rapid-onset childhood obesity - hypothalamic dysfunction - hypoventilation - autonomic dysregulation syndrome"
+        ]
+       },
+       {
+        "terms": [
+         "rapid-onset obesity with hypothalamic dysfunction, hypoventilation and autonomic dysregulation"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0015198",
+      "name": "aniridia-ptosis-intellectual disability-familial obesity syndrome",
+      "parents": [
+       {
+        "id": "Orphanet_108987"
+       },
+       {
+        "id": "Orphanet_183763"
+       },
+       {
+        "id": "Orphanet_98640"
+       },
+       {
+        "id": "Orphanet_98632"
+       },
+       {
+        "id": "OTAR_0000018"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "Aniridia - ptosis - intellectual disability - familial obesity"
+        ]
+       },
+       {
+        "terms": [
+         "aniridia - ptosis - intellectual disability - familial obesity"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  diseases(efoIds: $ids) {\n    id name\n    synonyms { terms }\n    parents { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "MONDO_0011122",
+     "MONDO_0019182",
+     "MONDO_0005139",
+     "MONDO_0013991",
+     "MONDO_0012335",
+     "MONDO_0010961",
+     "MONDO_0019115",
+     "MONDO_0019506",
+     "MONDO_0017408",
+     "MONDO_0015198"
+    ]
    }
   }
  },
@@ -3201,6 +3693,400 @@
    }
   }
  },
+ "4ba9ffdfdc0708ceba6e696ff0fcdbc6477e0516c9e57b1df07c2bc693b350e6": {
+  "answer": {
+   "data": {
+    "diseases": [
+     {
+      "id": "MONDO_0005044",
+      "name": "hypertensive disorder",
+      "parents": [
+       {
+        "id": "MONDO_0000473"
+       },
+       {
+        "id": "HP_0032263"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "blood pressure, high",
+         "blood pressure, increased",
+         "high blood pressure",
+         "hypertensive disease",
+         "increased blood pressure",
+         "pressure, high blood",
+         "vascular hypertensive disorder",
+         "Arterial hypertension",
+         "Systemic hypertension",
+         "Hypertension",
+         "(hypertensive disease) or (hypertension)",
+         "Blood Pressures, High",
+         "HTN",
+         "HTN - hypertension",
+         "High Blood Pressures",
+         "High blood pressure (& [essential hypertension])",
+         "Hypertensive disease (disorder)",
+         "Hypertensive disease NOS (disorder)",
+         "SURG COMP - HYPERTENSION",
+         "[X]Hypertensive diseases",
+         "[X]Hypertensive diseases (disorder)",
+         "hyperpiesia",
+         "hypertension NOS",
+         "hypertensive disease NOS"
+        ]
+       },
+       {
+        "terms": [
+         "High blood pressure"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": [
+         "HTN"
+        ]
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0015924",
+      "name": "pulmonary arterial hypertension",
+      "parents": [
+       {
+        "id": "MONDO_0005149"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "PAH",
+         "pulmonary arterial hypertension",
+         "Ayerza Arrilaga Syndrome",
+         "Ayerza Syndrome",
+         "Ayerza's Syndrome",
+         "Ayerza-Arrilaga Syndrome",
+         "Ayerzas Syndrome",
+         "HYPERTENSION PULM",
+         "Hypertension, Pulmonary",
+         "PHT - Pulmonary hypertension",
+         "PPH1",
+         "PULM HYPERTENSION",
+         "Pulmonary hypertension, NOS",
+         "Syndrome, Ayerza",
+         "Syndrome, Ayerza-Arrilaga",
+         "pulmonary hypertension",
+         "pulmonary hypertension (disorder)",
+         "pulmonary hypertension, primary, 1"
+        ]
+       },
+       {
+        "terms": [
+         "PPH",
+         "idiopathic pulmonary hypertension"
+        ]
+       },
+       {
+        "terms": [
+         "PAH with overt features of venous/capillaries involvement",
+         "PVOD/PCH"
+        ]
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0007781",
+      "name": "essential hypertension, genetic",
+      "parents": [
+       {
+        "id": "MONDO_0001134"
+       },
+       {
+        "id": "MONDO_0003847"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "blood pressure regulation QTL",
+         "genetic essential hypertension",
+         "hypertension, essential, salt-sensitive"
+        ]
+       },
+       {
+        "terms": [
+         "EHT"
+        ]
+       },
+       {
+        "terms": [
+         "hypertension, essential, susceptibility to, 2",
+         "hypertension, essential, susceptibility to, 3",
+         "hypertension, essential, susceptibility to, 4",
+         "hypertension, essential, susceptibility to, 5",
+         "hypertension, essential, susceptibility to, 6",
+         "hypertension, susceptibility to"
+        ]
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0001134",
+      "name": "essential hypertension",
+      "parents": [
+       {
+        "id": "MONDO_0005044"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "idiopathic hypertension",
+         "primary hypertension"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "EFO_0009197",
+      "name": "Pulmonary arterial hypertension associated with portal hypertension",
+      "parents": [
+       {
+        "id": "EFO_0009193"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "PAH associated with portal hypertension",
+         "POPH",
+         "Portopulmonary hypertension",
+         "portal hypertension-associated PAH"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0017148",
+      "name": "heritable pulmonary arterial hypertension",
+      "parents": [
+       {
+        "id": "MONDO_0015924"
+       },
+       {
+        "id": "MONDO_0003847"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "FPAH",
+         "HPAH",
+         "HpaH",
+         "familial pulmonary arterial hypertension",
+         "hereditary pulmonary arterial hypertension"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0007211",
+      "name": "brachydactyly-arterial hypertension syndrome",
+      "parents": [
+       {
+        "id": "Orphanet_69028"
+       },
+       {
+        "id": "Orphanet_98056"
+       },
+       {
+        "id": "MONDO_0021004"
+       },
+       {
+        "id": "MONDO_0018234"
+       },
+       {
+        "id": "MONDO_0019054"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "Bilginturan brachydactyly",
+         "Bilginturan syndrome",
+         "brachydactyly type E, with short stature and hypertension",
+         "Brachydactyly - arterial hypertension"
+        ]
+       },
+       {
+        "terms": [
+         "HTNB",
+         "brachydactyly type E with short stature and hypertension",
+         "hypertension and brachydactyly syndrome"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0024664",
+      "name": "hypertension, pregnancy-induced",
+      "parents": [
+       {
+        "id": "MONDO_0005044"
+       },
+       {
+        "id": "MONDO_0024575"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "hypertension associated disorders of pregnancy",
+         "hypertension-associated pregnancy disorder",
+         "pregnancy-induced hypertension"
+        ]
+       },
+       {
+        "terms": [
+         "gestational hypertension",
+         "hypertension, gestational",
+         "hypertension, pregnancy induced",
+         "hypertension, pregnancy transient",
+         "hypertensions, pregnancy induced",
+         "induced Hypertensions, pregnancy",
+         "induced hypertension, pregnancy",
+         "pregnancy induced hypertension",
+         "pregnancy transient hypertension",
+         "transient hypertension, pregnancy"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0006846",
+      "name": "malignant hypertension",
+      "parents": [
+       {
+        "id": "MONDO_0005044"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "accelerated-malignant hypertension",
+         "hypertensive emergency",
+         "malignant phase hypertension",
+         "Hypertension, Malignant"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": [
+         "MHT"
+        ]
+       }
+      ]
+     },
+     {
+      "id": "EFO_0009054",
+      "name": "Pulmonary arterial hypertension associated with congenital heart disease",
+      "parents": [
+       {
+        "id": "EFO_0009193"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "PAH associated with congenital heart disease",
+         "congenital heart disease-associated PAH"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  diseases(efoIds: $ids) {\n    id name\n    synonyms { terms }\n    parents { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "MONDO_0005044",
+     "MONDO_0015924",
+     "MONDO_0007781",
+     "MONDO_0001134",
+     "EFO_0009197",
+     "MONDO_0017148",
+     "MONDO_0007211",
+     "MONDO_0024664",
+     "MONDO_0006846",
+     "EFO_0009054"
+    ]
+   }
+  }
+ },
  "5b50c19a939a5cc3e119a7d5e662b366cc6979e79733807f204e709ada5c5b09": {
   "answer": {
    "data": {
@@ -3562,6 +4448,358 @@
    "variables": {
     "ids": [
      "CHEMBL5095236"
+    ]
+   }
+  }
+ },
+ "74cc9cd9417032a2cd236f51dc90e7cc44e7de1492516b3ec02cc35d167e2652": {
+  "answer": {
+   "data": {
+    "diseases": [
+     {
+      "id": "EFO_0803536",
+      "name": "multiple sclerosis symptom measurement",
+      "parents": [
+       {
+        "id": "EFO_0001444"
+       },
+       {
+        "id": "MONDO_0020800"
+       },
+       {
+        "id": "MONDO_0006704"
+       },
+       {
+        "id": "MONDO_0000568"
+       },
+       {
+        "id": "MONDO_0005560"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "multiple sclerosis",
+         "Disseminated Sclerosis",
+         "MS",
+         "MS (Multiple Sclerosis)",
+         "MULTIPLE SCLEROSIS ACUTE FULMINATING",
+         "Multiple Sclerosis, Acute Fulminating",
+         "Sclerosis, Disseminated",
+         "Sclerosis, Multiple"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": [
+         "generalised multiple sclerosis",
+         "generalized multiple sclerosis"
+        ]
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0005284",
+      "name": "chronic progressive multiple sclerosis",
+      "parents": [
+       {
+        "id": "EFO_0803536"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "MS CHRONIC PROGRESSIVE",
+         "MULTIPLE SCLEROSIS SECOND PROGRESSIVE",
+         "Multiple Sclerosis, Chronic Progressive",
+         "Multiple Sclerosis, Primary Progressive",
+         "Multiple Sclerosis, Progressive Relapsing",
+         "Multiple Sclerosis, Remittent Progressive",
+         "Multiple Sclerosis, Secondary Progressive",
+         "Primary Progressive Multiple Sclerosis",
+         "Progressive Relapsing Multiple Sclerosis",
+         "Remittent Progressive Multiple Sclerosis",
+         "SECOND PROGRESSIVE MULTIPLE SCLEROSIS",
+         "Secondary Progressive Multiple Sclerosis"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0005314",
+      "name": "relapsing-remitting multiple sclerosis",
+      "parents": [
+       {
+        "id": "EFO_0803536"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "Acute Relapsing Multiple Sclerosis",
+         "MS RELAPSING REMITTING",
+         "Multiple Sclerosis, Acute Relapsing",
+         "Multiple Sclerosis, Relapsing Remitting",
+         "Multiple Sclerosis, Relapsing-Remitting",
+         "Multiple Sclerosis, Remitting-Relapsing",
+         "Relapsing Remitting Multiple Sclerosis",
+         "Remitting Relapsing Multiple Sclerosis",
+         "Remitting-Relapsing Multiple Sclerosis"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0017837",
+      "name": "multiple sclerosis-ichthyosis-factor VIII deficiency syndrome",
+      "parents": [
+       {
+        "id": "MONDO_0002243"
+       },
+       {
+        "id": "MONDO_0002242"
+       },
+       {
+        "id": "Orphanet_281244"
+       },
+       {
+        "id": "Orphanet_68334"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "Multiple sclerosis - ichthyosis - factor VIII deficiency"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0000451",
+      "name": "primary progressive multiple sclerosis",
+      "parents": [
+       {
+        "id": "MONDO_0005284"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "multiple sclerosis primary progressive",
+         "primary-progressive multiple sclerosis"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0000450",
+      "name": "secondary progressive multiple sclerosis",
+      "parents": [
+       {
+        "id": "MONDO_0005284"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "SPMS",
+         "secondary-progressive MS",
+         "multiple sclerosis secondary progressive",
+         "secondary-progressive multiple sclerosis"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0008612",
+      "name": "tuberous sclerosis 1",
+      "parents": [
+       {
+        "id": "MONDO_0001734"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "TSC1 tuberous sclerosis",
+         "TSC1-related tuberous sclerosis",
+         "tuberous sclerosis 1",
+         "tuberous sclerosis caused by mutation in TSC1",
+         "tuberous sclerosis type 1",
+         "tuberous sclerosis-1"
+        ]
+       },
+       {
+        "terms": [
+         "TSC1",
+         "tuberous sclerosis, type 1"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0010856",
+      "name": "autosomal dominant polycystic kidney disease type 1 with tuberous sclerosis",
+      "parents": [
+       {
+        "id": "MONDO_0019741"
+       },
+       {
+        "id": "MONDO_0016894"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "tuberous sclerosis/polycystic kidney disease contiguous gene syndrome"
+        ]
+       },
+       {
+        "terms": [
+         "PKDTS",
+         "polycystic kidney disease, infantile severe, with tuberous sclerosis",
+         "polycystic kidneys, severe infantile with tuberous sclerosis",
+         "tuberous sclerosis polycystic kidney disease contiguous gene syndrome"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0013199",
+      "name": "tuberous sclerosis 2",
+      "parents": [
+       {
+        "id": "MONDO_0001734"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "TSC2-related tuberous sclerosis",
+         "tuberous sclerosis 2",
+         "tuberous sclerosis type 2",
+         "tuberous sclerosis-2"
+        ]
+       },
+       {
+        "terms": [
+         "TSC2",
+         "tuberous sclerosis, type 2"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "HP_0001967",
+      "name": "Diffuse mesangial sclerosis",
+      "parents": [
+       {
+        "id": "HP_0011035"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "Diffuse mesangial sclerosis glomerulopathy",
+         "Mesangial sclerosis"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  diseases(efoIds: $ids) {\n    id name\n    synonyms { terms }\n    parents { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "EFO_0803536",
+     "MONDO_0005284",
+     "MONDO_0005314",
+     "MONDO_0017837",
+     "MONDO_0000451",
+     "MONDO_0000450",
+     "MONDO_0008612",
+     "MONDO_0010856",
+     "MONDO_0013199",
+     "HP_0001967"
     ]
    }
   }
@@ -4211,6 +5449,360 @@
    "variables": {
     "ids": [
      "CHEMBL5095485"
+    ]
+   }
+  }
+ },
+ "a08da1b341120f78aa5d6c985f6a7560090d4c84388e720c267b4b1b6c7b382b": {
+  "answer": {
+   "data": {
+    "diseases": [
+     {
+      "id": "MONDO_0004975",
+      "name": "Alzheimer disease",
+      "parents": [
+       {
+        "id": "MONDO_0001627"
+       },
+       {
+        "id": "MONDO_0005574"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "AD",
+         "Alzheimer dementia",
+         "Alzheimer disease",
+         "Alzheimer's dementia",
+         "Alzheimer's disease",
+         "Alzheimers disease",
+         "presenile and senile dementia",
+         "AD - Alzheimer's disease",
+         "ALZHEIMER DIS",
+         "ALZHEIMERS DIS",
+         "Alzheimer Dementia, Presenile",
+         "Alzheimer Type Dementia",
+         "Alzheimer's",
+         "Alzheimer's disease (disorder)",
+         "Alzheimer's disease, NOS",
+         "Alzheimers",
+         "Alzheimers Dementia",
+         "DAT - Dementia Alzheimer's type",
+         "Dementia in Alzheimer's disease",
+         "Dementia in Alzheimer's disease (disorder)",
+         "Dementia in Alzheimer's disease, unspecified (disorder)",
+         "Dementia of the Alzheimer's type",
+         "Dementia, Alzheimer Type",
+         "Dementia, Presenile",
+         "Dementia, Presenile Alzheimer",
+         "Disease, Alzheimer",
+         "Disease, Alzheimer's",
+         "Presenile Alzheimer Dementia",
+         "[X]Dementia in Alzheimer's disease",
+         "[X]Dementia in Alzheimer's disease (disorder)",
+         "sporadic Alzheimer's disease"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": [
+         "Alzheimer disease, familial"
+        ]
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "EFO_0006514",
+      "name": "Alzheimer's disease biomarker measurement",
+      "parents": [
+       {
+        "id": "EFO_0006848"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "EFO_0006801",
+      "name": "Alzheimer's disease neuropathologic change",
+      "parents": [
+       {
+        "id": "MONDO_0002602"
+       },
+       {
+        "id": "EFO_0003765"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0011913",
+      "name": "Alzheimer disease 3",
+      "parents": [
+       {
+        "id": "MONDO_0015140"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "AD3",
+         "Alzheimer disease 3",
+         "Alzheimer disease type 3",
+         "Alzheimer disease, protection against, due to APOE3-Christchurch",
+         "Alzheimer disease, type 3",
+         "Alzheimer disease, type 3, with spastic paraparesis and apraxia",
+         "Alzheimer disease, type 3, with spastic paraparesis and unusual plaques",
+         "Alzheimer's disease 3",
+         "Alzheimer's disease type 3",
+         "PSEN1 early-onset autosomal dominant Alzheimer disease",
+         "early-onset autosomal dominant Alzheimer disease caused by mutation in PSEN1",
+         "familial Alzheimer disease, type 3",
+         "familial Alzheimer's disease, type 3"
+        ]
+       },
+       {
+        "terms": [
+         "AD",
+         "Alzheimer disease early onset type 3"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "EFO_0022957",
+      "name": "early-onset Alzheimers disease",
+      "parents": [
+       {
+        "id": "MONDO_0004975"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "early onset Alzheimer's disease",
+         "early-onset Alzheimer's"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "EFO_1001870",
+      "name": "late-onset Alzheimers disease",
+      "parents": [
+       {
+        "id": "MONDO_0004975"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "Alzheimer Senile Dementia",
+         "Alzheimer Type Senile Dementia",
+         "Senile Dementia, Alzheimer Type",
+         "late-onset Alzheimer's"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0014265",
+      "name": "Alzheimer disease 18",
+      "parents": [
+       {
+        "id": "MONDO_0015547"
+       },
+       {
+        "id": "MONDO_0024237"
+       },
+       {
+        "id": "MONDO_0004975"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "AD18",
+         "ADAM10 Alzheimer disease",
+         "Alzheimer disease 18",
+         "Alzheimer disease caused by mutation in ADAM10",
+         "Alzheimer disease type 18",
+         "Alzheimer's disease 18",
+         "Alzheimer's disease type 18"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0001627",
+      "name": "dementia",
+      "parents": [
+       {
+        "id": "MONDO_0002039"
+       },
+       {
+        "id": "HP_0001268"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "dementia",
+         "dementia (disease)",
+         "Dementia, progressive",
+         "Progressive dementia"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "EFO_0006798",
+      "name": "neuritic plaque measurement",
+      "parents": [
+       {
+        "id": "EFO_0006514"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "senile plaque measurement"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     },
+     {
+      "id": "MONDO_0017948",
+      "name": "ABetaA21G amyloidosis",
+      "parents": [
+       {
+        "id": "Orphanet_85458"
+       },
+       {
+        "id": "MONDO_0011583"
+       }
+      ],
+      "synonyms": [
+       {
+        "terms": [
+         "ABeta amyloidosis, Flemish type",
+         "ABetaA21G-related amyloidosis",
+         "HCHWA, Flemish type",
+         "cerebral amyloid angiopathy, APP-related, Flemish variant",
+         "hereditary cerebral haemorrhage with amyloidosis, Flemish type",
+         "hereditary cerebral hemorrhage with amyloidosis, Flemish type"
+        ]
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       },
+       {
+        "terms": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "payload": {
+   "query": "\nquery ($ids: [String!]!) {\n  diseases(efoIds: $ids) {\n    id name\n    synonyms { terms }\n    parents { id }\n  }\n}\n",
+   "variables": {
+    "ids": [
+     "MONDO_0004975",
+     "EFO_0006514",
+     "EFO_0006801",
+     "MONDO_0011913",
+     "EFO_0022957",
+     "EFO_1001870",
+     "MONDO_0014265",
+     "MONDO_0001627",
+     "EFO_0006798",
+     "MONDO_0017948"
     ]
    }
   }

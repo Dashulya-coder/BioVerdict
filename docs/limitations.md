@@ -34,6 +34,11 @@ These become diligence questions with the data type named.
 - **A model call that timed out keeps running in its thread** until the provider answers; its late answer is discarded.
 - **Market size is partial and crude.** Patients are covered for three cancer sites, three common conditions and rare diseases Orphanet lists; price only where an approved drug against the same target has Medicare spending. Everything else is reported as missing. An Orphanet code can describe a narrower (for example hereditary) form than the indication, which makes the count far too low. A biomarker fraction is applied only for a point mutation that the asset's registry records name, in three cancer types, from one centre's sequencing cohort; fusions, amplifications, expression levels and signatures such as MSI-high are not covered, and neither are stage and line of therapy.
 
+- **Module answers are a heuristic.** A module's answer is a balance of what each claim means for an investor (a label a model proposes) and the claim's computed confidence. Its two thresholds are uncalibrated, a mislabelled claim moves the balance, and many claims about one trial count as many. The verdict does not depend on it.
+- **A question about a class has no asset.** For an indication with a mechanism and no drug, stage and PoS are those of the most advanced program of the class in the registry records, stated as an assumption; competitors and the "asset" are the same drugs.
+- **Multiple sclerosis has no market size here.** Orphanet does not list it (it is not rare) and the CDC indicators do not cover it, so patients, TAM and rNPV are reported as missing for it, and the verdict cannot be `Invest`.
+- **The judge does not read context claims.** Links of claims on which nothing computed rests (neutral, not key, no gate, no chain link) are grounded by code only; a run has a time limit. A judge request that fails leaves its links unjudged, and the run's `verify` event says how many.
+
 ## Out of scope
 
 - Trading or portfolio advice.

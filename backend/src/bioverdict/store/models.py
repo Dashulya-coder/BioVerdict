@@ -60,6 +60,14 @@ class ClaimType(StrEnum):
     OTHER = "other"
 
 
+class Implication(StrEnum):
+    """What a claim, if true, means for the investment case. The model labels it; code weighs it."""
+
+    FAVOURABLE = "favourable"
+    UNFAVOURABLE = "unfavourable"
+    NEUTRAL = "neutral"  # context, or a gap
+
+
 class Basis(StrEnum):
     EXTRACTED = "extracted"
     DERIVED = "derived"
@@ -253,6 +261,11 @@ class Claim(_Model):
         description="Gates whose condition this claim asserts; code applies the rule",
     )
     critical: bool = Field(default=False, description="Key claim for the verdict")
+    implication: Implication = Field(
+        default=Implication.NEUTRAL,
+        description="Whether the claim, if true, speaks for or against investing; feeds the "
+        "per-module answers (scoring/module_answers.py), never the verdict",
+    )
 
     @model_validator(mode="after")
     def _unknown_needs_diligence_type(self) -> Claim:

@@ -92,6 +92,9 @@ treatments fall short (response rates, durability, safety, who they do not reach
   is serious. A serious disease with an effective treatment is not an unmet need: say which.
 - Do not estimate how many patients there are or what the market is worth: code does that from
   its own sources, and a number of yours would be discarded.
+- This module is about the disease and what treats it today. Do not report how the drug or the
+  class under question performed in its trials: that belongs to the clinical module. A shortfall
+  of today's treatments is favourable for an investor; an effective standard of care is not.
 - Guidelines and payers' views are rarely in the evidence. If the evidence does not say what the
   guidelines recommend, or which patients are left without an option, write an `unknown` claim
   for it with its diligence_type (usually kol_interview).
@@ -140,7 +143,9 @@ MECHANISM = ReasoningModule(
     allowed_gates=frozenset({GateId.K3}),
     claim_type=ClaimType.TARGET_CAUSAL,
     gate_guard=evidence_guard,
-    families=frozenset({"target_database", "literature"}),
+    # Preprints are where the laboratory work on a mechanism is (the mechanism section collects
+    # them); their level and source weigh them down in the confidence formula.
+    families=frozenset({"target_database", "literature", "preprint"}),
 )
 TRANSLATION = ReasoningModule(
     name="translation",
@@ -149,7 +154,7 @@ TRANSLATION = ReasoningModule(
     instruction=_TRANSLATION,
     chain=True,
     claim_type=ClaimType.DRUG_ACTS_IN_HUMANS,
-    families=frozenset({"literature", "registry"}),
+    families=frozenset({"literature", "registry", "preprint"}),
 )
 
 CLINICAL = ReasoningModule(

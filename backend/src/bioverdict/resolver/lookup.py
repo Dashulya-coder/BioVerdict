@@ -58,6 +58,7 @@ query ($ids: [String!]!) {
   diseases(efoIds: $ids) {
     id name
     synonyms { terms }
+    parents { id }
   }
 }
 """
@@ -229,21 +230,33 @@ class OpenTargetsLookup:
         return TargetMatch(target["approvedSymbol"], target["id"], _swissprot(target))
 
     async def find_disease(self, name: str) -> DiseaseResolution:
-        """A MONDO disease by name or synonym. Other term types only by their exact name.
+        """A MONDO disease by name or synonym. Other term types by their exact name, or by a
+        synonym when the disease's own subtypes hang under them.
 
-        Open Targets also holds measurements and traits (for example 'multiple sclerosis
-        symptom measurement') that list the disease name as a synonym; those are not the disease.
+        Open Targets also holds measurements and traits that list a disease name as a synonym;
+        those are not the disease. One exception is real: release 26.09 files multiple sclerosis
+        under 'multiple sclerosis symptom measurement' (EFO_0803536), which is the parent of the
+        relapsing and progressive forms and carries the disease's evidence. A term like that is
+        accepted when a MONDO disease among the hits names it as its parent.
         """
         ids = await self._hits(name, "disease")
         if not ids:
             return DiseaseResolution(None)
         answer, _ = await self._api.query(details_payload(DISEASES_QUERY, ids))
+        diseases = [d for d in answer["data"]["diseases"] if d]
+        parents_of_diseases = {
+            parent["id"]
+            for d in diseases
+            if d["id"].startswith("MONDO_")
+            for parent in d.get("parents") or []
+        }
         matches: list[DiseaseMatch] = []
-        for disease in (d for d in answer["data"]["diseases"] if d):
+        for disease in diseases:
             terms = [term for entry in disease["synonyms"] for term in entry["terms"]]
             kind = match_kind(name, disease["name"], terms)
             is_mondo = disease["id"].startswith("MONDO_")
-            if kind is MatchKind.NAME or (kind is not None and is_mondo):
+            holds_subtypes = disease["id"] in parents_of_diseases
+            if kind is MatchKind.NAME or (kind is not None and (is_mondo or holds_subtypes)):
                 matches.append(DiseaseMatch(disease["id"], disease["name"], kind))
 
         def strength(match: DiseaseMatch) -> tuple[MatchKind, bool]:

@@ -16,6 +16,7 @@ from bioverdict.store.models import (
     DiligenceType,
     Direction,
     GateId,
+    Implication,
 )
 
 
@@ -43,6 +44,11 @@ class DraftClaim(_Draft):
         default_factory=list, description="Kill criteria whose condition this claim asserts"
     )
     critical: bool = Field(default=False, description="True for a claim the verdict hinges on")
+    implication: Implication = Field(
+        default=Implication.NEUTRAL,
+        description="If the claim is true, does it speak for (favourable) or against "
+        "(unfavourable) investing in this program? neutral for context and for `unknown`",
+    )
     links: list[DraftLink] = Field(default_factory=list)
 
 

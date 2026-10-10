@@ -39,7 +39,7 @@ def test_a_fresh_fixture_setup_is_ready_with_two_notes(tmp_path: Path) -> None:
     assert [c.name for c in found.values() if c.status == "fail"] == []
     assert found["mode"].detail.startswith("fixtures")
     assert found["model key"].status == "warn"  # fine for fixtures, said aloud
-    assert found["database"].status == "ok" and "created, schema 3/3" in found["database"].detail
+    assert found["database"].status == "ok" and "created, schema 4/4" in found["database"].detail
     assert found["source cache"].status == "warn" and "never expire" in found["source cache"].detail
     assert "divarasib" in found["fixtures"].detail and found["Registry"].status == "ok"
 

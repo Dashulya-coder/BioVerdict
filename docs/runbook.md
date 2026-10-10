@@ -228,6 +228,17 @@ run that failed. See [eval](eval.md) for what the numbers mean and what is not m
 
 Compare the verdict distribution and top risks with expectations. Log any change to weights or thresholds in `config/scoring.yaml` with a reason.
 
+The sensitivity benchmark adds the documents of a file to a finished run, one at a time, and
+checks which modules moved (method and dataset items in [eval](eval.md), section 8). It always
+calls a model, so it is paid:
+
+```bash
+USE_FIXTURES=0 uv run --env-file ../.env bioverdict run \
+  --query "BTK inhibitor for multiple sclerosis" --as-of 2024-06-30      # the base run
+uv run --env-file ../.env bioverdict sensitivity --run <run id> \
+  --cases ../eval/sensitivity.yaml --out ../eval/results/$(date +%F)
+```
+
 ## 6. Reset
 
 ```bash

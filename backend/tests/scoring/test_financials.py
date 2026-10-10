@@ -122,3 +122,29 @@ def test_with_financials_fills_the_verdict_and_k5_is_held_back_as_a_near_miss() 
     assert result.pos == pos.pos
     k5 = next(g for g in result.gates if g.gate_id.value == "K5")
     assert not k5.fired and k5.near_miss is not None
+
+
+def _registry(phase: str, key: str = "nct:NCT00000001:design") -> Bundle:
+    bundle = _bundle(f'{{"studyType": "INTERVENTIONAL", "phases": ["{phase}"]}}')
+    item = bundle.evidence[0].model_copy(update={"status_key": key})
+    return bundle.model_copy(update={"evidence": [item]})
+
+
+def test_a_class_question_takes_the_stage_of_the_leading_program_in_the_registry() -> None:
+    from bioverdict.scoring.financials import CLASS_STAGE
+
+    fin = financial_model(_registry("PHASE3"), "multiple sclerosis", class_question=True)
+
+    assert fin.stage == "phase3" and fin.pos is not None
+    assert any(CLASS_STAGE in a for a in fin.assumptions)
+    assert fin.area == "neurology"
+
+
+def test_registry_phases_are_not_the_stage_of_a_named_drug() -> None:
+    """With a drug named, the registry also holds its competitors' studies."""
+    assert financial_model(_registry("PHASE3"), "multiple sclerosis").stage is None
+
+
+def test_only_design_records_give_a_class_its_stage() -> None:
+    bundle = _registry("PHASE3", key="nct:NCT00000001:overall_status")
+    assert financial_model(bundle, "multiple sclerosis", class_question=True).stage is None

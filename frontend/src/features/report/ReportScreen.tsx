@@ -5,6 +5,7 @@ import { ClaimList } from './ClaimList'
 import { DiligenceQuestions } from './DiligenceQuestions'
 import { ExecutiveSummary } from './ExecutiveSummary'
 import { GateList } from './GateList'
+import { ModuleScorecard } from './ModuleScorecard'
 import { Tornado } from './Tornado'
 import { TranslationChain } from './TranslationChain'
 import { UnknownFacts } from './UnknownFacts'
@@ -58,6 +59,7 @@ function LoadedReport({ runId }: { runId: string }) {
   return (
     <>
       <ExecutiveSummary report={state.report} />
+      <ModuleScorecard report={state.report} />
       <GateList report={state.report} />
       <TranslationChain report={state.report} />
       <Tornado runId={runId} />

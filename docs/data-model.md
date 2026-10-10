@@ -72,7 +72,8 @@ Valuation and probabilities are always `modeled`, with the assumptions visible.
   "confidence": 0.74,
   "confidence_parts": { "support": 0.82, "contra": 0.10, "freshness": 0.95, "independent_groups": 2 },
   "depends_on": ["C-0102"],
-  "diligence_type": null
+  "diligence_type": null,
+  "implication": "favourable"
 }
 ```
 
@@ -82,7 +83,7 @@ Link:
 { "claim_id": "C-0117", "evidence_id": "E-0042", "direction": "supports", "quote": "verbatim, must occur in the evidence excerpt" }
 ```
 
-`claim_type` (`target_causal` | `drug_acts_in_humans` | `study_fact` | `other`) selects the column of the level-weight table in [`scoring.md`](scoring.md). `flags` holds `sparse`, `contested`, `missing_link`. `chain_link` (`molecular_effect` | `human_exposure` | `target_engagement` | `biological_response` | `patient_benefit`) places a claim on the translation chain. `gate_signals` lists the gates (`K1`..`K5`, `S1`..`S6`) whose condition the claim asserts; code decides whether the gate fires. `critical` marks key claims for the verdict.
+`claim_type` (`target_causal` | `drug_acts_in_humans` | `study_fact` | `other`) selects the column of the level-weight table in [`scoring.md`](scoring.md). `flags` holds `sparse`, `contested`, `missing_link`. `chain_link` (`molecular_effect` | `human_exposure` | `target_engagement` | `biological_response` | `patient_benefit`) places a claim on the translation chain. `gate_signals` lists the gates (`K1`..`K5`, `S1`..`S6`) whose condition the claim asserts; code decides whether the gate fires. `critical` marks key claims for the verdict. `implication` (`favourable` | `unfavourable` | `neutral`) says what the claim means for an investor if it is true. The model proposes it; code sets `neutral` on every `unknown` and `unfavourable` on a claim that asserts a gate. It feeds the per-module answers ([`scoring.md`](scoring.md), "Module answers") and never the verdict.
 
 `diligence_type` for `unknown` claims: `proprietary_data` | `patient_level_data` | `kol_interview` | `experiment` | `cmc_diligence` | `ip_diligence`.
 
@@ -157,7 +158,7 @@ CREATE TABLE claims (
   run_id TEXT, id TEXT, section TEXT, claim_type TEXT, text TEXT, basis TEXT,
   status TEXT, confidence REAL, confidence_parts_json TEXT, flags_json TEXT,
   depends_on_json TEXT, diligence_type TEXT, chain_link TEXT,
-  gate_signals_json TEXT, critical INTEGER, version INTEGER,
+  gate_signals_json TEXT, critical INTEGER, version INTEGER, implication TEXT,
   PRIMARY KEY (run_id, id)
 );
 CREATE TABLE claim_evidence (

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { sourceKinds, evidenceLevels } from '../../app/constants'
+import { moduleAnswers } from '../../app/modules'
 
 // The report the API serves at /runs/{id}/report (backend `ReportResponse`); unknown fields are ignored.
 const range = z.object({ p10: z.number(), p50: z.number(), p90: z.number() })
@@ -37,9 +38,25 @@ const claim = z.object({
   chain_link: z.string().nullable(),
   gate_signals: z.array(z.string()),
   critical: z.boolean(),
+  implication: z.enum(['favourable', 'unfavourable', 'neutral']).default('neutral'),
   diligence_type: z.string().nullable(),
   depends_on: z.array(z.string()),
   links: z.array(link),
+})
+const moduleSchema = z.object({
+  module: z.string(),
+  title: z.string(),
+  question: z.string(),
+  answer: z.enum(moduleAnswers),
+  headline: z.string(),
+  balance: z.number().nullable(),
+  favourable: z.number(),
+  unfavourable: z.number(),
+  claim_ids: z.array(z.string()),
+  drivers: z.array(z.object({ claim_id: z.string(), contribution: z.number() })),
+  unknown_count: z.number(),
+  evidence_count: z.number(),
+  gates: z.array(z.string()),
 })
 export const reportSchema = z.object({
   executive: z.object({
@@ -53,6 +70,8 @@ export const reportSchema = z.object({
     rnpv: range.nullable(),
   }),
   assumptions: z.array(z.string()),
+  // A report stored by an older API has no module answers.
+  modules: z.array(moduleSchema).default([]),
   sections: z.array(z.object({ section: z.string(), status: z.string(), claims: z.array(claim) })),
   translation_chain: z.array(
     z.object({
@@ -85,3 +104,4 @@ export const reportSchema = z.object({
 export type Report = z.infer<typeof reportSchema>
 export type Range = z.infer<typeof range>
 export type ReportClaim = z.infer<typeof claim>
+export type ReportModule = z.infer<typeof moduleSchema>

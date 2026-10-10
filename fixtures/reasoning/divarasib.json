@@ -3,6 +3,7 @@
     "claims": [
       {
         "text": "KRAS G12C is a frequent, poor-prognosis driver mutation in NSCLC",
+        "implication": "favourable",
         "claim_type": "target_causal",
         "basis": "extracted",
         "critical": true,
@@ -68,6 +69,7 @@
       },
       {
         "text": "Roche reports that the Phase 3 trial met its primary and key secondary endpoints, progression-free and overall survival",
+        "implication": "favourable",
         "claim_type": "drug_acts_in_humans",
         "basis": "extracted",
         "critical": true,
@@ -86,6 +88,7 @@
       },
       {
         "text": "In the Phase 1 study divarasib gave a confirmed response in 53.4% of patients with non-small cell lung cancer",
+        "implication": "favourable",
         "claim_type": "drug_acts_in_humans",
         "basis": "extracted",
         "critical": true,
@@ -104,6 +107,7 @@
       },
       {
         "text": "Treatment-related adverse events were frequent in the Phase 1 study, with grade 3 events in 11% of patients",
+        "implication": "unfavourable",
         "claim_type": "drug_acts_in_humans",
         "basis": "extracted",
         "links": [
@@ -162,6 +166,7 @@
     "claims": [
       {
         "text": "Divarasib binds KRAS G12C in the allosteric switch-II pocket",
+        "implication": "favourable",
         "claim_type": "drug_acts_in_humans",
         "basis": "extracted",
         "chain_link": "molecular_effect",
@@ -191,6 +196,7 @@
       },
       {
         "text": "Divarasib produces confirmed responses in patients with KRAS G12C NSCLC",
+        "implication": "favourable",
         "claim_type": "drug_acts_in_humans",
         "basis": "extracted",
         "chain_link": "biological_response",
@@ -205,6 +211,7 @@
       },
       {
         "text": "Divarasib improved progression-free and overall survival over the approved KRAS G12C inhibitors in a randomised phase 3, as reported by the sponsor",
+        "implication": "favourable",
         "claim_type": "drug_acts_in_humans",
         "basis": "extracted",
         "chain_link": "patient_benefit",
@@ -219,6 +226,7 @@
       },
       {
         "text": "Treatment-related adverse events were mostly low grade in the phase 1 study",
+        "implication": "favourable",
         "claim_type": "drug_acts_in_humans",
         "basis": "extracted",
         "chain_link": "patient_benefit",
@@ -236,6 +244,7 @@
     "claims": [
       {
         "text": "KRAS G12C non-small cell lung cancer is a serious disease: the mutation is common and associated with poor prognosis",
+        "implication": "favourable",
         "claim_type": "other",
         "basis": "extracted",
         "links": [
@@ -248,6 +257,7 @@
       },
       {
         "text": "Approved KRAS G12C inhibitors extend progression-free survival over docetaxel by about two months in previously treated patients, which leaves room for a better option",
+        "implication": "favourable",
         "claim_type": "other",
         "basis": "inferred",
         "links": [

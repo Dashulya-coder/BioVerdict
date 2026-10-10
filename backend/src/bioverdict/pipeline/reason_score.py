@@ -15,8 +15,9 @@ from bioverdict.reasoning import ModuleReasoner
 from bioverdict.reasoning.critique import ask, challenge
 from bioverdict.reasoning.grounding import Drop, fill_missing_chain_links
 from bioverdict.reasoning.modules import ALL_MODULES
+from bioverdict.reasoning.prompts import question_text
 from bioverdict.scoring.confidence import apply_confidence
-from bioverdict.scoring.financials import financial_model, with_financials
+from bioverdict.scoring.financials import Financials, financial_model, with_financials
 from bioverdict.scoring.verdict import score_verdict
 from bioverdict.store.models import (
     Basis,
@@ -64,11 +65,25 @@ def drop_checks(drops: list[Drop], rejected: set[str]) -> list[VerificationCheck
     return checks
 
 
-def indication_of(conn: sqlite3.Connection, run_id: str) -> str:
-    """The indication the run was resolved to ("" before the resolver has run)."""
+def run_financials(conn: sqlite3.Connection, run_id: str, bundle: Bundle) -> Financials:
+    """PoS and rNPV of the run's bundle, for the question the run resolved.
+
+    A question with no drug in it (an indication and a mechanism) is about the class: its stage
+    is the most advanced program of the class in the bundle.
+    """
     record = get_run(conn, run_id)
     resolver = record.resolver if record is not None else None
-    return resolver.indication.name if resolver is not None else ""
+    if resolver is None:
+        return financial_model(bundle, "")
+    about_class = not resolver.assets and not resolver.known_assets
+    return financial_model(bundle, resolver.indication.name, class_question=about_class)
+
+
+def _question(conn: sqlite3.Connection, run_id: str) -> str:
+    """The resolved question for the prompts ("" when the run has no resolved input)."""
+    record = get_run(conn, run_id)
+    resolver = record.resolver if record is not None else None
+    return question_text(resolver) if resolver is not None else ""
 
 
 def skeptic_pass(
@@ -143,7 +158,9 @@ def verify_pass(
             "done",
             f"{found.judged} link(s) judged by {', '.join(found.models) or 'nobody'}, "
             f"{found.removed} not confirmed and removed, "
-            f"{len(found.downgraded)} claim(s) downgraded to hypothesis",
+            f"{len(found.downgraded)} claim(s) downgraded to hypothesis; "
+            f"{found.context_links} link(s) of context claims not judged, "
+            f"{found.failed_batches} request(s) failed",
         )
     if rules:
         save_checks(conn, run_id, rule_checks(claims))
@@ -183,7 +200,7 @@ def reason_and_score(
 ) -> VerdictResult:
     """Record the claims, the verdict and the progress events of the run, and finish it."""
     add_event(conn, run_id, "reason", "started", ", ".join(m.name for m in ALL_MODULES))
-    reasoner = ModuleReasoner(llm, run_id)
+    reasoner = ModuleReasoner(llm, run_id, question=_question(conn, run_id))
     claims, links = reasoner.reason(bundle)
     # A failed citation removes the whole claim, including a claim with other surviving
     # citations, rather than softening it to an inference.
@@ -210,7 +227,7 @@ def reason_and_score(
     save_claims(conn, run_id, claims, links, bundle.version)
 
     add_event(conn, run_id, "score", "started")
-    fin = financial_model(bundle, indication_of(conn, run_id))
+    fin = run_financials(conn, run_id, bundle)
     result = with_financials(score_verdict(claims, fin.rnpv.rnpv if fin.rnpv else None), fin)
     add_event(conn, run_id, "score", "done", f"{result.verdict.value} ({result.confidence:.2f})")
 

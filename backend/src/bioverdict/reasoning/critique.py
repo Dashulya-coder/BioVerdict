@@ -113,8 +113,51 @@ def _preamble(bundle: Bundle) -> str:
     )
 
 
+SKEPTIC_CLAIM_SHARE = 0.3  # of the request: the rest is the evidence to argue from
+
+
+def _fit(claims: list[Claim], room: int) -> tuple[list[Claim], int]:
+    """The first claims of `claims` whose lines fit `room` characters, and how many were left out."""
+    kept, used = [], 0
+    for claim in claims:
+        size = wire_len(_claim_lines([claim])) + 1
+        if used + size > room:
+            break
+        kept.append(claim)
+        used += size
+    return kept, len(claims) - len(kept)
+
+
+def _left_out(count: int) -> str:
+    return f"\n({count} further claims are not shown for length.)" if count else ""
+
+
+def _skeptic_order(claim: Claim) -> tuple[bool, float, str]:
+    """What is worth arguing against first: key claims, then the most confident."""
+    return (not claim.critical, -claim.confidence, claim.id)
+
+
+def _chair_order(claim: Claim) -> tuple[bool, bool, bool, float, str]:
+    """What a question can be asked about first: gaps, key claims, flagged claims, weak claims."""
+    flagged = bool(claim.flags or claim.gate_signals)
+    return (
+        claim.basis is not Basis.UNKNOWN,
+        not claim.critical,
+        not flagged,
+        claim.confidence,
+        claim.id,
+    )
+
+
 def skeptic_prompt(bundle: Bundle, claims: list[Claim], budget: int | None) -> str:
-    head = f"{_preamble(bundle)}\n## Your task\n{_SKEPTIC}\n## Claims\n{_claim_lines(claims)}\n\n## Evidence\n"
+    shown, hidden = claims, 0
+    if budget is not None:  # a long report must not crowd the evidence out of the request
+        claimable = [c for c in claims if c.basis not in (Basis.UNKNOWN, Basis.HYPOTHESIS)]
+        shown, hidden = _fit(
+            sorted(claimable, key=_skeptic_order), int(budget * SKEPTIC_CLAIM_SHARE)
+        )
+    listed = _claim_lines(shown) + _left_out(hidden)
+    head = f"{_preamble(bundle)}\n## Your task\n{_SKEPTIC}\n## Claims\n{listed}\n\n## Evidence\n"
     room = MAX_EVIDENCE_CHARS if budget is None else max(0, budget - wire_len(head) - RETRY_RESERVE)
     evidence, _ = render_evidence(
         bundle.evidence, boundary_tag(bundle), room, None if budget is None else 600
@@ -123,7 +166,11 @@ def skeptic_prompt(bundle: Bundle, claims: list[Claim], budget: int | None) -> s
 
 
 def chair_prompt(
-    bundle: Bundle, claims: list[Claim], near_misses: list[str], objections: list[str]
+    bundle: Bundle,
+    claims: list[Claim],
+    near_misses: list[str],
+    objections: list[str],
+    budget: int | None = None,
 ) -> str:
     extra = ""
     if near_misses:
@@ -132,9 +179,12 @@ def chair_prompt(
         extra += (
             "\n## Objections the skeptic made\n" + "\n".join(f"- {o}" for o in objections) + "\n"
         )
-    return (
-        f"{_preamble(bundle)}\n## Your task\n{_CHAIR}\n## Claims\n{_claim_lines(claims)}\n{extra}"
-    )
+    head = f"{_preamble(bundle)}\n## Your task\n{_CHAIR}\n## Claims\n"
+    shown, hidden = claims, 0
+    if budget is not None:
+        room = max(0, budget - wire_len(head) - wire_len(extra) - RETRY_RESERVE - 80)
+        shown, hidden = _fit(sorted(claims, key=_chair_order), room)
+    return f"{head}{_claim_lines(shown)}{_left_out(hidden)}\n{extra}"
 
 
 @dataclass
@@ -218,7 +268,10 @@ def ask(
     calls unknown is left without a way to find out. A question whose answer alone cannot move
     the verdict (other gaps would keep it where it is) stays, last, with a value of 0.
     """
-    result = llm.call(CHAIR_STEP, chair_prompt(bundle, claims, near_misses, objections), ChairDraft)
+    budget_of = getattr(llm, "input_budget", None)
+    budget = budget_of(CHAIR_STEP, ChairDraft) if callable(budget_of) else None
+    prompt = chair_prompt(bundle, claims, near_misses, objections, budget)
+    result = llm.call(CHAIR_STEP, prompt, ChairDraft)
     draft = ChairDraft.model_validate(result.parsed)
     by_id = {c.id: c for c in claims}
     questions: list[tuple[str, DiligenceType, str]] = []

@@ -46,12 +46,25 @@ NO_INDICATION = "not specified"
 _GUIDELINE_TYPES = {"Practice Guideline", "Guideline"}
 
 
-def build_term(indication: str) -> str:
+_GUIDELINE = "(Practice Guideline[pt] OR Guideline[pt])"
+# A guideline that mentions the disease is often about imaging it, or about another disease
+# altogether (the newest six for multiple sclerosis were MRI protocols, psoriasis and graft-versus-
+# host disease). The standard of care is in the ones whose main subject is the disease and whose
+# title or subheading is treatment.
+_TREATMENT = (
+    "(drug therapy[sh] OR therapeutic use[sh] OR treatment[ti] OR therapy[ti] OR therapies[ti] "
+    "OR management[ti])"
+)
+
+
+def build_term(indication: str, focused: bool = False) -> str:
     """The indication is not quoted, so that PubMed maps it to its MeSH heading and synonyms:
     the disease term of Open Targets ("non-small cell lung carcinoma") is not the one the
     guidelines use in their titles ("non-small cell lung cancer"), and a quoted phrase finds only
-    old papers."""
-    return f"{_quote(indication)} AND (Practice Guideline[pt] OR Guideline[pt])"
+    old papers. `focused` asks for treatment guidelines whose major topic is the disease."""
+    if focused:
+        return f"{_quote(indication)}[majr] AND {_GUIDELINE} AND {_TREATMENT}"
+    return f"{_quote(indication)} AND {_GUIDELINE}"
 
 
 def parse_guidelines(xml: bytes | str, retrieved_at: datetime) -> list[Evidence]:
@@ -102,18 +115,24 @@ class PubMedGuidelinesConnector:
         indication = query.indication.name
         if not indication.strip() or indication == NO_INDICATION:
             return []
-        params = {
-            **self._identity,
-            "db": "pubmed",
-            "term": build_term(indication),
-            "retmax": str(self._retmax),
-            "sort": "pub_date",
-            "retmode": "json",
-        }
-        found = await self._http.get(
-            f"{BASE_URL}/esearch.fcgi", params, validate=require_search_result
-        )
-        ids = json.loads(found.body)["esearchresult"].get("idlist", [])
+        # Treatment guidelines about the disease first; any guideline that mentions it only when
+        # there is none (a name PubMed cannot map to a major topic finds nothing).
+        ids: list[str] = []
+        for focused in (True, False):
+            params = {
+                **self._identity,
+                "db": "pubmed",
+                "term": build_term(indication, focused),
+                "retmax": str(self._retmax),
+                "sort": "pub_date",
+                "retmode": "json",
+            }
+            found = await self._http.get(
+                f"{BASE_URL}/esearch.fcgi", params, validate=require_search_result
+            )
+            ids = json.loads(found.body)["esearchresult"].get("idlist", [])
+            if ids:
+                break
         if not ids:
             return []
         fetched = await self._http.get(

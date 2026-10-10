@@ -22,6 +22,16 @@ _PHASE = re.compile(r"PHASE_(\d)", re.IGNORECASE)
 _APPROVED = "APPROVAL"  # Open Targets' name of the stage of an approved drug
 IN_INDICATION = "its stage in the run's indication"
 ANY_INDICATION = "its highest stage in any indication: the bundle gives none for this one"
+CLASS_STAGE = (
+    "the most advanced phase a drug of this class has reached in the indication's registry "
+    "records: the question names no single drug, so the leading program stands for the class"
+)
+_REGISTRY_PHASE = re.compile(r'"phases":\s*\[([^\]]*)\]')
+_NEUROLOGY = re.compile(
+    r"multiple sclerosis|alzheimer|parkinson|epilep|migraine|neuropath|amyotrophic|huntington|"
+    r"dementia|neuromyelitis|myasthenia",
+    re.IGNORECASE,
+)
 _CANCER = re.compile(
     r"cancer|carcinoma|tumou?r|neoplasm|lymphoma|leuk(?:a)?emia|melanoma|sarcoma|myeloma|glioma|"
     r"blastoma|nsclc|malignan",
@@ -79,10 +89,39 @@ def read_stage(bundle: Bundle) -> tuple[str | None, list[str], str]:
     return (*_highest(anywhere), ANY_INDICATION)
 
 
-def financial_model(bundle: Bundle, indication: str) -> Financials:
+def class_stage(bundle: Bundle) -> tuple[str | None, list[str]]:
+    """The highest phase among the registry studies of the bundle, and the records that give it.
+
+    Only for a question about a class (an indication and a mechanism, no drug): every study the
+    registry returned is then a program of the class in the indication.
+    """
+    phases: dict[str, int] = {}
+    for item in bundle.evidence:
+        if not (item.status_key or "").endswith(":design"):
+            continue
+        found = _REGISTRY_PHASE.search(item.excerpt)
+        digits = re.findall(r"PHASE(\d)", found.group(1)) if found else []
+        if digits:
+            phases[item.id] = max(int(d) for d in digits)
+    return _highest(phases)
+
+
+def therapy_area(indication: str) -> tuple[str, str]:
+    """The benchmark area of an indication and the rule that chose it (by its name only)."""
+    if _CANCER.search(indication):
+        return "oncology", "indication names a cancer"
+    if _NEUROLOGY.search(indication):
+        return "neurology", "indication names a neurological disease"
+    return "all", "all diseases"
+
+
+def financial_model(bundle: Bundle, indication: str, class_question: bool = False) -> Financials:
     out = Financials()
     out.stage, out.evidence_ids, which = read_stage(bundle)
-    out.area = "oncology" if _CANCER.search(indication) else "all"
+    if out.stage is None and class_question:
+        out.stage, out.evidence_ids = class_stage(bundle)
+        which = CLASS_STAGE
+    out.area, area_rule = therapy_area(indication)
     if out.stage is None:
         out.missing.append(
             "stage: the bundle reports no clinical stage (Phase 1 to 3) for the asset, so PoS "
@@ -94,8 +133,7 @@ def financial_model(bundle: Bundle, indication: str) -> Financials:
         f"(PoS counts from that phase to approval)"
     )
     out.assumptions.append(
-        f"therapy area for phase-transition benchmarks: {out.area} "
-        f"({'indication names a cancer' if out.area == 'oncology' else 'all diseases'})"
+        f"therapy area for phase-transition benchmarks: {out.area} ({area_rule})"
     )
     out.pos = probability_of_success(out.stage, out.area)
     out.assumptions += out.pos.assumptions

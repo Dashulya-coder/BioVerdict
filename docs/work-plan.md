@@ -42,6 +42,20 @@ is retried shorter (#90). Source text that still does not fit leaves an extracti
 `incomplete`; evidence a reasoning module could not read is listed as omitted in its trace. None
 of this has been seen in a whole run yet.
 
+**Finals rubric (2026-10-10).** The finals score six modules on conflicting evidence, evidence
+flow and quality for BTK inhibitor x multiple sclerosis (`docs/demo-script.md`). Added for it:
+an answer per module computed by code, in the report and on the report screen; each module
+before and after in the diff and on Compare, with the evidence, quote and claim that moved it;
+a sensitivity benchmark runner (`bioverdict sensitivity`) with five named dataset items.
+**Three whole runs with a real model were made for that pair** (the first ever): the last took
+5 min 7 s and $0.99 on the gateway, verdict Conditional, verification and Chair completed. The
+first showed defects that are fixed: the judge removed 75 of 93 citations because it saw quotes
+without their passage; the modules were not told the question; multiple sclerosis did not
+resolve; the Chair's request was too large; a 429 from the gateway's concurrency limit cancelled
+verification. Open: the sensitivity benchmark and the earlier-cutoff base run have not been run
+with a real model; no market size (so no rNPV) for multiple sclerosis; the same trial result is
+restated by several modules; run time is close to the 420 s limit.
+
 **Next for Arsenii:** the first measured live run together with Dasha (M2/M3): keep its report,
 bundle hash, trace, rejected claims, time and cost. Then eval and pre-warm on the real case set
 and asset list (A8).

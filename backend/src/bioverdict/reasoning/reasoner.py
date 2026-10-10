@@ -49,6 +49,7 @@ class ModuleReasoner:
         max_evidence_chars: int = MAX_EVIDENCE_CHARS,
         max_parallel: int | None = None,
         max_batches: int = 3,
+        question: str = "",
     ) -> None:
         self._llm = llm
         self._run_id = run_id
@@ -57,6 +58,7 @@ class ModuleReasoner:
         self._max_evidence_chars = max_evidence_chars
         self._max_parallel = max_parallel  # None: all calls at once (up to 6); 1: one at a time
         self._max_batches = max_batches  # batches of evidence per module when it does not fit one
+        self._question = question  # what is being underwritten (prompts.question_text)
         self.trace = ReasoningTrace()
 
     def _prompts(self, module: ReasoningModule, bundle: Bundle) -> list[BuiltPrompt]:
@@ -71,6 +73,7 @@ class ModuleReasoner:
                     bundle,
                     self._max_evidence_chars,
                     families=module.families,
+                    question=self._question,
                 )
             ]
         return build_prompts(
@@ -79,6 +82,7 @@ class ModuleReasoner:
             budget=budget,
             families=module.families,
             max_batches=self._max_batches,
+            question=self._question,
         )
 
     def _workers(self, calls: int) -> int:

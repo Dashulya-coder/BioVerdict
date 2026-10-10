@@ -103,7 +103,7 @@ Collect agents write **evidence**. Reason steps write **claims**. Neither writes
 |---|---|---|---|
 | 1 | Source validity | Was this URL or ID fetched in this run? | exact match against the bundle catalog |
 | 2 | Evidence presence | Is the quote in the bundle, and the number in the quote? | string check (code) |
-| 3 | Claim entailment | Does the quote actually support the claim? | LLM judge from a different provider, scored against a manual sample |
+| 3 | Claim entailment | Does the quote, read in the passage and record it was copied from, support the claim? | LLM judge from a different provider, scored against a manual sample |
 | 4 | Source authority | Is this the right source family for this field? | rule table |
 | 5 | Temporal validity | Is this the current figure or an older cutoff? | date and conflict rules |
 
@@ -166,7 +166,7 @@ routes and shapes are the same for both. Interactive documentation: `/docs` on a
 | `POST /runs` | Start a run: `{ asset, as_of? }` or `{ indication, mechanism, as_of? }`, returns `run_id` at once (202). Fixture mode knows the assets listed in `fixtures/`; others get 422 with the list. A live run without a model key gets 503 | done |
 | `GET /runs`, `GET /runs/{id}` | List runs, one run's status and verdict | done |
 | `GET /runs/{id}/events` | SSE progress: one event per step and status, then `end`; resumes from `Last-Event-ID` | done |
-| `GET /runs/{id}/report` | `ReportResponse`: executive verdict, sections with claims and links, translation chain, gates, diligence questions, assumptions, cited sources, bundle identity. 409 while the run is going | done |
+| `GET /runs/{id}/report` | `ReportResponse`: executive verdict, the six modules each with its answer and the claims behind it (`modules`, see [`scoring.md`](scoring.md)), sections with claims and links, translation chain, gates, diligence questions, assumptions, cited sources, bundle identity. 409 while the run is going | done |
 | `GET /runs/{id}/resolver` | The resolved input (`ResolverOutput`) with its assumptions. 409 until the resolve step has finished | done |
 | `GET /runs/{id}/evidence` | Every evidence item of the frozen bundle, cited or not. 409 until the bundle is frozen | done |
 | `GET /runs/{id}/market` | `MarketResponse`: patients, price of approved analogs and market size as low / middle / high bounds (in the fields `p10`/`p50`/`p90` of the shared range type; they are not percentiles, and `range_basis` says so), each with the bundle records it was read from, the assumptions made, and what is missing. Computed by code from the bundle; labelled `modeled`. 409 until the bundle is frozen | done |
@@ -174,7 +174,7 @@ routes and shapes are the same for both. Interactive documentation: `/docs` on a
 | `GET /runs/{id}/evidence/{evidence_id}` | One evidence item with excerpt, source and the claims that quote it | done |
 | `GET /runs/{id}/trace` | Steps, model calls, tokens and cost | done |
 | `POST /runs/{id}/evidence` | Add up to ten documents (verbatim text with its address, source, kind, level and date) to a finished run. Starts a new run that holds the original bundle as version 1 and the added evidence as version 2, and recomputes (the model places the new evidence among the claims, code recomputes; see below); returns the new `run_id` (202). Needs a model: a fixture API answers 422 | done |
-| `GET /runs/{id}/diff?against={other}` | `DiffResponse`: verdict, gates, chain links, evidence and claims that differ between two finished runs. `against` defaults to the run this one grew from | done |
+| `GET /runs/{id}/diff?against={other}` | `DiffResponse`: verdict, the six modules before and after with the new evidence, quote and claim that moved each (`modules`), gates, chain links, evidence and claims that differ between two finished runs. `against` defaults to the run this one grew from | done |
 
 Recompute runs as a new run, so the original run and its report stay as they were. By default
 (`RECOMPUTE_MODE=classify`) it follows section 8: the model is asked only where the added

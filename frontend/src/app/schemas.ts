@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { DEMO_DATE, evidenceLevels, sourceKinds } from './constants'
+import { moduleAnswers } from './modules'
 
 export const inputSchema = z
   .object({
@@ -98,10 +99,39 @@ const diffEvidenceSchema = z.object({
   published_at: z.iso.date().nullable(),
   claim_ids: z.array(z.string()),
 })
+const moduleCauseSchema = z.object({
+  evidence_id: z.string(),
+  source: z.string(),
+  url: z.string(),
+  published_at: z.iso.date().nullable(),
+  level: z.enum(evidenceLevels),
+  direction: z.enum(['supports', 'contradicts', 'neutral']),
+  quote: z.string(),
+  claim_id: z.string(),
+  claim_text: z.string(),
+  claim_change: z.enum(['added', 'changed']),
+  confidence_before: z.number().nullable(),
+  confidence_after: z.number(),
+  contribution_before: z.number().nullable(),
+  contribution_after: z.number(),
+})
+const moduleChangeSchema = z.object({
+  module: z.string(),
+  title: z.string(),
+  answer_before: z.enum(moduleAnswers),
+  answer_after: z.enum(moduleAnswers),
+  balance_before: z.number().nullable(),
+  balance_after: z.number().nullable(),
+  headline_before: z.string(),
+  headline_after: z.string(),
+  changed: z.boolean(),
+  causes: z.array(moduleCauseSchema),
+})
 export const diffSchema = z.object({
   base: runSideSchema,
   head: runSideSchema,
   verdict_changed: z.boolean(),
+  modules: z.array(moduleChangeSchema).default([]),
   gates: z.array(
     z.object({ gate_id: z.string(), fired_before: z.boolean(), fired_after: z.boolean() }),
   ),

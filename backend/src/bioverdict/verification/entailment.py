@@ -3,8 +3,10 @@
 Grounding (`reasoning/grounding.py`) proves that a quote is in the evidence. It cannot tell
 whether the quote says what the claim says: a registry status next to an efficacy claim, a result
 from another drug, a population the claim does not mean. A second model reads each claim with each
-of its quotes and says what the quote does to it. The judge sees nothing but the claim, the quote
-and the name of its source: not the other quotes, not the reasoning that produced the claim.
+of its quotes and says what the quote does to it. The judge sees the claim, the quote, and the
+passage and record the quote was copied from (a quote alone, "PRIMARY" or "69% relative
+reduction", does not say which drug, trial or endpoint it is about): not the other quotes, not
+the reasoning that produced the claim.
 
 The judge only reports; code acts. A link whose direction the judge does not confirm is removed
 (and logged), so the confidence formula never counts it. A claim left with no supporting link is
@@ -21,6 +23,7 @@ from typing import Literal
 from pydantic import Field
 
 from bioverdict.contracts import LLM
+from bioverdict.llm.errors import LLMError
 from bioverdict.reasoning.prompts import boundary_tag
 from bioverdict.reasoning.schemas import _Draft
 from bioverdict.store.models import (
@@ -29,6 +32,8 @@ from bioverdict.store.models import (
     Claim,
     ClaimEvidenceLink,
     Direction,
+    Implication,
+    LLMResult,
     VerificationCheck,
 )
 
@@ -37,6 +42,7 @@ CHECK_NAME = "entailment"
 UNJUDGED = "entailment_unjudged"
 BATCH_CHARS = 9_000  # of items per request: the gateway takes about 16,000 with the schema
 MAX_QUOTE_SHOWN = 400
+MAX_PASSAGE_SHOWN = 450  # of the excerpt around the quote
 MAX_WORKERS = 4
 
 # Only these claims lean on their quotes. A hypothesis or an unknown gains nothing from a link.
@@ -47,9 +53,9 @@ class DraftJudgment(_Draft):
     claim_id: str
     evidence_id: str
     relation: Literal["supports", "contradicts", "unrelated"] = Field(
-        description="What the quote, read on its own, does to the claim"
+        description="What the quote, read in its passage, does to the claim"
     )
-    reason: str = Field(description="At most 15 words")
+    reason: str = Field(description="At most 12 words")
 
 
 class JudgeDraft(_Draft):
@@ -57,16 +63,21 @@ class JudgeDraft(_Draft):
 
 
 _TASK = """\
-You are an independent verifier. A claim and the quotes cited for it are listed below. For each
-item, read the quote on its own and decide what it does to the claim.
-- "supports": the quote states the claim or directly implies it, about the same drug, population,
-  endpoint and setting that the claim names.
-- "contradicts": the quote states or directly implies the opposite.
+You are an independent verifier. A claim and the quotes cited for it are listed below. Each quote
+comes with the passage it was copied from and the record it belongs to (a trial id, an article).
+Use the passage and the record only to know what the quote is about: which drug, trial,
+population and endpoint. Then decide what the quote does to the claim.
+- "supports": the quote, read in its passage, states or directly implies the claim, or one of the
+  facts the claim asserts. A claim may rest on several quotes, each for a part of it; a quote
+  need not carry the whole claim. Ignore a cautious remark the claim adds ("this does not prove
+  ..."): judge its factual statement.
+- "contradicts": the quote states or directly implies the opposite of the claim.
 - "unrelated": anything else. That includes a quote about another drug or another population, a
-  trial's design, status or planned endpoint offered as a result, a general statement that merely
-  mentions the same topic, and a quote that supports a weaker or narrower statement than the claim.
-Be strict: a quote must say what the claim says. Do not use what you know from elsewhere, and do
-not guess how the claim was reached. Answer once for every item, naming its claim and evidence ids.
+  trial's design, status or planned endpoint offered as a result, and a general statement that
+  merely mentions the same topic.
+Be strict about the facts: same drug, same population, same endpoint, same direction. Do not use
+what you know from elsewhere, and do not guess how the claim was reached. Answer once for every
+item, naming its claim and evidence ids.
 """
 
 
@@ -79,6 +90,23 @@ class Verified:
     removed: int = 0
     downgraded: list[str] = field(default_factory=list)
     models: list[str] = field(default_factory=list)  # who judged, for the run's log
+    context_links: int = 0  # links of context claims, left unjudged (see `decides`)
+    failed_batches: int = 0  # requests that failed: their links are left as they were
+
+
+def decides(claim: Claim) -> bool:
+    """Whether anything computed rests on the claim: a module's answer (a claim that speaks for
+    or against), the verdict (a key claim, a gate) or the translation chain.
+
+    A context claim ("the analog is taken orally") moves no number, and a run has a time limit:
+    its quotes are grounded by code like every quote, but the judge is not asked about them.
+    """
+    return bool(
+        claim.implication is not Implication.NEUTRAL
+        or claim.critical
+        or claim.gate_signals
+        or claim.chain_link is not None
+    )
 
 
 def _preamble(bundle: Bundle) -> str:
@@ -89,17 +117,34 @@ def _preamble(bundle: Bundle) -> str:
     )
 
 
+def _passage(excerpt: str, quote: str) -> str:
+    """The excerpt, or the part of a long one that holds the quote."""
+    if len(excerpt) <= MAX_PASSAGE_SHOWN:
+        return excerpt
+    at = max(excerpt.find(quote), 0)
+    start = max(
+        0, min(at - (MAX_PASSAGE_SHOWN - len(quote)) // 2, len(excerpt) - MAX_PASSAGE_SHOWN)
+    )
+    start = max(start, 0)
+    cut = excerpt[start : start + MAX_PASSAGE_SHOWN]
+    return (
+        ("..." if start else "") + cut + ("..." if start + MAX_PASSAGE_SHOWN < len(excerpt) else "")
+    )
+
+
 def _item(number: int, claim: Claim, link: ClaimEvidenceLink, bundle: Bundle) -> str:
     evidence = bundle.evidence_by_id()[link.evidence_id]
     tag = boundary_tag(bundle)
     quote = (
         link.quote if len(link.quote) <= MAX_QUOTE_SHOWN else link.quote[:MAX_QUOTE_SHOWN] + "..."
     )
+    record = f", record {evidence.locator.value}" if evidence.locator else ""
     return (
         f"[{number}] claim {claim.id} ({claim.claim_type.value}): {claim.text}\n"
-        f"    evidence {link.evidence_id} ({evidence.source}, {evidence.level.value}), "
+        f"    evidence {link.evidence_id} ({evidence.source}{record}, {evidence.level.value}), "
         f"cited as: {link.direction.value}\n"
-        f"    <{tag}>{quote}</{tag}>"
+        f"    quote: <{tag}>{quote}</{tag}>\n"
+        f"    passage: <{tag}>{_passage(evidence.excerpt, link.quote)}</{tag}>"
     )
 
 
@@ -134,7 +179,7 @@ def verify_links(
     """
     by_id = {c.id: c for c in claims}
     evidence = bundle.evidence_by_id()
-    judged_links = [
+    citable = [
         link
         for link in links
         if link.direction is not Direction.NEUTRAL
@@ -143,14 +188,29 @@ def verify_links(
         and link.evidence_id in evidence
         and (only is None or (link.claim_id, link.evidence_id) in only)
     ]
+    # Links named in `only` (new evidence, an objection) are always judged: they are the change.
+    judged_links = [l for l in citable if only is not None or decides(by_id[l.claim_id])]
     out = Verified(links=list(links), claims=list(claims))
+    out.context_links = len(citable) - len(judged_links)
     if not judged_links:
         return out
 
     items = [_item(n, by_id[l.claim_id], l, bundle) for n, l in enumerate(judged_links, 1)]
     prompts = [judge_prompt(bundle, batch) for batch in _batches(items, BATCH_CHARS)]
+
+    def ask(prompt: str) -> LLMResult | None:
+        """One request. A failure costs its own links their judgement, not the whole check."""
+        try:
+            return llm.call(JUDGE_STEP, prompt, JudgeDraft)
+        except LLMError:
+            return None
+
     with ThreadPoolExecutor(max_workers=min(MAX_WORKERS, len(prompts))) as pool:
-        results = list(pool.map(lambda p: llm.call(JUDGE_STEP, p, JudgeDraft), prompts))
+        answers = list(pool.map(ask, prompts))
+    results = [answer for answer in answers if answer is not None]
+    out.failed_batches = len(answers) - len(results)
+    if not results:
+        raise LLMError(f"all {len(prompts)} request(s) to the judge failed")
     out.models = sorted({f"{r.provider}/{r.model}" for r in results})
 
     answered: dict[tuple[str, str], DraftJudgment] = {}

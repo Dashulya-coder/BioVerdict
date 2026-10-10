@@ -1,6 +1,7 @@
 import { Badge } from '../../ui/Badge'
 import { formatDate } from '../../app/format'
 import type { RunDiff } from '../../app/models'
+import { ModuleChanges } from './ModuleChanges'
 
 type Side = RunDiff['base']
 type DiffEvidence = RunDiff['evidence_added'][number]
@@ -95,6 +96,8 @@ export function DiffView({ diff }: { diff: RunDiff }) {
           </table>
         </div>
       </section>
+
+      <ModuleChanges diff={diff} />
 
       {diff.gates.length + diff.chain.length > 0 ? (
         <section aria-label="Gates and chain">
