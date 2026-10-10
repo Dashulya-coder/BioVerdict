@@ -16,6 +16,7 @@ says adds a link or raises a confidence.
 
 from __future__ import annotations
 
+import json
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Literal
@@ -43,6 +44,7 @@ UNJUDGED = "entailment_unjudged"
 BATCH_CHARS = 9_000  # of items per request: the gateway takes about 16,000 with the schema
 MAX_QUOTE_SHOWN = 400
 MAX_PASSAGE_SHOWN = 450  # of the excerpt around the quote
+MAX_RESULT_SHOWN = 1_200  # of a registry result written out as text
 MAX_WORKERS = 4
 
 # Only these claims lean on their quotes. A hypothesis or an unknown gains nothing from a link.
@@ -117,8 +119,67 @@ def _preamble(bundle: Bundle) -> str:
     )
 
 
+def _result_text(excerpt: str) -> str | None:
+    """A registry result record written as lines of text, or None for any other excerpt.
+
+    A record is JSON whose group names come first and whose numbers come after about 450
+    characters of headings. Cut at the window of an ordinary passage, the judge saw the groups
+    and no values, and removed the claims that quoted them. Here every value stands next to the
+    name of its group.
+    """
+    if not excerpt.startswith("{"):
+        return None
+    try:
+        record = json.loads(excerpt)
+    except ValueError:
+        return None
+    if not isinstance(record, dict) or "classes" not in record:
+        return None
+    names = {
+        g.get("id"): g.get("title", "") for g in record.get("groups", []) if isinstance(g, dict)
+    }
+    head = [str(record[k]) for k in ("type", "title") if record.get(k)]
+    lines = [f"Outcome measure ({'; '.join(head)})"]
+    for key, label in (
+        ("paramType", "reported as"),
+        ("dispersionType", "spread is"),
+        ("unitOfMeasure", "unit"),
+        ("timeFrame", "time frame"),
+    ):
+        if record.get(key):
+            lines[0] += f"; {label}: {record[key]}"
+    for outcome_class in record.get("classes", []):
+        for category in outcome_class.get("categories", []):
+            label = " / ".join(
+                str(t) for t in (outcome_class.get("title"), category.get("title")) if t
+            )
+            for item in category.get("measurements", []):
+                group = names.get(item.get("groupId"), item.get("groupId"))
+                value = f"{group}: {item.get('value')}"
+                if item.get("lowerLimit") is not None:
+                    value += f" (range {item['lowerLimit']} to {item.get('upperLimit')})"
+                if item.get("spread") is not None:
+                    value += f" (spread {item['spread']})"
+                lines.append(f"{label}: {value}" if label else value)
+    for analysis in record.get("analyses", []):
+        who = ", ".join(str(names.get(g, g)) for g in analysis.get("groupIds", []))
+        parts = [
+            f"{key} {analysis[key]}"
+            for key in ("statisticalMethod", "paramType", "paramValue", "pValue")
+            if analysis.get(key) is not None
+        ]
+        if analysis.get("ciLowerLimit") is not None:
+            parts.append(f"CI {analysis['ciLowerLimit']} to {analysis.get('ciUpperLimit')}")
+        lines.append(f"Analysis of {who or 'the groups'}: " + ", ".join(parts))
+    text = "\n".join(lines)
+    return text if len(text) <= MAX_RESULT_SHOWN else text[:MAX_RESULT_SHOWN] + "..."
+
+
 def _passage(excerpt: str, quote: str) -> str:
     """The excerpt, or the part of a long one that holds the quote."""
+    result = _result_text(excerpt)
+    if result is not None:
+        return result
     if len(excerpt) <= MAX_PASSAGE_SHOWN:
         return excerpt
     at = max(excerpt.find(quote), 0)
