@@ -25,7 +25,9 @@ Rules for every claim:
   about. One fact per claim: no "but", and no remark on what the fact does not prove.
 - Support it with links. Each link names an evidence id exactly as listed and a quote copied
   character for character from that evidence's text (at least a full phrase). A quote that is
-  not in the text is discarded together with your link.
+  not in the text is discarded together with your link. In a registry result record (it begins
+  "Outcome measure (") quote the line that holds the value with its group, for example
+  "Drug A 10 mg: 0.53 (range 0.44 to 0.64)", not only the title of the measure.
 - direction is "supports" or "contradicts" that claim; use "neutral" only if the evidence is
   merely related. Look for contradicting evidence actively and report it.
 - basis "extracted": the claim is stated by a quote. "inferred": you conclude it from the
@@ -68,6 +70,13 @@ RETRY_RESERVE = 700
 # A long excerpt is shown by its beginning when characters are scarce; a quote is still checked
 # against the whole excerpt, so nothing the model cites can be invented.
 DEFAULT_EXCERPT_CAP = 600
+# A registry result record is one outcome measure, its values after a heading of about 300
+# characters: cut at 600, a module saw the endpoint and few of the values, and quoted the endpoint.
+RESULT_EXCERPT_CAP = 2_000
+
+
+def _is_result(e: Evidence) -> bool:
+    return bool(e.status_key and ":result:" in e.status_key)
 
 
 def boundary_tag(bundle: Bundle) -> str:
@@ -79,6 +88,8 @@ def boundary_tag(bundle: Bundle) -> str:
 def _block(e: Evidence, tag: str, cap: int | None = None) -> str:
     published = e.published_at.isoformat() if e.published_at else "undated"
     text = e.excerpt
+    if cap is not None and _is_result(e):
+        cap = max(cap, RESULT_EXCERPT_CAP)
     if cap is not None and len(text) > cap:
         text = f"{text[:cap]}... [{len(text) - cap} more characters not shown]"
     return (

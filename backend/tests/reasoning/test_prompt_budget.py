@@ -50,7 +50,7 @@ def big_bundle(n: int = 100, chars: int = 500) -> Bundle:
 # --- sizing -------------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("budget", [4000, 8000, 13000])
+@pytest.mark.parametrize("budget", [4500, 8000, 13000])
 def test_the_prompt_fits_the_budget_and_keeps_the_retry_reserve(budget: int) -> None:
     built = build_prompt(MECHANISM.instruction, big_bundle(), budget=budget)
     assert len(built.text) + RETRY_RESERVE <= budget
@@ -155,3 +155,16 @@ def test_a_small_bundle_is_not_trimmed_on_the_gateway() -> None:
     reasoner = ModuleReasoner(client.bind("R-1"), "R-1")
     reasoner.reason(BASE)
     assert reasoner.trace.omitted_evidence == []
+
+
+def test_a_registry_result_is_shown_further_than_other_long_excerpts() -> None:
+    from bioverdict.reasoning.prompts import DEFAULT_EXCERPT_CAP, RESULT_EXCERPT_CAP, _block
+
+    text = "Outcome measure (PRIMARY; ARR)\n" + "\n".join(f"Arm {i}: 0.{i}" for i in range(300))
+    result = item(1, "registry", 10).model_copy(
+        update={"excerpt": text, "status_key": "nct:NCT1:result:primary:1"}
+    )
+    paper = item(2, "literature", 10).model_copy(update={"excerpt": text})
+
+    assert len(_block(result, "t", DEFAULT_EXCERPT_CAP)) > RESULT_EXCERPT_CAP
+    assert len(_block(paper, "t", DEFAULT_EXCERPT_CAP)) < DEFAULT_EXCERPT_CAP + 300

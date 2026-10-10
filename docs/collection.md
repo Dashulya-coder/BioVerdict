@@ -94,9 +94,18 @@ Sponsor names are not part of those excerpts; they are in the evidence's indepen
 ## Status facts and texts
 
 Within one source, records are of two kinds. A **status fact** (a record with a `status_key`: a
-trial's status or design, a database snapshot) is one fact that extraction never cuts, so it goes
-to the bundle as retrieved, without a model call. **Texts** (summaries, outcome descriptions,
-posted results, abstracts) go to the model, which picks verbatim quotes.
+trial's status or design, a posted result, a database snapshot) is one fact that extraction
+never cuts, so it goes to the bundle as retrieved, without a model call. **Texts** (summaries,
+outcome descriptions, abstracts) go to the model, which picks verbatim quotes.
+
+A **posted result** is one outcome measure, stored as lines of text (`result_lines` in
+`connectors/clinicaltrials.py`): a heading with the measure, its type, unit and time frame, then
+one line per value with its group ("Tolebrutinib 60 mg: 0.530 (range 0.439 to 0.641)"), then
+the analyses. It was stored as JSON with group codes until 2026-10-10; a quote could then name
+the endpoint but not tie a value to its group, and the judge removed such quotes (`eval.md`,
+section 9). A value whose group id the record does not give is labelled "unnamed group", never
+matched to a group by position. Modules see up to 2,000 characters of a result (600 of other
+long excerpts) and are told to quote the value's line.
 
 Texts are sent in up to three prompts per source (`max_batches`), at the same time, each with up
 to 24,000 characters and up to 32 returned facts. A record that does not fit a prompt is moved

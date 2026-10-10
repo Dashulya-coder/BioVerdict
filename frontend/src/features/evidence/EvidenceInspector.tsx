@@ -46,7 +46,7 @@ export function EvidenceInspector({ evidence }: { evidence: Evidence }) {
       </dl>
       <div className="mt-6 border-t border-rule pt-5">
         <h3 className="mb-4 font-editorial text-xl font-medium">Verbatim excerpt</h3>
-        <blockquote className="border-l-2 border-accent/50 bg-raised p-4 text-sm leading-7">
+        <blockquote className="border-l-2 border-accent/50 bg-raised p-4 text-sm leading-7 whitespace-pre-line">
           {evidence.excerpt}
         </blockquote>
       </div>

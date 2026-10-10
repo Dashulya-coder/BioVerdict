@@ -30,7 +30,7 @@ function EvidenceList({ title, items }: { title: string; items: readonly DiffEvi
                 <span>quoted by no claim</span>
               )}
             </p>
-            <blockquote className="mt-2 border-l-2 border-rule pl-3 text-sm leading-6">
+            <blockquote className="mt-2 border-l-2 border-rule pl-3 text-sm leading-6 whitespace-pre-line">
               {item.excerpt}
             </blockquote>
             <a href={item.url} target="_blank" rel="noreferrer" className="mt-2 block text-xs">

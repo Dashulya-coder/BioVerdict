@@ -265,6 +265,64 @@ def _outcome_fragment(measure: dict) -> dict:
     return {key: value for key, value in fragment.items() if value not in (None, [], "")}
 
 
+RESULT_HEAD = "Outcome measure ("  # how a result record's text begins
+
+
+def result_lines(record: dict) -> str:
+    """An outcome measure as lines of text: a heading, then every value next to its group.
+
+    Stored as JSON, the values carried group codes ("OG001") and stood after the headings, so a
+    quote could name the endpoint or a group but never tie a value to its group, and the judge
+    removed such claims as "the quote only names the endpoint" (docs/eval.md, section 9). As
+    lines, a quote such as "Tolebrutinib 60 mg: 0.530 (range 0.439 to 0.641)" is verbatim.
+    """
+    # A value is named only by its own group id: the registry's order of values need not follow
+    # the order of the groups, and a record read before ids were kept has none to go by.
+    names = {
+        g["id"]: g.get("title", "")
+        for g in record.get("groups", [])
+        if isinstance(g, dict) and g.get("id")
+    }
+    head = [str(record[k]) for k in ("type", "title") if record.get(k)]
+    lines = [f"{RESULT_HEAD}{'; '.join(head)})"]
+    if not names and record.get("groups"):
+        titles = ", ".join(str(g.get("title")) for g in record["groups"] if isinstance(g, dict))
+        lines.append(f"Groups (the record does not say which value is whose): {titles}")
+    for key, label in (
+        ("paramType", "reported as"),
+        ("dispersionType", "spread is"),
+        ("unitOfMeasure", "unit"),
+        ("timeFrame", "time frame"),
+    ):
+        if record.get(key):
+            lines[0] += f"; {label}: {record[key]}"
+    for outcome_class in record.get("classes", []):
+        for category in outcome_class.get("categories", []):
+            label = " / ".join(
+                str(t) for t in (outcome_class.get("title"), category.get("title")) if t
+            )
+            for item in category.get("measurements", []):
+                group = names.get(item.get("groupId"), item.get("groupId")) or "unnamed group"
+                value = f"{group}: {item.get('value')}"
+                if item.get("lowerLimit") is not None:
+                    value += f" (range {item['lowerLimit']} to {item.get('upperLimit')})"
+                if item.get("spread") is not None:
+                    value += f" (spread {item['spread']})"
+                lines.append(f"{label}: {value}" if label else value)
+    for analysis in record.get("analyses", []):
+        who = ", ".join(str(names.get(g, g)) for g in analysis.get("groupIds", []))
+        parts = [
+            f"{key} {analysis[key]}"
+            for key in ("statisticalMethod", "paramType", "paramValue", "pValue")
+            if analysis.get(key) is not None
+        ]
+        if analysis.get("ciLowerLimit") is not None:
+            ci = f"{analysis['ciPctValue']}% CI" if analysis.get("ciPctValue") else "CI"
+            parts.append(f"{ci} {analysis['ciLowerLimit']} to {analysis.get('ciUpperLimit')}")
+        lines.append(f"Analysis of {who or 'the groups'}: " + ", ".join(parts))
+    return "\n".join(lines)
+
+
 def parse_results(
     results: dict, study: dict, retrieved_at: datetime | None = None
 ) -> list[Evidence]:
@@ -297,7 +355,7 @@ def parse_results(
         item = _evidence(
             nct,
             f"result-{number}",
-            json.dumps(_outcome_fragment(measure), ensure_ascii=False),
+            result_lines(_outcome_fragment(measure)),
             posted,
             EvidenceLevel.HUMAN_INTERVENTIONAL,
             _sponsor(study),
