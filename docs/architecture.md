@@ -186,6 +186,12 @@ clearly, and a safety fact from two independent sources can flip the verdict; no
 reworded appears in the diff. `RECOMPUTE_MODE=full` is the fallback of ADR-007: every reasoning
 module runs again on the new bundle version.
 
+In full mode, analyst-added documents are available to every module despite having their
+own source family; grounding and entailment still apply. In classify mode, a new claim
+with even one failed citation is rejected together with all of its links, as in the first
+reasoning pass, and logged as `claim_dropped`. Existing unknowns are not promoted by adding
+a link: use full mode to establish a new module fact or close a translation-chain gap.
+
 The diff is computed by code from the stored records. It pairs evidence by address, locator and
 exact excerpt, and claims by section and identical wording. A translation-chain link is listed
 when its status or its confidence differs (0.71 to 0.89 within `supported` is a change). It also compares two runs of one

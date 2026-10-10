@@ -146,14 +146,35 @@ export async function openRun(
   onProgress('Opening the run.')
   const { mode } = await request('/health', healthSchema, signal)
   const run = await getRun(runId, signal)
-  const asset = typeof run.input.asset === 'string' && run.input.asset ? run.input.asset : runId
-  return openFrozen(
+  const field = (name: string) => (typeof run.input[name] === 'string' ? run.input[name] : '')
+  const analysis = await openFrozen(
     runId,
     mode,
-    { asset, indication: '', mechanism: '', as_of: run.as_of },
+    {
+      asset: field('asset'),
+      indication: field('indication'),
+      mechanism: field('mechanism'),
+      as_of: run.as_of,
+    },
     onProgress,
     signal,
   )
+  // CLI queries may store only free text. Reuse confirmed resolution rather than the run id
+  // as a drug name; structured inputs keep exactly the fields the user supplied.
+  if (!field('query')) return analysis
+  return {
+    ...analysis,
+    input: {
+      ...analysis.input,
+      asset: analysis.input.asset || analysis.resolver.known_assets[0] || '',
+      indication: analysis.input.indication || analysis.resolver.indication.name,
+      mechanism:
+        analysis.input.mechanism ||
+        [...analysis.resolver.targets.map((target) => target.symbol), analysis.resolver.action]
+          .filter(Boolean)
+          .join(' '),
+    },
+  }
 }
 
 /** The run's status and verdict as the API has them now. */

@@ -14,6 +14,7 @@ from bioverdict.reasoning.prompts import (
     RETRY_RESERVE,
     boundary_tag,
     build_prompt,
+    build_prompts,
 )
 from bioverdict.reasoning.schemas import ModuleDraft
 from bioverdict.store.models import Bundle, Evidence, EvidenceLevel, SourceKind
@@ -110,6 +111,19 @@ def test_a_module_prompt_holds_only_its_families() -> None:
     built = build_prompt(MECHANISM.instruction, big_bundle(), families=MECHANISM.families)
     assert "source registry" not in built.text and "source cms_spending" not in built.text
     assert "source literature" in built.text and "source target_database" in built.text
+
+
+@pytest.mark.parametrize("module", ALL_MODULES, ids=lambda m: m.name)
+@pytest.mark.parametrize("budget", [None, 13000])
+def test_full_recompute_shows_analyst_additions_to_every_module(module, budget) -> None:
+    new = item(999, "analyst_added", chars=100)
+    market = item(998, "cms_spending", chars=100)
+    bundle = BASE.model_copy(update={"evidence": [new, market]})
+    prompts = build_prompts(
+        module.instruction, bundle, budget=budget, families=module.families, max_batches=3
+    )
+    assert any(new.excerpt in p.text for p in prompts)
+    assert all(market.excerpt not in p.text for p in prompts)
 
 
 # --- through the client: every request fits ------------------------------------------------------

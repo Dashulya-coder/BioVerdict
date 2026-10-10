@@ -27,6 +27,7 @@ from bioverdict.reasoning.prompts import (
 )
 from bioverdict.reasoning.schemas import DraftClaim, ModuleDraft
 from bioverdict.store.models import (
+    Basis,
     Bundle,
     Claim,
     ClaimEvidenceLink,
@@ -80,6 +81,7 @@ class ClassifyResult:
     new_claim_links: list[ClaimEvidenceLink] = field(default_factory=list)
     unmatched: list[str] = field(default_factory=list)  # new evidence that bears on nothing
     drops: list[Drop] = field(default_factory=list)
+    rejected_claims: set[str] = field(default_factory=set)
     unread: list[str] = field(default_factory=list)  # new evidence no batch had room for
     llm_results: list[LLMResult] = field(default_factory=list)
 
@@ -205,8 +207,16 @@ def classify_new_evidence(
         allow_study_fact=CLINICAL.allow_study_fact,
         first_number=next_number,
     )
-    result.new_claims = grounded.claims
-    result.new_claim_links = grounded.links
+    # Apply the same fail-closed citation rule as the first reasoning pass: one invented
+    # citation rejects the entire new claim, even if another citation was grounded.
+    rejected = {d.claim_id for d in grounded.drops if d.is_citation_failure}
+    cited = {link.claim_id for link in grounded.links}
+    rejected |= {
+        c.id for c in grounded.claims if c.basis is not Basis.UNKNOWN and c.id not in cited
+    }
+    result.rejected_claims = rejected
+    result.new_claims = [c for c in grounded.claims if c.id not in rejected]
+    result.new_claim_links = [l for l in grounded.links if l.claim_id not in rejected]
     result.drops += grounded.drops
     result.unmatched = [i for i in parsed.unmatched if i in new_by_id]
     return result

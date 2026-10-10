@@ -4,20 +4,28 @@ import { Icon } from '../../ui/Icon'
 import { PageHeading } from '../../ui/PageHeading'
 import { AnalysisSteps } from '../../app/AnalysisSteps'
 import { copy } from '../../app/copy'
+import { AssetSelection } from './AssetSelection'
+import { isLandscape } from './candidates'
 import type { PreparedAnalysis } from '../../app/models'
 
 export function ResolvedInput({
   analysis,
   onBack,
   onContinue,
+  onSelectAsset,
 }: {
   analysis: PreparedAnalysis
   onBack: () => void
   onContinue: () => void
+  onSelectAsset: (asset: string) => void
 }) {
   const resolver = analysis.resolver
   const rows = [
-    { label: 'Drug', value: analysis.input.asset, field: 'known_assets' },
+    {
+      label: 'Drug',
+      value: analysis.input.asset || 'Class landscape — select an asset below',
+      field: 'known_assets',
+    },
     { label: 'Indication', value: resolver.indication.name, field: 'indication' },
     {
       label: 'Target',
@@ -83,6 +91,9 @@ export function ResolvedInput({
           </p>
         </aside>
       </div>
+      {isLandscape(analysis) ? (
+        <AssetSelection analysis={analysis} onSelect={onSelectAsset} />
+      ) : null}
     </>
   )
 }

@@ -181,7 +181,7 @@ def build_prompt(
     """
     tag = boundary_tag(bundle)
     if pool is None:
-        pool = [e for e in bundle.evidence if families is None or e.source_family in families]
+        pool = _module_evidence(bundle, families)
     batch_note = _BATCH.format(number=batch) if batch is not None else ""
 
     if budget is None:
@@ -212,7 +212,7 @@ def build_prompts(
     the last batch is in `omitted` of the last prompt. Without a budget, or when everything
     fits, there is a single prompt and no batch note.
     """
-    pool = [e for e in bundle.evidence if families is None or e.source_family in families]
+    pool = _module_evidence(bundle, families)
     if budget is None or max_batches <= 1:
         return [
             build_prompt(
@@ -254,6 +254,16 @@ def build_prompts(
             )
         ]
     return prompts
+
+
+def _module_evidence(bundle: Bundle, families: frozenset[str] | None) -> list[Evidence]:
+    # Analyst additions retain their provenance; they have no connector-specific family.
+    # Every module must be able to assess their relevance during a full recompute.
+    return [
+        e
+        for e in bundle.evidence
+        if families is None or e.source_family in families or e.source_family == "analyst_added"
+    ]
 
 
 _BATCH = (

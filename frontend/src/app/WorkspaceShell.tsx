@@ -4,6 +4,7 @@ import { Badge } from '../ui/Badge'
 import { Sidebar } from './Sidebar'
 import { apiMode, originLabels } from './copy'
 import { formatDate } from './format'
+import { isLandscape } from '../features/input/candidates'
 import type { PreparedAnalysis, RunSummary, Screen } from './models'
 
 const titles: Record<Screen, string> = {
@@ -61,7 +62,10 @@ export function WorkspaceShell({
             <span>
               <span className="sr-only">Run status: </span>
               {run.status === 'done' ? (
-                <Badge tone="fact">Verdict: {run.verdict ?? 'none'}</Badge>
+                <Badge tone="fact">
+                  {analysis && isLandscape(analysis) ? 'Class assessment' : 'Verdict'}:{' '}
+                  {run.verdict ?? 'none'}
+                </Badge>
               ) : run.status === 'failed' ? (
                 <Badge tone="error">Run failed</Badge>
               ) : (
@@ -83,6 +87,16 @@ export function WorkspaceShell({
         tabIndex={-1}
         className="mx-auto max-w-[1600px] p-6 focus-visible:outline-none lg:p-10"
       >
+        {analysis && isLandscape(analysis) ? (
+          <p className="mb-6 border border-assumption/30 bg-assumption/5 p-4 text-sm leading-6">
+            Class landscape for {analysis.resolver.indication.name}. Select an existing asset on the{' '}
+            <a href="#resolved" className="text-accent underline">
+              resolved input
+            </a>{' '}
+            screen for an asset-specific investment analysis. The class assessment combines several
+            programs.
+          </p>
+        ) : null}
         {children}
       </main>
     </div>

@@ -72,6 +72,22 @@ export function Workspace() {
             onContinue={() => {
               navigate('evidence')
             }}
+            onSelectAsset={(asset) => {
+              changeInput({
+                ...analysis.input,
+                asset,
+                indication: analysis.input.indication || analysis.resolver.indication.name,
+                mechanism:
+                  analysis.input.mechanism ||
+                  [
+                    ...analysis.resolver.targets.map((target) => target.symbol),
+                    analysis.resolver.action,
+                  ]
+                    .filter(Boolean)
+                    .join(' '),
+              })
+              navigate('new')
+            }}
           />
         ) : screen === 'report' ? (
           <ReportScreen analysis={analysis} />

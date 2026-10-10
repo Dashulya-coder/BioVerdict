@@ -31,6 +31,8 @@ That is the third thing criterion A asks for implicitly: change for the right re
 
 1. **Input (20 s).** Type `multiple sclerosis` and `BTK inhibitor`. Show the resolved target, and
    the assumption the Resolver states about how Open Targets files the disease.
+   The resolved-input screen also lists the drugs found in experimental arms of the registry
+   records ("Choose an existing asset"): choosing one prepares an asset-specific run.
 2. **Report, top down (90 s).** Executive verdict, then "Six modules, six answers". Read the six
    answers aloud once.
 3. **Evidence flow (90 s).** Open two modules of the judges' choice down to a quote and its
