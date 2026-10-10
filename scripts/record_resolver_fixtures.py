@@ -44,19 +44,22 @@ def payload_key(payload: dict) -> str:
 
 
 async def main() -> None:
-    recorded: dict[str, dict] = {}
+    # Answers already recorded are kept: a re-recording must not change what other tests replay.
+    recorded: dict[str, dict] = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
 
     async def capture(response: httpx.Response) -> None:
         await response.aread()
         payload = json.loads(response.request.content)
-        recorded[payload_key(payload)] = {"payload": payload, "answer": response.json()}
+        recorded.setdefault(payload_key(payload), {"payload": payload, "answer": response.json()})
 
     conn = connect(Path(tempfile.mkdtemp()) / "record.db")
     migrate(conn)
     async with httpx.AsyncClient(timeout=30, event_hooks={"response": [capture]}) as client:
         lookup = OpenTargetsLookup(OpenTargetsApi(CachedHttpClient(client, HttpCache(conn))))
         for name in DRUGS:
-            await lookup.find_drug(name)
+            resolution = await lookup.find_drug(name)
+            if resolution.chosen is not None:
+                await lookup.drug_indications(resolution.chosen.chembl_id)
         for symbol in TARGETS:
             await lookup.find_target(symbol)
         for name in DISEASES:

@@ -613,6 +613,52 @@
    }
   }
  },
+ "088369d80e9d0bfc52dc1f44f2577dfad908d9c5ff78b17cf3df40a8e30152ee": {
+  "answer": {
+   "data": {
+    "drug": {
+     "indications": {
+      "rows": [
+       {
+        "disease": {
+         "id": "MONDO_0005083",
+         "name": "psoriasis"
+        },
+        "maxClinicalStage": "PHASE_2"
+       },
+       {
+        "disease": {
+         "id": "EFO_1001494",
+         "name": "psoriasis vulgaris"
+        },
+        "maxClinicalStage": "PHASE_2"
+       },
+       {
+        "disease": {
+         "id": "MONDO_0011849",
+         "name": "psoriatic arthritis"
+        },
+        "maxClinicalStage": "PHASE_3"
+       },
+       {
+        "disease": {
+         "id": "MONDO_0006559",
+         "name": "hidradenitis suppurativa"
+        },
+        "maxClinicalStage": "PHASE_3"
+       }
+      ]
+     }
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($id: String!) {\n  drug(chemblId: $id) {\n    indications { rows { maxClinicalStage disease { id name } } }\n  }\n}\n",
+   "variables": {
+    "id": "CHEMBL4298023"
+   }
+  }
+ },
  "0a1d74d35f325ec85b6da0644f9364a8eed2db625e6a14f784c4aeb34fb573c6": {
   "answer": {
    "data": {
@@ -730,6 +776,23 @@
     "entity": "disease",
     "name": "NSCLC",
     "size": 10
+   }
+  }
+ },
+ "1981768a586eedf4fc3f8f7a44c75f9caebbee69920a8a5989f32e25a508c03b": {
+  "answer": {
+   "data": {
+    "drug": {
+     "indications": {
+      "rows": []
+     }
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($id: String!) {\n  drug(chemblId: $id) {\n    indications { rows { maxClinicalStage disease { id name } } }\n  }\n}\n",
+   "variables": {
+    "id": "CHEMBL6068555"
    }
   }
  },
@@ -3155,6 +3218,31 @@
    }
   }
  },
+ "64abee3a7a309d96a2360c08463b3b9085a41cc97d72be184ff51152e006cb24": {
+  "answer": {
+   "data": {
+    "drug": {
+     "indications": {
+      "rows": [
+       {
+        "disease": {
+         "id": "MONDO_0019623",
+         "name": "hereditary angioedema"
+        },
+        "maxClinicalStage": "PHASE_3"
+       }
+      ]
+     }
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($id: String!) {\n  drug(chemblId: $id) {\n    indications { rows { maxClinicalStage disease { id name } } }\n  }\n}\n",
+   "variables": {
+    "id": "CHEMBL6068148"
+   }
+  }
+ },
  "699f1904ea450d13c650f617f828312d052dff904aa8fd7102562b5ef5aaacc8": {
   "answer": {
    "data": {
@@ -4050,6 +4138,31 @@
    }
   }
  },
+ "92b162eb01ce4958bbe0d6feaef59dc3bb73090f558fd63590381a43f38aa3ed": {
+  "answer": {
+   "data": {
+    "drug": {
+     "indications": {
+      "rows": [
+       {
+        "disease": {
+         "id": "MONDO_0007113",
+         "name": "Angelman syndrome"
+        },
+        "maxClinicalStage": "PHASE_3"
+       }
+      ]
+     }
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($id: String!) {\n  drug(chemblId: $id) {\n    indications { rows { maxClinicalStage disease { id name } } }\n  }\n}\n",
+   "variables": {
+    "id": "CHEMBL6068612"
+   }
+  }
+ },
  "935a2d02189348f7dab398a679291b8cfea596033f55ab7f76723fad4076f069": {
   "answer": {
    "data": {
@@ -4160,6 +4273,59 @@
    }
   }
  },
+ "a1b17bbcf87ffa982958a3d61fa99ae852f94b9daac5ab166594b7c24e3cde4a": {
+  "answer": {
+   "data": {
+    "drug": {
+     "indications": {
+      "rows": [
+       {
+        "disease": {
+         "id": "MONDO_0005575",
+         "name": "colorectal cancer"
+        },
+        "maxClinicalStage": "PHASE_1"
+       },
+       {
+        "disease": {
+         "id": "MONDO_0005233",
+         "name": "non-small cell lung carcinoma"
+        },
+        "maxClinicalStage": "PHASE_3"
+       },
+       {
+        "disease": {
+         "id": "MONDO_0002714",
+         "name": "central nervous system cancer"
+        },
+        "maxClinicalStage": "PHASE_2"
+       },
+       {
+        "disease": {
+         "id": "MONDO_0006130",
+         "name": "central nervous system neoplasm"
+        },
+        "maxClinicalStage": "PHASE_2"
+       },
+       {
+        "disease": {
+         "id": "MONDO_0005070",
+         "name": "neoplasm"
+        },
+        "maxClinicalStage": "UNKNOWN"
+       }
+      ]
+     }
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($id: String!) {\n  drug(chemblId: $id) {\n    indications { rows { maxClinicalStage disease { id name } } }\n  }\n}\n",
+   "variables": {
+    "id": "CHEMBL5095236"
+   }
+  }
+ },
  "a60bd58e75c13331b422f5eaee7aad1cbb01adef7c2a9073ac9b7ab3b094dbb7": {
   "answer": {
    "data": {
@@ -4226,6 +4392,80 @@
     "entity": "drug",
     "name": "HRO761",
     "size": 10
+   }
+  }
+ },
+ "b0b94f26408cad9301a7395d4974ff70f3b03c743997bcfadf4cef756a070fd4": {
+  "answer": {
+   "data": {
+    "drug": {
+     "indications": {
+      "rows": [
+       {
+        "disease": {
+         "id": "MONDO_0004995",
+         "name": "cardiovascular disorder"
+        },
+        "maxClinicalStage": "PHASE_3"
+       },
+       {
+        "disease": {
+         "id": "MONDO_0011122",
+         "name": "obesity disorder"
+        },
+        "maxClinicalStage": "PHASE_3"
+       },
+       {
+        "disease": {
+         "id": "MONDO_0005148",
+         "name": "type 2 diabetes mellitus"
+        },
+        "maxClinicalStage": "PHASE_3"
+       },
+       {
+        "disease": {
+         "id": "MONDO_0005178",
+         "name": "osteoarthritis"
+        },
+        "maxClinicalStage": "PHASE_3"
+       },
+       {
+        "disease": {
+         "id": "MONDO_0005300",
+         "name": "chronic kidney disease"
+        },
+        "maxClinicalStage": "PHASE_2"
+       },
+       {
+        "disease": {
+         "id": "HP_0001943",
+         "name": "Hypoglycemia"
+        },
+        "maxClinicalStage": "PHASE_1"
+       },
+       {
+        "disease": {
+         "id": "MONDO_0005015",
+         "name": "diabetes mellitus"
+        },
+        "maxClinicalStage": "UNKNOWN"
+       },
+       {
+        "disease": {
+         "id": "HP_0025502",
+         "name": "Overweight"
+        },
+        "maxClinicalStage": "PHASE_3"
+       }
+      ]
+     }
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($id: String!) {\n  drug(chemblId: $id) {\n    indications { rows { maxClinicalStage disease { id name } } }\n  }\n}\n",
+   "variables": {
+    "id": "CHEMBL5095485"
    }
   }
  },
@@ -4542,6 +4782,38 @@
      "CHEMBL6068612",
      "CHEMBL6068484"
     ]
+   }
+  }
+ },
+ "dbfe2b9bc8f6b990d67245ae54a487007037a696527464ff4017d9765d9cf338": {
+  "answer": {
+   "data": {
+    "drug": {
+     "indications": {
+      "rows": [
+       {
+        "disease": {
+         "id": "MONDO_0006559",
+         "name": "hidradenitis suppurativa"
+        },
+        "maxClinicalStage": "PHASE_2"
+       },
+       {
+        "disease": {
+         "id": "MONDO_0004980",
+         "name": "atopic eczema"
+        },
+        "maxClinicalStage": "PHASE_2"
+       }
+      ]
+     }
+    }
+   }
+  },
+  "payload": {
+   "query": "\nquery ($id: String!) {\n  drug(chemblId: $id) {\n    indications { rows { maxClinicalStage disease { id name } } }\n  }\n}\n",
+   "variables": {
+    "id": "CHEMBL5569030"
    }
   }
  },
