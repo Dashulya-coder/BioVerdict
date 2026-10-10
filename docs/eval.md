@@ -149,11 +149,11 @@ retrieved on 2026-10-10, for BTK inhibitor x multiple sclerosis):
 |---|---|---|---|
 | strong-tolebrutinib-not-superior | strong | PMID 40202623, tolebrutinib vs teriflunomide in relapsing MS | clinical development down |
 | strong-evobrutinib-not-superior | strong | PMID 39307151, evobrutinib vs teriflunomide in relapsing MS | clinical development down |
-| strong-fenebrutinib-lesions | strong | PMID 40683275, fenebrutinib vs placebo, new T1 Gd+ lesions | clinical development up |
+| strong-fenebrutinib-lesions | strong | PMID 40683275, fenebrutinib vs placebo, new T1 Gd+ lesions | translation up (was clinical development up; changed 2026-10-11, reason below) |
 | weak-microglia-preprint | weak | bioRxiv doi 10.64898/2026.08.25.747169, laboratory work on microglia | mechanism up, a little |
 | noise-kras-lung-release | noise | Roche release of 2026-07-02 on divarasib in lung cancer | nothing moves |
 
-**State.** Run once with the real model on 2026-10-10 (section 9): 3 of 5 cases passed, and two of the three failures say more about the benchmark than about the system (below).
+**State.** 5 of 5 on 2026-10-11 with the real model (section 9), after one expectation was changed with its reason and two defects of the classification of added evidence were fixed; 3 of 5 on 2026-10-10 before that.
 
 A time-travel comparison needs no model and no benchmark file: two runs of the same question at
 two cutoffs, compared with `GET /runs/{id}/diff`, list each module before and after with the
@@ -218,6 +218,34 @@ It took three runs to get there, each failure a defect fixed in the same PR: (1)
 *Method note.* That run compared each case with the base, and the noise case passed only after a drift exception was added to its rule. Since then the runner compares each case with a control at the same cutoff and the noise rule has no exception (section 8); this table was not re-run with it and is kept as the record of the first run.
 
 What it means for the benchmark: the two failures that are not the system's are the ceiling (a balance at +1.00 cannot show an expected rise; the base should be one where the balances are not saturated, or the weak case should expect no move) and the cutoff (a base and a recompute two years apart drift together). The benchmark has never been run with the cutoff of the base equal to that of the recompute, which would need documents dated before the base.
+
+**Re-run on the current code** (after #128, 2026-10-10, with the control). Base `R-7965504f84cb411ab268aab0ab737d91` (as of 2024-06-30: Conditional 0.52, 50 evidence items, 165 s, $0.36); control `R-6cbbe927160f40a7b57e8218645ad382` (the base recomputed at 2026-10-10 with no document); the noise rule strict, without the drift exception. Results: `eval/results/2026-10-10-ms-current/`.
+
+| Case | Result | What happened |
+|---|---|---|
+| strong-tolebrutinib-not-superior | pass | clinical development +1.00 to +0.45, the document named as the cause |
+| strong-evobrutinib-not-superior | pass | clinical development +1.00 to +0.46, named |
+| strong-fenebrutinib-lesions | **fail** (expectation) | placed as a translation claim on the biological-response link: the link went from weak to supported and translation +0.74 to +0.78; clinical development, which the case names, did not move. MRI lesions are the biological response of the brief's chain, so the system's placement is defensible; the case's expectation was written before a new fact could close a chain link (#116). Changing it needs a reason and is left to the team |
+| weak-microglia-preprint | **fail** | linked to a mechanism claim that is context (`neutral`), which carries no weight in the balance: +0.51 to +0.51. Laboratory evidence weighing nothing is by design; the case expects "up, a little" |
+| noise-kras-lung-release | pass | no module moved, under the strict rule |
+
+3 of 5, as before, but each result now stands on a control at the same cutoff; the two failures are where a document was placed, not drift.
+
+**5 of 5 on 2026-10-11.** Same base; control `R-ae67ad95e37546ca835a4df2a6485d5d`; results `eval/results/2026-10-11-ms-current/`. What changed, in order:
+
+1. *Fenebrutinib: the expectation, with a reason.* Fewer new MRI lesions is the "biological response" link of the brief's chain, not a patient benefit (fewer relapses or less disability), so the case now expects translation up. The case had been written before a new fact could close a chain link (#116). Under the first expectation it fails; say so when the score is quoted.
+2. *Microglia preprint: a path to the mechanism module.* A new claim from added evidence could only be grounded as a clinical claim or a chain link, so laboratory work on the target never reached the mechanism answer: the first attempt put it on the human biological-response link, typed "drug acts in humans". A new claim about the target's role in the disease (`target_causal`, no chain link, no gate) is now grounded as a mechanism claim, and the prompt marks neutral claims `context` (a link to one moves nothing).
+3. *The question in the classification prompt.* After step 2 the fenebrutinib paper was turned away as "bearing on nothing" in 5 of 5 tries: the task told the model to set aside evidence about "another drug" but never said the report is about the class. The prompt now carries the run's resolved question, as the module prompts do. Afterwards fenebrutinib and microglia passed 3 of 3 repeats each, then the whole file 5 of 5.
+
+| Case | Result | What happened |
+|---|---|---|
+| strong-tolebrutinib-not-superior | pass | clinical development +1.00 to +0.45, named |
+| strong-evobrutinib-not-superior | pass | clinical development +1.00 to +0.46, named |
+| strong-fenebrutinib-lesions | pass | translation +0.74 to +0.78, named |
+| weak-microglia-preprint | pass | mechanism +0.51 to +0.56 (within the weak limit of 0.15), answer and verdict unchanged, named |
+| noise-kras-lung-release | pass | no module moved |
+
+The verdict case was re-run on the same code (`eval/results/2026-10-11-evobrutinib/`, control `R-f8e4a6a008724fc48f9877e5d5ff5237`): 2 of 2, Conditional to Do Not Invest (0.86) with K1 on one claim citing both documents (`R-7d76fa6cd25a423fb08ee7e11f857696`); the single-source hold stays Conditional. These cases were used to find the defects, so they are a development set, not a held-out score.
 
 **Coverage of the medical reference set** (`docs/finals-audit.md`, "Medical reference set for the finals"; run `R-20261010-125211-cf5016`, as of 2026-10-10, one live run). This is a **development set, written by us, not held out**: it shows what the bundle and the claims contain, not how the system performs on items it has not seen. Method: each item is looked up in the run's evidence (`/runs/<id>/evidence`) by trial id, PMID or source address; an item counts as *cited* only if a claim has a link to one of its evidence records (`/runs/<id>/report`), not if the claim text happens to mention it.
 

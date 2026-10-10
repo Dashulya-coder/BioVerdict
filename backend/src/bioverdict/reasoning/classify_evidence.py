@@ -24,7 +24,7 @@ from bioverdict.reasoning.grounding import (
     Grounded,
     ground_draft,
 )
-from bioverdict.reasoning.modules import CLINICAL, TRANSLATION
+from bioverdict.reasoning.modules import CLINICAL, MECHANISM, TRANSLATION
 from bioverdict.reasoning.prompts import (
     CLOSED_WORLD,
     DEFAULT_EXCERPT_CAP,
@@ -38,8 +38,10 @@ from bioverdict.store.models import (
     Bundle,
     Claim,
     ClaimEvidenceLink,
+    ClaimType,
     Direction,
     Evidence,
+    Implication,
     LLMResult,
 )
 
@@ -54,6 +56,10 @@ where the new evidence belongs.
    Link a claim only if the evidence is about the same fact; related background is not a link.
    A weak or indirect result (a cell experiment against a human finding) is still a link: how
    much it matters is decided by code, not by you.
+   A claim marked `context` carries no weight in any answer of the report: a link to it changes
+   nothing. If the new evidence reports a result (what a drug or the target did in an experiment
+   or a trial) and the only claims it bears on are `context`, state the result as a new claim
+   (below) with its implication.
 2. new_claims: only for a fact the new evidence states that no existing claim already states
    (for example a trial stopped for futility, or a safety action), and only about the asset or
    class this report is about, in the disease it is about. Same rules as for any claim: a verbatim
@@ -68,6 +74,9 @@ where the new evidence belongs.
    clinical hold in force, a boxed warning); K4 when the sponsor stopped the program. A trial
    stopped for a business reason, a hold that was lifted, or a noninferiority result is no kill
    criterion.
+   A new fact about what the target does in the disease (a perturbation study, an animal model,
+   a laboratory experiment on the target's biology) is a mechanism claim: claim_type
+   "target_causal", no chain_link. A chain link is for what the drug does on its way to patients.
    The report holds `unknown` claims for links of the translation chain that no evidence showed
    (the third word in brackets names the link). If the new evidence shows such a link, state what
    it shows as a new claim with `chain_link` set to that link and a basis other than `unknown`;
@@ -122,46 +131,64 @@ MAX_BATCHES = 6
 
 MIN_CLAIM_CHARS = 60  # a claim is never shown by less than this when the prompt is crowded
 EVIDENCE_ROOM = 2_000  # what a prompt keeps for the new evidence, however many claims there are
-LINE_OVERHEAD = 70  # "[C-0007] (clinical, extracted, human_exposure) " and the newline
+LINE_OVERHEAD = 80  # "[C-0007] (clinical, extracted, human_exposure, context) " and the newline
 
 
 def _existing(claims: list[Claim], cap: int = MAX_CLAIM_CHARS) -> str:
+    # A neutral claim weighs nothing in a module's answer: evidence placed on it moves nothing.
+    # The model is told which claims these are, so it can state a result as a claim of its own.
     return "\n".join(
         f"[{c.id}] ({c.section.value}, {c.basis.value}"
-        f"{', ' + c.chain_link.value if c.chain_link else ''}) {c.text[:cap]}"
+        f"{', ' + c.chain_link.value if c.chain_link else ''}"
+        f"{', context' if c.implication is Implication.NEUTRAL else ''}) {c.text[:cap]}"
         for c in sorted(claims, key=lambda c: c.id)
     )
 
 
-def claim_cap(claims: list[Claim], budget: int | None, bundle: Bundle) -> int:
+def claim_cap(claims: list[Claim], budget: int | None, bundle: Bundle, question: str = "") -> int:
     """How much of each claim the prompt shows. A report of dozens of claims would otherwise leave
     no room for the new evidence on a small endpoint (a live run of 61 claims turned the added
     document away as "not read"): the claims are shortened, down to `MIN_CLAIM_CHARS`, before the
     evidence is."""
     if budget is None or not claims:
         return MAX_CLAIM_CHARS
-    room = budget - wire_len(_assemble([], "", bundle)) - RETRY_RESERVE - EVIDENCE_ROOM
+    room = budget - wire_len(_assemble([], "", bundle, question=question))
+    room -= RETRY_RESERVE + EVIDENCE_ROOM
     each = room // len(claims) - LINE_OVERHEAD
     return max(MIN_CLAIM_CHARS, min(MAX_CLAIM_CHARS, each))
 
 
 def _assemble(
-    claims: list[Claim], evidence: str, bundle: Bundle, cap: int = MAX_CLAIM_CHARS
+    claims: list[Claim],
+    evidence: str,
+    bundle: Bundle,
+    cap: int = MAX_CLAIM_CHARS,
+    question: str = "",
 ) -> str:
+    # The question says which asset or class the report is about: without it "another drug"
+    # in the task has nothing to be measured against, and a trial of a drug of the class was
+    # turned away as bearing on nothing.
     return (
         CLOSED_WORLD.format(as_of=bundle.as_of.isoformat(), tag=boundary_tag(bundle))
+        + question
         + f"\n## Your task\n{_TASK}\n## Existing claims\n{_existing(claims, cap) or '(none)'}\n"
         + f"\n## New evidence\n{evidence}\n"
     )
 
 
-def build_prompt(claims: list[Claim], new_evidence: list[Evidence], bundle: Bundle) -> str:
+def build_prompt(
+    claims: list[Claim], new_evidence: list[Evidence], bundle: Bundle, question: str = ""
+) -> str:
     evidence, _ = render_evidence(new_evidence, boundary_tag(bundle))
-    return _assemble(claims, evidence, bundle)
+    return _assemble(claims, evidence, bundle, question=question)
 
 
 def build_prompts(
-    claims: list[Claim], new_evidence: list[Evidence], bundle: Bundle, budget: int | None
+    claims: list[Claim],
+    new_evidence: list[Evidence],
+    bundle: Bundle,
+    budget: int | None,
+    question: str = "",
 ) -> tuple[list[tuple[str, list[Evidence]]], list[str]]:
     """The prompts that carry `new_evidence` and, for each, the evidence it shows.
 
@@ -170,10 +197,11 @@ def build_prompts(
     MAX_BATCHES. Returns the prompts and the ids that no prompt had room for.
     """
     if budget is None:
-        return [(build_prompt(claims, new_evidence, bundle), new_evidence)], []
+        return [(build_prompt(claims, new_evidence, bundle, question), new_evidence)], []
     tag = boundary_tag(bundle)
-    cap = claim_cap(claims, budget, bundle)
-    room = max(0, budget - wire_len(_assemble(claims, "", bundle, cap)) - RETRY_RESERVE)
+    cap = claim_cap(claims, budget, bundle, question)
+    empty = _assemble(claims, "", bundle, cap, question)
+    room = max(0, budget - wire_len(empty) - RETRY_RESERVE)
     prompts: list[tuple[str, list[Evidence]]] = []
     remaining = new_evidence
     while remaining and len(prompts) < MAX_BATCHES:
@@ -182,7 +210,7 @@ def build_prompts(
         shown = [e for e in remaining if e.id not in left]
         if not shown:  # not even one piece fits beside the claims
             break
-        prompts.append((_assemble(claims, text, bundle, cap), shown))
+        prompts.append((_assemble(claims, text, bundle, cap, question), shown))
         remaining = [e for e in remaining if e.id in left]
     return prompts, [e.id for e in remaining]
 
@@ -194,18 +222,20 @@ def classify_new_evidence(
     existing_links: list[ClaimEvidenceLink],
     new_evidence: list[Evidence],
     bundle: Bundle,
+    question: str = "",
 ) -> ClassifyResult:
     """Ground the model's classification of `new_evidence` against the claims of a finished run.
 
-    `bundle` holds all evidence (old and new) as of the recompute. Nothing the model says is kept
-    unless its ids exist and its quote is verbatim in the evidence it names.
+    `bundle` holds all evidence (old and new) as of the recompute; `question` is the run's
+    resolved question (`prompts.question_text`). Nothing the model says is kept unless its ids
+    exist and its quote is verbatim in the evidence it names.
     """
     result = ClassifyResult()
     if not new_evidence:  # a control recompute adds nothing: there is nothing to ask the model
         return result
     budget_of = getattr(llm, "input_budget", None)
     budget = budget_of(STEP, Classification) if callable(budget_of) else None
-    prompts, result.unread = build_prompts(claims, new_evidence, bundle, budget)
+    prompts, result.unread = build_prompts(claims, new_evidence, bundle, budget, question)
     answers = [llm.call(STEP, text, Classification) for text, _ in prompts]
     result.llm_results = answers
     parsed = Classification(
@@ -254,8 +284,17 @@ def classify_new_evidence(
     # Every other new fact is grounded like a claim of the clinical module (the one that describes
     # studies and programs): its gate tags are checked against the evidence, and study_fact is
     # allowed.
+    # A new fact about the target's role in the disease, with no chain link and no gate, is
+    # grounded like a claim of the mechanism module: otherwise laboratory work on the target could
+    # only become a clinical claim or a link of the chain, and the mechanism answer never hears it.
     on_chain = [c for c in parsed.new_claims if c.chain_link is not None and not c.gate_signals]
-    elsewhere = [c for c in parsed.new_claims if c.chain_link is None or c.gate_signals]
+    on_target = [
+        c
+        for c in parsed.new_claims
+        if c.chain_link is None and not c.gate_signals and c.claim_type is ClaimType.TARGET_CAUSAL
+    ]
+    placed = {id(c) for c in [*on_chain, *on_target]}
+    elsewhere = [c for c in parsed.new_claims if id(c) not in placed]
     next_number = max((int(c.id.removeprefix("C-")) for c in claims), default=0) + 1
     chain = ground_draft(
         ModuleDraft(claims=on_chain),
@@ -267,6 +306,14 @@ def classify_new_evidence(
         forced_type=TRANSLATION.claim_type,
         first_number=next_number,
     )
+    target = ground_draft(
+        ModuleDraft(claims=on_target),
+        bundle,
+        run_id,
+        MECHANISM.section,
+        forced_type=MECHANISM.claim_type,
+        first_number=next_number + len(chain.claims),
+    )
     rest = ground_draft(
         ModuleDraft(claims=elsewhere),
         bundle,
@@ -275,12 +322,12 @@ def classify_new_evidence(
         allowed_gates=CLINICAL.allowed_gates,
         gate_guard=CLINICAL.gate_guard,
         allow_study_fact=CLINICAL.allow_study_fact,
-        first_number=next_number + len(chain.claims),
+        first_number=next_number + len(chain.claims) + len(target.claims),
     )
     grounded = Grounded(
-        claims=[*chain.claims, *rest.claims],
-        links=[*chain.links, *rest.links],
-        drops=[*chain.drops, *rest.drops],
+        claims=[*chain.claims, *target.claims, *rest.claims],
+        links=[*chain.links, *target.links, *rest.links],
+        drops=[*chain.drops, *target.drops, *rest.drops],
     )
     # Apply the same fail-closed citation rule as the first reasoning pass: one invented
     # citation rejects the entire new claim, even if another citation was grounded.

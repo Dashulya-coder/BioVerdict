@@ -53,7 +53,12 @@
     source_kind: peer_reviewed
     level: human_interventional
     published_at: 2025-07-19
-  expect: { module: clinical_development, direction: up }
+  # Changed on 2026-10-11 from clinical_development up, after the run of 2026-10-10 placed the
+  # document on the translation chain. Fewer new MRI lesions is the "biological response" link of
+  # the brief's chain (molecular effect, exposure, target engagement, biological response,
+  # patient benefit), not a patient benefit such as fewer relapses. The case was written before a
+  # new fact could close a link of the chain (#116). Under the first expectation it fails.
+  expect: { module: preclinical_translation, direction: up }
 
 - id: weak-microglia-preprint
   kind: weak

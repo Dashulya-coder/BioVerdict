@@ -193,7 +193,15 @@ In full mode, analyst-added documents are available to every module despite havi
 own source family; grounding and entailment still apply. In classify mode, a new claim
 with even one failed citation is rejected together with all of its links, as in the first
 reasoning pass, and logged as `claim_dropped`. Existing unknowns are not promoted by adding
-a link: use full mode to establish a new module fact or close a translation-chain gap.
+a link: a new claim on that chain link replaces the `unknown` one (#116).
+
+The classification prompt carries the run's resolved question (the asset, or the class when no
+drug is named), as the module prompts do: without it a trial of a drug of the class was turned
+away as "another drug". Existing claims are listed with their section, basis and chain link, and
+a neutral one is marked `context`, because a link to it moves no answer. A new claim is grounded
+by where it belongs: one on a chain link as a translation claim, one about the target's role in
+the disease (`target_causal`, no chain link, no gate) as a mechanism claim, every other one as a
+clinical claim whose gate tags are checked against the quote.
 
 The diff is computed by code from the stored records. It pairs evidence by address, locator and
 exact excerpt, and claims by section and identical wording. A translation-chain link is listed
