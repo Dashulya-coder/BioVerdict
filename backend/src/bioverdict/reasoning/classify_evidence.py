@@ -16,8 +16,15 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from bioverdict.contracts import LLM
 from bioverdict.llm.sizing import wire_len
-from bioverdict.reasoning.grounding import MIN_QUOTE_CHARS, Drop, DropKind, ground_draft
-from bioverdict.reasoning.modules import CLINICAL
+from bioverdict.reasoning.grounding import (
+    MIN_QUOTE_CHARS,
+    TRANSLATION_SOURCES,
+    Drop,
+    DropKind,
+    Grounded,
+    ground_draft,
+)
+from bioverdict.reasoning.modules import CLINICAL, TRANSLATION
 from bioverdict.reasoning.prompts import (
     CLOSED_WORLD,
     DEFAULT_EXCERPT_CAP,
@@ -52,6 +59,13 @@ where the new evidence belongs.
    class this report is about, in the disease it is about. Same rules as for any claim: a verbatim
    quote, a basis, no numbers of your own. Leave the list empty when the existing claims already
    cover the evidence.
+   The report holds `unknown` claims for links of the translation chain that no evidence showed
+   (the third word in brackets names the link). If the new evidence shows such a link, state what
+   it shows as a new claim with `chain_link` set to that link and a basis other than `unknown`;
+   do not link the evidence to the `unknown` claim. Code retires the `unknown` claim and decides
+   how far the new one reaches. Set `chain_link` only for a link of the chain (molecular_effect,
+   human_exposure, target_engagement, biological_response, patient_benefit), never for a fact
+   that asserts a kill criterion.
 3. unmatched: ids of new evidence that bears on nothing in the report. Evidence about another drug
    or another disease belongs here, even if it is a strong result: it is not a link and not a
    new claim.
@@ -87,6 +101,10 @@ class ClassifyResult:
     rejected_claims: set[str] = field(default_factory=set)
     unread: list[str] = field(default_factory=list)  # new evidence no batch had room for
     llm_results: list[LLMResult] = field(default_factory=list)
+    # `unknown` claims of a chain link that a new claim now shows: old claim id -> new claim id.
+    # The caller drops the old claim, so the report does not say "not shown" beside the claim
+    # that shows it.
+    gaps_closed: dict[str, str] = field(default_factory=dict)
 
 
 MAX_CLAIM_CHARS = 240  # an existing claim is shown by its beginning in the prompt
@@ -95,12 +113,13 @@ MAX_BATCHES = 6
 
 MIN_CLAIM_CHARS = 60  # a claim is never shown by less than this when the prompt is crowded
 EVIDENCE_ROOM = 2_000  # what a prompt keeps for the new evidence, however many claims there are
-LINE_OVERHEAD = 50  # "[C-0007] (clinical, extracted) " and the newline
+LINE_OVERHEAD = 70  # "[C-0007] (clinical, extracted, human_exposure) " and the newline
 
 
 def _existing(claims: list[Claim], cap: int = MAX_CLAIM_CHARS) -> str:
     return "\n".join(
-        f"[{c.id}] ({c.section.value}, {c.basis.value}) {c.text[:cap]}"
+        f"[{c.id}] ({c.section.value}, {c.basis.value}"
+        f"{', ' + c.chain_link.value if c.chain_link else ''}) {c.text[:cap]}"
         for c in sorted(claims, key=lambda c: c.id)
     )
 
@@ -173,6 +192,8 @@ def classify_new_evidence(
     unless its ids exist and its quote is verbatim in the evidence it names.
     """
     result = ClassifyResult()
+    if not new_evidence:  # a control recompute adds nothing: there is nothing to ask the model
+        return result
     budget_of = getattr(llm, "input_budget", None)
     budget = budget_of(STEP, Classification) if callable(budget_of) else None
     prompts, result.unread = build_prompts(claims, new_evidence, bundle, budget)
@@ -217,18 +238,40 @@ def classify_new_evidence(
             )
         )
 
-    # A new fact is grounded like a claim of the clinical module (the one that describes studies
-    # and programs): its gate tags are checked against the evidence, and study_fact is allowed.
+    # A new fact that shows a link of the translation chain is grounded like a claim of the
+    # translation module (its section, its claim type, the chain link kept), so it can speak for
+    # that link. A claim that also asserts a kill criterion stays clinical: the translation module
+    # asserts no gate, and the chain link the model put on it is then dropped and logged.
+    # Every other new fact is grounded like a claim of the clinical module (the one that describes
+    # studies and programs): its gate tags are checked against the evidence, and study_fact is
+    # allowed.
+    on_chain = [c for c in parsed.new_claims if c.chain_link is not None and not c.gate_signals]
+    elsewhere = [c for c in parsed.new_claims if c.chain_link is None or c.gate_signals]
     next_number = max((int(c.id.removeprefix("C-")) for c in claims), default=0) + 1
-    grounded = ground_draft(
-        ModuleDraft(claims=parsed.new_claims),
+    chain = ground_draft(
+        ModuleDraft(claims=on_chain),
+        bundle,
+        run_id,
+        TRANSLATION.section,
+        allow_chain=True,
+        evidence_sections=TRANSLATION_SOURCES,
+        forced_type=TRANSLATION.claim_type,
+        first_number=next_number,
+    )
+    rest = ground_draft(
+        ModuleDraft(claims=elsewhere),
         bundle,
         run_id,
         CLINICAL.section,
         allowed_gates=CLINICAL.allowed_gates,
         gate_guard=CLINICAL.gate_guard,
         allow_study_fact=CLINICAL.allow_study_fact,
-        first_number=next_number,
+        first_number=next_number + len(chain.claims),
+    )
+    grounded = Grounded(
+        claims=[*chain.claims, *rest.claims],
+        links=[*chain.links, *rest.links],
+        drops=[*chain.drops, *rest.drops],
     )
     # Apply the same fail-closed citation rule as the first reasoning pass: one invented
     # citation rejects the entire new claim, even if another citation was grounded.
@@ -242,4 +285,12 @@ def classify_new_evidence(
     result.new_claim_links = [l for l in grounded.links if l.claim_id not in rejected]
     result.drops += grounded.drops
     result.unmatched = [i for i in parsed.unmatched if i in new_by_id]
+    # A gap is closed by a claim that survived grounding on a link of the chain and is not itself
+    # a gap. How far the link then reaches is the formula's business, not decided here.
+    for new in result.new_claims:
+        if new.chain_link is None or new.basis is Basis.UNKNOWN:
+            continue
+        for old in claims:
+            if old.basis is Basis.UNKNOWN and old.chain_link is new.chain_link:
+                result.gaps_closed.setdefault(old.id, new.id)
     return result

@@ -77,9 +77,11 @@ Each of these was made by one person under time pressure, or not made at all.
    gateway lists no other. An independent check needs a second adapter and key.
 6. **The gateway's concurrency limit (4) comes from one observation** and is enforced inside
    one process (`llm/providers/openai.py`). Two runs started through the API at once exceed it.
-7. **Incremental recompute cannot close a gap.** New evidence placed on an `unknown` leaves its
-   confidence at the default, and every new claim is grounded as clinical, so it cannot fill a
-   translation-chain link. Today that needs `RECOMPUTE_MODE=full`.
+7. **Incremental recompute and a gap.** A new fact that shows a translation-chain link is now a
+   translation claim with its `chain_link`, and it retires the `unknown` claim of that link
+   (tested with fakes, not yet with a real model). Evidence the model links *to* the `unknown`
+   claim itself still leaves its confidence at the default: the prompt asks for a new claim
+   instead. Decide whether code should also refuse such a link.
 8. **rNPV.** There is none for multiple sclerosis (no prevalence source). Where there is one it
    rests on placeholders, and the rule is asymmetric: a negative rNPV does not kill, a positive
    one helps reach `Invest`. Remove the asymmetry, or say it on stage.

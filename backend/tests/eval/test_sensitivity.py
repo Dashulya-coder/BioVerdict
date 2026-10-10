@@ -6,13 +6,15 @@ from pathlib import Path
 
 import pytest
 
+from bioverdict.api.diff import build_diff
 from bioverdict.eval.sensitivity import SensitivityCase, load_cases, run_cases, summary
 from bioverdict.llm import FakeLLM
 from bioverdict.pipeline.fixture_run import run_fixture
 from bioverdict.store.db import connect
+from bioverdict.store.load_bundle import load_bundle
 from bioverdict.store.migrations import migrate
 from bioverdict.store.models import Bundle
-from bioverdict.store.runs_repo import create_run, load_claims
+from bioverdict.store.runs_repo import create_run, get_run, load_claims
 
 FIXTURES = Path(__file__).parents[3] / "fixtures"
 EARLY = date(2026, 6, 30)
@@ -169,13 +171,91 @@ def _module_diff(*, answer_after: str, with_cause: bool):
     )
 
 
-def test_an_answer_that_changes_with_no_cause_is_drift_not_a_failure_of_noise() -> None:
+def test_noise_fails_when_an_answer_flips_with_or_without_a_cause() -> None:
+    """The strict rule: the diff is against a control at the same cutoff, so there is no drift
+    that could excuse a changed answer."""
     from bioverdict.eval.sensitivity import judge_case
 
     noise = case("noise", None, "none")
 
     ok, why = judge_case(noise, _module_diff(answer_after="insufficient", with_cause=False))
-    assert ok and "drift" in why and "disease_unmet_need" in why
+    assert not ok and "disease_unmet_need" in why
 
     ok, why = judge_case(noise, _module_diff(answer_after="insufficient", with_cause=True))
     assert not ok and "disease_unmet_need" in why
+
+
+# --- the control: the base run at the case's cutoff, with no document --------------------------------
+
+LATE = date(2026, 10, 7)
+PASSIVE = {"chair": {"questions": []}, "judge": {"judgments": []}}  # and no classification
+
+
+def test_a_later_cutoff_is_not_mistaken_for_the_effect_of_the_document(conn) -> None:
+    noise = case("noise", None, "none").model_copy(update={"as_of": LATE})
+
+    report = run_cases(conn, "R-1", [noise], placing(conn, None))
+
+    outcome = report.cases[0]
+    assert outcome.passed and outcome.reason == "no module moved"
+    # Against the base the same run does drift, because the claims aged to the later cutoff.
+    # That is what the old comparison mistook for an effect, and what the control removes.
+    base_claims = {c.id: c.confidence for c in load_claims(conn, "R-1")[0]}
+    aged = {c.id: c.confidence for c in load_claims(conn, outcome.run_id)[0]}
+    assert any(aged[i] != base_claims[i] for i in base_claims)
+
+
+def test_the_control_is_the_base_at_the_same_cutoff_made_once_without_asking_the_model(
+    conn,
+) -> None:
+    runs: list[str] = []
+
+    def llm(run_id: str) -> FakeLLM:
+        runs.append(run_id)
+        if len(runs) == 1:  # the control: a model with no classification to give must not be asked
+            return FakeLLM(PASSIVE)
+        return placing(conn, "contradicts")(run_id)
+
+    report = run_cases(
+        conn,
+        "R-1",
+        [case("strong", "clinical_development", "down"), case("noise", None, "none")],
+        llm,
+    )
+
+    control = runs[0]
+    assert len(runs) == 3  # one control, then one run for each case
+    assert report.controls == {EARLY.isoformat(): control}
+    assert [c.control_run for c in report.cases] == [control, control]
+    assert get_run(conn, control).status == "done"
+    assert len(load_bundle(conn, control).evidence) == len(load_bundle(conn, "R-1").evidence)
+    assert [c.text for c in load_claims(conn, control)[0]] == [
+        c.text for c in load_claims(conn, "R-1")[0]
+    ]
+    assert f"Control at {EARLY.isoformat()}: run {control}" in summary(report)
+
+
+def test_every_case_is_read_against_its_control_not_against_the_base(conn) -> None:
+    report = run_cases(
+        conn, "R-1", [case("strong", "clinical_development", "down")], placing(conn, "contradicts")
+    )
+
+    outcome = report.cases[0]
+    diff = build_diff(conn, outcome.control_run, outcome.run_id)
+    target = next(m for m in diff.modules if m.module.value == "clinical_development")
+    assert (outcome.balance_before, outcome.balance_after) == (
+        target.balance_before,
+        target.balance_after,
+    )
+    assert outcome.verdict_before == diff.base.verdict.value
+
+
+def test_a_control_that_cannot_be_made_is_reported_and_no_case_runs(conn) -> None:
+    case_ = case("strong", "clinical_development", "down").model_copy(
+        update={"as_of": date(2020, 1, 1)}  # before the base run's cutoff
+    )
+
+    outcome = run_cases(conn, "R-1", [case_], placing(conn, None)).cases[0]
+
+    assert not outcome.passed and outcome.run_id is None
+    assert outcome.reason.startswith("not run:") and "earlier" in outcome.reason

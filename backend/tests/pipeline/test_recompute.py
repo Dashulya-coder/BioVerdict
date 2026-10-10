@@ -26,7 +26,15 @@ from bioverdict.pipeline.recompute import (
 from bioverdict.store.db import connect
 from bioverdict.store.load_bundle import load_bundle
 from bioverdict.store.migrations import migrate
-from bioverdict.store.models import Bundle, Evidence, EvidenceLevel, SourceKind
+from bioverdict.store.models import (
+    Basis,
+    Bundle,
+    ChainLink,
+    Evidence,
+    EvidenceLevel,
+    GateId,
+    SourceKind,
+)
 from bioverdict.store.runs_repo import (
     DONE,
     FAILED,
@@ -36,6 +44,7 @@ from bioverdict.store.runs_repo import (
     load_claims,
     load_events,
 )
+from bioverdict.store.verification_repo import load_checks
 
 FIXTURES = Path(__file__).parents[3] / "fixtures"
 EARLY, LATE = date(2026, 6, 30), date(2026, 10, 7)
@@ -394,3 +403,122 @@ def test_the_environment_chooses_the_mode(monkeypatch) -> None:
     assert settings.recompute_mode() == "full"
     monkeypatch.setenv("RECOMPUTE_MODE", "nonsense")
     assert settings.recompute_mode() == "classify"
+
+
+# --- a document that fills a missing link of the translation chain -----------------------------------
+
+EXPOSURE_QUOTE = (
+    "Plasma exposure of divarasib at the recommended dose exceeded the concentration that "
+    "inhibited KRAS G12C signalling in the cell models."
+)
+ENGAGEMENT_QUOTE = "Paired tumour biopsies showed more than 90 percent occupancy of KRAS G12C."
+PK_DOC = analyst_evidence(
+    1,
+    f"{EXPOSURE_QUOTE} {ENGAGEMENT_QUOTE}",
+    "https://example.org/divarasib-pk",
+    "Added by an analyst",
+    SourceKind.PEER_REVIEWED,
+    EvidenceLevel.HUMAN_INTERVENTIONAL,
+    date(2026, 6, 15),
+)
+
+
+def chain_claim(link: str, text: str, quote: str) -> dict:
+    return {
+        "text": text,
+        "claim_type": "drug_acts_in_humans",
+        "basis": "extracted",
+        "chain_link": link,
+        "implication": "favourable",
+        "links": [{"evidence_id": NEW_ID, "direction": "supports", "quote": quote}],
+    }
+
+
+EXPOSURE_CLAIM = chain_claim(
+    "human_exposure",
+    "Divarasib reaches an exposure in patients above the effective experimental one.",
+    EXPOSURE_QUOTE,
+)
+ENGAGEMENT_CLAIM = chain_claim(
+    "target_engagement",
+    "Divarasib occupies KRAS G12C in the tumours of patients.",
+    ENGAGEMENT_QUOTE,
+)
+
+
+def filled(conn, *new_claims: dict, run_id: str = "R-2"):
+    answer = {"links": [], "new_claims": list(new_claims)}
+    bundle = prepare_recompute(conn, "R-1", run_id, [PK_DOC], EARLY)
+    llm = FakeLLM(
+        {"reasoning.classify": answer, "chair": {"questions": []}, "judge": {"judgments": []}}
+    )
+    return finish_recompute(conn, run_id, lambda: bundle, lambda: llm)
+
+
+def test_a_document_on_human_exposure_moves_that_link_from_missing_to_weak(conn) -> None:
+    gap = next(c for c in load_claims(conn, "R-1")[0] if c.chain_link is ChainLink.HUMAN_EXPOSURE)
+
+    assert filled(conn, EXPOSURE_CLAIM) is not None and get_run(conn, "R-2").status == DONE
+
+    diff = build_diff(conn, "R-1", "R-2")
+    (moved,) = [c for c in diff.chain if c.link is ChainLink.HUMAN_EXPOSURE]
+    assert moved.status_before == "missing" and moved.status_after in ("weak", "supported")
+    assert (moved.confidence_before or 0) < 0.4 <= (moved.confidence_after or 0)
+    assert [c.link for c in diff.chain] == [ChainLink.HUMAN_EXPOSURE]  # no other link moved
+    # The gap is gone, the claim that closes it is new, and the diff says which evidence did it.
+    removed = [c for c in diff.claims if c.change == "removed"]
+    added = [c for c in diff.claims if c.change == "added"]
+    assert [c.text for c in removed] == [gap.text]
+    assert [(c.text, c.new_evidence_ids) for c in added] == [(EXPOSURE_CLAIM["text"], [NEW_ID])]
+
+
+def test_the_diff_names_the_claims_and_quotes_that_changed_the_translation_answer(conn) -> None:
+    filled(conn, EXPOSURE_CLAIM, ENGAGEMENT_CLAIM)
+
+    modules = {m.module.value: m for m in build_diff(conn, "R-1", "R-2").modules}
+    translation = next(m for name, m in modules.items() if name.startswith("preclinical"))
+
+    # Soft gate S1 held the module at Mixed while two links were missing; with both filled it
+    # no longer fires and the answer changes. The balance was already at its ceiling.
+    assert translation.changed and translation.answer_before != translation.answer_after
+    assert translation.answer_before.value == "mixed"
+    causes = {c.quote: c for c in translation.causes}
+    assert set(causes) == {EXPOSURE_QUOTE, ENGAGEMENT_QUOTE}
+    cause = causes[EXPOSURE_QUOTE]
+    assert (cause.evidence_id, cause.claim_change) == (NEW_ID, "added")
+    assert cause.claim_text == EXPOSURE_CLAIM["text"] and cause.direction.value == "supports"
+    assert cause.url == PK_DOC.url
+
+
+def test_the_confidence_of_the_new_chain_claim_comes_from_the_formula(conn) -> None:
+    filled(conn, EXPOSURE_CLAIM)
+
+    claims, links = load_claims(conn, "R-2")
+    (claim,) = [c for c in claims if c.text == EXPOSURE_CLAIM["text"]]
+    assert claim.id.startswith("C-") and claim.chain_link is ChainLink.HUMAN_EXPOSURE
+    assert claim.confidence_parts is not None and claim.confidence_parts.support > 0
+    assert 0.4 <= claim.confidence < 1.0
+    assert not [c for c in claims if c.basis is Basis.UNKNOWN and c.chain_link is claim.chain_link]
+    assert all(l.claim_id in {c.id for c in claims} for l in links)  # no link left on the gap
+
+
+def test_the_last_missing_link_filled_clears_gate_s1(conn) -> None:
+    filled(conn, EXPOSURE_CLAIM)
+    s1 = {g.gate_id: g for g in build_diff(conn, "R-1", "R-2").gates}
+    assert GateId.S1 not in s1  # target engagement is still missing: the gate still fires
+
+    filled(conn, EXPOSURE_CLAIM, ENGAGEMENT_CLAIM, run_id="R-3")
+
+    diff = build_diff(conn, "R-1", "R-3")
+    (gate,) = [g for g in diff.gates if g.gate_id is GateId.S1]
+    assert gate.fired_before and not gate.fired_after
+    assert {c.link for c in diff.chain} == {ChainLink.HUMAN_EXPOSURE, ChainLink.TARGET_ENGAGEMENT}
+
+
+def test_a_closed_gap_is_logged_on_the_run(conn) -> None:
+    filled(conn, EXPOSURE_CLAIM)
+
+    detail = " ".join(e.detail or "" for e in load_events(conn, "R-2"))
+    assert "1 chain-link gap(s) closed" in detail
+    (check,) = [c for c in load_checks(conn, "R-2") if c.check_name == "gap_closed"]
+    assert check.passed and "replaces C-" in check.detail

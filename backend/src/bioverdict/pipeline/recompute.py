@@ -32,7 +32,14 @@ from bioverdict.store.evidence_ids import assign_ids, dedup_key
 from bioverdict.store.evidence_repo import load_evidence
 from bioverdict.store.freeze import freeze
 from bioverdict.store.load_bundle import load_bundle
-from bioverdict.store.models import Bundle, Evidence, EvidenceLevel, SourceKind, VerdictResult
+from bioverdict.store.models import (
+    Bundle,
+    Evidence,
+    EvidenceLevel,
+    SourceKind,
+    VerdictResult,
+    VerificationCheck,
+)
 from bioverdict.store.runs_repo import (
     DONE,
     FAILED,
@@ -180,8 +187,18 @@ def classify_and_score(
 
     add_event(conn, run_id, "reason", "started", f"place {len(added)} new item(s) among claims")
     found = classify_new_evidence(llm, run_id, claims, links, added, bundle)
-    merged_claims = [c.model_copy(update={"run_id": run_id}) for c in claims] + found.new_claims
-    merged_links = [*links, *found.links, *found.new_claim_links]
+    # A chain link that a new claim now shows no longer has its `unknown` claim: the report would
+    # say "not shown" beside the claim that shows it. The new claim's own confidence, from the
+    # formula, decides whether the link is still weak or missing.
+    closed = found.gaps_closed
+    merged_claims = [
+        c.model_copy(update={"run_id": run_id}) for c in claims if c.id not in closed
+    ] + found.new_claims
+    merged_links = [
+        *(link for link in links if link.claim_id not in closed),
+        *found.links,
+        *found.new_claim_links,
+    ]
     # Links the model has just placed are checked like the ones the reasoning step wrote.
     placed = {(l.claim_id, l.evidence_id) for l in [*found.links, *found.new_claim_links]}
     merged_claims, merged_links = verify_pass(
@@ -197,8 +214,19 @@ def classify_and_score(
     )
     result = with_financials(result, fin)
     save_claims(conn, run_id, scored, merged_links, bundle.version)
+    gap_checks = [
+        VerificationCheck(
+            claim_id=new_id,
+            check_name="gap_closed",
+            passed=True,
+            detail=f"replaces {old_id}: the chain link was an unknown and the new evidence shows it",
+        )
+        for old_id, new_id in closed.items()
+    ]
     save_checks(
-        conn, run_id, [*drop_checks(found.drops, found.rejected_claims), *rule_checks(scored)]
+        conn,
+        run_id,
+        [*drop_checks(found.drops, found.rejected_claims), *gap_checks, *rule_checks(scored)],
     )
     add_event(
         conn,
@@ -208,6 +236,7 @@ def classify_and_score(
         f"{len(found.links)} link(s) and {len(found.new_claims)} new claim(s) from the new "
         f"evidence, {len(found.unmatched)} item(s) bearing on nothing, "
         f"{len(found.drops)} proposal(s) dropped by code"
+        + (f", {len(closed)} chain-link gap(s) closed" if closed else "")
         + (
             f", {len(found.unread)} item(s) not read (too long for the endpoint)"
             if found.unread
