@@ -2,6 +2,7 @@ import { Button } from '../../ui/Button'
 import { PageHeading } from '../../ui/PageHeading'
 import { navigate } from '../../app/useScreen'
 import { ClaimList } from './ClaimList'
+import { DiligenceQuestions } from './DiligenceQuestions'
 import { ExecutiveSummary } from './ExecutiveSummary'
 import { GateList } from './GateList'
 import { Tornado } from './Tornado'
@@ -60,6 +61,7 @@ function LoadedReport({ runId }: { runId: string }) {
       <GateList report={state.report} />
       <TranslationChain report={state.report} />
       <Tornado runId={runId} />
+      <DiligenceQuestions report={state.report} />
       <UnknownFacts report={state.report} />
       <ClaimList report={state.report} />
     </>
