@@ -42,6 +42,12 @@ That is the third thing criterion A asks for implicitly: change for the right re
 5. **Conflicting evidence, live (90 s).** Paste one strong sentence from `eval/sensitivity.yaml`
    (or a judge's document) into Compare. Show the module that moved, the quote and the claim.
    Then the noise document: nothing moves.
+5a. **The verdict changes (60 s).** Evobrutinib before its phase 3 read out (as of 2023-11-30) is
+   Conditional. Add the two documents of `eval/sensitivity-evobrutinib.yaml`
+   (`strong-evolution-phase3-failed`): the verdict becomes Do Not Invest, gate K1 fires on one
+   claim that cites both, and Compare names them. Then the FDA's partial hold alone: one source,
+   the verdict stays Conditional. Recorded runs: control `R-653fa48f3b214b8383c66c3faa0fd1b1`,
+   case run in `eval/results/2026-10-10-evobrutinib-3/sensitivity.json`.
 6. **Benchmark (40 s).** The sensitivity table: method in two sentences, the five named items,
    pass or fail for each.
 7. **Trace and cost (20 s).** Time, cost, models, what code dropped.
@@ -50,11 +56,12 @@ That is the third thing criterion A asks for implicitly: change for the right re
 
 - [x] Live runs of the pair on the current code (`eval.md`, section 9) and a base as of
       2024-06-30 with the sensitivity benchmark (3 of 5, on an earlier version).
-- [ ] **A case where the verdict itself changes.** The brief asks for new or contradictory
-      evidence that changes the system's conclusion. The benchmark's cases move module answers;
-      none expects the verdict to move. Add one that reaches a hard gate (a stopped program, a
-      clinical hold) with negative controls for K2 and K4 (a business stop, a lifted hold), then
-      re-run the benchmark with its control on the current code.
+- [x] **A case where the verdict itself changes**: evobrutinib, Conditional → Do Not Invest on
+      the two reports of its failed phase 3, with a one-source control (step 5a; `eval.md`,
+      section 9). The lifted-hold and business-stop controls are unit tests (no verified public
+      text of a lifted hold was found).
+- [ ] Re-run the BTK x MS benchmark (`eval/sensitivity.yaml`) with its control on the current
+      code: its table in `eval.md` is from an earlier version.
 - [ ] Record the demo runs on the frozen code and keep their bundle hashes: a run now takes about
       9 minutes, too long for the stage.
 - [ ] `RUN_TIMEOUT_S`: a run for this pair took 4 to 7 minutes on the gateway with four module

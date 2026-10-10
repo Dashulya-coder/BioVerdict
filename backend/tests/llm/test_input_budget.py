@@ -159,6 +159,7 @@ def test_the_gateway_preset_has_no_request_limit_and_the_environment_can_set_one
 
 def test_on_the_gateway_the_answer_bounds_the_prompt_of_a_module_not_of_the_chair() -> None:
     from bioverdict.llm.config import (
+        GATEWAY_CLASSIFY_CHARS,
         GATEWAY_EXTRACTION_CHARS,
         GATEWAY_MODULE_CHARS,
         GATEWAY_SKEPTIC_CHARS,
@@ -168,8 +169,9 @@ def test_on_the_gateway_the_answer_bounds_the_prompt_of_a_module_not_of_the_chai
 
     config = LLMConfig.for_provider("openai")
     assert config.step("extraction").prompt_chars == GATEWAY_EXTRACTION_CHARS
-    for step in ("reasoning.mechanism", "reasoning.clinical", "reasoning.classify"):
+    for step in ("reasoning.mechanism", "reasoning.clinical"):
         assert config.step(step).prompt_chars == GATEWAY_MODULE_CHARS
+    assert config.step("reasoning.classify").prompt_chars == GATEWAY_CLASSIFY_CHARS
     assert config.step("chair").prompt_chars == GATEWAY_SYNTHESIS_CHARS
     assert config.step("skeptic").prompt_chars == GATEWAY_SKEPTIC_CHARS
     assert config.step("synthesis").prompt_chars == GATEWAY_THESES_CHARS

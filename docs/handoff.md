@@ -52,8 +52,9 @@ citations judged and 13 removed, 37 links of context claims not judged, 8 dilige
 | Nobody has read the 13 removals | a hand-labelled sample of about 30 claims (`eval.md`, "Judge agreement") | The judge went from removing 75 of 93 to 13 of 72 after it was shown the passage; whether it is now too lenient is unknown |
 | Unmet-need module reported the class's own trial failures and answered "against" | `reasoning/modules.py`, `_UNMET_NEED` | Prompt changed, not seen live |
 | Modules restate one another | mechanism, translation and clinical prompts | One trial result is written by three modules and pulls on each |
-| K2 and K4 fire on keywords | `reasoning/gate_guards.py`, `stop_reason.py` | A terminated study is not a stopped program; a boxed warning is not unmitigable toxicity. Add negative controls: a business stop, a lifted hold |
-| K1 did not fire for the pair | clinical module | The registry record of evobrutinib says the primary endpoint was not met. Decide whether silence is right for a class question or the model missed it |
+| K2 and K4 fire on keywords | `reasoning/gate_guards.py`, `stop_reason.py` | Partly done (#128): a lifted hold no longer supports K2; a business stop supports no K1, K2 or K4 (unit tests). Open: a registry record TERMINATED still supports K4 whatever the reason, and a boxed warning is not unmitigable toxicity |
+| K1 did not fire for the pair | clinical module | The guard did not read "not superior to" or "endpoint was not met" as a failure (fixed in #128; K1 now fires for evobrutinib on its two phase 3 reports). Still open for the pair: whether a failed program of the class should kill a class question |
+| An asset's registry search is not limited to the indication | `connectors/clinicaltrials.py` (`query.intr`) | Evobrutinib for MS (`R-34158eeca1b34375a86331eb442e5afc`) listed its rheumatoid-arthritis trials (ACR20) among the top risks |
 | `eval/cases.yaml` has one smoke case | B10 | No regression set |
 
 ### 3. Decisions to think over together

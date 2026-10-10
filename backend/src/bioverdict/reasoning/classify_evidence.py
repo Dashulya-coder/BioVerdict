@@ -59,6 +59,15 @@ where the new evidence belongs.
    class this report is about, in the disease it is about. Same rules as for any claim: a verbatim
    quote, a basis, no numbers of your own. Leave the list empty when the existing claims already
    cover the evidence.
+   When several pieces of new evidence state the same fact, write ONE claim with a link to each
+   of them, not one claim per document: independent sources on one claim are what confirm it.
+   A new fact that meets a kill criterion carries its gate signal, and code checks it against the
+   words you quote: K1 when a trial of the same target in this disease failed its primary
+   endpoint for lack of efficacy ("did not meet its primary endpoint", "was not superior to" the
+   comparator in a superiority trial); K2 for serious toxicity with a regulator's action (a
+   clinical hold in force, a boxed warning); K4 when the sponsor stopped the program. A trial
+   stopped for a business reason, a hold that was lifted, or a noninferiority result is no kill
+   criterion.
    The report holds `unknown` claims for links of the translation chain that no evidence showed
    (the third word in brackets names the link). If the new evidence shows such a link, state what
    it shows as a new claim with `chain_link` set to that link and a basis other than `unknown`;
