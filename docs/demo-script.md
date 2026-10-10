@@ -46,12 +46,17 @@ That is the third thing criterion A asks for implicitly: change for the right re
    pass or fail for each.
 7. **Trace and cost (20 s).** Time, cost, models, what code dropped.
 
-## What is not ready (2026-10-10): do before the demo
+## What is not ready (2026-10-10, evening): do before the demo
 
-- [ ] One live run for the pair after the last fixes, kept with its bundle hash; and one with
-      `--as-of 2024-06-30` as the base for time travel and the benchmark (Dasha, paid).
-- [ ] `bioverdict sensitivity` on that base; paste the table into [eval](eval.md), section 9.
-      It has never been run with a real model: if a case fails, show it as failed.
+- [x] Live runs of the pair on the current code (`eval.md`, section 9) and a base as of
+      2024-06-30 with the sensitivity benchmark (3 of 5, on an earlier version).
+- [ ] **A case where the verdict itself changes.** The brief asks for new or contradictory
+      evidence that changes the system's conclusion. The benchmark's cases move module answers;
+      none expects the verdict to move. Add one that reaches a hard gate (a stopped program, a
+      clinical hold) with negative controls for K2 and K4 (a business stop, a lifted hold), then
+      re-run the benchmark with its control on the current code.
+- [ ] Record the demo runs on the frozen code and keep their bundle hashes: a run now takes about
+      9 minutes, too long for the stage.
 - [ ] `RUN_TIMEOUT_S`: a run for this pair took 4 to 7 minutes on the gateway with four module
       batches; with up to eight (all of the bundle read) expect about ten. The old default of 420
       seconds cut the Chair off once; the default is now 1500. A `.env` copied from an older

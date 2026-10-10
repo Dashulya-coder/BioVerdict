@@ -18,31 +18,33 @@
 
 ## 2. Overview
 
+As built (2026-10-10). Dashed: designed, not built.
+
 ```mermaid
 flowchart TD
-  IN[Input: indication + mechanism / drug name / code] --> RES[Resolver]
-  RES --> TRI[Triage]
-  TRI --> COL
-  subgraph COL[Phase A: Collect - network allowed]
+  IN[Input: indication + mechanism, or a drug name / code] --> RES[Resolver: ids from databases]
+  RES -.-> TRI[Triage]
+  RES --> COL
+  subgraph COL[Collect - network allowed, connectors only]
     direction LR
-    A1[Disease and unmet need]
-    A2[Mechanism validation]
-    A3[Clinical and trials]
-    A4[Competition and pipeline]
-    A5[Red/Green flags]
-    A6[IP and regulatory]
+    A1[Unmet need: guidelines]
+    A2[Mechanism: Open Targets, preprints]
+    A3[Clinical: registry, PubMed, PMC, safety]
+    A4[Competition: class trials, FDA, EMA]
+    A5[Flags: SEC filings]
+    A6[Commercial: market records for code]
   end
-  COL --> FRZ[Freeze: content-hashed bundle v1]
-  FRZ --> B1[Translation chain]
-  FRZ --> B2[Commercial and market]
-  B1 --> BB[Skeptic]
-  B2 --> BB
-  BB --> CH[Chair: critical unknowns]
-  CH -- targeted round, max 2-3 --> COL2[Collect: only requested items] --> FRZ2[Bundle v2]
-  CH --> SC[Scoring - code]
-  FRZ2 --> SC
-  SC --> VER[Verification]
-  VER --> REP[Report + executive verdict]
+  COL --> FRZ[Freeze: content-hashed bundle]
+  FRZ --> MOD[Six modules in parallel, no network:<br/>unmet need, mechanism, translation chain,<br/>clinical, competition, commercial]
+  MOD --> GR[Grounding - code: quote verbatim or claim dropped]
+  GR --> SK[Skeptic: contradicting evidence]
+  SK --> JU[Judge: does each quote support its claim]
+  JU --> SC[Scoring - code: confidence, gates, module answers,<br/>PoS, capital, time, rNPV, verdict]
+  SC --> CH[Chair: diligence questions, ranked by code]
+  CH --> SY[Synthesis: written theses, grounded by code]
+  SY --> REP[Report: verdict to claims to quotes to sources]
+  CH -.-> COL2[Targeted second collection round] -.-> FRZ
+  NEW[Added document] --> RC[Recompute on bundle v2] --> DIFF[Diff: what moved and why]
 ```
 
 The outer structure is a deterministic DAG (LangGraph). Inside each node a small tool-calling agent has a step limit. LangGraph is used only as a DAG runner with checkpointing. Tracing and cost accounting are our own code so nothing is hidden. See ADR-001.

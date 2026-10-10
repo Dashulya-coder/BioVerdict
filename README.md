@@ -237,14 +237,30 @@ question, so these describe that question, not the system in general. Details an
 
 | Metric | Result |
 |---|---|
-| Cost per run | $0.87 to $1.20; the judge is 53% to about 60% of it |
-| Time per run | 3 min 45 s to 7 min 21 s (`RUN_TIMEOUT_S=900`) |
-| Quotes found verbatim in their source | 89 of 89 (one run; code drops a claim whose quote is not found) |
-| Cited sources in the run's catalog | 48 of 48 (same run) |
-| Quotes the judge confirmed | 39 of 70 on that run; the judge was changed afterwards (#117) and not measured again |
-| Sensitivity benchmark | 3 of 5 cases passed, on a base as of 2024-06-30 |
-| Verdict change on strong counter-evidence | not shown: no benchmark case expects one yet |
-| Verdict stability | not measured |
+| Cost per run | about $3.10 with the whole bundle read (`R-0cb20fbb…` $3.07, the written case $0.04 more); $0.87 to $1.78 on earlier versions that read part of it |
+| Time per run | about 9 minutes (486 s, and 37 s for the written case); 3 min 45 s to 7 min 21 s before |
+| Model calls per run | 78: extraction, six modules in up to eight batches each, Skeptic, judge, Chair, synthesis |
+| Quotes found verbatim in their source | all kept quotes: code drops a claim whose quote is not in the evidence it names |
+| Evidence read by the modules | none of the bundle's 214 items left out of a module's prompts for length (market records go to code, not to a model); 11 of 11 registry trials and 29 of 29 drug records approved for MS cited by a claim |
+| Quotes the judge confirmed | 220 of 233 judged links (13 removed); 40% were removed before results were stored as lines (#124, #125) |
+| Written case | 24 sentences in six theses, none dropped by code for an uncited claim or a number of its own |
+| Sensitivity benchmark | 3 of 5 cases passed, on a base as of 2024-06-30, on an earlier version; not re-run since |
+| Verdict change on strong counter-evidence | not shown yet: the benchmark's cases move module answers, none expects the verdict to change |
+| Verdict stability | not measured (the verdict was Conditional on every run of the day) |
+
+## What the brief asks for, and where it is
+
+| Deliverable | Where |
+|---|---|
+| Working prototype: indication + mechanism in, investment underwriting out | the New analysis screen (indication and mechanism; the drug is optional); `bioverdict run --query "BTK inhibitor for multiple sclerosis"`; `POST /runs` |
+| Interactive evidence: recommendation to claims to evidence to sources | Report: the verdict's top risks, gates, six module answers and the written theses each open their claims; a claim opens its verbatim quote and the source link (`GET /runs/{id}/claims/{claim}`, `/evidence/{id}`) |
+| Architecture | [`docs/architecture.md`](docs/architecture.md), [`docs/data-model.md`](docs/data-model.md), [`docs/scoring.md`](docs/scoring.md) |
+| README | this file |
+| Source attribution | [`docs/sources.md`](docs/sources.md); every evidence item keeps its source, URL, record id and date |
+| Model and API usage | [`docs/cost.md`](docs/cost.md) (models by step, gateway limits); "Configuration" above |
+| Approximate cost per run | "Results" above; [`docs/cost.md`](docs/cost.md), measured from the `llm_calls` table; `bioverdict cost` |
+| Logs and traces | the Trace screen (every model call with model, time, tokens, cost, cache hit, failover), `GET /runs/{id}/trace`, the run's progress events (`/runs/{id}/events`), `verification_log` |
+| Demo: new or contradictory evidence changes the conclusion | Compare: add a document or compare two cutoffs; the diff names each module that moved and the quote that moved it ([`docs/demo-script.md`](docs/demo-script.md)). A case where the verdict itself changes is still to be made |
 
 ## Team
 
