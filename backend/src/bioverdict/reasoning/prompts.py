@@ -27,7 +27,10 @@ Rules for every claim:
   character for character from that evidence's text (at least a full phrase). A quote that is
   not in the text is discarded together with your link. In a registry result record (it begins
   "Outcome measure (") quote the line that holds the value with its group, for example
-  "Drug A 10 mg: 0.53 (range 0.44 to 0.64)", not only the title of the measure.
+  "Drug A 10 mg: 0.53 (range 0.44 to 0.64)", not only the title of the measure. A claim that
+  compares groups needs the value of each: quote the groups' lines together (they stand one
+  under the other) or the line that begins "Analysis of"; one group's value alone is no
+  comparison.
 - direction is "supports" or "contradicts" that claim; use "neutral" only if the evidence is
   merely related. Look for contradicting evidence actively and report it.
 - basis "extracted": the claim is stated by a quote. "inferred": you conclude it from the

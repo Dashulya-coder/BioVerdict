@@ -31,16 +31,16 @@ GATEWAY_MAX_OUTPUT = 4096
 # 128,000 on gpt-6.1-sol and 256,000 on gpt-6-luna. No limit by default; LLM_MAX_INPUT_CHARS puts
 # one back if the gateway does.
 GATEWAY_INPUT_CHARS: int | None = None
-# What bounds a prompt now is the answer: a module batch of 16,000 characters drew up to 3,185 of
-# the 4,096 output tokens on the live run R-20261010-125211-cf5016, so a larger batch would be cut
-# off and retried short. Steps whose answer does not grow with the prompt get more room.
-GATEWAY_BATCH_CHARS = 16_000  # module, extraction and classification prompts
-# The clinical module writes the most per item: on R-cf6f3be64e7b409f803f162134a0f174 one of its
-# 16,000-character batches was cut off at 4,096 tokens and retried short.
-GATEWAY_CLINICAL_CHARS = 12_000
+# What bounds a prompt now is the answer, which grows with what the prompt holds. A module batch
+# of 16,000 characters was cut off at 4,096 tokens and retried short twice in two live runs
+# (clinical on R-cf6f3be64e7b409f803f162134a0f174, translation on R-e0a3a432b1a6486da63da74805af1a04),
+# so module and classification batches are 12,000 and more evidence means more batches.
+GATEWAY_MODULE_CHARS = 12_000
+GATEWAY_EXTRACTION_CHARS = 16_000  # its answers stayed under 900 of its 3,000 tokens
 GATEWAY_SYNTHESIS_CHARS = 60_000  # the Chair: room for every claim of a run
-# The Skeptic answers from the evidence it reads: at 60,000 it wrote 3,881 of the 4,096 tokens.
-GATEWAY_SKEPTIC_CHARS = 30_000
+# The Skeptic answers from the evidence it reads: 3,881 tokens from 60,000 (5 objections grounded),
+# 1,532 from 30,000 (1 grounded). One run each; 45,000 is between, with room in the answer.
+GATEWAY_SKEPTIC_CHARS = 45_000
 
 
 def _input_limit(default: int | None) -> int | None:
@@ -164,14 +164,14 @@ class LLMConfig(BaseModel):
                 effort="low",
                 max_tokens=3000,
                 timeout_s=90.0,
-                prompt_chars=GATEWAY_BATCH_CHARS,
+                prompt_chars=GATEWAY_EXTRACTION_CHARS,
             )
             reasoning = StepConfig(
                 models=[SOL, MINI],
                 effort="low",
                 max_tokens=GATEWAY_MAX_OUTPUT,
                 timeout_s=180.0,
-                prompt_chars=GATEWAY_BATCH_CHARS,
+                prompt_chars=GATEWAY_MODULE_CHARS,
             )
             synthesis = StepConfig(
                 models=[SOL, MINI],
@@ -187,9 +187,6 @@ class LLMConfig(BaseModel):
                 models=[ASTRA, MINI], effort="high", max_tokens=GATEWAY_MAX_OUTPUT, timeout_s=240.0
             )
             config = cls._build(extraction, reasoning, synthesis, judge, dict(GATEWAY_PRICES))
-            config.steps["reasoning.clinical"] = reasoning.model_copy(
-                update={"prompt_chars": GATEWAY_CLINICAL_CHARS}
-            )
             config.steps["skeptic"] = synthesis.model_copy(
                 update={"prompt_chars": GATEWAY_SKEPTIC_CHARS}
             )

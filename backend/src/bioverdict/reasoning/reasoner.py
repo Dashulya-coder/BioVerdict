@@ -48,7 +48,7 @@ class ModuleReasoner:
         confidence: ConfidenceConfig | None = None,
         max_evidence_chars: int = MAX_EVIDENCE_CHARS,
         max_parallel: int | None = None,
-        max_batches: int = 4,  # the clinical module's smaller batches read as much as three did
+        max_batches: int = 4,  # batches of 12,000 on the gateway: four read what three of 16,000 did
         question: str = "",
     ) -> None:
         self._llm = llm

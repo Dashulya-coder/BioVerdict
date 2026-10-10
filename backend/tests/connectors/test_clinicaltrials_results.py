@@ -106,6 +106,8 @@ def test_measurements_and_analyses_keep_their_arm_ids_when_order_differs() -> No
     assert "\nControl: 4\n" in item.excerpt and "\nSynthetic drug: 6\n" in item.excerpt
     assert "Analysis of Control, Synthetic drug: pValue 0.01" in item.excerpt
     assert "G1" not in item.excerpt and "G2" not in item.excerpt
+    # A comparison can quote both groups' values in one verbatim quote.
+    assert "Control: 4\nSynthetic drug: 6" in item.excerpt
 
 
 def test_primary_measures_come_first_and_the_number_is_capped() -> None:

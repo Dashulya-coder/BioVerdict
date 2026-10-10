@@ -219,7 +219,9 @@ def reason_and_score(
         "reason",
         "done",
         f"{len(claims)} claims, {len(rejected)} dropped by code; rejected claims: "
-        f"{', '.join(sorted(rejected)) or 'none'}; {corrections} other corrections by code",
+        f"{', '.join(sorted(rejected)) or 'none'}; {corrections} other corrections by code; "
+        f"{len(reasoner.trace.omitted_evidence)} evidence item(s) left out of a module's prompts "
+        "for length",
     )
 
     claims, links, objections = skeptic_pass(conn, run_id, bundle, llm, claims, links)
