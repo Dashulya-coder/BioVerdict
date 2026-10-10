@@ -248,7 +248,10 @@ QUOTE = "The study met its primary and key secondary endpoint"
 def classified(conn, answer: dict):
     bundle = prepare_recompute(conn, "R-1", "R-2", [DOC], EARLY)
     return finish_recompute(
-        conn, "R-2", lambda: bundle, lambda: FakeLLM({"reasoning.classify": answer})
+        conn,
+        "R-2",
+        lambda: bundle,
+        lambda: FakeLLM({"reasoning.classify": answer, "chair": {"questions": []}}),
     )
 
 
