@@ -198,3 +198,29 @@ row, "quotes the judge kept, here or in the run this grew from", and no "read" r
 removed in the earlier run are not in this report, so they cannot be counted. Not carried over:
 the reasons for those earlier removals (`ClaimView.checks` still comes from the run's own log).
 Seen in tests on the fixture; look at the evobrutinib recompute on your machine.
+
+---
+
+## To Dasha, from Arsenii — 2026-10-11 (cases for the two other modules)
+
+`eval/sensitivity-modules.yaml` holds two cases for criterion A in the modules the benchmark
+does not move: unmet need (PMID 32511687: most disability accumulation on interferon beta-1a
+and on ocrelizumab comes without relapses; expected up) and competition (Roche, 2026-09-30: the
+FDA accepted the fenebrutinib NDA under priority review; expected down). Both passages are
+verbatim and checked against the source. **Not run: the paid runs are yours.**
+
+Two things in your track decide whether they can pass, whatever the documents say:
+
+1. **A recompute has no route to these two sections.** `classify_evidence.py` grounds a new
+   fact as a clinical claim, a chain link or, since your fix of 2026-10-11, a mechanism claim.
+   A fact about what treats the disease today, or about a competitor's stage, becomes a
+   clinical claim or is linked to an existing claim. If the base holds no fitting claim in the
+   unmet-need or the competition section, the module cannot move. The same kind of route you
+   added for `target_causal` would be needed for each (and a rule for telling them apart).
+2. **The balance saturates.** With weight on one side only it is +1.00 or -1.00. Competitive
+   and commercial stood at -1.00 on the runs of 2026-10-10, so "down" cannot show there. Either
+   the expectation becomes "the document is a cause and the unfavourable weight grows", or the
+   case needs a base where the module has weight on both sides.
+
+If there is time for one of the two only, the route (1) is what criterion A needs for these
+modules; without it the honest thing on stage is the time-travel diff, as the script says now.

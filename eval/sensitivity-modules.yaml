@@ -1,0 +1,66 @@
+# Two more cases for the sensitivity benchmark of BTK inhibitor x multiple sclerosis
+# (docs/eval.md, section 8), for the two modules that eval/sensitivity.yaml does not move:
+# disease and unmet need, and competitive and commercial. Run them like that file:
+#
+#   uv run --env-file ../.env bioverdict sensitivity --run <base run id> \
+#     --cases ../eval/sensitivity-modules.yaml --out ../eval/results/<date>
+#
+# NOT RUN YET (2026-10-11). Each text is a verbatim passage, checked against its source on
+# 2026-10-11 (PubMed efetch; roche.com). Neither was retrieved by a connector: check that the
+# base run does not already hold the item.
+#
+# Read before running. They may fail for reasons that are not the documents:
+# 1. A recompute writes a new fact as a clinical claim, a link of the translation chain or a
+#    mechanism claim (reasoning/classify_evidence.py). It has no way to write a new claim of
+#    the unmet-need or the competition section, so these modules move only if the model links
+#    the document to a claim they already hold. If the base has no such claim, the document
+#    lands in clinical development or nowhere, and the case fails.
+# 2. A balance is (for - against) / (for + against). A module with weight on one side only
+#    stands at +1.00 or -1.00 and cannot move further that way: on the runs of 2026-10-10 the
+#    competitive and commercial module stood at -1.00. Look at the control's balances first; a
+#    case whose direction the control cannot show proves nothing either way.
+#  is the direction a reader of the passage would expect, written before any run.
+- id: strong-progression-on-approved-treatment
+  kind: strong
+  item: PMID 32511687 (pooled OPERA I and II, disability accumulation on interferon beta-1a and ocrelizumab, 2020)
+  as_of: 2026-10-10
+  document:
+    text: >-
+      The PIRA events were the main contributors to 12-week and 24-week composite CDA after 96 weeks
+      in patients treated with interferon β-1a (174 of 223 [78.0%] and 137 of 170 [80.6%],
+      respectively) and ocrelizumab (147 of 167 [88.0%] and 115 of 129 [89.1%], respectively); a
+      minority had CDA explained by RAW events (69 of 390 [17.7%] and 52 of 299 [17.4%],
+      respectively).
+    url: https://pubmed.ncbi.nlm.nih.gov/32511687/
+    source: PubMed
+    source_kind: peer_reviewed
+    # A post hoc classification of events inside two randomized trials: the comparison of the
+    # arms is randomized, the split into relapse-associated and relapse-independent is not.
+    level: human_observational
+    published_at: 2020-09-01
+  # Most of the disability that accumulates on two approved treatments, the high-efficacy one
+  # included, comes without relapses: a shortfall of what treats the disease today, which the
+  # unmet-need module counts as favourable for an investor.
+  expect: { module: disease_unmet_need, direction: up }
+
+- id: strong-fenebrutinib-filing-accepted
+  kind: strong
+  item: Roche investor update of 2026-09-30 (FDA accepts the fenebrutinib NDA under priority review)
+  as_of: 2026-10-10
+  document:
+    text: >-
+      Roche (SIX: RO, ROP; OTCQX: RHHBY) announced today that the United States Food and Drug
+      Administration (FDA) has accepted the company’s New Drug Application (NDA) under priority
+      review for fenebrutinib, an investigational non-covalent Bruton’s tyrosine kinase (BTK)
+      inhibitor for the treatment of relapsing multiple sclerosis (RMS) and primary progressive
+      multiple sclerosis (PPMS).
+    url: https://www.roche.com/investors/updates/inv-update-2026-09-30
+    source: Roche investor update
+    source_kind: company
+    # The status of a program (a filing was accepted), not a result: it weighs on a claim about
+    # a program's stage (study_fact) and on nothing else. Acceptance is not approval.
+    level: registry_record
+    published_at: 2026-09-30
+  # A drug of the same class is one regulatory decision from the market in both relapsing and
+  # primary progressive disease: a new entrant has less room.
+  expect: { module: competitive_commercial, direction: down }

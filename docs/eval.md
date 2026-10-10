@@ -153,6 +153,22 @@ retrieved on 2026-10-10, for BTK inhibitor x multiple sclerosis):
 | weak-microglia-preprint | weak | bioRxiv doi 10.64898/2026.08.25.747169, laboratory work on microglia | mechanism up, a little |
 | noise-kras-lung-release | noise | Roche release of 2026-07-02 on divarasib in lung cancer | nothing moves |
 
+**Two more cases, not run** (`eval/sensitivity-modules.yaml`, written 2026-10-11): the file
+above moves clinical development, translation and mechanism, and nothing in it names the other
+two modules. Each passage is verbatim and was checked against its source on 2026-10-11.
+
+| Case | Kind | Item | Expected |
+|---|---|---|---|
+| strong-progression-on-approved-treatment | strong | PMID 32511687, pooled OPERA I and II: disability accumulation on interferon beta-1a and ocrelizumab | disease and unmet need up |
+| strong-fenebrutinib-filing-accepted | strong | Roche investor update of 2026-09-30: the FDA accepts the fenebrutinib NDA under priority review | competitive and commercial down |
+
+They may fail for two reasons that are not the documents, both written at the top of the file.
+A recompute writes a new fact as a clinical claim, a chain link or a mechanism claim, never as
+a claim of the unmet-need or the competition section, so those modules move only when the model
+links the document to a claim they already hold. And a balance with weight on one side only
+stands at +1.00 or -1.00 and cannot move further that way (competitive and commercial stood at
+-1.00 on the runs of 2026-10-10): read the control's balances before the result.
+
 **State.** 5 of 5 on 2026-10-11 with the real model (section 9), after one expectation was changed with its reason and two defects of the classification of added evidence were fixed; 3 of 5 on 2026-10-10 before that.
 
 A time-travel comparison needs no model and no benchmark file: two runs of the same question at
