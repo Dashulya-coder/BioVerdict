@@ -231,6 +231,31 @@ def test_a_real_safety_action_still_supports_k2() -> None:
         assert evidence_guard(GateId.K2, [pair(company(text))]) is None, text
 
 
+def test_a_lifted_hold_does_not_support_k2_and_a_hold_in_force_still_does() -> None:
+    for text in (
+        "The FDA lifted the partial clinical hold on the tolebrutinib trials.",
+        "The clinical hold was removed after the sponsor amended the protocol.",
+    ):
+        assert evidence_guard(GateId.K2, [pair(company(text))]), text
+    held = "The FDA lifted one partial clinical hold and placed a clinical hold on another trial."
+    assert evidence_guard(GateId.K2, [pair(company(held))]) is None
+
+
+def test_a_business_stop_supports_no_efficacy_or_safety_kill_criterion() -> None:
+    text = "The study was terminated due to a business decision, not for safety or efficacy."
+    assert evidence_guard(GateId.K1, [pair(company(text))])
+    assert evidence_guard(GateId.K2, [pair(company(text))])
+    # A stopped study is not a stopped program: K4 needs the program named as stopped.
+    assert evidence_guard(GateId.K4, [pair(company(text))])
+
+
+def test_k1_reads_a_failed_active_comparator_trial_as_a_failure_for_efficacy() -> None:
+    text = "The efficacy of evobrutinib was not superior to that of teriflunomide."
+    assert evidence_guard(GateId.K1, [pair(company(text))]) is None
+    noninferior = "Fenebrutinib was noninferior to ocrelizumab but not superior to it."
+    assert evidence_guard(GateId.K1, [pair(company(noninferior))])
+
+
 def test_a_negated_discontinuation_does_not_support_k4() -> None:
     for text in (
         "Development was not discontinued; the program continues.",

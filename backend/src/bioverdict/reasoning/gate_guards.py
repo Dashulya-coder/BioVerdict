@@ -18,6 +18,7 @@ from bioverdict.reasoning.stop_reason import (
     classify_stop_reason,
     overall_status,
     why_stopped,
+    without_lifted_holds,
 )
 from bioverdict.store.models import ClaimEvidenceLink, Evidence, EvidenceLevel, GateId
 
@@ -59,7 +60,8 @@ def evidence_guard(gate: GateId, support: Support) -> str | None:
         return "no cited evidence states a stop for lack of efficacy (futility, endpoint not met)"
     if gate is GateId.K2:
         if any(
-            stop_reason_of(ev) is StopReason.SAFETY or has_unnegated(_SAFETY_ACTION, ev.excerpt)
+            stop_reason_of(ev) is StopReason.SAFETY
+            or has_unnegated(_SAFETY_ACTION, without_lifted_holds(ev.excerpt))
             for ev in evidence
         ):
             return None

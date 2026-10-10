@@ -23,7 +23,7 @@ from typing import Literal
 from uuid import uuid4
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
 from bioverdict.api.diff import build_diff
 from bioverdict.api.schemas import AddedEvidence, DiffResponse, ModuleChange
@@ -35,9 +35,12 @@ from bioverdict.pipeline.recompute import (
     prepare_recompute,
 )
 from bioverdict.scoring.module_answers import ModuleId
+from bioverdict.store.models import Verdict
 from bioverdict.store.runs_repo import get_run, load_events
 
-Kind = Literal["strong", "weak", "noise"]
+# A control is a document that looks alarming and must not change the verdict (a business stop,
+# a lifted hold): it checks that a kill criterion fires for the right reason only.
+Kind = Literal["strong", "weak", "noise", "control"]
 Direction = Literal["down", "up", "none"]
 # A weak document may move a balance; it must not move it this far or change the answer.
 WEAK_MAX_SHIFT = 0.15
@@ -47,7 +50,18 @@ class Expectation(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     module: ModuleId | None = None  # none for a noise case: no module may move
-    direction: Direction
+    direction: Direction | None = None
+    # The verdict the recompute must reach. Different from the control's: the documents must
+    # change it (and be among the causes); the same: they must not.
+    verdict: Verdict | None = None
+
+    @model_validator(mode="after")
+    def _expects_something(self) -> Expectation:
+        if self.direction is None and self.verdict is None:
+            raise ValueError("expect a module direction, a verdict, or both")
+        if self.direction in ("up", "down") and self.module is None:
+            raise ValueError("a direction up or down needs the module that moves")
+        return self
 
 
 class SensitivityCase(BaseModel):
@@ -56,9 +70,21 @@ class SensitivityCase(BaseModel):
     id: str = Field(pattern=r"^[A-Za-z0-9._-]+$")
     kind: Kind
     item: str = Field(description="What the document is: the dataset item, by its public id")
-    document: AddedEvidence
+    document: AddedEvidence | None = None
+    # Several documents added together: a kill criterion needs two independent sources.
+    documents: list[AddedEvidence] = Field(default_factory=list, max_length=10)
     expect: Expectation
     as_of: date_type | None = None  # default: the base run's cutoff
+
+    @model_validator(mode="after")
+    def _one_way_to_give_documents(self) -> SensitivityCase:
+        if (self.document is None) == (not self.documents):
+            raise ValueError("give either `document` or `documents`")
+        return self
+
+    @property
+    def docs(self) -> list[AddedEvidence]:
+        return [self.document] if self.document is not None else self.documents
 
 
 class CaseOutcome(BaseModel):
@@ -104,8 +130,36 @@ def _shift(change: ModuleChange) -> float:
     return (change.balance_after or 0.0) - (change.balance_before or 0.0)
 
 
+def _judge_verdict(case: SensitivityCase, diff: DiffResponse) -> tuple[bool, str]:
+    """The verdict part of a case: reached, and changed only if the control's was different."""
+    wanted = case.expect.verdict
+    assert wanted is not None
+    before, after = diff.base.verdict, diff.head.verdict
+    gates = ", ".join(
+        f"{g.gate_id.value} {'fired' if g.fired_after else 'cleared'}" for g in diff.gates
+    )
+    said = f"verdict {before.value} → {after.value}" + (f" ({gates})" if gates else "")
+    if after is not wanted:
+        return False, f"{said}, expected {wanted.value}"
+    if before is not wanted:
+        added = {item.id for item in diff.evidence_added}
+        if not any(c.evidence_id in added for m in diff.modules for c in m.causes):
+            return False, f"{said}, but no document is among the causes"
+    return True, said
+
+
 def judge_case(case: SensitivityCase, diff: DiffResponse) -> tuple[bool, str]:
     """Whether the diff shows what the case expects, and the sentence that says why."""
+    if case.expect.verdict is not None:
+        passed, why = _judge_verdict(case, diff)
+        if not passed or case.expect.direction is None:
+            return passed, why
+        module_passed, module_why = _judge_modules(case, diff)
+        return module_passed, f"{why}; {module_why}"
+    return _judge_modules(case, diff)
+
+
+def _judge_modules(case: SensitivityCase, diff: DiffResponse) -> tuple[bool, str]:
     added = {item.id for item in diff.evidence_added}
     if case.expect.direction == "none":
         # The diff is against the control at the same cutoff, so nothing here is drift with a
@@ -177,14 +231,16 @@ def run_case(
     control_run: str,
 ) -> CaseOutcome:
     """Add the case's document to `base_run` and compare the result with `control_run`."""
-    doc = case.document
-    evidence = analyst_evidence(
-        1, doc.text, doc.url, doc.source, doc.source_kind, doc.level, doc.published_at
-    )
+    evidence = [
+        analyst_evidence(
+            n, doc.text, doc.url, doc.source, doc.source_kind, doc.level, doc.published_at
+        )
+        for n, doc in enumerate(case.docs, start=1)
+    ]
     run_id = f"R-{uuid4().hex}"
     blank = _blank(case, control_run=control_run)
     try:
-        bundle = prepare_recompute(conn, base_run, run_id, [evidence], case.as_of)
+        bundle = prepare_recompute(conn, base_run, run_id, evidence, case.as_of)
     except (LookupError, RecomputeError) as exc:
         return blank.model_copy(update={"reason": f"not run: {exc}"})
     result = finish_recompute(conn, run_id, lambda: bundle, lambda: llm(run_id))

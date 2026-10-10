@@ -1,0 +1,60 @@
+# Verdict benchmark for evobrutinib x multiple sclerosis (docs/eval.md, "Sensitivity benchmark").
+# The brief asks for new or contradictory evidence that changes the system's conclusion. Here
+# the conclusion is the verdict: a kill criterion needs a claim at confidence 0.85 or more with
+# evidence from two independence groups (docs/scoring.md), so one alarming document must not
+# kill a program and two independent reports of a failed phase 3 should.
+#
+# The base run is the asset before its phase 3 read out (5 December 2023):
+#
+#   cd backend
+#   USE_FIXTURES=0 RUN_TIMEOUT_S=1500 uv run --env-file ../.env bioverdict run \
+#     --query "evobrutinib for multiple sclerosis" --as-of 2023-11-30
+#   uv run --env-file ../.env bioverdict sensitivity --run <that run id> \
+#     --cases ../eval/sensitivity-evobrutinib.yaml --out ../eval/results/<date>
+#
+# Every text is a verbatim sentence of the named public record, checked against it on
+# 2026-10-10. An added document's independence group is its web host, so the company release and
+# the journal paper count as two groups although they report the same two trials: the two
+# trials (evolutionRMS 1 and 2) are independent, the reports of them are not.
+- id: strong-evolution-phase3-failed
+  kind: strong
+  item: >-
+    Merck KGaA release of 2023-12-05 (EVOLUTION phase 3 results) and PMID 39307151 (evobrutinib
+    vs teriflunomide in relapsing MS)
+  as_of: 2024-09-30
+  documents:
+    - text: >-
+        Results from the EVOLUTION clinical trials showed evobrutinib did not meet its primary
+        endpoint of annualized relapse rate for up to 156 weeks compared to oral teriflunomide in
+        both studies
+      url: https://www.biospace.com/merck-kgaa-darmstadt-germany-provides-update-on-phase-iii-results-for-evobrutinib-in-relapsing-multiple-sclerosis
+      source: Merck KGaA press release (Business Wire)
+      source_kind: company
+      level: human_interventional
+      published_at: 2023-12-05
+    - text: The efficacy of evobrutinib was not superior to that of teriflunomide.
+      url: https://pubmed.ncbi.nlm.nih.gov/39307151/
+      source: PubMed
+      source_kind: peer_reviewed
+      level: human_interventional
+      published_at: 2024-09-22
+  # K1: the same target failed in phase 3 in this indication for lack of efficacy.
+  expect: { verdict: Do Not Invest, module: clinical_development, direction: down }
+
+- id: control-partial-hold-one-source
+  kind: control
+  item: Merck KGaA release of 2023-04-12 (FDA partial clinical hold on evobrutinib)
+  as_of: 2024-09-30
+  document:
+    text: >-
+      The U.S. Food and Drug Administration (FDA) has placed a partial clinical hold on the
+      initiation of new patients on evobrutinib and patients with less than 70 days exposure to
+      study medication in the U.S.
+    url: https://www.emdgroup.com/en/news/evobrutinib-12-04-2023.html
+    source: Merck KGaA press release
+    source_kind: company
+    level: human_interventional
+    published_at: 2023-04-12
+  # A hold from one source is a risk to name, not a kill: K2 needs a second independent source
+  # and unmitigable toxicity. The verdict the control run has must stay.
+  expect: { verdict: Conditional }
