@@ -23,7 +23,7 @@ export function Sources({ report }: { report: Report }) {
     .sort((a, b) => b.major.length - a.major.length || a.id.localeCompare(b.id))
   return (
     <section aria-labelledby="sources" className="mt-10">
-      <h2 id="sources" className="font-editorial text-2xl">
+      <h2 id="sources" className="text-xl font-semibold tracking-tight">
         Sources supporting major claims
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">

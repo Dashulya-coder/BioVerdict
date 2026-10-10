@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { addEvidence, compareRuns, listFinishedRuns } from '../../app/api-client'
 import { evidenceLevels, levelLabels, sourceKinds, sourceLabels } from '../../app/constants'
-import { formatDate } from '../../app/format'
+import { formatDate, subjectOf } from '../../app/format'
 import { addedEvidenceSchema } from '../../app/schemas'
 import { WorkspaceError } from '../../app/WorkspaceError'
 import { Button } from '../../ui/Button'
@@ -26,14 +26,6 @@ const emptyDocument = {
 }
 const selectClass =
   'mt-2 min-h-11 w-full rounded-sm border border-control bg-sidebar px-3 py-2.5 text-sm'
-
-/** The drug, or for a run without one the mechanism and the indication. */
-function subjectOf(input: { asset: string; mechanism: string; indication: string }): string {
-  if (input.asset) return input.asset
-  return (
-    [input.mechanism, input.indication].filter((part) => part !== '').join(' in ') || 'this run'
-  )
-}
 
 function describe(run: RunSummary): string {
   const subject = [run.input.asset, run.input.query, run.input.mechanism, run.input.indication]

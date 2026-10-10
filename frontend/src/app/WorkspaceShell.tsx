@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Badge } from '../ui/Badge'
 import { Sidebar } from './Sidebar'
 import { apiMode, originLabels } from './copy'
+import { verdictLook } from './verdict'
 import { formatDate } from './format'
 import { isLandscape } from '../features/input/candidates'
 import type { PreparedAnalysis, RunSummary, Screen } from './models'
@@ -37,7 +38,7 @@ export function WorkspaceShell({
     main.current?.focus({ preventScroll: true })
   }, [screen])
   return (
-    <div className="min-h-dvh lg:pl-56">
+    <div className="min-h-dvh lg:pl-60">
       <a
         href="#workspace"
         onClick={(event) => {
@@ -49,12 +50,12 @@ export function WorkspaceShell({
         Skip to workspace
       </a>
       <Sidebar screen={screen} />
-      <header className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-rule px-6 py-4 lg:px-10">
+      <header className="sticky top-0 z-20 flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-rule bg-canvas/85 px-6 py-3 backdrop-blur lg:px-10">
         <p className="text-sm text-muted">
           Workspace <span className="mx-3 text-rule">/</span>
           <span className="text-ink">{titles[screen]}</span>
         </p>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <Badge tone="fact">
             {analysis ? originLabels[analysis.origin] : apiMode ? 'API' : originLabels.demo}
           </Badge>
@@ -62,7 +63,7 @@ export function WorkspaceShell({
             <span>
               <span className="sr-only">Run status: </span>
               {run.status === 'done' ? (
-                <Badge tone="fact">
+                <Badge tone={verdictLook(run.verdict).tone}>
                   {analysis && isLandscape(analysis) ? 'Class assessment' : 'Verdict'}:{' '}
                   {run.verdict ?? 'none'}
                 </Badge>
@@ -74,7 +75,10 @@ export function WorkspaceShell({
             </span>
           ) : null}
           {analysis?.runId ? (
-            <span className="font-mono text-xs text-muted" title="Run id">
+            <span
+              className="max-w-40 truncate font-mono text-xs text-muted"
+              title={`Run id ${analysis.runId}`}
+            >
               {analysis.runId}
             </span>
           ) : null}
@@ -88,7 +92,7 @@ export function WorkspaceShell({
         className="mx-auto max-w-[1600px] p-6 focus-visible:outline-none lg:p-10"
       >
         {analysis && isLandscape(analysis) ? (
-          <p className="mb-6 border border-assumption/30 bg-assumption/5 p-4 text-sm leading-6">
+          <p className="mb-8 rounded-lg border border-assumption/30 bg-assumption/5 px-4 py-3 text-sm leading-6">
             Class landscape for {analysis.resolver.indication.name}. Select an existing asset on the{' '}
             <a href="#resolved" className="text-accent underline">
               resolved input

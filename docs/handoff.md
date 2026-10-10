@@ -121,3 +121,40 @@ changed is in [`collection.md`](collection.md) ("Three tools were added for the 
   whether to count by trial or by claim. I would decide after a live run on the new collection.
 - Approval of `Claim.implication` (decision 1 above), which entered the shared contract without
   the two-step approval.
+
+---
+
+## To Dasha, from Arsenii — 2026-10-11
+
+**The interface was redesigned** on `arsenii/F2-redesign`, and it touches your folders
+(`features/report/`, `features/trace/`): a neutral black palette, the verdict first and in its
+colour, tiles with meters, cards for the modules, the gates and the chain. Texts, roles and the
+API shapes are unchanged; the browser tests pass. The branch is built on top of your #129, so
+merge #129 first. What changed and the tokens are in [`design-system.md`](design-system.md); the
+screens are on the [Canva board](https://www.canva.com/d/T-qG6_ucTsY8fFk). Say if a colour or a
+block reads wrong on your screens.
+
+**A defect in #129, fixed on that branch:** a link of the report's contents (`#executive`,
+`#questions`, ...) changed the address hash, and the hash names the screen (`app/useScreen.ts`),
+so every contents link opened the New analysis screen. `Contents.tsx` now scrolls by script, and
+a browser test clicks a link. If #129 is merged alone, the links are broken until the redesign
+is merged.
+
+**From reading #111 to #128** (no paid run; `pytest`, ruff, `check_compat` and the frontend
+checks pass on `main`):
+
+- `api/report.py:_judged_states` takes the evidence id from the first word of a check's
+  `detail`. It works with today's two texts in `verification/entailment.py`; a change of either
+  text silently turns every link into "not judged". A field for the evidence id on
+  `VerificationCheck` would remove the coupling (shared model: both approve).
+- `verification/entailment.py` imports `result_lines` from `connectors/clinicaltrials.py`:
+  verification now depends on a connector. The formatter could live beside the store models.
+- `reasoning/synthesis.py` checks digits only: "three trials" or "half of the patients" passes
+  as a sentence without a number.
+- In a `classify` recompute a gap is retired as soon as a new claim names its chain link. If
+  the judge then removes that claim's only quote, the link is held by a hypothesis and the
+  `unknown` claim is gone. Decide whether the gap should come back in that case.
+- A run now costs about $3.10 and takes about 9 minutes (`cost.md`), against $0.99 and 5 minutes
+  before #125; `RUN_BUDGET_USD` is 5. Two attempts on stage are close to the limit of one run
+  each: record the demo runs beforehand.
+

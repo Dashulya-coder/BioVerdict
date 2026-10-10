@@ -20,29 +20,34 @@
   --font-sans: 'Inter Variable', Inter, system-ui, sans-serif;
   --font-editorial: 'Lora Variable', Georgia, serif;
   --font-mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
-  --color-canvas: #171c18;
-  --color-sidebar: #111611;
-  --color-surface: #20271f;
-  --color-raised: #273024;
-  --color-selected: #2d382c;
-  --color-ink: #e8e3d7;
-  --color-muted: #afb3a5;
-  --color-rule: #394435;
-  --color-control: #74806b;
-  --color-accent: #aec2a1;
-  --color-assumption: #c3a777;
-  --color-danger: #e89a92;
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
+  --color-canvas: #0a0b0d;
+  --color-sidebar: #070809;
+  --color-surface: #111316;
+  --color-raised: #181b1f;
+  --color-selected: #1d2126;
+  --color-ink: #edeff2;
+  --color-muted: #98a0ab;
+  --color-rule: #23272d;
+  --color-control: #5c6570;
+  --color-accent: #b5d3a4;
+  --color-assumption: #e0b46a;
+  --color-danger: #f08a80;
+  --color-positive: #6fd49a;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
 }
 
 @layer base {
   html {
     color-scheme: dark;
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
     scrollbar-color: var(--color-rule) var(--color-canvas);
   }
   body {
     @apply m-0 min-w-80 bg-canvas font-sans text-ink antialiased;
+    font-feature-settings: 'cv11', 'ss01';
   }
   :focus-visible {
     @apply outline-2 outline-offset-4 outline-accent;
@@ -54,6 +59,15 @@
   a {
     cursor: pointer;
   }
+}
+
+/* A bordered block of the page: a card, a tile, a table frame. */
+@utility panel {
+  @apply rounded-lg border border-rule bg-surface;
+}
+/* A figure a reader compares with its neighbours: same width for every digit. */
+@utility figure {
+  @apply font-sans font-semibold tracking-tight tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {

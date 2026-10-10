@@ -11,7 +11,7 @@ export function AssetSelection({
 }) {
   const found = candidates(analysis.evidence)
   return (
-    <section aria-labelledby="asset-selection" className="mt-8 border border-rule bg-surface p-5">
+    <section aria-labelledby="asset-selection" className="mt-8 panel p-5">
       <h2 id="asset-selection" className="text-lg font-medium">
         Choose an existing asset
       </h2>

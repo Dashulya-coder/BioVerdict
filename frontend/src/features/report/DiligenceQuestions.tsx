@@ -9,7 +9,7 @@ export function DiligenceQuestions({ report }: { report: Report }) {
   )
   return (
     <section aria-labelledby="questions" className="mt-10">
-      <h2 id="questions" className="font-editorial text-2xl">
+      <h2 id="questions" className="text-xl font-semibold tracking-tight">
         Highest-value diligence questions
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
@@ -18,8 +18,10 @@ export function DiligenceQuestions({ report }: { report: Report }) {
       {questions.length ? (
         <ol className="mt-5 max-w-3xl space-y-3">
           {questions.map((question, index) => (
-            <li key={question.text} className="flex gap-4 border border-rule bg-surface p-4">
-              <span className="font-mono text-xs text-muted">{(index + 1).toString()}</span>
+            <li key={question.text} className="flex gap-4 panel p-4">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-raised figure text-xs text-muted">
+                {(index + 1).toString()}
+              </span>
               <div>
                 <p className="text-sm leading-6">{question.text}</p>
                 <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">

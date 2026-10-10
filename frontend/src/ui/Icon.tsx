@@ -8,6 +8,9 @@ const paths = {
   external: 'M14 3h7v7m0-7L10 14M10 3H3v18h18v-7',
   check: 'm5 12 4 4L19 6',
   close: 'm6 6 12 12M6 18 18 6',
+  report: 'M4 20V10m5 10V4m5 16v-7m5 7V8',
+  compare: 'M8 4v16m0 0-4-4m4 4 4-4M16 20V4m0 0-4 4m4-4 4 4',
+  trace: 'M3 12h4l3-8 4 16 3-8h4',
 } satisfies Record<string, string>
 
 export function Icon({ name, className = '' }: { name: keyof typeof paths; className?: string }) {

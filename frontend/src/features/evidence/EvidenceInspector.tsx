@@ -17,10 +17,7 @@ export function EvidenceInspector({ evidence }: { evidence: Evidence }) {
     }
   }
   return (
-    <aside
-      aria-label="Evidence detail"
-      className="min-w-0 self-start border border-rule bg-surface p-5 xl:sticky xl:top-6"
-    >
+    <aside aria-label="Evidence detail" className="min-w-0 self-start panel p-5 xl:sticky xl:top-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="mb-2 text-xs text-muted">Selected evidence</p>

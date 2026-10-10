@@ -110,7 +110,7 @@ function ClaimDetail({ claim }: { claim: ReportClaim }) {
 export function ClaimRow({ claim, anchored = false }: { claim: ReportClaim; anchored?: boolean }) {
   return (
     <li id={anchored ? `claim-${claim.id}` : undefined}>
-      <details className="group border border-rule bg-surface p-4 open:bg-selected">
+      <details className="group panel p-4 open:bg-selected">
         <summary className="cursor-pointer list-none">
           <span className="flex flex-wrap items-start justify-between gap-3">
             <span className="min-w-0 flex-1 text-sm leading-6">{claim.text}</span>
@@ -161,7 +161,7 @@ function sectionState(section: Report['sections'][number]): string {
 export function ClaimList({ report }: { report: Report }) {
   return (
     <section aria-labelledby="claims" className="mt-10">
-      <h2 id="claims" className="font-editorial text-2xl">
+      <h2 id="claims" className="text-xl font-semibold tracking-tight">
         All claims and their evidence
       </h2>
       <div className="mt-5 space-y-8">

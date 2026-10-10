@@ -26,7 +26,7 @@ export function TraceScreen({
           running={status === null || (status.status !== 'done' && status.status !== 'failed')}
         />
       ) : (
-        <p className="max-w-2xl border border-rule bg-surface p-6 text-sm leading-7 text-muted">
+        <p className="max-w-2xl panel p-6 text-sm leading-7 text-muted">
           The prepared snapshot has no trace. Start the API and run an analysis to see one.
         </p>
       )}

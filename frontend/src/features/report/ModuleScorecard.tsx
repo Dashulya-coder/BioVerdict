@@ -16,14 +16,14 @@ function BalanceBar({ module }: { module: ReportModule }) {
       <div
         role="img"
         aria-label={`Weight against ${module.unfavourable.toFixed(2)}, weight for ${module.favourable.toFixed(2)}`}
-        className="flex h-1.5 overflow-hidden rounded-sm bg-rule"
+        className="flex h-2 gap-0.5 overflow-hidden rounded-full"
       >
-        <span className="bg-danger/70" style={{ width: `${against.toString()}%` }} />
-        <span className="flex-1 bg-accent/70" />
+        <span className="rounded-full bg-danger" style={{ width: `${against.toString()}%` }} />
+        <span className="flex-1 rounded-full bg-positive" />
       </div>
-      <p className="mt-1 flex justify-between font-mono text-[11px] text-muted">
+      <p className="mt-2 flex justify-between font-mono text-[11px] text-muted">
         <span>against {module.unfavourable.toFixed(2)}</span>
-        <span>balance {signed(module.balance)}</span>
+        <span className="text-ink">balance {signed(module.balance)}</span>
         <span>for {module.favourable.toFixed(2)}</span>
       </p>
     </div>
@@ -38,16 +38,16 @@ function ModuleCard({ module, claims }: { module: ReportModule; claims: ReportCl
   )
   return (
     <li>
-      <details className="group border border-rule bg-surface p-4 open:border-accent/40">
+      <details className="group panel p-5 transition-colors open:border-accent/40 hover:border-control">
         <summary className="cursor-pointer list-none">
           <span className="flex flex-wrap items-start justify-between gap-3">
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium">{module.title}</span>
+              <span className="block text-[15px] font-semibold">{module.title}</span>
               <span className="block text-xs text-muted">{module.question}</span>
             </span>
             <Badge tone={answerTones[module.answer]}>{answerLabels[module.answer]}</Badge>
           </span>
-          <span className="mt-3 block text-sm leading-6">{module.headline}</span>
+          <span className="mt-3 block text-sm leading-6 text-muted">{module.headline}</span>
           <BalanceBar module={module} />
           <span className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
             <span>{plural(module.claim_ids.length, 'claim')}</span>
@@ -74,7 +74,7 @@ function ModuleCard({ module, claims }: { module: ReportModule; claims: ReportCl
                 return (
                   <li key={claim.id} className="grid gap-2 sm:grid-cols-[5.5rem_1fr]">
                     <span
-                      className={`pt-4 font-mono text-xs ${pull === undefined ? 'text-muted' : pull < 0 ? 'text-danger' : 'text-accent'}`}
+                      className={`pt-4 font-mono text-xs ${pull === undefined ? 'text-muted' : pull < 0 ? 'text-danger' : 'text-positive'}`}
                     >
                       {pull === undefined
                         ? claim.badge === 'unknown'
@@ -106,7 +106,7 @@ export function ModuleScorecard({ report }: { report: Report }) {
   )
   return (
     <section aria-labelledby="modules" className="mt-10">
-      <h2 id="modules" className="font-editorial text-2xl">
+      <h2 id="modules" className="text-xl font-semibold tracking-tight">
         Six modules, six answers
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
@@ -114,7 +114,7 @@ export function ModuleScorecard({ report }: { report: Report }) {
         weighted by the confidence its evidence gives it. A fired kill gate decides a module; a soft
         gate caps it at Mixed. New evidence moves an answer only through the claims it touches.
       </p>
-      <ul className="mt-5 grid gap-3 xl:grid-cols-2">
+      <ul className="mt-5 grid gap-4 xl:grid-cols-2">
         {report.modules.map((module) => (
           <ModuleCard
             key={module.module}

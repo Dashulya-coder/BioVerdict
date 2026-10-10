@@ -1,46 +1,51 @@
 # BioVerdict design system
 
-Approved direction (2026-10-07): **dark editorial workspace**, English interface.
-[Latest Canva concept](https://canva.link/92wk5z92z6lv5ez) combines the original dark
-analytical console with warm editorial typography and sage accents. It supersedes
-the earlier dark and light concepts. The implementation uses plain backgrounds,
-existing product navigation and locally served fonts; mockup photography and extra
-navigation labels are illustrative. Quotes, dates and identifiers come from fixture data.
+Direction: **dark analytical workspace**, English interface. The layout and the neutral black
+palette below date from 2026-10-11 ([Canva board](https://www.canva.com/d/T-qG6_ucTsY8fFk):
+every screen, two other colour options and the screen before); they replace the olive palette
+of 2026-10-07. The palette is proposed by Arsenii and awaits both tracks' approval: changing it
+is a change of the tokens only. Quotes, dates and identifiers come from run data.
 The source of truth for tokens is `frontend/src/index.css`, shared by both tracks.
 
 ## Colors
 
 | Token / Tailwind suffix | Value | Use |
 |---|---|---|
-| `canvas` | `#171C18` | Main background |
-| `sidebar` | `#111611` | Navigation and inset form fields |
-| `surface` | `#20271F` | Panels and subtle controls |
-| `raised` | `#273024` | Hovered surfaces and source quotations |
-| `selected` | `#2D382C` | Selected rows and navigation |
-| `ink` | `#E8E3D7` | Warm main text |
-| `muted` | `#AFB3A5` | Secondary text and metadata |
-| `rule` | `#394435` | Decorative dividers and panel borders |
-| `control` | `#74806B` | Input, select and secondary action boundaries |
-| `accent` | `#AEC2A1` | Sage primary actions, focus and source labels |
-| `assumption` | `#C3A777` | Explicit assumptions and review prompts |
-| `danger` | `#E89A92` | Failures and invalid input |
+| `canvas` | `#0A0B0D` | Main background |
+| `sidebar` | `#070809` | Navigation and inset form fields |
+| `surface` | `#111316` | Panels and subtle controls |
+| `raised` | `#181B1F` | Tiles inside a panel, hovered surfaces, source quotations |
+| `selected` | `#1D2126` | Selected rows and navigation |
+| `ink` | `#EDEFF2` | Main text |
+| `muted` | `#98A0AB` | Secondary text and metadata |
+| `rule` | `#23272D` | Decorative dividers and panel borders |
+| `control` | `#5C6570` | Input, select and secondary action boundaries |
+| `accent` | `#B5D3A4` | Sage: primary actions, focus, links to claims and sources |
+| `assumption` | `#E0B46A` | Assumptions, modeled numbers, a Conditional verdict, a weak link |
+| `danger` | `#F08A80` | Failures, fired gates, weight against, a Do Not Invest verdict |
+| `positive` | `#6FD49A` | Weight for, a supported link, an Invest verdict |
 
 Use semantic utilities: `bg-canvas`, `text-ink`, `border-rule`, `text-assumption`.
-Avoid new raw colors in feature components. Green is an interaction/provenance accent,
-not a positive investment verdict. A quoted source fact is not a claim of clinical efficacy.
-Pair every status color with text; absence of evidence must not look like a reassuring result.
+Avoid new raw colors in feature components. The sage accent is for interaction and provenance;
+a favourable result is `positive`, never the accent. A verdict is coloured through
+`verdictLook` (`src/app/verdict.ts`) and nowhere else. A quoted source fact is not a claim of
+clinical efficacy. Pair every status color with text; absence of evidence must not look like a
+reassuring result.
 
 ## Type, spacing and layout
 
-- Inter Variable for controls, tables and quotations; Lora Variable (`font-editorial`)
-  for the wordmark, page titles and excerpt heading. Both are served locally as Latin
+- Inter Variable for controls, tables, quotations, section headings and figures; Lora Variable
+  (`font-editorial`) for the wordmark, page titles, the verdict and thesis titles. Both are served locally as Latin
   WOFF2 files with `font-display: swap`; system sans-serif and Georgia are fallbacks.
   Monospace only for IDs, timestamps and compact metadata. No third-party font CDN.
 - Body: 14px, 20–28px line height. Metadata: 12px. Page headings: 30–36px, medium weight.
   Source quotations: 14px with at least 24px line height. Preserve their original wording.
 - Use the Tailwind 4px spacing scale. Field gaps 8px; related groups 16px; panel padding
-  24px; page padding 24px on mobile and 40px on desktop. Corners are 4px or 6px.
-- Desktop: persistent sidebar, thin top bar, generous central work area. Evidence uses
+  24px; page padding 24px on mobile and 40px on desktop. Corners: 6px controls, 8px tiles,
+  12px panels, full for badges.
+- Section headings are 20px semibold Inter. A number a reader compares uses the `figure`
+  utility (semibold, tabular digits). A bordered block uses the `panel` utility.
+- Desktop: persistent sidebar with two groups (Analysis, Results), sticky top bar, generous central work area. Evidence uses
   a compact ID/date/source/type table beside a nearly equal-width reading pane.
   Selection has a sage surface and a left rule. Keep the full quotation in the pane.
   On mobile, navigation wraps and the inspector stacks below the list.
@@ -55,7 +60,8 @@ Import directly from `frontend/src/ui/`; keep feature behavior out of these prim
 |---|---|
 | `Button` | Native button props; `primary`, `secondary`, `ghost`; defaults to `type="button"` |
 | `Field` | Required `id`/`label`, native input props, optional hint or error; links accessible descriptions |
-| `Badge` | `neutral`, `fact`, `assumption`, `error`; always has readable text |
+| `Badge` | `neutral`, `fact`, `assumption`, `error`, `positive`; always has readable text |
+| `Meter` | A share from 0 to 1 as a bar, in a status colour; decorative, the number is written beside it |
 | `Icon` | Small decorative SVGs; accompanying text supplies the accessible name |
 | `PageHeading` | Eyebrow, title and description; one page-level `h1` |
 

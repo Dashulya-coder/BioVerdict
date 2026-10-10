@@ -19,7 +19,7 @@ export function Field({ id, label, hint, error, className = '', ...props }: Prop
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={descriptionId}
-        className={`min-h-11 w-full rounded-sm border bg-sidebar px-3 py-2.5 text-sm placeholder:text-muted ${error ? 'border-danger' : 'border-control'} ${className}`}
+        className={`min-h-11 w-full rounded-md border bg-sidebar px-3 py-2.5 text-sm transition-colors placeholder:text-muted hover:border-muted ${error ? 'border-danger' : 'border-control'} ${className}`}
       />
       {hint || error ? (
         <p

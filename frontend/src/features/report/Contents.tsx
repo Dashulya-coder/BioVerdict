@@ -1,47 +1,74 @@
+import type { ReactNode } from 'react'
 import { thesisTitles } from './thesisTitles'
 
 /** The parts of the underwriting report in the order the brief lists them, then the rest. */
-const brief: { href: string; label: string }[] = [
-  { href: '#executive', label: 'Recommendation' },
-  { href: '#thesis-scientific', label: thesisTitles.scientific },
-  { href: '#thesis-translation', label: thesisTitles.translation },
-  { href: '#thesis-development_plan', label: thesisTitles.development_plan },
-  { href: '#thesis-competitive', label: thesisTitles.competitive },
-  { href: '#thesis-commercial', label: thesisTitles.commercial },
-  { href: '#capital', label: 'Capital required to reach the next major milestone' },
-  { href: '#thesis-investment', label: thesisTitles.investment },
-  { href: '#risks', label: 'Key risks and failure modes' },
-  { href: '#unknowns', label: 'Critical unknowns' },
-  { href: '#questions', label: 'Highest-value diligence questions' },
-  { href: '#sources', label: 'Sources supporting major claims' },
+const brief: { target: string; label: string }[] = [
+  { target: 'executive', label: 'Recommendation' },
+  { target: 'thesis-scientific', label: thesisTitles.scientific },
+  { target: 'thesis-translation', label: thesisTitles.translation },
+  { target: 'thesis-development_plan', label: thesisTitles.development_plan },
+  { target: 'thesis-competitive', label: thesisTitles.competitive },
+  { target: 'thesis-commercial', label: thesisTitles.commercial },
+  { target: 'capital', label: 'Capital required to reach the next major milestone' },
+  { target: 'thesis-investment', label: thesisTitles.investment },
+  { target: 'risks', label: 'Key risks and failure modes' },
+  { target: 'unknowns', label: 'Critical unknowns' },
+  { target: 'questions', label: 'Highest-value diligence questions' },
+  { target: 'sources', label: 'Sources supporting major claims' },
 ]
-const more: { href: string; label: string }[] = [
-  { href: '#modules', label: 'Six modules, six answers' },
-  { href: '#gates', label: 'Gates' },
-  { href: '#chain', label: 'Translation chain' },
-  { href: '#tornado', label: 'What moves the rNPV' },
-  { href: '#claims', label: 'All claims and their evidence' },
+const more: { target: string; label: string }[] = [
+  { target: 'modules', label: 'Six modules, six answers' },
+  { target: 'gates', label: 'Gates' },
+  { target: 'chain', label: 'Translation chain' },
+  { target: 'tornado', label: 'What moves the rNPV' },
+  { target: 'claims', label: 'All claims and their evidence' },
 ]
+
+/**
+ * Brings a part of the report into view. The address hash names the screen (`useScreen`), so a
+ * plain `#part` link would leave the report for the input screen: the jump is made by script.
+ * A part this run does not have (a thesis the synthesis step did not write) falls back to the
+ * written case as a whole.
+ */
+function show(target: string) {
+  const part = document.getElementById(target) ?? document.getElementById('theses')
+  part?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function Jump({ target, children }: { target: string; children: ReactNode }) {
+  return (
+    <a
+      href={`#${target}`}
+      onClick={(event) => {
+        event.preventDefault()
+        show(target)
+      }}
+      className="inline-flex items-center gap-1.5 rounded-full border border-rule bg-surface px-3 py-1.5 text-xs whitespace-nowrap text-muted transition-colors hover:border-control hover:text-ink"
+    >
+      {children}
+    </a>
+  )
+}
 
 export function Contents() {
   return (
-    <nav aria-label="Contents of the report" className="mb-8 text-sm">
-      <ol className="flex flex-wrap gap-x-4 gap-y-1">
+    <nav aria-label="Contents of the report" className="mt-8 border-y border-rule py-5">
+      <ol className="flex flex-wrap gap-2">
         {brief.map((item, index) => (
-          <li key={item.href}>
-            <a href={item.href} className="text-accent underline-offset-2 hover:underline">
-              <span className="mr-1 font-mono text-xs text-muted">{(index + 1).toString()}</span>
+          <li key={item.target}>
+            <Jump target={item.target}>
+              <span className="font-mono text-[11px] text-accent">{(index + 1).toString()}</span>
               {item.label}
-            </a>
+            </Jump>
           </li>
         ))}
       </ol>
-      <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+      <p className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
         Also:
         {more.map((item) => (
-          <a key={item.href} href={item.href} className="underline-offset-2 hover:underline">
+          <Jump key={item.target} target={item.target}>
             {item.label}
-          </a>
+          </Jump>
         ))}
       </p>
     </nav>

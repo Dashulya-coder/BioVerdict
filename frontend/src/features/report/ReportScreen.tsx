@@ -26,7 +26,7 @@ export function ReportScreen({ analysis }: { analysis: PreparedAnalysis }) {
       {analysis.runId ? (
         <LoadedReport runId={analysis.runId} />
       ) : (
-        <div className="max-w-2xl border border-rule bg-surface p-6 text-sm leading-7">
+        <div className="max-w-2xl panel p-6 text-sm leading-7">
           <p>The prepared snapshot has no report: it holds evidence only.</p>
           <p className="mt-2 text-muted">Start the API and run an analysis to see a verdict.</p>
           <div className="mt-4">
@@ -61,8 +61,8 @@ function LoadedReport({ runId }: { runId: string }) {
     )
   return (
     <>
-      <Contents />
       <ExecutiveSummary report={state.report} />
+      <Contents />
       <Theses report={state.report} />
       <ModuleScorecard report={state.report} />
       <GateList report={state.report} />

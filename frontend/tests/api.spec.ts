@@ -583,6 +583,22 @@ test("the report lists its parts in the brief's order and the sources of its maj
   await sources.getByRole('button', { name: 'C-0006' }).first().click()
 })
 
+test('a contents link moves within the report and does not leave it', async ({ page }) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  const contents = page.getByRole('navigation', { name: 'Contents of the report' })
+  // The address hash names the screen: a plain `#questions` link would open the input screen.
+  await contents.getByRole('link', { name: /Highest-value diligence questions/ }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Highest-value diligence questions' }),
+  ).toBeInViewport()
+  await expect(
+    page.getByRole('heading', { name: 'Verdict and the reasons behind it' }),
+  ).toBeVisible()
+  expect(new URL(page.url()).hash).toBe('#report')
+})
+
 test('a run without a written case says why', async ({ page }) => {
   await serve(page)
   await openRun(page, 'divarasib')
@@ -983,4 +999,10 @@ test('a reopened class run is a landscape, not a drug named after its run id', a
 
   await expect(page.getByText('Class landscape — select an asset below')).toBeVisible()
   await expect(page.getByRole('region', { name: 'Choose an existing asset' })).toBeVisible()
+
+  // The evidence screen names the question, not an empty drug.
+  await page.getByRole('link', { name: 'Evidence', exact: true }).click()
+  await expect(
+    page.getByText('for BTK inhibitor in multiple sclerosis, visible by', { exact: false }),
+  ).toBeVisible()
 })

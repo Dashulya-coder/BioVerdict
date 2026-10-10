@@ -123,7 +123,7 @@ export function AnalysisForm({
             </p>
           </form>
           {apiMode ? null : (
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border border-rule bg-surface px-5 py-4">
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 panel px-5 py-4">
               <div>
                 <p className="mb-1 text-xs text-muted">Available demo</p>
                 <p className="text-sm">

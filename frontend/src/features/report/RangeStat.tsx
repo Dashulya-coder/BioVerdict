@@ -15,20 +15,20 @@ export function RangeStat({
   missing: string
 }) {
   return (
-    <div className="border-l border-rule pl-4">
+    <div className="bg-surface p-5">
       <dt className="text-xs text-muted">{label}</dt>
       {range ? (
-        <dd>
-          <span className="font-editorial text-2xl">{format(range.p50)}</span>
+        <dd className="mt-1">
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="figure text-2xl">{format(range.p50)}</span>
+            <Badge tone="assumption">Modeled</Badge>
+          </span>
           <span className="mt-1 block text-xs text-muted">
             P10 to P90: {rangeText(range, format)}
           </span>
-          <span className="mt-2 block">
-            <Badge tone="assumption">Modeled</Badge>
-          </span>
         </dd>
       ) : (
-        <dd className="mt-1 text-sm text-muted">{missing}</dd>
+        <dd className="mt-2 text-xs leading-5 text-muted">{missing}</dd>
       )}
     </div>
   )
