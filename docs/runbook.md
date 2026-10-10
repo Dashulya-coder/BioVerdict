@@ -18,6 +18,7 @@ Required variables are listed in the README. Check access:
 ```bash
 uv run python ../scripts/check_compat.py   # dependencies work on this Python (expects 17/17)
 uv run bioverdict doctor        # mode, model key, limits, database, caches, fixtures, sources
+uv run bioverdict cost          # what logged model calls cost: latest runs; --run ID for one run, step by step
 ```
 
 `doctor` prints one line per check (`ok`, `warn` or `fail`) and exits with 1 when anything

@@ -128,7 +128,9 @@ export async function runAnalysis(
     )
   onProgress('Contacting the API.')
   const { mode } = await request('/health', healthSchema, signal)
-  const { run_id: runId } = await request('/runs', runCreatedSchema, signal, parsed.data)
+  // Only what was typed is sent: an empty field is not an answer.
+  const typed = Object.fromEntries(Object.entries(parsed.data).filter(([, value]) => value !== ''))
+  const { run_id: runId } = await request('/runs', runCreatedSchema, signal, typed)
   return openFrozen(runId, mode, parsed.data, onProgress, signal)
 }
 
@@ -145,7 +147,13 @@ export async function openRun(
   const { mode } = await request('/health', healthSchema, signal)
   const run = await getRun(runId, signal)
   const asset = typeof run.input.asset === 'string' && run.input.asset ? run.input.asset : runId
-  return openFrozen(runId, mode, { asset, as_of: run.as_of }, onProgress, signal)
+  return openFrozen(
+    runId,
+    mode,
+    { asset, indication: '', mechanism: '', as_of: run.as_of },
+    onProgress,
+    signal,
+  )
 }
 
 /** The run's status and verdict as the API has them now. */

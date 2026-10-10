@@ -1,10 +1,17 @@
 import { z } from 'zod'
 import { DEMO_DATE, evidenceLevels, sourceKinds } from './constants'
 
-export const inputSchema = z.object({
-  asset: z.string().trim().min(1, 'Enter a drug name.'),
-  as_of: z.iso.date({ error: 'Choose a valid evidence cutoff.' }),
-})
+export const inputSchema = z
+  .object({
+    asset: z.string().trim(),
+    indication: z.string().trim().default(''),
+    mechanism: z.string().trim().default(''),
+    as_of: z.iso.date({ error: 'Choose a valid evidence cutoff.' }),
+  })
+  .refine(
+    (input) => input.asset !== '' || (input.indication !== '' && input.mechanism !== ''),
+    'Enter a drug name, or an indication together with a mechanism or target.',
+  )
 export const demoInputSchema = inputSchema.refine(
   (input) => input.as_of <= DEMO_DATE,
   'This demo snapshot is available through 7 Oct 2026.',

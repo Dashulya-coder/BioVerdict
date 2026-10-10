@@ -20,6 +20,7 @@ from uuid import uuid4
 
 from bioverdict import settings
 from bioverdict.api.report import build_report
+from bioverdict.cost_report import cost_of_run, cost_of_runs
 from bioverdict.doctor import Probe, render, run_checks
 from bioverdict.eval.cases import load_cases
 from bioverdict.eval.runner import StartRun, run_cases, summary, write_report
@@ -68,7 +69,11 @@ def main(
     doctor = commands.add_parser("doctor", help="check that this machine is ready for a run")
     doctor.add_argument("--offline", action="store_true", help="do not contact the sources")
 
-    for command in (run, evaluate, warming, doctor):
+    cost = commands.add_parser("cost", help="what the logged model calls cost, per run or per step")
+    cost.add_argument("--run", help="show this run step by step; default: the latest runs")
+    cost.add_argument("--limit", type=int, default=10, help="how many latest runs to list")
+
+    for command in (run, evaluate, warming, doctor, cost):
         command.add_argument("--db", type=Path, help="SQLite path; defaults to DB_PATH")
     for command in (run, evaluate, doctor):
         command.add_argument("--fixtures", type=Path, help="fixture directory (FIXTURES_DIR)")
@@ -78,6 +83,17 @@ def main(
         checks = run_checks(args.db, args.fixtures, offline=args.offline, sources=probes)
         sys.stdout.write(render(checks))
         return 1 if any(check.status == "fail" for check in checks) else 0
+
+    if args.command == "cost":
+        try:
+            with closing(settings.open_database(args.db)) as conn:
+                sys.stdout.write(
+                    cost_of_run(conn, args.run) if args.run else cost_of_runs(conn, args.limit)
+                )
+        except (OSError, sqlite3.Error) as exc:
+            print(f"cost: {exc}", file=sys.stderr)
+            return 1
+        return 0
 
     if args.command == "warm":
         patient = paced_sources(WARM_INTERVAL_S, WARM_ATTEMPTS, refresh=args.refresh)

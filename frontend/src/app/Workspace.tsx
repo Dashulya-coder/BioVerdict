@@ -16,6 +16,8 @@ import type { AnalysisInput } from './models'
 export function Workspace() {
   const [draft, setDraft] = useState<AnalysisInput>(() => ({
     asset: 'Divarasib',
+    indication: '',
+    mechanism: '',
     as_of: latestCutoff(),
   }))
   const { state, reopened: reopening, prepare, restore, reset } = useAnalysis()
