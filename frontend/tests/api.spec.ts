@@ -113,6 +113,8 @@ interface Api {
   statuses?: string[]
   /** Paths the API accepts and never answers. */
   silent?: string[]
+  /** The tornado bars the financials of RUN list. */
+  tornado?: unknown[]
   /** The report the API serves for RUN; default: the fixture run's. */
   report?: unknown
 }
@@ -163,6 +165,11 @@ async function serve(page: Page, api: Api = {}) {
         : json(route, { run_id: GROWN, status: 'running' }, 202)
     }
     if (url.pathname === `/runs/${RUN}`) return json(route, summary(RUN, '2026-10-07'))
+    if (url.pathname === `/runs/${RUN}/financials`)
+      return json(route, {
+        tornado: api.tornado ?? [],
+        missing: ['the market could not be sized.'],
+      })
     if (url.pathname === `/runs/${RUN}/report`) return json(route, api.report ?? report)
     if (url.pathname === `/runs/${GROWN}`) return json(route, summary(GROWN, '2026-10-08'))
     if (url.pathname === `/runs/${RUN}/resolver`) return json(route, resolver)
@@ -506,4 +513,26 @@ test('a report that is not ready or failed says so', async ({ page }) => {
   await openRun(page, 'divarasib')
   await page.getByRole('link', { name: 'Report' }).click()
   await expect(page.getByRole('alert')).toContainText('shape this workspace does not understand')
+})
+
+test('the tornado shows each input with the rNPV at its low and high end', async ({ page }) => {
+  await serve(page, {
+    tornado: [
+      { input: 'peak_share', at_low: -20e6, at_high: 180e6 },
+      { input: 'discount_rate', at_low: 10e6, at_high: 30e6 },
+    ],
+  })
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  const bars = page.getByRole('region', { name: 'What moves the rNPV' })
+  await expect(bars.getByText('peak share')).toBeVisible()
+  await expect(bars.getByText('−$20.0M')).toBeVisible()
+  await expect(bars.getByText('$180.0M')).toBeVisible()
+})
+
+test('the tornado says why it is empty', async ({ page }) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  await expect(page.getByText('Not computed: the market could not be sized.')).toHaveCount(2)
 })
