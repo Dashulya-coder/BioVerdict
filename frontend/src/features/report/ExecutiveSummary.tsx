@@ -40,7 +40,7 @@ export function ExecutiveSummary({ report }: { report: Report }) {
           </div>
         </dl>
       </div>
-      <dl className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+      <dl id="capital" className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
         <RangeStat
           label="Probability of success"
           range={executive.pos}
@@ -74,7 +74,9 @@ export function ExecutiveSummary({ report }: { report: Report }) {
       </dl>
       <div className="mt-8 grid gap-8 md:grid-cols-2">
         <div>
-          <h3 className="text-sm font-medium">Top risks</h3>
+          <h3 id="risks" className="text-sm font-medium">
+            Key risks and failure modes
+          </h3>
           {executive.top_risks.length ? (
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6">
               {executive.top_risks.map((risk, index) => (

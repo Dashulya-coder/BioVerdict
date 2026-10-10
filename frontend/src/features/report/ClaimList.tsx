@@ -162,7 +162,7 @@ export function ClaimList({ report }: { report: Report }) {
   return (
     <section aria-labelledby="claims" className="mt-10">
       <h2 id="claims" className="font-editorial text-2xl">
-        Claims and their evidence
+        All claims and their evidence
       </h2>
       <div className="mt-5 space-y-8">
         {report.sections.map((section) => (

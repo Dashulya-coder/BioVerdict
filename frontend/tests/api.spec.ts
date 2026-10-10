@@ -526,7 +526,7 @@ test('the report opens with the verdict, the modeled figures and what is missing
   await page.getByRole('link', { name: 'Report' }).click()
   const summary = page.getByRole('region', { name: 'Executive verdict' })
   await expect(summary.getByText('Conditional', { exact: true })).toBeVisible()
-  await expect(summary.getByText('Top risks')).toBeVisible()
+  await expect(summary.getByText('Key risks and failure modes')).toBeVisible()
   await expect(summary.getByText('What would change our mind')).toBeVisible()
   await expect(summary.getByText('Not computed: the market could not be sized.')).toBeVisible()
 })
@@ -565,6 +565,22 @@ test("the written case shows each thesis under the brief's title and leads to it
       '“found in approximately 14% of NSCLC cases and associated with poor prognosis”',
     ),
   ).toBeVisible()
+})
+
+test("the report lists its parts in the brief's order and the sources of its major claims", async ({
+  page,
+}) => {
+  await serve(page)
+  await openRun(page, 'divarasib')
+  await page.getByRole('link', { name: 'Report' }).click()
+  const contents = page.getByRole('navigation', { name: 'Contents of the report' })
+  await expect(contents.getByRole('listitem')).toHaveCount(12)
+  await expect(contents.getByRole('link', { name: /Clinical development plan/ })).toBeVisible()
+  const sources = page.getByRole('region', { name: 'Sources supporting major claims' })
+  // E-0003 is quoted by C-0006, a key claim; E-0001 only by C-0004, which is not major.
+  await expect(sources.getByText('E-0003', { exact: false })).toBeVisible()
+  await expect(sources.getByText('E-0001 ·', { exact: false })).toHaveCount(0)
+  await sources.getByRole('button', { name: 'C-0006' }).first().click()
 })
 
 test('a run without a written case says why', async ({ page }) => {
@@ -678,7 +694,10 @@ test('a top risk leads to its claim and then to the quotation', async ({ page })
   await openRun(page, 'divarasib')
   await page.getByRole('link', { name: 'Report' }).click()
 
-  await page.getByRole('button', { name: claim.id }).click()
+  await page
+    .getByRole('region', { name: 'Executive verdict' })
+    .getByRole('button', { name: claim.id })
+    .click()
   const opened = page.locator('details', { hasText: claim.text }).last()
   await expect(opened).toHaveAttribute('open', '')
   await expect(opened.getByText('Open the original source').first()).toBeVisible()
@@ -688,7 +707,7 @@ test('what is unknown is listed by the diligence that could answer it', async ({
   await serve(page)
   await openRun(page, 'divarasib')
   await page.getByRole('link', { name: 'Report' }).click()
-  const unknown = page.getByRole('region', { name: 'What we do not know' })
+  const unknown = page.getByRole('region', { name: 'Critical unknowns' })
   await expect(unknown.getByText('Patient-level data', { exact: true })).toBeVisible()
   await expect(unknown.getByText('Expert interview', { exact: true })).toBeVisible()
   await expect(unknown.getByText('Target engagement in tumour tissue is not shown')).toBeVisible()
@@ -814,7 +833,7 @@ test('diligence questions are ranked by the value of their answer', async ({ pag
   await serve(page, { report: ranked })
   await openRun(page, 'divarasib')
   await page.getByRole('link', { name: 'Report' }).click()
-  const questions = page.getByRole('region', { name: 'Questions to ask next' })
+  const questions = page.getByRole('region', { name: 'Highest-value diligence questions' })
   await expect(questions.getByRole('listitem').first()).toContainText('Why did the sponsor pause?')
   await expect(questions.getByText('Expert interview')).toBeVisible()
 })

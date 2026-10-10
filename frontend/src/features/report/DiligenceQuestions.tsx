@@ -10,7 +10,7 @@ export function DiligenceQuestions({ report }: { report: Report }) {
   return (
     <section aria-labelledby="questions" className="mt-10">
       <h2 id="questions" className="font-editorial text-2xl">
-        Questions to ask next
+        Highest-value diligence questions
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
         Ranked by the value of the answer: how far it could move the verdict.
