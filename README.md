@@ -245,7 +245,7 @@ question, so these describe that question, not the system in general. Details an
 | Quotes the judge confirmed | 220 of 233 judged links (13 removed); 40% were removed before results were stored as lines (#124, #125) |
 | Written case | 24 sentences in six theses, none dropped by code for an uncited claim or a number of its own |
 | Sensitivity benchmark | 3 of 5 cases passed, on a base as of 2024-06-30, on an earlier version; not re-run since |
-| Verdict change on strong counter-evidence | not shown yet: the benchmark's cases move module answers, none expects the verdict to change |
+| Verdict change on strong counter-evidence | shown: evobrutinib as of 2023-11-30 goes from Conditional to Do Not Invest (gate K1) when the two reports of its failed phase 3 are added; one source on a clinical hold leaves it Conditional (`eval/sensitivity-evobrutinib.yaml`) |
 | Verdict stability | not measured (the verdict was Conditional on every run of the day) |
 
 ## What the brief asks for, and where it is
@@ -260,7 +260,7 @@ question, so these describe that question, not the system in general. Details an
 | Model and API usage | [`docs/cost.md`](docs/cost.md) (models by step, gateway limits); "Configuration" above |
 | Approximate cost per run | "Results" above; [`docs/cost.md`](docs/cost.md), measured from the `llm_calls` table; `bioverdict cost` |
 | Logs and traces | the Trace screen (every model call with model, time, tokens, cost, cache hit, failover), `GET /runs/{id}/trace`, the run's progress events (`/runs/{id}/events`), `verification_log` |
-| Demo: new or contradictory evidence changes the conclusion | Compare: add a document or compare two cutoffs; the diff names each module that moved and the quote that moved it ([`docs/demo-script.md`](docs/demo-script.md)). A case where the verdict itself changes is still to be made |
+| Demo: new or contradictory evidence changes the conclusion | Compare: add a document or compare two cutoffs; the diff names each module that moved and the quote that moved it; evobrutinib goes from Conditional to Do Not Invest on the reports of its failed phase 3 ([`docs/demo-script.md`](docs/demo-script.md), step 5a) |
 
 ## Team
 

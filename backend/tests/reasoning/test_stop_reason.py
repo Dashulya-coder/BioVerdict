@@ -25,6 +25,17 @@ from bioverdict.reasoning.stop_reason import (
         ("Funding withdrawn due to COVID-19", StopReason.BUSINESS),
         ("Business decision following futility analysis", StopReason.MIXED),
         ("Study design was revised", StopReason.OTHER),
+        # how papers word a failed active-comparator trial (PMID 39307151, PMID 40202623)
+        (
+            "The efficacy of evobrutinib was not superior to that of teriflunomide.",
+            StopReason.EFFICACY,
+        ),
+        ("The primary endpoint was not met.", StopReason.EFFICACY),
+        ("PERSEUS missed its primary endpoint.", StopReason.EFFICACY),
+        # a noninferiority trial is meant not to be superior
+        ("Fenebrutinib was noninferior to ocrelizumab but not superior to it.", StopReason.OTHER),
+        # a lifted hold is no safety action in force
+        ("The FDA lifted the partial clinical hold on the program.", StopReason.OTHER),
         ("", StopReason.UNKNOWN),
         (None, StopReason.UNKNOWN),
     ],

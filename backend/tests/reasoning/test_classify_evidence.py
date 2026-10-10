@@ -474,3 +474,30 @@ def test_the_prompt_names_the_chain_link_of_a_claim() -> None:
     )
 
     assert f"[{gap.id}] (translation, unknown, human_exposure)" in prompt
+
+
+def test_on_the_gateway_a_report_of_hundreds_of_claims_leaves_room_for_the_new_evidence() -> None:
+    """At 16,000 characters a run of 88 claims left no room and the documents went unread."""
+    from bioverdict.llm import LLMClient, LLMConfig
+    from bioverdict.llm.providers.fake import FakeProvider
+    from bioverdict.llm.providers.openai import OpenAIProvider
+    from bioverdict.reasoning.classify_evidence import STEP, Classification, build_prompts
+
+    class GatewayLike(FakeProvider):
+        input_chars = OpenAIProvider(client=object()).input_chars
+
+    llm = LLMClient(LLMConfig.for_provider("openai"), {"openai": GatewayLike("{}", name="openai")})
+    claims, _, _ = finished_run()
+    many = [
+        claims[0].model_copy(update={"id": f"C-{n:04d}", "text": "a claim about a trial " * 8})
+        for n in range(1, 300)
+    ]
+    new = [
+        added(f"E-900{n}", f"Decisive result {n}.", EvidenceLevel.HUMAN_INTERVENTIONAL, f"g{n}")
+        for n in (1, 2)
+    ]
+
+    prompts, unread = build_prompts(many, new, BUNDLE, llm.input_budget(STEP, Classification))
+
+    assert unread == [] and len(prompts) == 1
+    assert "Decisive result 1." in prompts[0][0] and "[C-0299]" in prompts[0][0]

@@ -190,6 +190,92 @@ def test_noise_fails_when_an_answer_flips_with_or_without_a_cause() -> None:
     assert not ok and "disease_unmet_need" in why
 
 
+def _verdict_case(verdict: str, kind: str = "strong") -> SensitivityCase:
+    doc = {
+        "text": STATEMENT.excerpt,
+        "url": STATEMENT.url,
+        "source": STATEMENT.source,
+        "source_kind": "company",
+        "level": "human_interventional",
+    }
+    return SensitivityCase.model_validate(
+        {
+            "id": f"{kind}-verdict",
+            "kind": kind,
+            "item": "two documents",
+            "documents": [doc, {**doc, "url": "https://example.com/second"}],
+            "expect": {"verdict": verdict},
+        }
+    )
+
+
+def _with_verdicts(diff, before: str, after: str):
+    from bioverdict.api.schemas import GateChange
+    from bioverdict.store.models import GateId, Verdict
+
+    return diff.model_copy(
+        update={
+            "base": diff.base.model_copy(update={"verdict": Verdict(before)}),
+            "head": diff.head.model_copy(update={"verdict": Verdict(after)}),
+            "verdict_changed": before != after,
+            "gates": [
+                GateChange(gate_id=GateId.K1, kind="hard", fired_before=False, fired_after=True)
+            ]
+            if after == "Do Not Invest"
+            else [],
+        }
+    )
+
+
+def test_a_verdict_case_passes_when_the_documents_change_the_verdict_and_cause_it() -> None:
+    from bioverdict.eval.sensitivity import judge_case
+
+    case_ = _verdict_case("Do Not Invest")
+    assert len(case_.docs) == 2
+    caused = _with_verdicts(
+        _module_diff(answer_after="against", with_cause=True), "Conditional", "Do Not Invest"
+    )
+    ok, why = judge_case(case_, caused)
+    assert ok and "Conditional → Do Not Invest" in why and "K1 fired" in why
+
+    uncaused = _with_verdicts(
+        _module_diff(answer_after="against", with_cause=False), "Conditional", "Do Not Invest"
+    )
+    ok, why = judge_case(case_, uncaused)
+    assert not ok and "no document is among the causes" in why
+
+    unchanged = _with_verdicts(
+        _module_diff(answer_after="against", with_cause=True), "Conditional", "Conditional"
+    )
+    assert not judge_case(case_, unchanged)[0]
+
+
+def test_a_control_document_must_leave_the_verdict_where_it_was() -> None:
+    from bioverdict.eval.sensitivity import judge_case
+
+    control = _verdict_case("Conditional", kind="control")
+    held = _with_verdicts(
+        _module_diff(answer_after="against", with_cause=True), "Conditional", "Conditional"
+    )
+    assert judge_case(control, held)[0]
+    killed = _with_verdicts(
+        _module_diff(answer_after="against", with_cause=True), "Conditional", "Do Not Invest"
+    )
+    ok, why = judge_case(control, killed)
+    assert not ok and "expected Conditional" in why
+
+
+def test_a_case_gives_its_documents_one_way_and_expects_something() -> None:
+    import pytest
+    from pydantic import ValidationError
+
+    base = _verdict_case("Conditional").model_dump(mode="json")
+    with pytest.raises(ValidationError):
+        SensitivityCase.model_validate({**base, "document": base["documents"][0]})
+    with pytest.raises(ValidationError):
+        SensitivityCase.model_validate({**base, "expect": {}})
+
+
 # --- the control: the base run at the case's cutoff, with no document --------------------------------
 
 LATE = date(2026, 10, 7)

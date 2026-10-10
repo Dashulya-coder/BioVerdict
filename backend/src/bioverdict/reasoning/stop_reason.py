@@ -45,10 +45,42 @@ _BUSINESS = re.compile(
 )
 
 
+# How papers and registry records word a failed primary endpoint without "did not meet": an
+# active-comparator trial that was "not superior" (evobrutinib and tolebrutinib against
+# teriflunomide), an endpoint that "was not met". A noninferiority trial is meant not to be
+# superior, so there "not superior" says nothing about failure.
+_NOT_SUPERIOR = re.compile(r"\bnot superior to\b", re.IGNORECASE)
+_NONINFERIORITY = re.compile(r"non-?inferior", re.IGNORECASE)
+_ENDPOINT_NOT_MET = re.compile(
+    r"end ?points? (?:was|were|had been|has been) not (?:met|achieved|reached)"
+    r"|missed (?:its|the|their|both) (?:co-)?primary end ?points?",
+    re.IGNORECASE,
+)
+# A hold that was lifted is not a safety action in force: "the FDA lifted the partial clinical
+# hold" must not read as a hold.
+_LIFTED_HOLD = re.compile(
+    r"lift(?:ed|s|ing)? (?:the |a |its |their )?(?:partial |full )?clinical holds?"
+    r"|(?:partial |full )?clinical holds? (?:was |were |has been |have been |had been )?"
+    r"(?:lifted|removed|released|resolved)"
+    r"|remov(?:ed|es|ing) (?:the |a |its )?(?:partial |full )?clinical holds?",
+    re.IGNORECASE,
+)
+
+
+def without_lifted_holds(text: str) -> str:
+    """`text` with every mention of a lifted clinical hold taken out."""
+    return _LIFTED_HOLD.sub(" ", text)
+
+
 def classify_stop_reason(text: str | None) -> StopReason:
     if not text or not text.strip():
         return StopReason.UNKNOWN
-    efficacy = has_unnegated(_EFFICACY, text)  # "not based on any safety or efficacy concerns"
+    text = without_lifted_holds(text)
+    efficacy = (
+        has_unnegated(_EFFICACY, text)  # "not based on any safety or efficacy concerns"
+        or has_unnegated(_ENDPOINT_NOT_MET, text)
+        or (has_unnegated(_NOT_SUPERIOR, text) and not _NONINFERIORITY.search(text))
+    )
     safety = has_unnegated(_SAFETY, text)  # says neither
     business = bool(_BUSINESS.search(text))  # business wording stays even beside a negation
     scientific = efficacy or safety
