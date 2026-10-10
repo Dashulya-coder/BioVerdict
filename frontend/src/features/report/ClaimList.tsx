@@ -31,7 +31,21 @@ const statusNotes: Record<string, string> = {
   error: 'A fetch failed: this proves nothing, run again.',
   incomplete: 'The search was cut short.',
 }
+const checkNames: Record<string, string> = {
+  entailment: 'The judge removed a quotation',
+  source_authority: 'Weak source',
+  claim_downgraded: 'The claim lost its support',
+}
 const directionLabels = { supports: 'Supports', contradicts: 'Contradicts', neutral: 'Neutral' }
+const unjudgedLabels = {
+  not_judged: 'Not read by the judge',
+  no_answer: 'The judge gave no answer',
+}
+
+/** A claim whose every quotation the judge left unread: grounded by code, not checked for meaning. */
+function unjudged(claim: ReportClaim): boolean {
+  return claim.links.length > 0 && claim.links.every((link) => link.judged !== 'judged')
+}
 
 function ClaimDetail({ claim }: { claim: ReportClaim }) {
   const parts = claim.confidence_parts
@@ -55,6 +69,9 @@ function ClaimDetail({ claim }: { claim: ReportClaim }) {
                 {formatDate(link.published_at)}
               </p>
               <blockquote className="mt-2 text-sm leading-6">“{link.quote}”</blockquote>
+              {link.judged === 'judged' ? null : (
+                <p className="mt-2 text-xs text-assumption">{unjudgedLabels[link.judged]}</p>
+              )}
               <a
                 href={link.url}
                 target="_blank"
@@ -67,8 +84,22 @@ function ClaimDetail({ claim }: { claim: ReportClaim }) {
           ))}
         </ul>
       ) : (
-        <p className="text-muted">No quotation supports this claim: it is a stated gap.</p>
+        <p className="text-muted">
+          {claim.checks.length
+            ? 'No quotation is left to support this claim.'
+            : 'No quotation supports this claim: it is a stated gap.'}
+        </p>
       )}
+      {claim.checks.length ? (
+        <ul className="space-y-2 border-l-2 border-assumption/60 bg-raised p-3 text-xs">
+          {claim.checks.map((check) => (
+            <li key={`${check.check}-${check.detail}`}>
+              <span className="font-medium text-ink">{checkNames[check.check] ?? check.check}</span>
+              <span className="text-muted"> · {check.detail}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {claim.depends_on.length ? (
         <p className="font-mono text-xs text-muted">Depends on {claim.depends_on.join(', ')}</p>
       ) : null}
@@ -98,6 +129,7 @@ export function ClaimRow({ claim, anchored = false }: { claim: ReportClaim; anch
             <span className="font-mono">{claim.id}</span>
             <span>{basisNames[claim.basis] ?? claim.basis}</span>
             {claim.critical ? <span className="text-ink">Key claim</span> : null}
+            {unjudged(claim) ? <span className="text-assumption">Quotes not judged</span> : null}
             {claim.flags.map((flag) => (
               <span key={flag}>{flag}</span>
             ))}
@@ -113,6 +145,18 @@ export function ClaimRow({ claim, anchored = false }: { claim: ReportClaim; anch
   )
 }
 
+/** Translation has no search of its own: its claims are read from the other sections. */
+function readFromOthers(section: Report['sections'][number]): boolean {
+  return (
+    section.section === 'translation' &&
+    section.status === 'not_searched' &&
+    section.claims.length > 0
+  )
+}
+function sectionState(section: Report['sections'][number]): string {
+  return readFromOthers(section) ? 'read from the other sections' : section.status.replace('_', ' ')
+}
+
 /** Recommendation → claims → quotations → sources: every claim opens onto what it rests on. */
 export function ClaimList({ report }: { report: Report }) {
   return (
@@ -126,10 +170,10 @@ export function ClaimList({ report }: { report: Report }) {
             <h3 className="flex flex-wrap items-baseline gap-3 text-sm font-medium">
               {sectionNames[section.section] ?? section.section}
               <span className="text-xs font-normal text-muted">
-                {section.status.replace('_', ' ')} · {section.claims.length.toString()} claim(s)
+                {sectionState(section)} · {section.claims.length.toString()} claim(s)
               </span>
             </h3>
-            {statusNotes[section.status] ? (
+            {statusNotes[section.status] && !readFromOthers(section) ? (
               <p className="mt-1 text-xs text-assumption">{statusNotes[section.status]}</p>
             ) : null}
             {section.claims.length ? (

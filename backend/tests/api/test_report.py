@@ -17,8 +17,15 @@ from bioverdict.api.report import (
 from bioverdict.pipeline.fixture_run import run_fixture
 from bioverdict.store.db import connect
 from bioverdict.store.migrations import migrate
-from bioverdict.store.models import ChainLink, Section, SectionStatus, Verdict
+from bioverdict.store.models import (
+    ChainLink,
+    Section,
+    SectionStatus,
+    Verdict,
+    VerificationCheck,
+)
 from bioverdict.store.runs_repo import create_run
+from bioverdict.store.verification_repo import save_checks
 
 FIXTURES = Path(__file__).parents[3] / "fixtures"
 
@@ -154,3 +161,53 @@ def test_the_trace_lists_the_steps_and_totals_the_model_calls(conn: sqlite3.Conn
     assert trace.events[0].step == "resolve"
     assert trace.events[-1].step == "run" and trace.events[-1].status == "done"
     assert trace.totals.calls == 0 and trace.totals.cost_usd == 0  # a fixture run calls no model
+
+
+def test_a_claim_shows_the_checks_it_failed_and_not_the_bookkeeping(
+    conn: sqlite3.Connection,
+) -> None:
+    claim = build_report(conn, "R-1").sections[0].claims[0]
+    save_checks(
+        conn,
+        "R-1",
+        [
+            VerificationCheck(claim_id=claim.id, check_name="entailment", passed=False, detail="x"),
+            VerificationCheck(claim_id=claim.id, check_name="entailment", passed=False, detail="x"),
+            VerificationCheck(claim_id=claim.id, check_name="entailment", passed=True, detail="ok"),
+            VerificationCheck(claim_id=claim.id, check_name="chain_link", passed=False, detail="y"),
+        ],
+    )
+
+    for view in (build_report(conn, "R-1").sections[0].claims[0], get_claim(conn, "R-1", claim.id)):
+        assert [(c.check, c.detail) for c in view.checks] == [("entailment", "x")]
+
+
+def test_a_link_says_whether_the_judge_read_it(conn: sqlite3.Connection) -> None:
+    claims = [c for s in build_report(conn, "R-1").sections for c in s.claims if c.links]
+    read, silent, skipped = claims[0], claims[1], claims[2]
+    with conn:  # the fixture run wrote its own judge rows: start from an empty log
+        conn.execute("DELETE FROM verification_log WHERE run_id = 'R-1'")
+    save_checks(
+        conn,
+        "R-1",
+        [
+            VerificationCheck(
+                claim_id=read.id,
+                check_name="entailment",
+                passed=True,
+                detail=f"{read.links[0].evidence_id} cited as supports, judged supports: ok",
+            ),
+            VerificationCheck(
+                claim_id=silent.id,
+                check_name="entailment_unjudged",
+                passed=True,
+                detail=f"{silent.links[0].evidence_id}: the judge gave no answer",
+            ),
+        ],
+    )
+
+    by_id = {c.id: c for s in build_report(conn, "R-1").sections for c in s.claims}
+    assert by_id[read.id].links[0].judged == "judged"
+    assert by_id[silent.id].links[0].judged == "no_answer"
+    assert all(link.judged == "not_judged" for link in by_id[skipped.id].links)
+    assert get_claim(conn, "R-1", read.id).links[0].judged == "judged"

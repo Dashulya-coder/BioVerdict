@@ -34,8 +34,12 @@ fixes, asset selection, `docs/finals-audit.md`). The finals rubric and the stage
 4. **Raise `RUN_TIMEOUT_S` on the demo machine** and pre-warm the model cache. The three runs
    took 3 min 45 s, 7 min 21 s and 5 min 7 s against a limit of 420 s; the second lost its Chair
    step to the limit.
-5. **Look at the Report and Compare screens on a live run.** "Six modules, six answers" and
-   "Module by module" have been seen only in browser tests.
+   (Partly done 2026-10-10, Dasha: `.env` on her machine says 900 and `doctor` is green; the
+   demo machine is still to check.)
+5. **(Done 2026-10-10, Dasha: Report, Compare and Trace on run `R-20261010-125211-cf5016`;
+   three defects found, fixed in #112 except "top risks".) Look at the Report and Compare
+   screens on a live run.** "Six modules, six answers" and "Module by module" had been seen
+   only in browser tests.
 
 Measured on the last run (R-440107f1…, 2026-10-10): $0.99, Conditional, 100 claims, 72
 citations judged and 13 removed, 37 links of context claims not judged, 8 diligence questions.
@@ -85,3 +89,68 @@ Each of these was made by one person under time pressure, or not made at all.
 The findings behind these, numbered, are in [`finals-audit.md`](finals-audit.md) (read its
 status note first); the ordered list of what is open before the demo is in
 [`work-plan.md`](work-plan.md).
+
+---
+
+## To Arsenii, from Dasha — 2026-10-10
+
+I read the report of a second live run of the pair (`R-20261010-125211-cf5016`, Conditional,
+$0.87, 156 evidence items) against the finals rubric. The plan that follows from it is in
+[`work-plan.md`](work-plan.md), "Final plan". Your part is stage 1: collection for multiple
+sclerosis. It is the longest path, because every paid run I make for the benchmark has to come
+after it. If it cannot be ready, the reference documents go in through add-evidence on stage.
+
+### 1. Competitors by indication, not analogs by target
+
+- No claim of the run names an approved MS drug. I searched all claims for ocrelizumab,
+  ofatumumab, siponimod, fingolimod, ozanimod, natalizumab, interferon and glatiramer: 0 hits.
+  Teriflunomide appears only as the comparator of BTK trials.
+- The competition section holds 12 claims that restate the trial results of tolebrutinib and
+  evobrutinib (the clinical module's). The FDA labels sit in the commercial section: Imbruvica,
+  Calquence (lymphoma, CLL), Litfulo (alopecia), Wayrilz (thrombocytopenia). Eight of its 18
+  claims say the same thing ("taken orally").
+- Wanted: approved drugs for the indication (FDA labels whose indications name multiple
+  sclerosis; trials of the indication in the registry), and fewer analogs by target. Analogs
+  are 45 of the 156 evidence items, and 13 of those 45 are cited by a claim.
+
+### 2. Regulatory status and class safety
+
+- Nothing on liver injury reached the bundle or any claim: it is the best known risk of the
+  class. The EU authorised tolebrutinib as Cenrifki on 2026-06-19 (adults with secondary
+  progressive MS without relapses in the last two years, liver monitoring; EMA page, checked
+  2026-10-10). The FDA issued a complete response letter for non-relapsing secondary
+  progressive MS (Sanofi, 2025-12-24). Neither is in the run.
+- The EPAR is not on the source catalog allowlist. **Your decision:** add EMA, or find these
+  facts in a source that is already allowed.
+- The fenebrutinib filing acceptance and FENtrepid (Roche) are also absent; both are in the
+  reference set of `finals-audit.md`.
+
+### 3. Evidence that is in the bundle and used by nothing
+
+- 117 of 156 evidence items are cited by no claim. Six of the 11 registry trials have no
+  citing claim: NCT04458051 (PERSEUS), NCT04742400, NCT05064436, NCT07067463, NCT07299019,
+  NCT07776743. I do not yet know whether the reasoning modules are given these records or a
+  limit cuts them. I check that on the reasoning side; you need not.
+
+### 4. For your review
+
+- #112: an additive field `ClaimView.checks` (the checks a claim failed: why a quote was
+  removed). It also touches `features/compare/CompareRuns.tsx`, your folder (a subtitle that
+  read "report of :" for a run without a drug).
+- To come: an additive API field that marks links of context claims as not judged.
+- To come: a proposal to change the shared `VerdictResult.top_risks` (now `list[str]`, at most
+  three) so that each risk carries its claim ids. By `CONTRIBUTING.md` it is a PR in
+  `data-model.md` first, and both approve before code.
+- To come: a PR in your areas A7 and A8: a `classify` recompute that attaches a new claim to a
+  chain link, and a sensitivity runner that compares each case with a control recompute at the
+  same cutoff.
+
+### 5. Open between us
+
+- Balance calibration: the two thresholds (0.2 and 0.25 in `scoring/module_answers.py`), and
+  whether to count by trial or by claim. Unmet need sits at weight 0.21 against a floor of
+  0.20 on one claim; mechanism at balance 0.254 against 0.25. I would decide after the new
+  collection, not before.
+- Adding EMA to the catalog (section 2).
+- Approval of `Claim.implication` (decision 1 above), which entered the shared contract
+  without the two-step approval.

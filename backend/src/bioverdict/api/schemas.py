@@ -81,6 +81,9 @@ class EvidenceView(_View):
     claim_ids: list[str] = Field(description="The claims that quote this evidence")
 
 
+JudgedState = Literal["judged", "not_judged", "no_answer"]
+
+
 class LinkView(_View):
     evidence_id: str
     direction: Direction
@@ -91,6 +94,18 @@ class LinkView(_View):
     level: EvidenceLevel
     published_at: date | None
     badge: Badge
+    judged: JudgedState = Field(
+        default="judged",
+        description="judged: the judge read this quote; not_judged: it was not asked (a context "
+        "claim, a neutral link); no_answer: it was asked and gave none",
+    )
+
+
+class CheckView(_View):
+    """A verification check the claim did not pass, in the words the check logged."""
+
+    check: str = Field(description="entailment | source_authority | claim_downgraded")
+    detail: str
 
 
 class ClaimView(_View):
@@ -111,6 +126,10 @@ class ClaimView(_View):
     diligence_type: str | None
     depends_on: list[str]
     links: list[LinkView]
+    checks: list[CheckView] = Field(
+        default_factory=list,
+        description="Checks the claim failed: why a quote was removed or the claim lost its weight",
+    )
 
 
 class SectionView(_View):

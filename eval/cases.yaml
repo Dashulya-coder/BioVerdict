@@ -13,8 +13,9 @@
   expected_verdict:
   - Conditional
   expected_top_risks:
-  - 'No BTK inhibitor is approved for multiple sclerosis: the FDA refused tolebrutinib in non-relapsing
-    secondary progressive MS'
+  - 'Regulatory status differs by region: the EU authorised tolebrutinib (Cenrifki) on 2026-06-19 for
+    secondary progressive MS without relapses, with liver monitoring, while the FDA issued a complete
+    response letter for non-relapsing secondary progressive MS'
   - Drug-induced liver injury is a recognised risk of the class
   - 'Phase 3 results are mixed across the class: evobrutinib and tolebrutinib failed, fenebrutinib and
     remibrutinib beat teriflunomide'
@@ -34,8 +35,13 @@
     date: 2025-12-15
   - text: 'Tolebrutinib: the FDA issued a complete response letter for non-relapsing secondary progressive
       MS'
-    url: https://multiplesclerosisnewstoday.com/news-posts/2025/12/29/fda-denies-tolebrutinib-approval-nonrelapsing-progressive-ms/
-    date: 2025-12-29
+    url: https://www.sanofi.com/en/media-room/press-releases/2025/2025-12-24-06-00-00-3210238
+    date: 2025-12-24
+  - text: 'Tolebrutinib: the EU granted a marketing authorisation (Cenrifki) on 2026-06-19 for adults with
+      secondary progressive MS without relapses in the last two years; liver function is checked before
+      and during treatment'
+    url: https://www.ema.europa.eu/en/medicines/human/EPAR/cenrifki
+    date: 2026-06-19
   - text: 'Evobrutinib: the two phase 3 EVOLUTION trials did not beat teriflunomide on annualised relapse
       rate'
     url: https://www.mssociety.org.uk/research/latest-research/latest-research-news-and-blogs/phase-3-trials-show-evobrutinib-no-better-existing-treatments-people-relapsing-ms
