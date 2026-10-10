@@ -110,11 +110,36 @@ Placeholder assumptions (not measured; **lower bound**, because reasoning tokens
 | Synthesis and diligence questions | 0.13 | 0.011 |
 | **Total** | **~1.72** | **~0.19** |
 
-Replace this table with measured numbers from `llm_calls` after the first full runs.
+Kept as the estimate made before any run; measured numbers are below.
 
 ## Measured results
 
-TODO (from the trace table): median cost per run, p90, median time per run, cache hit rate, failover count.
+Whole live runs of BTK inhibitor x multiple sclerosis on 2026-10-10, on the organizers' gateway
+(`gpt-6-luna` extracts, `gpt-6.1-sol` reasons, `gpt-6-astra` judges). One question: these numbers
+describe it, not the system in general, and the runs were made on successive code versions.
+
+| Runs | Cost | Time | Source |
+|---|---|---|---|
+| Three runs (Arsenii) | $0.90 to $1.20, the last $0.99; the judge about 60% | 3 min 45 s, 7 min 21 s (lost its Chair step to the old 420 s limit), 5 min 7 s | #105 |
+| `R-20261010-125211-cf5016` (Dasha) | $0.87 | 6 min 20 s | `llm_calls`, `runs` |
+| The run of [`eval.md`](eval.md), section 9 (Dasha) | $0.99 | 357 s | `eval.md` |
+
+Not measured: a median or p90 over repeated runs of one code version, other questions, the
+cache hit rate of a warm run (every call above was answered afresh) and failover (none occurred).
+
+Cost by step of `R-20261010-125211-cf5016` (35 calls, 118 k input and 35 k output tokens, no
+cache hits, no failover):
+
+| Step | Calls | Input tokens | Output tokens | Cost | Share |
+|---|---|---|---|---|---|
+| judge | 6 | 17,708 | 5,775 | $0.466 | 53% |
+| reasoning (six modules) | 16 | 63,547 | 21,897 | $0.346 | 40% |
+| chair | 1 | 4,059 | 2,732 | $0.035 | 4% |
+| skeptic | 1 | 4,376 | 1,293 | $0.022 | 2% |
+| extraction | 10 | 27,565 | 2,784 | $0.004 | 0% |
+| resolver | 1 | 430 | 160 | $0.000 | 0% |
+
+The estimate above assumed about fifteen times as many input tokens (1.72 M) as this run used.
 
 ```sql
 SELECT run_id, SUM(cost_usd) AS usd, SUM(input_tokens) AS tin, SUM(output_tokens) AS tout

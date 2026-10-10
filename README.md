@@ -80,18 +80,20 @@ configured model, which costs money. It takes a drug name or code, or free text:
 ```bash
 USE_FIXTURES=0 uv run --env-file ../.env bioverdict run --asset HRO761 --output report.json
 USE_FIXTURES=0 uv run --env-file ../.env bioverdict run --query "KRAS G12C inhibitor in NSCLC"
+USE_FIXTURES=0 uv run --env-file ../.env bioverdict run --query "BTK inhibitor for multiple sclerosis"
 ```
 
 | Section | Sources read |
 |---|---|
+| Unmet need | PubMed: the newest practice guidelines for the indication |
 | Mechanism | Open Targets; preprints from Europe PMC |
-| Clinical | ClinicalTrials.gov (with posted results); PubMed; full texts of open-access papers (PubMed Central) |
-| Competition | ClinicalTrials.gov by target within the indication; openFDA approvals and labels of approved analogs |
+| Clinical | ClinicalTrials.gov (with posted results); PubMed, including safety reviews of the class; full texts of open-access papers (PubMed Central) |
+| Competition | ClinicalTrials.gov by target within the indication; openFDA approvals and labels of approved analogs and of the drugs approved for the indication; the EMA register of medicines |
 | Flags | SEC EDGAR: the sponsor's 8-K and 6-K filings that name the asset |
 | Commercial | CMS Medicare spending on analogs; NCI cancer incidence; CDC; Orphanet; World Bank; cBioPortal for how common the asset's mutation is |
 
-Unmet need and IP/regulatory are not searched and say so. Source rules and attribution:
-[`docs/sources.md`](docs/sources.md).
+Translation is reasoned from the mechanism and clinical evidence. IP/regulatory is not searched
+and says so. Source rules and attribution: [`docs/sources.md`](docs/sources.md).
 
 Environment variables are not loaded from `.env` automatically outside Docker: pass `--env-file`
 to `uv run` or export them.
@@ -130,7 +132,8 @@ The full list with comments is [`.env.example`](.env.example).
 
 ```
 Resolver → Collect (one bounded tool loop per section) → FREEZE bundle
-        → Reason (four modules, no network) → Grounding (code) → Scoring (code) → Report
+        → Reason (six modules, no network) → Grounding (code) → Skeptic → Judge
+        → Scoring (code) → Chair → Report
 ```
 
 - **Resolver.** One model call reads the text; every identifier comes from a database lookup.
@@ -138,13 +141,18 @@ Resolver → Collect (one bounded tool loop per section) → FREEZE bundle
 - **Collect.** A fixed list of connectors per section, with limits on requests, records and time.
   Extraction picks verbatim quotes; status records (a trial's status, an approval, a spending
   row) are stored whole without a model.
-- **Reason.** Mechanism, clinical, competition and translation-chain modules write claims with
-  quotes over the frozen bundle only.
-- **Scoring.** Confidence per claim, hard and soft gates, probability of success, rNPV by Monte
-  Carlo, verdict.
+- **Reason.** Unmet need, mechanism, translation chain, clinical, competition and commercial
+  modules write claims with quotes over the frozen bundle only.
+- **Skeptic and judge.** The Skeptic looks for evidence against the claims; a grounded objection
+  becomes a contradicting link. An entailment judge reads each quote with its passage and removes
+  a link the quote does not support.
+- **Scoring.** Confidence per claim, hard and soft gates, an answer per module, probability of
+  success, rNPV by Monte Carlo, verdict.
+- **Chair.** Asks the questions only diligence could settle; code ranks them by how much each
+  answer could move the verdict.
 
-Designed and not built yet: triage, Bull vs Bear, Chair with targeted second rounds, the
-entailment judge. Details: [`docs/architecture.md`](docs/architecture.md).
+Designed and not built yet: triage, Bull vs Bear, the Chair's targeted second collection round.
+Details: [`docs/architecture.md`](docs/architecture.md).
 Data contracts: [`docs/data-model.md`](docs/data-model.md). Verdict logic: [`docs/scoring.md`](docs/scoring.md).
 
 ## Documentation
@@ -177,13 +185,15 @@ Task by task, with owners: [`docs/work-plan.md`](docs/work-plan.md). In short:
 
 - Resolver, connectors for every source in the table above, bounded collection with grounded
   extraction, cache, `as_of` cutoff, frozen and hashed bundles.
-- Four reasoning modules, code grounding, deterministic scoring and verdict, probability of
-  success and rNPV with capital, time to milestone and a tornado (`GET /runs/{id}/financials`).
+- Six reasoning modules, code grounding, the Skeptic, the entailment judge and the Chair;
+  deterministic scoring, an answer per module and the verdict; probability of success and rNPV
+  with capital, time to milestone and a tornado (`GET /runs/{id}/financials`).
 - API with report, drill-down, trace, progress events, market size, add-evidence and diff; CLI
-  with `run`, `eval`, `warm`, `doctor`.
+  with `run`, `eval`, `warm`, `doctor`, `sensitivity` and `cost`.
 - Web workspace: input, resolved assumptions, evidence explorer, sources, comparing runs and
-  adding a document; the report screen with the executive verdict, the translation chain and
-  claim drill-down to verbatim quotes.
+  adding a document; the report screen with the executive verdict, six module answers, gates,
+  the translation chain, ranked diligence questions, the tornado and claim drill-down to
+  verbatim quotes; the trace screen with the cost and every model call of a run.
 - Two model adapters (Anthropic, and an OpenAI-compatible gateway), with cache, budget, deadline
   and failover.
 - Docker images, `compose.yaml`, and CI that lints, tests and runs a fixture run through the
@@ -191,14 +201,16 @@ Task by task, with owners: [`docs/work-plan.md`](docs/work-plan.md). In short:
 
 **Not yet**
 
-- **No whole run with a real model has been measured**: quality, cost and time are unknown.
-- The trace panel, and on the report screen the gates list, the ranked diligence questions and
-  the tornado chart.
+- Whole runs with a real model have been made for one question only (BTK inhibitor x multiple
+  sclerosis), one run per code version: stability across runs is not measured.
+- The report has no written theses, no plan for the next trial, and no value inflection points,
+  financing needs or deal outcomes.
 - rNPV is not calibrated: peak share, rebates, margin, discount rate and phase costs and
   durations are placeholders listed with every result, so its figures are modeled, not sourced.
-- The independent entailment judge, Bull/Bear and Chair, unmet-need, commercial and IP modules.
-- Real evaluation cases, the closed-book leakage probe and baselines: the case file holds one
-  smoke case.
+  Multiple sclerosis has no patient count in the sources, so it has no market size and no rNPV.
+- On the gateway the judge is a model of the same vendor as the one that writes the claims.
+- Bull/Bear, the IP/regulatory module and patent sources.
+- The closed-book leakage probe and baselines.
 - The API has no authentication: do not expose a live instance, anyone could spend the model
   key.
 
@@ -216,17 +228,20 @@ CI runs the same on every pull request.
 
 ## Results
 
-Nothing is measured yet; this table is filled from `eval/results/` after the first evaluation
-run with a real model. Template: [`docs/eval.md`](docs/eval.md).
+Live runs of BTK inhibitor x multiple sclerosis on 2026-10-10, on the organizers' gateway. One
+question, so these describe that question, not the system in general. Details and method:
+[`docs/eval.md`](docs/eval.md), section 9; costs: [`docs/cost.md`](docs/cost.md).
 
 | Metric | Result |
 |---|---|
-| Citation support rate | not measured |
-| Source validity | not measured |
-| Verdict stability (3 runs) | not measured |
-| Verdict change on strong counter-evidence | not measured |
-| Median cost per run | not measured |
-| Median time per run | not measured |
+| Cost per run | $0.87 to $1.20; the judge is 53% to about 60% of it |
+| Time per run | 3 min 45 s to 7 min 21 s (`RUN_TIMEOUT_S=900`) |
+| Quotes found verbatim in their source | 89 of 89 (one run; code drops a claim whose quote is not found) |
+| Cited sources in the run's catalog | 48 of 48 (same run) |
+| Quotes the judge confirmed | 39 of 70 on that run; the judge was changed afterwards (#117) and not measured again |
+| Sensitivity benchmark | 3 of 5 cases passed, on a base as of 2024-06-30 |
+| Verdict change on strong counter-evidence | not shown: no benchmark case expects one yet |
+| Verdict stability | not measured |
 
 ## Team
 
