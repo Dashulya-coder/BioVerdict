@@ -174,6 +174,7 @@ def test_on_the_gateway_the_answer_bounds_the_prompt_of_a_module_not_of_the_chai
     assert config.step("reasoning.classify").prompt_chars == GATEWAY_CLASSIFY_CHARS
     assert config.step("chair").prompt_chars == GATEWAY_SYNTHESIS_CHARS
     assert config.step("skeptic").prompt_chars == GATEWAY_SKEPTIC_CHARS
+    assert config.step("skeptic").effort == "medium"
     assert config.step("synthesis").prompt_chars == GATEWAY_THESES_CHARS
     assert config.step("synthesis").effort == "medium" and config.step("chair").effort == "high"
     assert config.step("judge").prompt_chars is None  # it sizes its own batches

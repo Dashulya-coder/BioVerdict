@@ -198,8 +198,10 @@ class LLMConfig(BaseModel):
                 models=[ASTRA, MINI], effort="high", max_tokens=GATEWAY_MAX_OUTPUT, timeout_s=240.0
             )
             config = cls._build(extraction, reasoning, synthesis, judge, dict(GATEWAY_PRICES))
+            # At high effort its answer reached 3,777 of the 4,096 tokens (R-0cb20fbb3dc443b091d01a58d9760476):
+            # most of it hidden reasoning. Medium effort, as for the written case.
             config.steps["skeptic"] = synthesis.model_copy(
-                update={"prompt_chars": GATEWAY_SKEPTIC_CHARS}
+                update={"effort": "medium", "prompt_chars": GATEWAY_SKEPTIC_CHARS}
             )
             config.steps["reasoning.classify"] = reasoning.model_copy(
                 update={"prompt_chars": GATEWAY_CLASSIFY_CHARS}
