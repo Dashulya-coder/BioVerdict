@@ -34,7 +34,7 @@ export function DiligenceQuestions({ report }: { report: Report }) {
         </ol>
       ) : (
         <p className="mt-4 max-w-2xl text-sm text-muted">
-          No question was ranked for this run. The Skeptic step that proposes them is not built yet.
+          No question was ranked for this run: the Chair step proposed none, or it did not finish.
         </p>
       )}
     </section>

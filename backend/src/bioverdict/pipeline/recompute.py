@@ -16,7 +16,12 @@ from urllib.parse import urlsplit
 
 from bioverdict.contracts import LLM
 from bioverdict.llm.errors import ConfigError
-from bioverdict.pipeline.reason_score import drop_checks, indication_of, reason_and_score
+from bioverdict.pipeline.reason_score import (
+    chair_pass,
+    drop_checks,
+    indication_of,
+    reason_and_score,
+)
 from bioverdict.reasoning.classify_evidence import classify_new_evidence
 from bioverdict.scoring.financials import financial_model, with_financials
 from bioverdict.scoring.verdict import rescore
@@ -202,6 +207,10 @@ def classify_and_score(
     )
     add_event(conn, run_id, "score", "started")
     add_event(conn, run_id, "score", "done", f"{result.verdict.value} ({result.confidence:.2f})")
+    # The Skeptic's objections are among the original claims' links already; the Chair asks again
+    # because the new evidence may have answered some questions and raised others.
+    questions = chair_pass(conn, run_id, bundle, llm, scored, result, [])
+    result = result.model_copy(update={"diligence_questions": questions})
     finish_run(conn, run_id, DONE, result)
     add_event(conn, run_id, "run", "done")
     return result

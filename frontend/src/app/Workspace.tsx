@@ -6,6 +6,7 @@ import { ResolvedInput } from '../features/input/ResolvedInput'
 import { EvidenceExplorer } from '../features/evidence/EvidenceExplorer'
 import { CompareRuns } from '../features/compare/CompareRuns'
 import { ReportScreen } from '../features/report/ReportScreen'
+import { TraceScreen } from '../features/trace/TraceScreen'
 import { WorkspaceShell } from './WorkspaceShell'
 import { apiMode, copy, latestCutoff } from './copy'
 import { useAnalysis } from './useAnalysis'
@@ -74,6 +75,8 @@ export function Workspace() {
           />
         ) : screen === 'report' ? (
           <ReportScreen analysis={analysis} />
+        ) : screen === 'trace' ? (
+          <TraceScreen analysis={analysis} status={run} />
         ) : screen === 'compare' ? (
           <CompareRuns analysis={analysis} status={run} />
         ) : (

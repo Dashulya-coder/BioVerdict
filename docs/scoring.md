@@ -214,7 +214,11 @@ For each verdict, the report lists concrete conditions that flip it (for example
 
 ## Diligence questions
 
-Ranked by value of information: how much the verdict or rNPV would change depending on the answer, weighted by how likely each answer is. Each question states what would answer it: proprietary data, patient-level data, KOL interview, experiment, CMC or IP diligence.
+The Chair (a model step) proposes questions; each names one claim whose truth the answer would settle and the diligence that could answer it (proprietary data, patient-level data, KOL interview, experiment, CMC or IP diligence). Code adds a question for every `unknown` claim the Chair left out, and drops a question about a claim that is not in the report. Code then ranks them by value of information (`scoring/voi.py`), and the model never gives a value.
+
+For one question the verdict is recomputed twice, with the claim settled as true (confidence 0.95, a stated fact, two independent sources) and as false (0.05). The value is the weighted sum of the two movements, the weights being the chance of each answer: the claim's confidence, or 0.5 for an `unknown` or `hypothesis` claim. A movement is the number of verdict steps (Invest, Conditional, Do Not Invest) plus half of the change in verdict confidence and in translation-chain probability, so a question that moves no verdict step still ranks by how much it moves the numbers. rNPV does not depend on the claims in this model (it follows from the stage and the market), so it is not part of the value.
+
+A question whose answer cannot move the verdict alone, because another gap would hold the verdict where it is, is kept with a value of 0 and listed last: unanswered unknowns are never hidden. The values are relative and uncalibrated (the 0.95, 0.05 and 0.5 are placeholders like the other thresholds); read the order, not the number.
 
 ## Calibration protocol
 

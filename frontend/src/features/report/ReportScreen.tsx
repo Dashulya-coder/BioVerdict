@@ -4,6 +4,8 @@ import { navigate } from '../../app/useScreen'
 import { ClaimList } from './ClaimList'
 import { DiligenceQuestions } from './DiligenceQuestions'
 import { ExecutiveSummary } from './ExecutiveSummary'
+import { GateList } from './GateList'
+import { Tornado } from './Tornado'
 import { TranslationChain } from './TranslationChain'
 import { UnknownFacts } from './UnknownFacts'
 import { useReport } from './useReport'
@@ -56,7 +58,9 @@ function LoadedReport({ runId }: { runId: string }) {
   return (
     <>
       <ExecutiveSummary report={state.report} />
+      <GateList report={state.report} />
       <TranslationChain report={state.report} />
+      <Tornado runId={runId} />
       <DiligenceQuestions report={state.report} />
       <UnknownFacts report={state.report} />
       <ClaimList report={state.report} />
