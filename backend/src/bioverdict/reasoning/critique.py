@@ -92,15 +92,48 @@ scoring formula gave each. What public sources cannot settle becomes a diligence
 """
 
 
-def _claim_lines(claims: list[Claim]) -> str:
-    lines = []
-    for c in claims:
-        marks = [c.basis.value, f"confidence {c.confidence:.2f}", c.section.value]
-        marks += ["critical"] if c.critical else []
-        marks += [f.value for f in c.flags]
-        marks += [f"gate {g.value}" for g in c.gate_signals]
-        lines.append(f"{c.id} [{'; '.join(marks)}]: {c.text}")
-    return "\n".join(lines) or "(no claims)"
+MAX_CLAIM_TEXT = 240
+CLAIMS_SHARE = 0.45  # of the room the Skeptic's prompt has, at most, for the claims
+NO_BUDGET_CLAIM_CHARS = 30_000
+
+
+def _importance(claim: Claim) -> tuple:
+    """What a prompt that cannot hold every claim keeps first: key claims, the claims that
+    assert a gate, gaps and weak claims (the Chair's business), then the rest by confidence."""
+    return (
+        not claim.critical,
+        not claim.gate_signals,
+        claim.basis is not Basis.UNKNOWN,
+        claim.confidence,
+        claim.id,
+    )
+
+
+def _claim_line(c: Claim) -> str:
+    marks = [c.basis.value, f"confidence {c.confidence:.2f}", c.section.value]
+    marks += ["critical"] if c.critical else []
+    marks += [f.value for f in c.flags]
+    marks += [f"gate {g.value}" for g in c.gate_signals]
+    text = c.text if len(c.text) <= MAX_CLAIM_TEXT else c.text[:MAX_CLAIM_TEXT] + "..."
+    return f"{c.id} [{'; '.join(marks)}]: {text}"
+
+
+def _claim_lines(claims: list[Claim], limit: int | None = None) -> str:
+    """The claims in id order. Over `limit` characters the least important are left out, and
+    the prompt says how many, so that the model does not take the list for the whole report."""
+    lines = {c.id: _claim_line(c) for c in claims}
+    kept: set[str] = set()
+    used = 0
+    for claim in sorted(claims, key=_importance):
+        size = wire_len(lines[claim.id]) + 1
+        if limit is not None and used + size > limit:
+            continue
+        kept.add(claim.id)
+        used += size
+    out = [lines[c.id] for c in claims if c.id in kept]
+    if len(kept) < len(claims):
+        out.append(f"({len(claims) - len(kept)} less important claims are not shown)")
+    return "\n".join(out) or "(no claims)"
 
 
 def _preamble(bundle: Bundle) -> str:
@@ -114,7 +147,15 @@ def _preamble(bundle: Bundle) -> str:
 
 
 def skeptic_prompt(bundle: Bundle, claims: list[Claim], budget: int | None) -> str:
-    head = f"{_preamble(bundle)}\n## Your task\n{_SKEPTIC}\n## Claims\n{_claim_lines(claims)}\n\n## Evidence\n"
+    fixed = wire_len(_preamble(bundle)) + wire_len(_SKEPTIC) + 80
+    if budget is None:
+        claim_room = NO_BUDGET_CLAIM_CHARS
+    else:
+        claim_room = int(max(0, budget - fixed - RETRY_RESERVE) * CLAIMS_SHARE)
+    head = (
+        f"{_preamble(bundle)}\n## Your task\n{_SKEPTIC}\n## Claims\n"
+        f"{_claim_lines(claims, claim_room)}\n\n## Evidence\n"
+    )
     room = MAX_EVIDENCE_CHARS if budget is None else max(0, budget - wire_len(head) - RETRY_RESERVE)
     evidence, _ = render_evidence(
         bundle.evidence, boundary_tag(bundle), room, None if budget is None else 600
@@ -122,18 +163,33 @@ def skeptic_prompt(bundle: Bundle, claims: list[Claim], budget: int | None) -> s
     return head + evidence + "\n"
 
 
+MAX_NOTES = 8
+MAX_NOTE_CHARS = 220
+
+
+def _notes(title: str, items: list[str]) -> str:
+    shown = [
+        item if len(item) <= MAX_NOTE_CHARS else item[:MAX_NOTE_CHARS] + "..."
+        for item in items[:MAX_NOTES]
+    ]
+    return f"\n## {title}\n" + "\n".join(f"- {n}" for n in shown) + "\n" if shown else ""
+
+
 def chair_prompt(
-    bundle: Bundle, claims: list[Claim], near_misses: list[str], objections: list[str]
+    bundle: Bundle,
+    claims: list[Claim],
+    near_misses: list[str],
+    objections: list[str],
+    budget: int | None = None,
 ) -> str:
-    extra = ""
-    if near_misses:
-        extra += "\n## Gates that nearly fired\n" + "\n".join(f"- {n}" for n in near_misses) + "\n"
-    if objections:
-        extra += (
-            "\n## Objections the skeptic made\n" + "\n".join(f"- {o}" for o in objections) + "\n"
-        )
+    extra = _notes("Gates that nearly fired", near_misses) + _notes(
+        "Objections the skeptic made", objections
+    )
+    fixed = wire_len(_preamble(bundle)) + wire_len(_CHAIR) + wire_len(extra) + 80
+    claim_room = None if budget is None else max(0, budget - fixed - RETRY_RESERVE)
     return (
-        f"{_preamble(bundle)}\n## Your task\n{_CHAIR}\n## Claims\n{_claim_lines(claims)}\n{extra}"
+        f"{_preamble(bundle)}\n## Your task\n{_CHAIR}\n## Claims\n"
+        f"{_claim_lines(claims, claim_room)}\n{extra}"
     )
 
 
@@ -218,7 +274,10 @@ def ask(
     calls unknown is left without a way to find out. A question whose answer alone cannot move
     the verdict (other gaps would keep it where it is) stays, last, with a value of 0.
     """
-    result = llm.call(CHAIR_STEP, chair_prompt(bundle, claims, near_misses, objections), ChairDraft)
+    budget_of = getattr(llm, "input_budget", None)
+    budget = budget_of(CHAIR_STEP, ChairDraft) if callable(budget_of) else None
+    prompt = chair_prompt(bundle, claims, near_misses, objections, budget)
+    result = llm.call(CHAIR_STEP, prompt, ChairDraft)
     draft = ChairDraft.model_validate(result.parsed)
     by_id = {c.id: c for c in claims}
     questions: list[tuple[str, DiligenceType, str]] = []

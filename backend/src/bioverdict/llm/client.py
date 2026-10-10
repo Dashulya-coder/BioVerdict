@@ -81,6 +81,7 @@ class LLMClient:
         self._deadline = deadline or Deadline(config.run_timeout_s)
         self._mixed: set[str] = set()
         self._lock = threading.Lock()
+        self._slots = threading.BoundedSemaphore(config.max_concurrency)
 
     # -- public ---------------------------------------------------------------
 
@@ -146,7 +147,9 @@ class LLMClient:
                 attempts += getattr(exc, "attempts", 1)
                 failures.append(f"{ref}: {type(exc).__name__}: {exc}")
                 first_failed = first_failed or ref
-                if isinstance(exc, TransientProviderError):
+                # A rate limit says "slow down", not "this provider is down": it does not open
+                # the breaker, which would turn a busy minute into a failed run.
+                if isinstance(exc, TransientProviderError) and exc.kind != "rate_limit":
                     self._breaker.record_failure(provider_name)
                 continue
             except (FatalProviderError, BudgetExceededError, RunTimeoutError) as exc:
@@ -240,7 +243,8 @@ class LLMClient:
             try:
                 with self._budget.hold(run_id, self._worst_case(ref, cfg, text)):
                     try:
-                        response = provider.complete(request)
+                        with self._slots:
+                            response = provider.complete(request)
                     except LLMError as exc:  # an answer that was unusable still cost money
                         self._charge_tokens(run_id, ref, exc.input_tokens, exc.output_tokens, usage)
                         raise

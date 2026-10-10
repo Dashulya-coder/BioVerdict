@@ -57,16 +57,25 @@ class JudgeDraft(_Draft):
 
 
 _TASK = """\
-You are an independent verifier. A claim and the quotes cited for it are listed below. For each
-item, read the quote on its own and decide what it does to the claim.
-- "supports": the quote states the claim or directly implies it, about the same drug, population,
-  endpoint and setting that the claim names.
-- "contradicts": the quote states or directly implies the opposite.
-- "unrelated": anything else. That includes a quote about another drug or another population, a
-  trial's design, status or planned endpoint offered as a result, a general statement that merely
-  mentions the same topic, and a quote that supports a weaker or narrower statement than the claim.
-Be strict: a quote must say what the claim says. Do not use what you know from elsewhere, and do
-not guess how the claim was reached. Answer once for every item, naming its claim and evidence ids.
+You are an independent verifier. Each block below is a claim with the quotes cited for it. For each
+numbered quote, decide what it does to the claim. Read the quotes of one claim together: the
+sources of a claim are often a record quoted in pieces (the name of an outcome, the groups that
+were compared, the figures), and a piece that carries no result on its own still supports the
+claim when the other pieces of the same record carry the rest.
+- "supports": the quote states the claim, directly implies it, or states one essential part of it.
+  A claim often combines several statements and cites a separate quote for each, so a quote need
+  not carry the whole claim; it must carry a part the claim really makes, about the same drug,
+  population, endpoint and setting that the claim names.
+- "contradicts": the quote states or directly implies the opposite of the claim or of an essential
+  part of it.
+- "unrelated": anything else. That includes a quote about another drug, population or endpoint, a
+  trial's design, status or planned endpoint offered as if it were a result (a quote that names an
+  endpoint but gives no outcome does not support a claim that states the outcome), a general
+  statement that merely mentions the same topic, and a quote that, even read with the other quotes
+  of the claim, adds nothing to it.
+Be strict about what the quotes say and fair about how much of the claim each has to carry. Do not
+use what you know from elsewhere, and do not guess how the claim was reached. Answer once for
+every numbered quote, naming its claim and evidence ids.
 """
 
 
@@ -89,18 +98,32 @@ def _preamble(bundle: Bundle) -> str:
     )
 
 
-def _item(number: int, claim: Claim, link: ClaimEvidenceLink, bundle: Bundle) -> str:
+def _quote_line(prefix: str, link: ClaimEvidenceLink, bundle: Bundle) -> str:
     evidence = bundle.evidence_by_id()[link.evidence_id]
     tag = boundary_tag(bundle)
     quote = (
         link.quote if len(link.quote) <= MAX_QUOTE_SHOWN else link.quote[:MAX_QUOTE_SHOWN] + "..."
     )
     return (
-        f"[{number}] claim {claim.id} ({claim.claim_type.value}): {claim.text}\n"
-        f"    evidence {link.evidence_id} ({evidence.source}, {evidence.level.value}), "
-        f"cited as: {link.direction.value}\n"
-        f"    <{tag}>{quote}</{tag}>"
+        f"  {prefix} evidence {link.evidence_id} ({evidence.source}, {evidence.level.value}), "
+        f"cited as: {link.direction.value}\n      <{tag}>{quote}</{tag}>"
     )
+
+
+def _block(
+    claim: Claim,
+    judged: list[ClaimEvidenceLink],
+    context: list[ClaimEvidenceLink],
+    first_number: int,
+    bundle: Bundle,
+) -> str:
+    """One claim with its quotes. The quotes of a claim are read together: a record of results is
+    quoted in pieces (the name of the endpoint, the groups, the numbers), and no piece says what
+    the claim says alone. Quotes that are only context are shown but not asked about."""
+    lines = [f"claim {claim.id} ({claim.claim_type.value}): {claim.text}"]
+    lines += [_quote_line(f"[{first_number + n}]", link, bundle) for n, link in enumerate(judged)]
+    lines += [_quote_line("(context, not asked about)", link, bundle) for link in context]
+    return "\n".join(lines)
 
 
 def _batches(items: list[str], limit: int) -> list[list[str]]:
@@ -147,7 +170,20 @@ def verify_links(
     if not judged_links:
         return out
 
-    items = [_item(n, by_id[l.claim_id], l, bundle) for n, l in enumerate(judged_links, 1)]
+    items, number = [], 1
+    for claim_id in dict.fromkeys(l.claim_id for l in judged_links):
+        mine = [l for l in judged_links if l.claim_id == claim_id]
+        asked = {l.evidence_id for l in mine}
+        context = [
+            l
+            for l in links
+            if l.claim_id == claim_id
+            and l.evidence_id not in asked
+            and l.direction is not Direction.NEUTRAL
+            and l.evidence_id in evidence
+        ]
+        items.append(_block(by_id[claim_id], mine, context, number, bundle))
+        number += len(mine)
     prompts = [judge_prompt(bundle, batch) for batch in _batches(items, BATCH_CHARS)]
     with ThreadPoolExecutor(max_workers=min(MAX_WORKERS, len(prompts))) as pool:
         results = list(pool.map(lambda p: llm.call(JUDGE_STEP, p, JudgeDraft), prompts))

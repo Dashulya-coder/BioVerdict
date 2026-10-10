@@ -49,8 +49,11 @@ def test_a_paper_that_is_not_labelled_a_guideline_is_not_read() -> None:
     assert parse_guidelines(plain, NOW) == []
 
 
-def test_the_search_is_for_guidelines_of_the_indication() -> None:
-    assert build_term('bad"name[x]') == "bad name x AND (Practice Guideline[pt] OR Guideline[pt])"
+def test_the_search_is_for_guidelines_on_treating_the_indication() -> None:
+    term = build_term('bad"name[x]')
+
+    assert term.startswith("bad name x AND (Practice Guideline[pt] OR Guideline[pt]) AND ")
+    assert "treatment[ti]" in term and "therapy[ti]" in term
 
 
 class FakeNCBI:

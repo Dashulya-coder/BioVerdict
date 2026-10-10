@@ -21,8 +21,9 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict
 
-from bioverdict.eval.cases import EvalCase
+from bioverdict.eval.cases import EvalCase, Outcome
 from bioverdict.eval.metrics import RunMetrics, run_metrics
+from bioverdict.eval.sensitivity import FinishRecompute, ProbeResult, run_probe
 from bioverdict.store.runs_repo import create_run
 
 # Starts and finishes one run on the connection: (conn, run_id, typed request). The run row
@@ -68,6 +69,8 @@ class CaseResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     case_id: str
+    set: str = "regression"
+    outcome: Outcome | None = None  # for a backtest: what happened next (never shown to the model)
     request: str
     as_of: date
     expected_verdict: list[str]
@@ -79,6 +82,7 @@ class CaseResult(BaseModel):
     same_verdict_every_run: bool | None  # None with fewer than two fresh runs
     top_risk_overlap: float | None  # mean Jaccard of the top-risk lists between fresh runs
     risks: list[RiskMatch]
+    probes: list[ProbeResult] = []
 
 
 class EvalReport(BaseModel):
@@ -118,7 +122,12 @@ def reasoned_afresh(run: RunMetrics) -> bool:
 
 
 def run_case(
-    conn: sqlite3.Connection, case: EvalCase, start: StartRun, repeat: int, today: date
+    conn: sqlite3.Connection,
+    case: EvalCase,
+    start: StartRun,
+    repeat: int,
+    today: date,
+    recompute: FinishRecompute | None = None,
 ) -> CaseResult:
     as_of, request = case.as_of or today, case.input.text()
     runs: list[RunMetrics] = []
@@ -136,6 +145,9 @@ def run_case(
     pairs = list(combinations(fresh, 2))
     return CaseResult(
         case_id=case.id,
+        set=case.set,
+        outcome=case.outcome,
+        probes=_probes(conn, case, finished[0].run_id if finished else None, recompute),
         request=request,
         as_of=as_of,
         expected_verdict=expected,
@@ -156,6 +168,33 @@ def run_case(
     )
 
 
+def _probes(
+    conn: sqlite3.Connection, case: EvalCase, base: str | None, recompute: FinishRecompute | None
+) -> list[ProbeResult]:
+    """Each probe grows the case's first finished run by one document and is judged by code."""
+    results = []
+    for number, probe in enumerate(case.probes, 1):
+        if base is None or recompute is None:
+            results.append(
+                ProbeResult(
+                    kind=probe.kind,
+                    direction=probe.direction,
+                    note=probe.note,
+                    run_id=None,
+                    passed=None,
+                    reason=(
+                        "not run: the case has no finished run"
+                        if base is None
+                        else "not run: a recompute needs a model (live mode)"
+                    ),
+                )
+            )
+            continue
+        new_id = f"R-eval-{case.id}-probe{number}-{uuid4().hex[:6]}"
+        results.append(run_probe(conn, base, probe, recompute, new_id))
+    return results
+
+
 def run_cases(
     conn: sqlite3.Connection,
     cases: list[EvalCase],
@@ -164,9 +203,10 @@ def run_cases(
     mode: str,
     repeat: int = 1,
     today: date,
+    recompute: FinishRecompute | None = None,
 ) -> EvalReport:
     started = datetime.now(UTC)
-    results = [run_case(conn, case, start, repeat, today) for case in cases]
+    results = [run_case(conn, case, start, repeat, today, recompute) for case in cases]
     return EvalReport(started_at=started, mode=mode, repeat=repeat, cases=results)
 
 
@@ -259,6 +299,53 @@ def summary(report: EvalReport) -> str:
             for case in risky
             for risk in case.risks
         ]
+    probed = [case for case in report.cases if case.probes]
+    if probed:
+        results = [probe for case in probed for probe in case.probes]
+        ran = [probe for probe in results if probe.passed is not None]
+        lines += [
+            "",
+            "## Sensitivity (a document is added to a finished run; judged by code)",
+            "",
+            f"{sum(bool(p.passed) for p in ran)} of {len(ran)} probes that ran passed; "
+            + f"{len(results) - len(ran)} did not run.",
+            "",
+            "| Case | Probe | Direction | Result | Verdict | Confidence | Why |",
+            "|---|---|---|---|---|---|---|",
+        ]
+        for case in probed:
+            for probe in case.probes:
+                mark = "not run" if probe.passed is None else "pass" if probe.passed else "FAIL"
+                before = (
+                    f"{probe.verdict_before} -> {probe.verdict_after}"
+                    if probe.verdict_after
+                    else "n/a"
+                )
+                conf = (
+                    f"{probe.confidence_before:.2f} -> {probe.confidence_after:.2f}"
+                    if probe.confidence_after is not None and probe.confidence_before is not None
+                    else "n/a"
+                )
+                lines.append(
+                    f"| {case.case_id} | {probe.kind} | {probe.direction or '-'} | {mark} "
+                    f"| {before} | {conf} | {probe.reason} |"
+                )
+    later = [case for case in report.cases if case.outcome is not None]
+    if later:
+        lines += [
+            "",
+            "## What happened next (backtests; the model never saw it)",
+            "",
+            "| Case | Cutoff | Verdict | Outcome | Source |",
+            "|---|---|---|---|---|",
+        ]
+        for case in later:
+            done = sorted({str(run.verdict) for run in case.runs if run.verdict is not None})
+            assert case.outcome is not None
+            lines.append(
+                f"| {case.case_id} | {case.as_of} | {', '.join(done) or 'failed'} "
+                f"| {case.outcome.text} | {case.outcome.url or ''} |"
+            )
     return "\n".join(lines) + "\n"
 
 

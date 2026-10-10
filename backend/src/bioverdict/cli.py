@@ -24,12 +24,15 @@ from bioverdict.cost_report import cost_of_run, cost_of_runs
 from bioverdict.doctor import Probe, render, run_checks
 from bioverdict.eval.cases import load_cases
 from bioverdict.eval.runner import StartRun, run_cases, summary, write_report
+from bioverdict.eval.sensitivity import FinishRecompute
 from bioverdict.eval.warm import load_assets, table, warm
 from bioverdict.llm.errors import ConfigError
 from bioverdict.pipeline.fixture_run import fixture_names, run_fixture
 from bioverdict.pipeline.live_llm import live_llm, require_configured
 from bioverdict.pipeline.live_run import LiveRunner, run_live
 from bioverdict.pipeline.live_sources import SourcesFactory, paced_sources
+from bioverdict.pipeline.recompute import finish_recompute
+from bioverdict.store.load_bundle import load_bundle
 from bioverdict.store.runs_repo import create_run, load_events
 
 
@@ -159,6 +162,21 @@ def _starter(
     return lambda conn, run_id, text: run_live(conn, run_id, text, lambda run: live_llm(run, db))
 
 
+def _recomputer(db: Path | None) -> FinishRecompute:
+    """Carries out the recompute of a probe with the live model, as the API does."""
+
+    def finish(conn: sqlite3.Connection, run_id: str) -> object:
+        return finish_recompute(
+            conn,
+            run_id,
+            lambda: load_bundle(conn, run_id),
+            lambda: live_llm(run_id, db),
+            settings.recompute_mode(),
+        )
+
+    return finish
+
+
 def _eval(
     parser: argparse.ArgumentParser, args: argparse.Namespace, start: StartRun, fixture_mode: bool
 ) -> int:
@@ -181,6 +199,7 @@ def _eval(
                 mode="fixtures" if fixture_mode else "live",
                 repeat=args.repeat,
                 today=settings.today(),
+                recompute=None if fixture_mode else _recomputer(args.db),
             )
         write_report(report, args.out)
     except (OSError, sqlite3.Error) as exc:
@@ -188,11 +207,15 @@ def _eval(
         return 1
     sys.stdout.write(summary(report))
     unexpected = [c.case_id for c in report.cases if c.verdict_as_expected is False]
+    insensitive = [
+        f"{c.case_id}/{p.kind}" for c in report.cases for p in c.probes if p.passed is False
+    ]
     failed = [c.case_id for c in report.cases if any(r.failure for r in c.runs)]
-    if unexpected or failed:
+    if unexpected or failed or insensitive:
         print(
             f"unexpected verdict: {', '.join(unexpected) or 'none'}; "
-            f"failed runs: {', '.join(failed) or 'none'}",
+            f"failed runs: {', '.join(failed) or 'none'}; "
+            f"failed probes: {', '.join(insensitive) or 'none'}",
             file=sys.stderr,
         )
         return 1

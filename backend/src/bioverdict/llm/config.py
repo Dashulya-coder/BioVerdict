@@ -43,6 +43,19 @@ def _input_limit(default: int | None) -> int | None:
         raise ConfigError(f"LLM_MAX_INPUT_CHARS={value!r} is not a whole number") from exc
 
 
+def _positive_int(name: str, default: int) -> int:
+    value = os.environ.get(name, "").strip()
+    if not value:
+        return default
+    try:
+        number = int(value)
+    except ValueError as exc:
+        raise ConfigError(f"{name}={value!r} is not a whole number") from exc
+    if number < 1:
+        raise ConfigError(f"{name}={value!r} must be at least 1")
+    return number
+
+
 class ModelPrice(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -99,7 +112,11 @@ class LLMConfig(BaseModel):
     budget_usd: float = 5.0  # RUN_BUDGET_USD
     breaker_threshold: int = 3  # consecutive failures that open a provider's breaker
     breaker_cooldown_s: float = 180.0  # "a few minutes"
-    run_timeout_s: float = 420.0  # RUN_TIMEOUT_S: hard wall-clock limit per run
+    run_timeout_s: float = 900.0  # RUN_TIMEOUT_S: hard wall-clock limit per run
+    # Calls in flight at once across the whole run (LLM_MAX_CONCURRENCY). The team gateway answers
+    # 429 'concurrency_limit' above its own cap, and the reasoning modules, the judge and the
+    # collection all call in parallel.
+    max_concurrency: int = Field(default=4, ge=1)
     # Characters an endpoint accepts in one request (messages and response schema together); None:
     # no known limit. The gateway's is measured; LLM_MAX_INPUT_CHARS overrides it.
     max_input_chars: int | None = None
@@ -191,7 +208,8 @@ class LLMConfig(BaseModel):
             },
             prices=prices,
             budget_usd=float(os.environ.get("RUN_BUDGET_USD", "5")),
-            run_timeout_s=float(os.environ.get("RUN_TIMEOUT_S", "420")),
+            run_timeout_s=float(os.environ.get("RUN_TIMEOUT_S", "900")),
+            max_concurrency=_positive_int("LLM_MAX_CONCURRENCY", 4),
         )
         config.validate_prices()
         return config

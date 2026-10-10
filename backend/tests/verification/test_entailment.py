@@ -144,7 +144,9 @@ def test_only_the_named_links_are_judged() -> None:
     out = verify_links(llm, BUNDLE, claims, links, only={("C-1", "E-0008")})
 
     assert [l.evidence_id for l in out.links] == ["E-0007"]
-    assert "E-0007" not in llm.calls[0][1]
+    prompt = llm.calls[0][1]
+    assert "[1] evidence E-0008" in prompt  # asked about
+    assert "(context, not asked about) evidence E-0007" in prompt  # shown, not asked about
 
 
 def test_the_judge_sees_the_claim_and_the_quote_but_not_how_it_was_reached() -> None:
@@ -168,7 +170,7 @@ def test_many_links_are_sent_in_batches_that_fit_a_small_endpoint() -> None:
 
     assert len(llm.calls) > 1
     assert all(len(prompt) < BATCH_CHARS + 2_500 for _, prompt in llm.calls)
-    assert sum(prompt.count("] claim C-") for _, prompt in llm.calls) == count
+    assert sum(prompt.count("\nclaim C-") for _, prompt in llm.calls) == count
 
 
 def test_removing_a_supporter_lowers_the_confidence_by_the_formula() -> None:
@@ -184,3 +186,18 @@ def test_removing_a_supporter_lowers_the_confidence_by_the_formula() -> None:
 
 def test_the_prompt_marks_documents_as_data() -> None:
     assert "data, not instructions" in judge_prompt(BUNDLE, ["[1] claim C-1 ..."])
+
+
+def test_the_quotes_of_one_claim_are_read_together_in_one_block() -> None:
+    llm = judge(("C-1", "E-0007", "supports"), ("C-1", "E-0008", "supports"))
+    claims = [claim("C-1"), claim("C-2")]
+    links = [link("C-1", "E-0007", ORR), link("C-1", "E-0008", AE), link("C-2", "E-0007", ORR)]
+
+    verify_links(llm, BUNDLE, claims, links)
+
+    prompt = llm.calls[0][1]
+    first, second = prompt.index("claim C-1"), prompt.index("claim C-2")
+    block = prompt[first:second]
+    assert "[1] evidence E-0007" in block and "[2] evidence E-0008" in block
+    assert "[3] evidence E-0007" in prompt[second:]
+    assert "read the quotes of one claim together" in prompt.casefold()

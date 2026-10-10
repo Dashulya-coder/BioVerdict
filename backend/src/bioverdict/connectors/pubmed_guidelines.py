@@ -41,17 +41,25 @@ from bioverdict.store.models import (
 )
 
 FAMILY = "literature"
-RETMAX = 6  # the newest guidelines: an older one is replaced by its update
+RETMAX = 8  # the newest guidelines: an older one is replaced by its update
 NO_INDICATION = "not specified"
 _GUIDELINE_TYPES = {"Practice Guideline", "Guideline"}
 
 
+_TREATMENT = "(treatment[ti] OR therapy[ti] OR management[ti] OR therapeutic[ti] OR treating[ti])"
+
+
 def build_term(indication: str) -> str:
-    """The indication is not quoted, so that PubMed maps it to its MeSH heading and synonyms:
-    the disease term of Open Targets ("non-small cell lung carcinoma") is not the one the
-    guidelines use in their titles ("non-small cell lung cancer"), and a quoted phrase finds only
-    old papers."""
-    return f"{_quote(indication)} AND (Practice Guideline[pt] OR Guideline[pt])"
+    """Guidelines about treating the indication.
+
+    The indication is not quoted, so that PubMed maps it to its MeSH heading and synonyms: the
+    disease term of Open Targets ("non-small cell lung carcinoma") is not the one the guidelines
+    use in their titles ("non-small cell lung cancer"), and a quoted phrase finds only old
+    papers. The title must name treatment: without that the newest guidelines of a disease are
+    about imaging and diagnosis (for multiple sclerosis, MRI protocols), which say nothing about
+    what is given to patients.
+    """
+    return f"{_quote(indication)} AND (Practice Guideline[pt] OR Guideline[pt]) AND {_TREATMENT}"
 
 
 def parse_guidelines(xml: bytes | str, retrieved_at: datetime) -> list[Evidence]:

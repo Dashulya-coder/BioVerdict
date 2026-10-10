@@ -371,7 +371,7 @@ def test_the_default_config_gives_reasoning_a_second_model_and_more_time() -> No
     cfg = LLMConfig.default()
     assert cfg.step("reasoning").models == [SONNET, OPUS]
     assert cfg.step("synthesis").timeout_s > cfg.step("extraction").timeout_s == 90.0
-    assert cfg.run_timeout_s == 420.0
+    assert cfg.run_timeout_s == 900.0
 
 
 # --- an unusable answer is still paid for ------------------------------------------------
@@ -438,3 +438,50 @@ def test_a_cut_off_answer_is_retried_with_a_request_to_write_less() -> None:
     client = LLMClient(LLMConfig.default(), {"anthropic": provider})
     client.call("reasoning.clinical", "prompt", Answer)
     assert "cut off because it was too long" in provider.requests[-1].prompt
+
+
+def test_calls_in_flight_never_exceed_the_configured_concurrency() -> None:
+    import time
+    from concurrent.futures import ThreadPoolExecutor
+
+    from bioverdict.llm.types import ProviderResponse
+
+    lock, active, peak = threading.Lock(), [0], [0]
+
+    def slow(request):
+        with lock:
+            active[0] += 1
+            peak[0] = max(peak[0], active[0])
+        time.sleep(0.03)
+        with lock:
+            active[0] -= 1
+        return ProviderResponse(text=GOOD, input_tokens=1, output_tokens=1, model=request.model)
+
+    fake = FakeProvider(slow, name="anthropic")
+    llm = LLMClient(config(HAIKU, max_concurrency=2), {"anthropic": fake}, call_log=MemoryCallLog())
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        list(pool.map(lambda n: llm.call("s", f"prompt {n}", Answer, run_id="R1"), range(8)))
+
+    assert peak[0] == 2
+
+
+def test_the_concurrency_cap_comes_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert LLMConfig.default().max_concurrency == 4
+    monkeypatch.setenv("LLM_MAX_CONCURRENCY", "2")
+    assert LLMConfig.default().max_concurrency == 2
+    monkeypatch.setenv("LLM_MAX_CONCURRENCY", "0")
+    with pytest.raises(ConfigError, match="at least 1"):
+        LLMConfig.default()
+
+
+def test_a_busy_gateway_does_not_open_the_breaker() -> None:
+    busy = TransientProviderError("Too many active requests", "rate_limit")
+    fake = FakeProvider(busy, name="anthropic")
+    llm = client(config(HAIKU, breaker_threshold=2), anthropic=fake)
+
+    for n in range(4):
+        with pytest.raises(AllModelsFailedError):
+            llm.call("s", f"prompt {n}", Answer, run_id="R1")
+
+    assert len(fake.requests) == 4  # every call still went to the provider

@@ -59,19 +59,28 @@ Candidate cases from our plan (verify each fact by search before recording an ex
 
 A deal or market reaction is a noisy proxy for an expert verdict. Record it as a *signal*, and write expectations as ranges ("Conditional or better") unless the signal is clear.
 
-`eval/cases.yaml` schema:
+`eval/cases.yaml` schema (`eval/cases.py`; the fields `set`, `outcome` and `probes` are optional, so an older file still loads):
 
 ```yaml
-- id: divarasib-2026-10
-  input: { asset: divarasib }
-  as_of: 2026-10-06
-  expected_verdict: [Conditional, Invest]
-  expected_top_risks: ["competition from approved KRAS G12C inhibitors", "..."]
+- id: tolebrutinib-2025-12
+  set: backtest                      # demo | regression | backtest | smoke   (default: regression)
+  input: { asset: tolebrutinib }     # or { indication: ..., mechanism: ... } or { query: "..." }
+  as_of: 2025-12-01
+  expected_verdict: [Conditional, Do Not Invest]
+  expected_top_risks: ["Drug-induced liver injury", "..."]
   signals:
     - { text: "...", url: "...", date: "..." }
+  outcome:                           # a backtest: what happened after as_of; never shown to the model
+    { text: "...", url: "...", date: 2025-12-15 }
+  probes:                            # sensitivity tests (section 7)
+    - { kind: strong, direction: lower, as_of: 2025-12-16, note: "...",
+        evidence: { text: "<verbatim>", url: "https://...", source: "...",
+                    source_kind: company, level: human_interventional, published_at: 2025-12-15 } }
   recorded_by: Dasha
-  recorded_at: TODO
+  recorded_at: 2026-10-10
 ```
+
+The cases in the repository are a reading of the public record by a person, each fact with the address it came from; none is an expert's answer. The demo pair is `btk-ms-demo`: a BTK inhibitor in multiple sclerosis, entered as an indication and a mechanism, no drug name. It is a class with mixed phase 3 results (fenebrutinib and remibrutinib beat teriflunomide in relapsing MS; evobrutinib and tolebrutinib failed; the FDA refused tolebrutinib in non-relapsing secondary progressive MS), a recognised liver risk, and no approval yet. The three backtests (`evobrutinib-2023-11`, `fenebrutinib-2025-10`, `tolebrutinib-2025-12`) are dated before the readout whose result is recorded as the `outcome`; judge the argument and the risks, not only the verdict (section 5).
 
 ## 5. Time-travel backtesting
 
@@ -106,7 +115,7 @@ runs; no model judges a report.
 | Expected top risks | hint only | each expected risk beside the reported risk that shares most words with it. A person has to read both |
 | Citation support rate | partly | the judge exists (B8) and the runner reports how many judged links it confirmed; its agreement with a person is not measured |
 | Judge agreement | not done | needs a hand-labelled sample of about 30 claims |
-| Sensitivity (strong, weak, noise) | not done here | `pipeline/recompute.py` and `GET /runs/{id}/diff` are the interface for B10 |
+| Sensitivity (strong, weak, noise) | done (live mode) | a `probe` adds one real document to the case's first finished run (`pipeline/recompute.py`) and code judges the diff of the two runs (`eval/sensitivity.py`). strong: the verdict, or a key claim's confidence by at least 0.10, or a gate moves in the stated direction. weak: the verdict and the gates hold and some confidence moves that way by at least 0.02. noise: nothing moves (verdict, gates, chain, no claim added or removed, every confidence within 0.02). The 0.10 and 0.02 are placeholders. A probe whose run could not be made is `not run`, never a pass. Fixture mode cannot run them: a recompute needs a model |
 | Closed-book leakage probe, bare-LLM baseline | not done | needs paid calls to a model without retrieval and a way to score its answers |
 
 `uv run bioverdict warm --list <file>` fills the retrieval cache for a list of assets and prints
@@ -114,8 +123,27 @@ which ids were confirmed and how much each source returned (see the [runbook](ru
 
 ## 8. Results
 
-| Case | Verdict | Expected | Top risks match | Citation support | Time | Cost |
-|---|---|---|---|---|---|---|
-| TODO | | | | | | |
+Live runs of 2026-10-10 on the public sources and the team gateway (`gpt-6.1-sol` writes, `gpt-6-astra` judges), one run per case, `LLM_MAX_CONCURRENCY=3`, `RUN_TIMEOUT_S=900`. One run is not a measure of stability. Raw outputs: `eval/results/<date>/` (not committed).
 
-Raw outputs: `eval/results/<date>/`.
+| Case | Verdict | Expected | As expected | Quotes present | Sources in catalog | Sections | Judge confirmed | Time | Cost |
+|---|---|---|---|---|---|---|---|---|---|
+| btk-ms-demo | Conditional | Conditional | yes | 84/84 | 43/43 | 6/6 | 78 of 100 links | 262 s | $0.86 |
+| tolebrutinib-2025-12 | Conditional | Conditional or Do Not Invest | yes | 60/60 | 32/32 | 6/6 | judge version 1, see below | 291 s | $0.96 |
+
+Sensitivity, `tolebrutinib-2025-12` (a base run at 2025-12-01, one document added to it):
+
+| Probe | Result | What happened |
+|---|---|---|
+| noise (a divarasib result) | **pass** | after the classify prompt was told to leave other drugs and diseases unmatched: nothing moved. Before that it added a claim about divarasib |
+| strong (the PERSEUS failure, from Sanofi's release of 2025-12-15) | **fail** | the model wrote two new claims (the failure, and that Sanofi will not file for primary progressive MS) and linked no existing key claim, so no confidence and not the verdict moved. Whether a primary progressive failure should move the verdict for relapsing and secondary progressive MS is arguable; K1 needs the same indication |
+| weak (Sanofi's impairment test) | **fail** | one new claim, no confidence moved lower |
+
+What the runs showed, beyond the table:
+
+- **The demo pair resolves with an assumption.** Open Targets 26.09 has no `multiple sclerosis` term to search for (its search returns the subtypes, not the disease: `MONDO_0005301` and `EFO_0003885` both come back null), so the indication is recorded as "not confirmed: no matching disease term" and the run goes on with the name. The BTK target resolves.
+- **The report's "top risks" are generic for the demo.** They are the gate and key-claim texts ("a link of the translation chain is missing", "a key claim rests on too little evidence"), not the risks a person would name (liver injury, no approval, mixed phase 3 results). Those are in the claims and the Chair's questions, not in the three lines the summary shows. The shared-words hint against the expected risks is 0 for that reason.
+- **The judge, version 1, read each quote alone and removed 71% of the links** (59 of 83), mostly fragments of a results record (the name of an endpoint, the groups, the figures), none of which says the result by itself. Version 2 reads the quotes of one claim together and removed 22% (22 of 100). The 22 left were read: quotes that name an endpoint without a result, or that belong to another drug.
+- **The pipeline needs time and room.** At the old 420 s deadline the judge and the Chair were skipped on this class; at 900 s they run. The Skeptic and the Chair prompts did not fit the gateway's 16,000-character request with 70 claims (now shortened by importance), and so did the classify prompt (now the claims are shortened before the new evidence is turned away). With six reasoning modules in parallel the gateway answered 429 `concurrency_limit`; a client-wide cap (`LLM_MAX_CONCURRENCY`) and not opening the breaker on a rate limit fixed it.
+- **Classify-mode recompute adds claims more readily than it moves them.** A decisive document became new claims that no gate or key claim reads. The demo script's "a strong result flips the verdict" holds on the prepared fixture and has not been shown on a live class run.
+
+Not done: the closed-book leakage probe and the bare-LLM baseline (paid calls to a model without retrieval, and a way to score its answers), the hand-labelled sample for judge agreement, three repeated runs for stability.

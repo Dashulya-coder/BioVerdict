@@ -91,7 +91,7 @@ class OpenAIProvider:
         *,
         base_url: str | None = None,
         api_key: str | None = None,
-        max_retries: int = 1,
+        max_retries: int = 3,  # the SDK backs off and honours Retry-After on a 429
     ) -> None:
         self._client = client
         self._base_url = base_url

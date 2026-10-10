@@ -313,3 +313,30 @@ def test_new_claims_are_numbered_after_the_existing_ones_and_never_assert_a_gap_
     found, _ = classify(claims, links, [new], Classification(new_claims=[unknown]))
     assert [c.id for c in found.new_claims] == [f"C-{last + 1:04d}"]
     assert found.new_claims[0].basis is Basis.UNKNOWN and found.new_claims[0].gate_signals == []
+
+
+def test_a_report_of_dozens_of_claims_still_leaves_room_for_the_new_evidence() -> None:
+    from bioverdict.llm.sizing import wire_len
+    from bioverdict.reasoning.classify_evidence import MIN_CLAIM_CHARS, build_prompts
+    from bioverdict.reasoning.prompts import RETRY_RESERVE
+
+    claims, _, _ = finished_run()
+    many = [
+        claims[0].model_copy(
+            update={"id": f"C-{n:04d}", "text": "a long claim about the drug " * 12}
+        )
+        for n in range(1, 71)
+    ]
+    document = added(
+        "E-9001", "A decisive result, stated plainly.", EvidenceLevel.HUMAN_INTERVENTIONAL, "g"
+    )
+    budget = 16_000
+
+    prompts, unread = build_prompts(many, [document], BUNDLE, budget)
+
+    assert unread == [] and len(prompts) == 1
+    text, shown = prompts[0]
+    assert shown == [document] and "A decisive result, stated plainly." in text
+    assert wire_len(text) + RETRY_RESERVE <= budget
+    assert "[C-0070]" in text  # every claim can still be linked
+    assert MIN_CLAIM_CHARS > 0 and claims  # the fixture report is untouched

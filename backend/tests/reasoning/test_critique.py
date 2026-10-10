@@ -6,8 +6,10 @@ import pytest
 
 from bioverdict.llm import FakeLLM
 from bioverdict.llm.errors import FatalProviderError
+from bioverdict.llm.sizing import wire_len
 from bioverdict.pipeline.reason_score import chair_pass, skeptic_pass
 from bioverdict.reasoning.critique import ask, chair_prompt, challenge, skeptic_prompt
+from bioverdict.reasoning.prompts import RETRY_RESERVE
 from bioverdict.scoring.confidence import apply_confidence
 from bioverdict.scoring.verdict import score_verdict
 from bioverdict.store.db import connect
@@ -224,3 +226,29 @@ def test_an_objection_lowers_the_claim_it_contradicts_by_the_formula(conn) -> No
 
     assert len(links) == 2 and objections
     assert out[0].confidence < before[0].confidence
+
+
+def many_claims(count: int = 80) -> list[Claim]:
+    return [
+        claim(f"C-{n:04d}", 0.8, text="a fairly long claim about the drug " * 6)
+        for n in range(1, count + 1)
+    ]
+
+
+def test_the_prompts_fit_a_small_endpoint_however_many_claims_there_are() -> None:
+    budget = 16_000
+    claims = [*many_claims(), claim("C-9999", 0.9, critical=True, text="the key claim")]
+
+    skeptic = skeptic_prompt(BUNDLE, claims, budget)
+    chair = chair_prompt(BUNDLE, claims, ["near miss " * 40] * 20, ["objection " * 40] * 20, budget)
+
+    assert wire_len(skeptic) + RETRY_RESERVE <= budget
+    assert wire_len(chair) + RETRY_RESERVE <= budget
+    assert "C-9999 [extracted; confidence 0.90; clinical; critical]" in skeptic  # key claims stay
+    assert "C-9999" in chair and "less important claims are not shown" in chair
+
+
+def test_a_prompt_with_room_for_every_claim_shows_them_all() -> None:
+    prompt = chair_prompt(BUNDLE, many_claims(5), [], [], budget=None)
+
+    assert prompt.count("C-000") == 5 and "not shown" not in prompt

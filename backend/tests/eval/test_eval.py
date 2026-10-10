@@ -110,7 +110,32 @@ def test_metrics_of_an_unknown_run_are_refused(conn) -> None:
 
 def test_the_repository_cases_file_loads() -> None:
     cases = load_cases(CASES)
-    assert cases and cases[0].input.text() == "divarasib"
+    assert {case.id for case in cases} >= {"btk-ms-demo", "divarasib-2026-10"}
+
+
+def test_the_demo_pair_is_a_btk_inhibitor_in_multiple_sclerosis() -> None:
+    (demo,) = [case for case in load_cases(CASES) if case.set == "demo"]
+
+    assert (demo.input.indication, demo.input.mechanism) == ("multiple sclerosis", "BTK inhibitor")
+    assert demo.input.asset is None and demo.as_of is None  # a class, as of the day it is run
+    assert demo.expected_top_risks and all(signal.url for signal in demo.signals)
+
+
+def test_a_backtest_says_what_happened_next_and_is_dated_before_it() -> None:
+    backtests = [case for case in load_cases(CASES) if case.set == "backtest"]
+
+    assert backtests
+    for case in backtests:
+        assert case.outcome is not None and case.outcome.url and case.as_of is not None
+        assert str(case.outcome.date) > str(case.as_of), case.id
+        assert case.expected_verdict, case.id
+
+
+def test_every_probe_is_a_real_document_with_an_address() -> None:
+    probes = [probe for case in load_cases(CASES) for probe in case.probes]
+
+    assert {probe.kind for probe in probes} == {"strong", "weak", "noise"}
+    assert all(probe.evidence.url.startswith("https://") for probe in probes)
 
 
 def test_a_case_is_put_as_one_line_whatever_its_input_format() -> None:
