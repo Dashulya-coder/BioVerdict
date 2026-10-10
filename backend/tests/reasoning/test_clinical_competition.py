@@ -111,6 +111,8 @@ def run(bundle: Bundle, clinical: list[dict], competition=()):
             "reasoning.clinical": ModuleDraft.model_validate({"claims": clinical}),
             "reasoning.competition": ModuleDraft.model_validate({"claims": list(competition)}),
             "reasoning.translation": empty,
+            "reasoning.unmet_need": empty,
+            "reasoning.commercial": empty,
         }
     )
     reasoner = ModuleReasoner(llm, "R-1")
@@ -121,8 +123,15 @@ def run(bundle: Bundle, clinical: list[dict], competition=()):
 # --- the modules ------------------------------------------------------------------
 
 
-def test_the_four_modules_run_in_the_planned_order() -> None:
-    assert [m.name for m in ALL_MODULES] == ["mechanism", "clinical", "competition", "translation"]
+def test_the_modules_run_in_the_planned_order() -> None:
+    assert [m.name for m in ALL_MODULES] == [
+        "mechanism",
+        "clinical",
+        "competition",
+        "translation",
+        "unmet_need",
+        "commercial",
+    ]
     assert CLINICAL.allowed_gates == {GateId.K1, GateId.K2, GateId.K4}
     assert COMPETITION.allowed_gates == {GateId.S4}
 
@@ -232,3 +241,28 @@ def test_s4_survives_with_three_independent_competitors_only() -> None:
     )
     assert [c.gate_signals for c in claims if c.section is Section.COMPETITION] == [[]]
     assert any("1 independent source" in d.reason for d in reasoner.trace.drops)
+
+
+# --- disease and unmet need, commercial ------------------------------------------------
+
+
+def test_the_commercial_module_never_reads_the_numbers_that_code_computes() -> None:
+    from bioverdict.reasoning import COMMERCIAL, UNMET_NEED
+
+    market = {"approved_analog", "cms_spending", "cancer_incidence", "population"}
+    assert COMMERCIAL.families == {"regulatory_analog", "sec_filing", "company"}
+    assert not (COMMERCIAL.families & market) and not (UNMET_NEED.families & market)
+    assert "computed by code" in COMMERCIAL.instruction
+
+
+def test_the_two_added_modules_cannot_assert_a_gate_or_a_study_fact() -> None:
+    from bioverdict.reasoning import COMMERCIAL, UNMET_NEED
+    from bioverdict.store.models import ClaimType
+
+    for module in (UNMET_NEED, COMMERCIAL):
+        assert module.allowed_gates == frozenset() and not module.allow_study_fact
+        assert module.claim_type is ClaimType.OTHER
+
+
+def test_their_claims_come_after_the_others_so_existing_ids_do_not_move() -> None:
+    assert [m.section for m in ALL_MODULES][-2:] == [Section.UNMET_NEED, Section.COMMERCIAL]
