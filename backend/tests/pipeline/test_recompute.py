@@ -35,6 +35,7 @@ from bioverdict.store.models import (
     EvidenceLevel,
     GateId,
     SourceKind,
+    VerificationCheck,
 )
 from bioverdict.store.runs_repo import (
     DONE,
@@ -45,7 +46,7 @@ from bioverdict.store.runs_repo import (
     load_claims,
     load_events,
 )
-from bioverdict.store.verification_repo import load_checks
+from bioverdict.store.verification_repo import load_checks, save_checks
 
 FIXTURES = Path(__file__).parents[3] / "fixtures"
 EARLY, LATE = date(2026, 6, 30), date(2026, 10, 7)
@@ -338,6 +339,47 @@ def test_a_claim_reworded_in_the_recompute_does_not_inherit_the_reading(conn) ->
         )
 
     assert judged_links(conn, "R-2")[(claim_id, evidence_id)] == "not_judged"
+
+
+def removal(claim_id: str) -> VerificationCheck:
+    return VerificationCheck(
+        claim_id=claim_id,
+        check_name="entailment",
+        passed=False,
+        detail="E-0099 cited as supports, judged unrelated: the quote names another drug",
+    )
+
+
+def test_why_a_quote_was_removed_in_the_original_run_is_still_said_in_the_recompute(conn) -> None:
+    _, target = key_claim(conn)
+    other = next(c for c in load_claims(conn, "R-1")[0] if c.id != target.id)
+    save_checks(conn, "R-1", [removal(other.id)])
+    said = [(c.check, c.detail) for c in get_claim(conn, "R-1", other.id).checks]
+    assert ("entailment", removal(other.id).detail) in said
+
+    classified(conn, {"links": [link_to(target.id, "contradicts")]})
+
+    # The recompute judged the new quote only; the claim it carried over lost that quote earlier.
+    assert [(c.check, c.detail) for c in get_claim(conn, "R-2", other.id).checks] == said
+    report = build_report(conn, "R-2")
+    in_report = next(c for s in report.sections for c in s.claims if c.id == other.id)
+    assert [(c.check, c.detail) for c in in_report.checks] == said
+
+
+def test_a_reworded_claim_does_not_inherit_why_a_quote_was_removed(conn) -> None:
+    _, target = key_claim(conn)
+    other = next(c for c in load_claims(conn, "R-1")[0] if c.id != target.id)
+    save_checks(conn, "R-1", [removal(other.id)])
+    classified(conn, {"links": [link_to(target.id, "contradicts")]})
+
+    with conn:
+        conn.execute(
+            "UPDATE claims SET text = text || ' (reworded)' WHERE run_id = 'R-2' AND id = ?",
+            (other.id,),
+        )
+
+    details = [c.detail for c in get_claim(conn, "R-2", other.id).checks]
+    assert removal(other.id).detail not in details
 
 
 def test_the_diff_of_a_placed_document_names_only_the_claim_it_touches(conn) -> None:
