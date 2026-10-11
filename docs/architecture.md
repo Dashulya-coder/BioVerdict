@@ -47,7 +47,7 @@ flowchart TD
   NEW[Added document] --> RC[Recompute on bundle v2] --> DIFF[Diff: what moved and why]
 ```
 
-The outer structure is a deterministic DAG (LangGraph). Inside each node a small tool-calling agent has a step limit. LangGraph is used only as a DAG runner with checkpointing. Tracing and cost accounting are our own code so nothing is hidden. See ADR-001.
+The run is a fixed sequence of steps in plain Python (`pipeline/live_run.py`, `pipeline/reason_score.py`). LangGraph runs one part of it, collect then freeze (`graph/pipeline.py`); reasoning, verification and scoring are ordinary function calls. Collection is not a free agent: each section has a fixed list of connectors, called in order under a step and a time limit (`agents/collect.py`). Tracing and cost accounting are our own code so nothing is hidden. See ADR-001.
 
 ## 3. Two phases per run
 
@@ -57,18 +57,18 @@ The outer structure is a deterministic DAG (LangGraph). Inside each node a small
 | **Freeze** | none | immutable bundle with a content hash, a source catalog (allowlist) and `as_of` |
 | **Reason** | **forbidden** | claims, each pointing to evidence in the bundle |
 
-Rule: *absence from the bundle means unknown, not false.* The reasoning code does not import any HTTP client, which is enforced by a test.
+Rule: *absence from the bundle means unknown, not false.* Reasoning receives only the frozen bundle: its functions take a `Bundle` and a model, and no connector. No test enforces this by checking imports, and `verification/entailment.py` imports a formatter (no request) from `connectors/clinicaltrials.py`.
 
-A targeted second round (from Chair) runs Collect only for the requested items, creating bundle v2. Reasoning then re-runs against v2.
+Designed, not built: a targeted second round (from Chair) that runs Collect only for the requested items, creating bundle v2, after which reasoning re-runs against v2.
 
 ## 4. Stages
 
 1. **Resolver.** Normalizes input to indication IDs (MONDO/EFO), targets (UniProt/Ensembl), action, modality, delivery, tissue and known assets. Fields it infers itself are listed in `assumptions`. Accepts a drug name or code, for example a company code in brackets, and resolves it through ChEMBL and Open Targets. Names that look similar are disambiguated by ID, never by string match.
-2. **Triage (1-2 min).** Basic facts, red flags, whether any human evidence exists. Decides which sections need depth and which can stay shallow, which controls cost.
-3. **Stage 1, parallel.** Disease and unmet need; mechanism validation; clinical/trials; competition and pipeline; red/green flags; IP and regulatory.
-4. **Stage 2, parallel, depends on stage 1.** Translation chain (needs mechanism and clinical); commercial and market (needs disease and competition).
+2. **Triage (1-2 min). Designed, not built.** Basic facts, red flags, whether any human evidence exists. Decides which sections need depth and which can stay shallow, which controls cost.
+3. **Stage 1, parallel.** Disease and unmet need; mechanism validation; clinical/trials; competition and pipeline; red/green flags. IP and regulatory was planned here and is not built: nothing collects for it and no module writes its claims.
+4. **Stage 2, as designed.** Translation chain (from mechanism and clinical); commercial and market (from disease and competition).
 
-In the code the two added modules, `unmet_need` and `commercial`, run in the same parallel pass as the others and come last, so the ids of the other claims do not change. Neither may assert a gate or a study fact. `unmet_need` reads target databases, literature, the labels of approved analogs and company statements. `commercial` reads the labels, SEC filings and company statements only: prices, spending, patient numbers and market size are code's (`market/tam.py`) and never reach a model, so what the model can add is differentiation from the analogs and, honestly, what is unknown (pricing, coverage, launch plan).
+In the code there are no two stages: all six modules run in one parallel pass, and each reads the frozen bundle, not the claims of another module. The translation module reads the mechanism and clinical evidence, not what those modules concluded. The two added modules, `unmet_need` and `commercial`, come last in that pass, so the ids of the other claims do not change. Neither may assert a gate or a study fact. `unmet_need` reads target databases, literature, the labels of approved analogs and company statements. `commercial` reads the labels, SEC filings and company statements only: prices, spending, patient numbers and market size are code's (`market/tam.py`) and never reach a model, so what the model can add is differentiation from the analogs and, honestly, what is unknown (pricing, coverage, launch plan).
 5. **Skeptic.** One reasoning step over the same frozen bundle and the claims so far looks for evidence that contradicts them and for failed analogs. An objection is kept only when its quote is in the cited evidence; it becomes a `contradicts` link on the claim and the formula recomputes the confidence. An ungrounded objection is dropped and logged (`skeptic_ungrounded`). If the call fails the report is made without it and the run logs `skeptic skipped`.
 6. **Chair.** Lists what only diligence could settle, as questions about claims; code ranks them by value of information (`scoring.md`). What stays unanswered becomes a diligence question. Not built yet: the targeted second round of collection (bundle v2) that the Chair would trigger.
 6a. **Synthesis.** After the Chair (in the code, after scoring), one model step writes the parts of the report the brief names in prose: the scientific and the human translation thesis, a clinical development plan (the next trial: population, endpoint, biomarker strategy, comparator, size, sequence), the competitive landscape, the commercial opportunity and the investment case (capital and time to the next milestone, value inflection points, financing, licensing or acquisition). It reads the claims and the figures code computed (verdict, gates, module answers, PoS, capital, time, rNPV or why it is missing), never the evidence. Code keeps a sentence only if it cites claims of the run and every number in it appears in a cited claim or in those figures (`reasoning/synthesis.py`); the event says how many were dropped and why. The report shows the theses as AI inference, each sentence leading to its claims. The verdict does not depend on them; a failed call leaves the report without them and the run logs `synthesis skipped`.
@@ -77,7 +77,7 @@ In the code the two added modules, `unmet_need` and `commercial`, run in the sam
 
 ## 5. Agent contract
 
-Each agent is a node with a declared contract.
+The design gives each agent a declared contract. As built, the collection plan of a section carries its tools, `max_steps` (8) and `timeout_s` (90) (`agents/collect.py`); a reasoning module is a prompt with its source families, not a tool-calling agent.
 
 | Field | Example |
 |---|---|
@@ -106,7 +106,7 @@ Collect agents write **evidence**. Reason steps write **claims**. Neither writes
 |---|---|---|---|
 | 1 | Source validity | Was this URL or ID fetched in this run? | exact match against the bundle catalog |
 | 2 | Evidence presence | Is the quote in the bundle, and the number in the quote? | string check (code) |
-| 3 | Claim entailment | Does the quote, read in the passage and record it was copied from, support the claim? | LLM judge from a different provider, scored against a manual sample |
+| 3 | Claim entailment | Does the quote, read in the passage and record it was copied from, support the claim? | LLM judge: another vendor's model when both keys are set, otherwise another model of the same vendor (as on the gateway; see below). 30 of its answers were read against a sample (`eval.md`) |
 | 4 | Source authority | Is this the right source family for this field? | rule table |
 | 5 | Temporal validity | Is this the current figure or an older cutoff? | date and conflict rules |
 
