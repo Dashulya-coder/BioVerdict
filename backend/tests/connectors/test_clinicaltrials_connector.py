@@ -77,11 +77,53 @@ def test_satisfies_connector_protocol(tmp_path: Path) -> None:
     assert isinstance(make_connector(tmp_path, FakeRegistry()), Connector)
 
 
-def test_asset_name_is_searched_as_intervention() -> None:
+def test_asset_name_is_searched_as_intervention_within_the_indication() -> None:
     params, _ = build_queries(asset_query("divarasib"))
     assert params["query.intr"] == "divarasib"
-    assert "query.cond" not in params
+    # A drug is studied in several diseases: its trials in another one are not this question's.
+    assert params["query.cond"] == "non-small cell lung cancer"
     assert params["fields"] == FIELDS and params["pageSize"] == "20"
+
+
+def test_an_asset_with_no_stated_indication_is_searched_everywhere() -> None:
+    query = asset_query("divarasib").model_copy(
+        update={"indication": Indication(name="not specified")}
+    )
+    assert all("query.cond" not in params for params in build_queries(query))
+
+
+def test_the_condition_can_be_left_out_of_an_asset_search() -> None:
+    queries = build_queries(asset_query("divarasib"), in_indication=False)
+    assert all("query.cond" not in params for params in queries)
+    assert queries[0]["query.intr"] == "divarasib"
+
+
+async def test_an_asset_with_no_study_in_the_indication_is_searched_without_it(
+    tmp_path: Path,
+) -> None:
+    class OtherDiseaseOnly(FakeRegistry):
+        """The drug has studies, none of them registered for the indication asked about."""
+
+        def __call__(self, request: httpx.Request) -> httpx.Response:
+            if "query.cond" in request.url.params:
+                self.requests.append(request)
+                return httpx.Response(200, json={"studies": []})
+            return super().__call__(request)
+
+    registry = OtherDiseaseOnly()
+    connector = make_connector(tmp_path, registry)
+
+    evidence = await connector.fetch(asset_query("divarasib"), TODAY)
+
+    assert nct_ids(evidence)  # the wider search found the drug's studies
+    first_pages = [r for r in registry.searches() if "pageToken" not in r.url.params]
+    assert ["query.cond" in r.url.params for r in first_pages] == [True, True, False, False]
+    assert connector.problems == [
+        (
+            "no study of divarasib is registered for non-small cell lung cancer: "
+            "its studies in other indications are listed instead"
+        )
+    ]
 
 
 def test_every_search_is_repeated_for_stopped_studies() -> None:

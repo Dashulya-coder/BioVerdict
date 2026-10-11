@@ -54,7 +54,6 @@ citations judged and 13 removed, 37 links of context claims not judged, 8 dilige
 | Modules restate one another | mechanism, translation and clinical prompts | One trial result is written by three modules and pulls on each |
 | K2 and K4 fire on keywords | `reasoning/gate_guards.py`, `stop_reason.py` | Partly done (#128): a lifted hold no longer supports K2; a business stop supports no K1, K2 or K4 (unit tests). Open: a registry record TERMINATED still supports K4 whatever the reason, and a boxed warning is not unmitigable toxicity |
 | K1 did not fire for the pair | clinical module | The guard did not read "not superior to" or "endpoint was not met" as a failure (fixed in #128; K1 now fires for evobrutinib on its two phase 3 reports). Still open for the pair: whether a failed program of the class should kill a class question |
-| An asset's registry search is not limited to the indication | `connectors/clinicaltrials.py` (`query.intr`) | Evobrutinib for MS (`R-34158eeca1b34375a86331eb442e5afc`) listed its rheumatoid-arthritis trials (ACR20) among the top risks |
 | `eval/cases.yaml` has one smoke case | B10 | No regression set |
 
 ### 3. Decisions to think over together
@@ -224,3 +223,20 @@ Two things in your track decide whether they can pass, whatever the documents sa
 
 If there is time for one of the two only, the route (1) is what criterion A needs for these
 modules; without it the honest thing on stage is the time-travel diff, as the script says now.
+
+---
+
+## To Dasha, from Arsenii — 2026-10-11 (an asset's registry search)
+
+**A drug's studies are now searched within the run's indication** (`connectors/clinicaltrials.py`,
+`build_queries`): `query.intr` goes with `query.cond`. This was the row of section 2 above about
+evobrutinib for MS listing its rheumatoid-arthritis trials among the top risks; the row is
+removed. If the drug has no study registered for the indication, the search is repeated without
+the condition and the section's problems say so. An input with no indication is searched as
+before. Class runs (no drug) are unchanged: they already searched within the indication.
+
+**What it changes for you:** a new run of `evobrutinib for multiple sclerosis` collects fewer
+registry records than `R-34158eeca1b34375a86331eb442e5afc` did, so the base of
+`eval/sensitivity-evobrutinib.yaml` will differ if you run it again. The recorded runs are as
+they were. Tested on recorded responses only: not seen on the live registry, so check on the
+first asset run that the condition name finds the drug's MS trials.
