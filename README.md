@@ -12,7 +12,7 @@ Output: an Investment Underwriting Report with a verdict of **Invest / Condition
 
 Most "AI due diligence" output looks confident whether it is right or wrong. We designed around that failure.
 
-1. **Closed world.** The network is touched once, in a *collect* phase. The results are frozen into a content-hashed evidence bundle. The *reasoning* phase has no network access: if a fact is not in the bundle, it does not exist for this run.
+1. **Closed world.** The network is touched once, in a *collect* phase. The results are frozen into a content-hashed evidence bundle. The *reasoning* phase receives only the frozen bundle and queries no source: if a fact is not in the bundle, it does not exist for this run.
 2. **Grounded or dropped.** Every claim carries a verbatim quote. Code keeps the claim only if the quote appears in the evidence it names; a claim with a failed citation is dropped, not softened. URLs and IDs come from retrieval, never from a model.
 3. **Unknown is a result.** Missing information is reported with a reason (`not_reported`, `none_found`, `not_searched`, `error`, `incomplete`) and becomes a diligence question that names what kind of data would answer it.
 4. **Code decides, the LLM classifies.** Claim confidence, the gates, the probability of success, the market size and the verdict are computed by deterministic code from the claim ledger. A model never produces a number the verdict depends on.
@@ -132,7 +132,7 @@ The full list with comments is [`.env.example`](.env.example).
 
 ```
 Resolver → Collect (one bounded tool loop per section) → FREEZE bundle
-        → Reason (six modules, no network) → Grounding (code) → Skeptic → Judge
+        → Reason (six modules, the bundle only) → Grounding (code) → Skeptic → Judge
         → Scoring (code) → Chair → Synthesis → Report
 ```
 
@@ -142,7 +142,8 @@ Resolver → Collect (one bounded tool loop per section) → FREEZE bundle
   Extraction picks verbatim quotes; status records (a trial's status, an approval, a spending
   row) are stored whole without a model.
 - **Reason.** Unmet need, mechanism, translation chain, clinical, competition and commercial
-  modules write claims with quotes over the frozen bundle only.
+  modules write claims with quotes over the frozen bundle only. The six run in parallel and
+  each reads the bundle, not the claims of another module.
 - **Skeptic and judge.** The Skeptic looks for evidence against the claims; a grounded objection
   becomes a contradicting link. An entailment judge reads each quote with its passage and removes
   a link the quote does not support.
@@ -154,7 +155,9 @@ Resolver → Collect (one bounded tool loop per section) → FREEZE bundle
   competitive and commercial view and the investment case from the claims and code's figures;
   code keeps a sentence only if it cites claims and its numbers come from them or from code.
 
-Designed and not built yet: triage, Bull vs Bear, the Chair's targeted second collection round.
+Designed and not built yet: triage, Bull vs Bear, the Chair's targeted second collection round
+and the IP/regulatory module. The soft gates S5 and S6 are defined, but no module is asked to
+assert them.
 Details: [`docs/architecture.md`](docs/architecture.md).
 Data contracts: [`docs/data-model.md`](docs/data-model.md). Verdict logic: [`docs/scoring.md`](docs/scoring.md).
 
@@ -204,15 +207,17 @@ Task by task, with owners: [`docs/work-plan.md`](docs/work-plan.md). In short:
 
 **Not yet**
 
-- Whole runs with a real model have been made for one question only (BTK inhibitor x multiple
-  sclerosis), one run per code version: stability across runs is not measured.
+- Whole runs with a real model are recorded for one indication only: the class question (BTK
+  inhibitor x multiple sclerosis) and one asset in it (evobrutinib), one run per code version.
+  Stability across runs is not measured.
 - The written theses (including the next-trial plan and the investment case) are a model's
   synthesis checked for citations and numbers, not for meaning.
 - rNPV is not calibrated: peak share, rebates, margin, discount rate and phase costs and
   durations are placeholders listed with every result, so its figures are modeled, not sourced.
   Multiple sclerosis has no patient count in the sources, so it has no market size and no rNPV.
 - On the gateway the judge is a model of the same vendor as the one that writes the claims.
-- Bull/Bear, the IP/regulatory module and patent sources.
+- Triage, Bull/Bear, the Chair's second collection round, the IP/regulatory module and patent
+  sources; nothing asserts the soft gates S5 (surrogate endpoint) and S6 (IP).
 - The closed-book leakage probe and baselines.
 - The API has no authentication: do not expose a live instance, anyone could spend the model
   key.
@@ -231,8 +236,9 @@ CI runs the same on every pull request.
 
 ## Results
 
-Live runs of BTK inhibitor x multiple sclerosis on 2026-10-10, on the organizers' gateway. One
-question, so these describe that question, not the system in general. Details and method:
+Live runs of BTK inhibitor x multiple sclerosis, and of evobrutinib in the same indication, on
+2026-10-10 and 2026-10-11, on the organizers' gateway. One indication, so these describe that
+question, not the system in general. Details and method:
 [`docs/eval.md`](docs/eval.md), section 9; costs: [`docs/cost.md`](docs/cost.md).
 
 | Metric | Result |
@@ -244,7 +250,7 @@ question, so these describe that question, not the system in general. Details an
 | Evidence read by the modules | none of the bundle's 214 items left out of a module's prompts for length (market records go to code, not to a model); 11 of 11 registry trials and 29 of 29 drug records approved for MS cited by a claim |
 | Quotes the judge confirmed | 220 of 233 judged links (13 removed); 40% were removed before results were stored as lines (#124, #125) |
 | Written case | 24 sentences in six theses, none dropped by code for an uncited claim or a number of its own |
-| Sensitivity benchmark | 3 of 5 cases passed, on a base as of 2024-06-30, on an earlier version; not re-run since |
+| Sensitivity benchmark | 5 of 5 cases on 2026-10-11, on a base as of 2024-06-30, each against a control at the same cutoff; 3 of 5 the day before. Two defects were fixed in between and one expectation was changed with its reason (under the first one that case fails). The cases were used to find the defects: a development set, not a held-out score |
 | Verdict change on strong counter-evidence | shown: evobrutinib as of 2023-11-30 goes from Conditional to Do Not Invest (gate K1) when the two reports of its failed phase 3 are added; one source on a clinical hold leaves it Conditional (`eval/sensitivity-evobrutinib.yaml`) |
 | Verdict stability | not measured (the verdict was Conditional on every run of the day) |
 

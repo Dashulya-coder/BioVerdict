@@ -207,6 +207,7 @@ COMMERCIAL = ReasoningModule(
     first=frozenset({"approved_for_indication"}),  # the drugs a new one is priced against
 )
 
-# Order of the plan: translation reads what mechanism and clinical established. The two modules
-# added last keep the ids of the claims before them.
+# Order of the plan. The modules run in parallel and each reads the bundle, not another module's
+# claims: translation reads the mechanism and clinical evidence. The two modules added last keep
+# the ids of the claims before them.
 ALL_MODULES = (MECHANISM, CLINICAL, COMPETITION, TRANSLATION, UNMET_NEED, COMMERCIAL)

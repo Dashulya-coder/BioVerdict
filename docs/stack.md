@@ -12,7 +12,7 @@
 | Storage | SQLite (WAL), standard-library `sqlite3` |
 | HTTP client | `httpx` (async) |
 | Lint, format, tests | Ruff, pytest, pytest-asyncio |
-| Frontend | React 19.3, Vite 8, TypeScript 7 |
+| Frontend | React 19, Vite 8, TypeScript 6.0 (as installed; see the note under the table below) |
 | Node.js | 24 LTS (consider 26 after it enters LTS on 2026-10-28) |
 
 ## Versions resolved from the registries on 2026-10-06
@@ -48,6 +48,13 @@ These were **not** copied from articles. We installed the full backend dependenc
 | recharts | 3.10.1 | npm |
 | @tanstack/react-query | 5.104.1 | npm |
 | eslint | 10.12.0 | npm |
+
+**What the frontend uses (`frontend/package.json`, 2026-10-11).** The table is what the registry
+offered on 2026-10-06, not what was installed. The frontend asks for `react` and `react-dom`
+`^19.2.8` (the lockfile holds 19.3.0) and `typescript` `~6.0.2` (the lockfile holds 6.0.3), not
+TypeScript 7 (see the caveat below on tools that call the compiler). `vitest`,
+`@xyflow/react`, `recharts` and `@tanstack/react-query` are not installed; browser tests run on
+Playwright.
 
 **SDK major versions have moved** (anthropic 1.x, openai 3.x, google-genai 2.x). Do not copy old code samples. Read each SDK's current documentation, and keep every provider call inside `llm.call` (ADR-004) so only one file changes if an SDK API differs from what you remember.
 
@@ -91,7 +98,7 @@ New interpreter releases lag the ecosystem (binary wheels, tooling). `uv` did no
 
 **Node 24 now, maybe 26 later.** Choose one runtime, pin it in `.nvmrc` and `engines`. From October 2026 Node moves to one major release a year with every release becoming LTS (starting with Node 27).
 
-**TypeScript 7 caveat.** `tsc` is now a native Go binary. It does not yet expose a stable programmatic API (planned for 7.1, stable release planned 2026-11-24), so tools that call the compiler (type-aware `typescript-eslint` rules, `ts-morph`, `typedoc`) may need TypeScript 6.0.x beside it. Plan: TypeScript 7 for `tsc --noEmit` and the build; if type-aware lint rules fail, turn them off or keep TypeScript 6.0.x as a separate dev dependency for linting only.
+**TypeScript 7 caveat (the frontend is on 6.0.x).** `tsc` is now a native Go binary. It does not yet expose a stable programmatic API (planned for 7.1, stable release planned 2026-11-24), so tools that call the compiler (type-aware `typescript-eslint` rules, `ts-morph`, `typedoc`) may need TypeScript 6.0.x beside it. Plan: TypeScript 7 for `tsc --noEmit` and the build; if type-aware lint rules fail, turn them off or keep TypeScript 6.0.x as a separate dev dependency for linting only.
 
 **LangGraph.** Version 1.2 adds per-node timeouts and node-level error handlers; use them for the agent contract's `timeout_s` and the `incomplete` section status. We use only the `langgraph` package, not LangChain or `langgraph-cli`.
 

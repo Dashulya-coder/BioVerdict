@@ -1,9 +1,10 @@
-"""Recompute a finished run on added evidence (A7, the documented fallback of ADR-007).
+"""Recompute a finished run on added evidence (A7, ADR-007).
 
-The added evidence becomes the next bundle version, and all reasoning and scoring are run again
-on that version. To keep the original run and its report untouched, the recompute is a new run
-that starts from a copy of the original's evidence history; comparing the two runs gives the
-diff (`api/diff.py`). Claim-level incremental recompute is not implemented.
+The added evidence becomes the next bundle version. By default (`mode="classify"`) the model only
+places the new evidence among the original claims and code recomputes confidence and the verdict;
+`mode="full"` is the fallback that runs all reasoning and scoring again on that version. To keep
+the original run and its report untouched, the recompute is a new run that starts from a copy of
+the original's evidence history; comparing the two runs gives the diff (`api/diff.py`).
 """
 
 from __future__ import annotations
