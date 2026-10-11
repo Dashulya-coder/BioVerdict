@@ -150,6 +150,24 @@ def _link_view(link: ClaimEvidenceLink, evidence: Evidence, judged: JudgedState)
     )
 
 
+def _still_holds(
+    check: VerificationCheck,
+    carried: dict[str, str],
+    cited: set[tuple[str, str]],
+    hypotheses: set[str],
+) -> bool:
+    """Whether a failure an earlier run logged still describes a claim carried over unchanged.
+
+    A removed quote counts while the claim has not got that quote back; a downgrade counts while
+    the claim is still a hypothesis. Rule checks (source authority) are logged anew by each run.
+    """
+    if check.passed or check.claim_id not in carried:
+        return False
+    if check.check_name == CHECK_NAME:
+        return _judged_key(check) not in cited
+    return check.check_name == "claim_downgraded" and check.claim_id in hypotheses
+
+
 def _lineage_logs(
     conn: sqlite3.Connection,
     record: RunRecord,
@@ -159,29 +177,45 @@ def _lineage_logs(
     """The verification log of the run, preceded by the logs of the runs it grew from.
 
     A recompute that places added evidence asks the judge about the new quotes only, so its own
-    log says nothing of the quotes it carried over: they would read as never judged. A check of
-    an earlier run is kept only for a quote this run still holds unchanged: the same claim id
-    with the same text citing the same evidence with the same quote. A full recompute writes its
-    claims anew, and a claim it words differently inherits nothing. Oldest log first.
+    log says nothing of what it carried over: a carried quote would read as never judged, and a
+    claim that lost a quote earlier would no longer say why. From an earlier run two things are
+    kept, for a claim this run still holds with the same id and text:
+
+    - the judge's row for a quote the claim still cites (same evidence, same quote);
+    - a failure that still holds: a quote the judge removed and the claim has not got back, or
+      the claim's downgrade while it is still a hypothesis.
+
+    A full recompute writes its claims anew, and a claim it words differently inherits nothing.
+    Oldest log first.
     """
     logs = [load_checks(conn, record.run_id)]
     texts = {claim.id: claim.text for claim in claims}
+    hypotheses = {claim.id for claim in claims if claim.basis is Basis.HYPOTHESIS}
+    cited = {(l.claim_id, l.evidence_id) for l in links}
     held = {(l.claim_id, l.evidence_id): (texts.get(l.claim_id), l.quote) for l in links}
     seen = {record.run_id}
     parent_id = record.input.get(PARENT)
-    while isinstance(parent_id, str) and parent_id not in seen and held:
+    while isinstance(parent_id, str) and parent_id not in seen and texts:
         seen.add(parent_id)
         parent = get_run(conn, parent_id)
         if parent is None:
             break
         earlier_claims, earlier_links = load_claims(conn, parent_id)
         earlier_texts = {claim.id: claim.text for claim in earlier_claims}
+        texts = {cid: text for cid, text in texts.items() if earlier_texts.get(cid) == text}
         held = {
             (l.claim_id, l.evidence_id): held[l.claim_id, l.evidence_id]
             for l in earlier_links
             if held.get((l.claim_id, l.evidence_id)) == (earlier_texts.get(l.claim_id), l.quote)
         }
-        logs.append([c for c in load_checks(conn, parent_id) if _judged_key(c) in held])
+
+        logs.append(
+            [
+                check
+                for check in load_checks(conn, parent_id)
+                if _judged_key(check) in held or _still_holds(check, texts, cited, hypotheses)
+            ]
+        )
         parent_id = parent.input.get(PARENT)
     return logs[::-1]
 
@@ -325,7 +359,7 @@ def build_report(conn: sqlite3.Connection, run_id: str) -> ReportResponse:
     evidence = bundle.evidence_by_id()
 
     logs = _lineage_logs(conn, record, claims, links)
-    failed, judged = _failed_checks(logs[-1]), _judged_states(logs)
+    failed, judged = _failed_checks([check for log in logs for check in log]), _judged_states(logs)
     claim_views = [_claim_view(c, links, evidence, failed.get(c.id, []), judged) for c in claims]
     cited = {link.evidence_id for link in links}
     sources = [evidence_view(e, links) for e in bundle.evidence if e.id in cited]
@@ -376,7 +410,7 @@ def get_claim(conn: sqlite3.Connection, run_id: str, claim_id: str) -> ClaimView
         claim,
         links,
         load_bundle(conn, run_id).evidence_by_id(),
-        _failed_checks(logs[-1]).get(claim.id, []),
+        _failed_checks([check for log in logs for check in log]).get(claim.id, []),
         _judged_states(logs),
     )
 

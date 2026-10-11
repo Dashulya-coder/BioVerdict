@@ -194,8 +194,10 @@ anew inherits nothing.
 This touches the tile you relabelled in #135. With the carried readings counted, "new quotes
 read by the judge in this recompute" would be wrong, so in a recompute the tile now shows one
 row, "quotes the judge kept, here or in the run this grew from", and no "read" row: the quotes
-removed in the earlier run are not in this report, so they cannot be counted. Not carried over:
-the reasons for those earlier removals (`ClaimView.checks` still comes from the run's own log).
+removed in the earlier run are not in this report, so they cannot be counted. The reasons for
+those earlier removals are carried over too (a later change): a claim kept unchanged still says
+why the judge removed a quote, until it gets that quote back, and that it was downgraded, while
+it is still a hypothesis.
 Seen in tests on the fixture; look at the evobrutinib recompute on your machine.
 
 ---
