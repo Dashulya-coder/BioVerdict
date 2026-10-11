@@ -369,15 +369,33 @@ def parse_results(
     return evidence
 
 
-def build_queries(query: ResolverOutput, page_size: int = PAGE_SIZE) -> list[dict[str, str]]:
+NO_INDICATION = "not specified"  # what the Resolver writes when the input names no disease
+
+
+def _asset_condition(query: ResolverOutput) -> str | None:
+    """The indication an asset's studies are limited to, or None when the input named none."""
+    name = query.indication.name.strip()
+    return name if name and name != NO_INDICATION else None
+
+
+def build_queries(
+    query: ResolverOutput, page_size: int = PAGE_SIZE, in_indication: bool = True
+) -> list[dict[str, str]]:
     """Search parameters.
 
     One query per known asset, else one per target within the indication; each is repeated
     restricted to stopped studies, because failed analogs rarely rank first.
+
+    An asset is searched within the run's indication too: a drug is studied in several diseases,
+    and its trials in another one (evobrutinib in rheumatoid arthritis, for a question about
+    multiple sclerosis) are not evidence for this question. `in_indication=False` drops that
+    limit, for an asset that has no study registered for the indication.
     """
     base = {"pageSize": str(page_size), "fields": FIELDS}
     if query.known_assets:
-        searches = [{**base, "query.intr": asset} for asset in query.known_assets]
+        condition = _asset_condition(query) if in_indication else None
+        scope = {"query.cond": condition} if condition else {}
+        searches = [{**base, "query.intr": asset, **scope} for asset in query.known_assets]
     else:
         searches = [
             {**base, "query.cond": query.indication.name, "query.term": target.symbol}
@@ -424,13 +442,26 @@ class ClinicalTrialsConnector:
         if token:
             self.problems.append(f"search truncated after {self._max_pages} page(s)")
 
-    async def fetch(self, query: ResolverOutput, as_of: date) -> list[Evidence]:
-        self.problems = []
-        found: dict[str, tuple[dict, datetime]] = {}  # by NCT id: a study seen twice is read once
-        for params in build_queries(query, self._page_size):
+    async def _search(self, queries: list[dict[str, str]]) -> dict[str, tuple[dict, datetime]]:
+        """The studies the queries find, by NCT id: a study seen twice is read once."""
+        found: dict[str, tuple[dict, datetime]] = {}
+        for params in queries:
             async for study, fetched_at in self._pages(params):
                 nct = study["protocolSection"]["identificationModule"]["nctId"]
                 found.setdefault(nct, (study, fetched_at))
+        return found
+
+    async def fetch(self, query: ResolverOutput, as_of: date) -> list[Evidence]:
+        self.problems = []
+        found = await self._search(build_queries(query, self._page_size))
+        if not found and query.known_assets and _asset_condition(query):
+            # Better the drug's studies elsewhere, said to be elsewhere, than no registry record.
+            found = await self._search(build_queries(query, self._page_size, in_indication=False))
+            if found:
+                self.problems.append(
+                    f"no study of {', '.join(query.known_assets)} is registered for "
+                    f"{query.indication.name}: its studies in other indications are listed instead"
+                )
 
         evidence: list[Evidence] = []
         for nct in sorted(found):
